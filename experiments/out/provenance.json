@@ -1,0 +1,15 @@
+{
+  "python": "3.13.3",
+  "packages": {
+    "numpy": "2.5.0",
+    "scipy": "1.18.0",
+    "scikit-learn": "1.9.0"
+  },
+  "seed": 20260721,
+  "input_hashes": {},
+  "meta": {
+    "selected": "E2,E3",
+    "quick": false
+  },
+  "timestamp_utc": "2026-07-30T18:00:01.965485+00:00"
+}

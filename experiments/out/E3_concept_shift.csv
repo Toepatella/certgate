@@ -1,0 +1,401 @@
+draw,alpha,certified,tau,coverage,n_answered,answered_err_rate,hard,exceed,rm_fresh,rm_exceed,deploy_mode,decline_reason
+0,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0,0.1,True,0.55,0.9846153846153847,192,0.15104166666666666,True,True,0.161961,True,baseline,
+1,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1,0.1,True,0.81,0.9043126684636119,671,0.06855439642324888,False,False,0.121666,True,bbse,
+2,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2,0.1,True,0.55,0.9824561403508771,112,0.125,False,True,0.163706,True,baseline,
+3,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+3,0.1,True,0.55,0.9872448979591837,387,0.09819121447028424,False,False,0.161489,True,baseline,
+4,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+4,0.1,True,0.55,0.9823008849557522,333,0.17417417417417416,True,True,0.170321,True,baseline,
+5,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+5,0.1,True,0.55,0.9747899159663865,116,0.27586206896551724,True,True,0.167224,True,baseline,
+6,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+6,0.1,True,0.55,0.9870801033591732,382,0.1387434554973822,True,True,0.15817,True,baseline,
+7,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+7,0.1,True,0.55,1.0,136,0.25735294117647056,True,True,0.169465,True,baseline,
+8,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+8,0.1,True,0.55,0.9863297431648715,2381,0.13439731205375893,True,True,0.168898,True,baseline,
+9,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+9,0.1,True,0.55,0.9813084112149533,315,0.23809523809523808,True,True,0.168554,True,baseline,
+10,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+10,0.1,True,0.63,0.9660426643447976,2219,0.11401532221721496,True,True,0.16601,True,bbse,
+11,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+11,0.1,True,0.55,0.9838709677419355,183,0.12021857923497267,False,True,0.153107,True,baseline,
+12,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+12,0.1,True,0.55,0.9884559884559885,685,0.1781021897810219,True,True,0.170177,True,baseline,
+13,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+13,0.1,True,0.55,0.974308300395257,493,0.19675456389452334,True,True,0.169659,True,baseline,
+14,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+14,0.1,True,0.55,0.9706703910614525,695,0.23741007194244604,True,True,0.1778,True,baseline,
+15,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+15,0.1,True,0.55,1.0,20,0.0,False,False,0.166396,True,baseline,
+16,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+16,0.1,True,0.55,0.9712643678160919,169,0.15976331360946747,True,True,0.169072,True,baseline,
+17,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+17,0.1,True,0.5700000000000001,0.9710144927536232,201,0.19402985074626866,True,True,0.165995,True,baseline,
+18,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+18,0.1,True,0.5700000000000001,0.9795918367346939,288,0.1701388888888889,True,True,0.162204,True,baseline,
+19,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+19,0.1,True,0.55,0.988394584139265,511,0.1506849315068493,True,True,0.162099,True,baseline,
+20,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+20,0.1,True,0.5700000000000001,0.9920212765957447,373,0.10991957104557641,False,True,0.165521,True,baseline,
+21,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+21,0.1,True,0.55,0.96,48,0.3125,True,True,0.156729,True,baseline,
+22,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+22,0.1,True,0.8300000000000001,0.8749470114455278,2064,0.10077519379844961,False,True,0.110617,True,bbse,
+23,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+23,0.1,True,0.55,0.9788732394366197,139,0.14388489208633093,True,True,0.16158,True,baseline,
+24,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+24,0.1,True,0.55,0.9862068965517241,143,0.18181818181818182,True,True,0.164944,True,baseline,
+25,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+25,0.1,True,0.55,0.9831365935919055,583,0.20926243567753003,True,True,0.16677,True,baseline,
+26,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+26,0.1,True,0.5700000000000001,0.9892787524366472,1015,0.14876847290640394,True,True,0.161836,True,bbse,
+27,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+27,0.1,True,0.55,0.9891304347826086,182,0.1813186813186813,True,True,0.159886,True,baseline,
+28,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+28,0.1,True,0.55,0.992822966507177,415,0.1493975903614458,True,True,0.156769,True,baseline,
+29,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+29,0.1,True,0.55,0.9855072463768116,136,0.125,False,True,0.163825,True,baseline,
+30,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+30,0.1,True,0.55,1.0,39,0.1282051282051282,False,True,0.167789,True,baseline,
+31,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+31,0.1,True,0.55,0.9776847977684798,701,0.24251069900142652,True,True,0.170151,True,baseline,
+32,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+32,0.1,True,0.55,0.993485342019544,610,0.11475409836065574,False,True,0.160769,True,baseline,
+33,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+33,0.1,True,0.55,0.984304932735426,878,0.23120728929384965,True,True,0.165056,True,baseline,
+34,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+34,0.1,True,0.55,0.9912023460410557,1014,0.10157790927021697,False,True,0.169209,True,baseline,
+35,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+35,0.1,True,0.55,0.988,4940,0.15850202429149798,True,True,0.171224,True,baseline,
+36,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+36,0.1,True,0.55,0.986737400530504,372,0.10483870967741936,False,True,0.165476,True,baseline,
+37,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+37,0.1,True,0.55,0.9935897435897436,155,0.05806451612903226,False,False,0.16216,True,baseline,
+38,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+38,0.1,True,0.55,0.9830985915492958,349,0.3151862464183381,True,True,0.159688,True,baseline,
+39,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+39,0.1,True,0.75,0.9440298507462687,1265,0.06007905138339921,False,False,0.136841,True,bbse,
+40,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+40,0.1,True,0.5900000000000001,0.9736842105263158,370,0.15405405405405406,True,True,0.160965,True,baseline,
+41,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+41,0.1,True,0.5700000000000001,1.0,52,0.21153846153846154,True,True,0.169101,True,baseline,
+42,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+42,0.1,True,0.55,0.9737991266375546,223,0.07623318385650224,False,False,0.160165,True,baseline,
+43,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+43,0.1,True,0.55,1.0,124,0.16129032258064516,True,True,0.176333,True,baseline,
+44,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+44,0.1,True,0.55,0.9871794871794872,1232,0.14285714285714285,True,True,0.167502,True,baseline,
+45,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+45,0.1,True,0.55,0.9946236559139785,185,0.1891891891891892,True,True,0.156525,True,baseline,
+46,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+46,0.1,True,0.55,0.9902200488997555,405,0.1111111111111111,False,True,0.166383,True,baseline,
+47,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+47,0.1,True,0.55,0.9821428571428571,220,0.11363636363636363,False,True,0.171855,True,baseline,
+48,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+48,0.1,True,0.55,0.9889746416758545,897,0.12709030100334448,True,True,0.169756,True,baseline,
+49,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+49,0.1,True,0.55,0.9789473684210527,186,0.17204301075268819,True,True,0.162724,True,baseline,
+50,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+50,0.1,True,0.55,0.9797160243407708,483,0.2318840579710145,True,True,0.167489,True,baseline,
+51,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+51,0.1,True,0.55,0.9910233393177738,552,0.13405797101449277,True,True,0.162946,True,baseline,
+52,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+52,0.1,True,0.55,0.9845924453280318,1981,0.18778394750126198,True,True,0.165602,True,baseline,
+53,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+53,0.1,True,0.55,0.9733924611973392,439,0.16856492027334852,True,True,0.163109,True,baseline,
+54,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+54,0.1,True,0.55,0.9897435897435898,386,0.15544041450777202,True,True,0.169268,True,baseline,
+55,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+55,0.1,True,0.55,0.9872340425531915,2088,0.21216475095785442,True,True,0.168984,True,baseline,
+56,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+56,0.1,True,0.5900000000000001,0.9686539643515673,1576,0.19289340101522842,True,True,0.15901,True,baseline,
+57,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+57,0.1,True,0.55,0.9923076923076923,516,0.18410852713178294,True,True,0.170792,True,baseline,
+58,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+58,0.1,True,0.55,0.9843444227005871,503,0.15705765407554673,True,True,0.163984,True,baseline,
+59,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+59,0.1,True,0.55,0.9864029666254636,798,0.15664160401002505,True,True,0.16145,True,baseline,
+60,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+60,0.1,True,0.55,0.9864864864864865,73,0.0958904109589041,False,False,0.164798,True,baseline,
+61,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+61,0.1,True,0.55,1.0,124,0.24193548387096775,True,True,0.157639,True,baseline,
+62,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+62,0.1,True,0.55,0.989010989010989,90,0.06666666666666667,False,False,0.155736,True,baseline,
+63,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+63,0.1,True,0.55,0.9849411764705882,2093,0.13425704730052557,True,True,0.15865,True,baseline,
+64,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+64,0.1,True,0.55,0.9888888888888889,445,0.20449438202247192,True,True,0.165874,True,baseline,
+65,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+65,0.1,True,0.55,0.9855072463768116,272,0.15808823529411764,True,True,0.173902,True,baseline,
+66,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+66,0.1,True,0.55,0.9934687953555879,1369,0.09203798392987582,False,False,0.157452,True,baseline,
+67,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+67,0.1,True,0.55,0.97724399494311,773,0.1461836998706339,True,True,0.167804,True,baseline,
+68,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+68,0.1,True,0.55,0.9844789356984479,444,0.12612612612612611,True,True,0.167569,True,baseline,
+69,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+69,0.1,True,0.55,0.9858667435823478,3418,0.1582796957284962,True,True,0.164485,True,baseline,
+70,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+70,0.1,True,0.55,1.0,104,0.08653846153846154,False,False,0.163018,True,baseline,
+71,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+71,0.1,True,0.55,1.0,62,0.22580645161290322,True,True,0.167173,True,baseline,
+72,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+72,0.1,True,0.55,0.9849246231155779,196,0.10714285714285714,False,True,0.166344,True,baseline,
+73,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+73,0.1,True,0.55,1.0,119,0.21008403361344538,True,True,0.167247,True,baseline,
+74,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+74,0.1,True,0.55,0.9705882352941176,231,0.2554112554112554,True,True,0.162026,True,baseline,
+75,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+75,0.1,True,0.5700000000000001,0.9794238683127572,714,0.10504201680672269,False,True,0.1652,True,baseline,
+76,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+76,0.1,True,0.55,0.9797101449275363,338,0.1390532544378698,True,True,0.164022,True,baseline,
+77,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+77,0.1,True,0.5700000000000001,0.9925093632958801,265,0.12830188679245283,False,True,0.165445,True,baseline,
+78,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+78,0.1,True,0.6900000000000001,0.9486228813559322,1791,0.096035734226689,False,False,0.139443,True,bbse,
+79,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+79,0.1,True,0.55,0.991304347826087,456,0.1425438596491228,True,True,0.162638,True,baseline,
+80,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+80,0.1,True,0.55,0.9711286089238845,370,0.24324324324324326,True,True,0.173162,True,baseline,
+81,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+81,0.1,True,0.55,0.98828125,253,0.1541501976284585,True,True,0.168409,True,baseline,
+82,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+82,0.1,True,0.55,0.9971014492753624,344,0.125,False,True,0.167601,True,baseline,
+83,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+83,0.1,True,0.61,0.9757975797579758,887,0.08229988726042842,False,False,0.167449,True,bbse,
+84,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+84,0.1,True,0.55,0.9896296296296296,668,0.11377245508982035,False,True,0.169941,True,baseline,
+85,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+85,0.1,True,0.55,0.9921259842519685,126,0.07142857142857142,False,False,0.164017,True,baseline,
+86,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+86,0.1,True,0.55,0.9916434540389972,356,0.09831460674157304,False,False,0.161621,True,baseline,
+87,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+87,0.1,True,0.55,0.9880794701986755,746,0.2037533512064343,True,True,0.162578,True,baseline,
+88,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+88,0.1,True,0.55,0.984271022383545,1627,0.14996926859250154,True,True,0.167991,True,baseline,
+89,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+89,0.1,True,0.5900000000000001,0.976231884057971,3368,0.11045130641330166,True,True,0.165655,True,baseline,
+90,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+90,0.1,True,0.5900000000000001,0.9696969696969697,32,0.15625,False,True,0.165253,True,baseline,
+91,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+91,0.1,True,0.55,0.9933333333333333,149,0.20134228187919462,True,True,0.168941,True,baseline,
+92,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+92,0.1,True,0.55,0.9866666666666667,74,0.2702702702702703,True,True,0.169704,True,baseline,
+93,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+93,0.1,True,0.55,0.9904761904761905,416,0.1778846153846154,True,True,0.171609,True,baseline,
+94,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+94,0.1,True,0.5700000000000001,0.9618320610687023,126,0.10317460317460317,False,True,0.155623,True,baseline,
+95,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+95,0.1,True,0.5700000000000001,0.9842105263157894,187,0.0855614973262032,False,False,0.161181,True,baseline,
+96,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+96,0.1,True,0.55,0.9853427895981087,2084,0.1785028790786948,True,True,0.159157,True,baseline,
+97,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+97,0.1,True,0.55,0.988,247,0.11740890688259109,False,True,0.164342,True,baseline,
+98,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+98,0.1,True,0.55,1.0,134,0.22388059701492538,True,True,0.160021,True,baseline,
+99,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+99,0.1,True,0.55,0.990234375,507,0.27416173570019725,True,True,0.167392,True,baseline,
+100,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+100,0.1,True,0.55,0.975609756097561,80,0.1,False,False,0.166372,True,baseline,
+101,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+101,0.1,True,0.5900000000000001,0.9573266394728585,3051,0.2504097017371354,True,True,0.154928,True,baseline,
+102,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+102,0.1,True,0.55,0.9933774834437086,150,0.2,True,True,0.160545,True,baseline,
+103,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+103,0.1,True,0.5700000000000001,0.9685863874345549,185,0.21621621621621623,True,True,0.163966,True,baseline,
+104,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+104,0.1,True,0.55,0.9893048128342246,185,0.08648648648648649,False,False,0.174113,True,baseline,
+105,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+105,0.1,True,0.5900000000000001,0.9585987261146497,1204,0.16611295681063123,True,True,0.16112,True,baseline,
+106,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+106,0.1,True,0.55,0.9865930599369085,1251,0.1334932054356515,True,True,0.163212,True,baseline,
+107,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+107,0.1,True,0.55,0.9874055415617129,392,0.12755102040816327,True,True,0.165148,True,baseline,
+108,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+108,0.1,True,0.55,0.9904988123515439,417,0.09832134292565947,False,False,0.164396,True,baseline,
+109,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+109,0.1,True,0.55,0.98125,157,0.27388535031847133,True,True,0.157604,True,baseline,
+110,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+110,0.1,True,0.55,0.9848484848484849,325,0.19384615384615383,True,True,0.164899,True,baseline,
+111,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+111,0.1,True,0.55,0.9710982658959537,168,0.2261904761904762,True,True,0.165574,True,baseline,
+112,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+112,0.1,True,0.55,0.994,497,0.10865191146881288,False,True,0.165354,True,baseline,
+113,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+113,0.1,True,0.55,1.0,133,0.09022556390977443,False,False,0.16737,True,baseline,
+114,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+114,0.1,True,0.5900000000000001,0.9701173959445037,909,0.19141914191419143,True,True,0.159892,True,baseline,
+115,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+115,0.1,True,0.55,0.9791452991452991,2864,0.210195530726257,True,True,0.166212,True,baseline,
+116,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+116,0.1,True,0.55,1.0,39,0.10256410256410256,False,True,0.161375,True,baseline,
+117,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+117,0.1,True,0.55,0.984251968503937,375,0.13866666666666666,True,True,0.160807,True,baseline,
+118,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+118,0.1,True,0.55,0.9830508474576272,638,0.1786833855799373,True,True,0.169057,True,baseline,
+119,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+119,0.1,True,0.55,0.9757281553398058,402,0.2064676616915423,True,True,0.168146,True,baseline,
+120,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+120,0.1,True,0.55,0.9930555555555556,143,0.17482517482517482,True,True,0.167768,True,baseline,
+121,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+121,0.1,True,0.55,0.9886363636363636,348,0.1810344827586207,True,True,0.175155,True,baseline,
+122,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+122,0.1,True,0.55,0.9925093632958801,265,0.11320754716981132,False,True,0.160734,True,baseline,
+123,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+123,0.1,True,0.5700000000000001,0.9791044776119403,328,0.18292682926829268,True,True,0.163862,True,baseline,
+124,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+124,0.1,True,0.55,0.9873949579831933,470,0.07234042553191489,False,False,0.1588,True,baseline,
+125,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+125,0.1,True,0.5700000000000001,0.9745762711864406,345,0.12173913043478261,False,True,0.162452,True,baseline,
+126,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+126,0.1,True,0.55,1.0,38,0.23684210526315788,True,True,0.163274,True,baseline,
+127,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+127,0.1,True,0.5700000000000001,0.9662576687116564,315,0.14285714285714285,True,True,0.166471,True,baseline,
+128,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+128,0.1,True,0.55,0.9886499402628435,3310,0.17613293051359516,True,True,0.16658,True,baseline,
+129,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+129,0.1,True,0.55,0.9871794871794872,462,0.10606060606060606,False,True,0.173872,True,baseline,
+130,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+130,0.1,True,0.55,1.0,46,0.2608695652173913,True,True,0.16922,True,baseline,
+131,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+131,0.1,True,0.5700000000000001,0.975669099756691,401,0.24688279301745636,True,True,0.159142,True,baseline,
+132,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+132,0.1,True,0.5700000000000001,0.9634146341463414,79,0.0759493670886076,False,False,0.168117,True,baseline,
+133,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+133,0.1,True,0.55,0.9938461538461538,646,0.24458204334365324,True,True,0.172894,True,baseline,
+134,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+134,0.1,True,0.55,0.9832869080779945,353,0.1671388101983003,True,True,0.16143,True,baseline,
+135,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+135,0.1,True,0.55,0.9809160305343512,257,0.17509727626459143,True,True,0.158075,True,baseline,
+136,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+136,0.1,True,0.55,0.9904458598726115,311,0.09003215434083602,False,False,0.157808,True,baseline,
+137,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+137,0.1,True,0.55,0.9864559819413092,437,0.14874141876430205,True,True,0.16164,True,baseline,
+138,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+138,0.1,True,0.55,0.9851063829787234,463,0.18142548596112312,True,True,0.167788,True,baseline,
+139,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+139,0.1,True,0.5700000000000001,0.986449864498645,364,0.1813186813186813,True,True,0.169274,True,baseline,
+140,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+140,0.1,True,0.55,0.9777777777777777,88,0.1590909090909091,True,True,0.163241,True,baseline,
+141,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+141,0.1,True,0.55,0.9832775919732442,294,0.20748299319727892,True,True,0.163364,True,baseline,
+142,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+142,0.1,True,0.5900000000000001,0.9727891156462585,429,0.22377622377622378,True,True,0.158375,True,baseline,
+143,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+143,0.1,True,0.55,0.9898255813953488,681,0.15418502202643172,True,True,0.161256,True,baseline,
+144,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+144,0.1,True,0.55,0.9896373056994818,382,0.20157068062827224,True,True,0.17553,True,baseline,
+145,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+145,0.1,True,0.55,0.975609756097561,200,0.21,True,True,0.156287,True,baseline,
+146,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+146,0.1,True,0.55,0.9886480908152735,958,0.18997912317327767,True,True,0.16433,True,baseline,
+147,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+147,0.1,True,0.55,0.9822888283378747,2163,0.18723994452149792,True,True,0.16551,True,baseline,
+148,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+148,0.1,True,0.55,0.9832635983263598,470,0.1595744680851064,True,True,0.167879,True,baseline,
+149,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+149,0.1,True,0.55,0.9870782483847811,2750,0.1741818181818182,True,True,0.16358,True,baseline,
+150,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+150,0.1,True,0.55,0.9912663755458515,227,0.13215859030837004,False,True,0.165038,True,baseline,
+151,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+151,0.1,True,0.55,0.9912663755458515,227,0.22466960352422907,True,True,0.167153,True,baseline,
+152,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+152,0.1,True,0.55,0.9783653846153846,814,0.2321867321867322,True,True,0.174257,True,baseline,
+153,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+153,0.1,True,0.55,0.9846,4923,0.18240910014218972,True,True,0.166336,True,baseline,
+154,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+154,0.1,True,0.55,0.9818780889621087,1192,0.09731543624161074,False,False,0.163788,True,baseline,
+155,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+155,0.1,True,0.55,0.9857932123125493,1249,0.1297037630104083,True,True,0.16748,True,baseline,
+156,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+156,0.1,True,0.55,0.9941176470588236,338,0.22485207100591717,True,True,0.167809,True,baseline,
+157,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+157,0.1,True,0.55,1.0,86,0.06976744186046512,False,False,0.161794,True,baseline,
+158,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+158,0.1,True,0.55,0.9886104783599089,434,0.18663594470046083,True,True,0.159411,True,baseline,
+159,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+159,0.1,True,0.55,0.9873417721518988,234,0.20085470085470086,True,True,0.164066,True,baseline,
+160,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+160,0.1,True,0.55,0.9920318725099602,498,0.09437751004016064,False,False,0.172329,True,baseline,
+161,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+161,0.1,True,0.55,1.0,191,0.11518324607329843,False,True,0.165998,True,baseline,
+162,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+162,0.1,True,0.55,0.9874551971326165,551,0.16152450090744103,True,True,0.168585,True,baseline,
+163,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+163,0.1,True,0.55,1.0,84,0.16666666666666666,True,True,0.170744,True,baseline,
+164,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+164,0.1,True,0.55,0.9860359076660017,3460,0.16618497109826588,True,True,0.167182,True,baseline,
+165,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+165,0.1,True,0.5700000000000001,0.979253112033195,236,0.21610169491525424,True,True,0.164753,True,baseline,
+166,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+166,0.1,True,0.55,0.9845360824742269,191,0.225130890052356,True,True,0.164304,True,baseline,
+167,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+167,0.1,True,0.55,0.9830188679245283,521,0.11900191938579655,False,True,0.163327,True,baseline,
+168,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+168,0.1,True,0.55,0.9860248447204969,635,0.2015748031496063,True,True,0.164748,True,baseline,
+169,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+169,0.1,True,0.5700000000000001,0.979381443298969,190,0.16842105263157894,True,True,0.162544,True,baseline,
+170,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+170,0.1,True,0.55,0.9776876267748479,482,0.14730290456431536,True,True,0.169778,True,baseline,
+171,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+171,0.1,True,0.55,0.9858982219497241,1608,0.1890547263681592,True,True,0.165752,True,baseline,
+172,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+172,0.1,True,0.55,0.9800995024875622,394,0.24873096446700507,True,True,0.168295,True,baseline,
+173,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+173,0.1,True,0.55,0.9806629834254144,355,0.18591549295774648,True,True,0.157622,True,baseline,
+174,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+174,0.1,True,0.55,0.9816216216216216,908,0.16079295154185022,True,True,0.164183,True,baseline,
+175,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+175,0.1,True,0.55,0.9555555555555556,43,0.20930232558139536,True,True,0.168711,True,baseline,
+176,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+176,0.1,True,0.55,0.9856115107913669,137,0.06569343065693431,False,False,0.165247,True,baseline,
+177,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+177,0.1,True,0.55,1.0,93,0.0967741935483871,False,False,0.165352,True,baseline,
+178,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+178,0.1,True,0.55,0.9826086956521739,113,0.18584070796460178,True,True,0.161445,True,baseline,
+179,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+179,0.1,True,0.55,0.9692307692307692,567,0.26278659611992944,True,True,0.16454,True,baseline,
+180,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+180,0.1,True,0.5700000000000001,0.9870466321243523,381,0.17060367454068243,True,True,0.159202,True,baseline,
+181,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+181,0.1,True,0.55,0.9917695473251029,241,0.18672199170124482,True,True,0.166549,True,baseline,
+182,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+182,0.1,True,0.55,0.9884615384615385,257,0.1517509727626459,True,True,0.168577,True,baseline,
+183,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+183,0.1,True,0.55,0.9815950920245399,160,0.14375,True,True,0.167189,True,baseline,
+184,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+184,0.1,True,0.55,0.9871794871794872,308,0.19805194805194806,True,True,0.172494,True,baseline,
+185,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+185,0.1,True,0.55,0.9876543209876543,240,0.15,True,True,0.158641,True,baseline,
+186,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+186,0.1,True,0.5700000000000001,0.9816446402349486,1337,0.11219147344801796,False,True,0.162147,True,bbse,
+187,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+187,0.1,True,0.55,0.9708029197080292,133,0.18796992481203006,True,True,0.164639,True,baseline,
+188,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+188,0.1,True,0.55,0.9936908517350158,315,0.17777777777777778,True,True,0.163832,True,baseline,
+189,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+189,0.1,True,0.5700000000000001,0.9846517119244392,1668,0.1696642685851319,True,True,0.169144,True,baseline,
+190,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+190,0.1,True,0.55,0.9831932773109243,468,0.14957264957264957,True,True,0.169457,True,baseline,
+191,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+191,0.1,True,0.55,1.0,96,0.09375,False,False,0.167792,True,baseline,
+192,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+192,0.1,True,0.55,0.9723926380368099,317,0.0914826498422713,False,False,0.162276,True,baseline,
+193,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+193,0.1,True,0.55,0.9845201238390093,318,0.18867924528301888,True,True,0.165885,True,baseline,
+194,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+194,0.1,True,0.55,0.993573264781491,1546,0.0705045278137128,False,False,0.161956,True,baseline,
+195,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+195,0.1,True,0.55,1.0,160,0.15625,True,True,0.167023,True,baseline,
+196,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+196,0.1,True,0.55,1.0,93,0.0967741935483871,False,False,0.168042,True,baseline,
+197,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+197,0.1,True,0.5700000000000001,0.9749430523917996,856,0.24532710280373832,True,True,0.165195,True,baseline,
+198,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+198,0.1,True,0.5700000000000001,0.921875,59,0.13559322033898305,False,True,0.158476,True,baseline,
+199,0.05,False,,0.0,0,nan,False,False,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+199,0.1,True,0.55,0.9786096256684492,183,0.15300546448087432,True,True,0.169488,True,baseline,

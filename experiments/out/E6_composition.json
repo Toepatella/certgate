@@ -1,0 +1,49 @@
+{
+  "size_bins": [
+    {
+      "size_bin": "[0,30)",
+      "n_sites": 0,
+      "mean_coverage": null,
+      "mean_answered_err": null
+    },
+    {
+      "size_bin": "[30,100)",
+      "n_sites": 4,
+      "mean_coverage": 0.9896,
+      "mean_answered_err": 0.0523
+    },
+    {
+      "size_bin": "[100,300)",
+      "n_sites": 15,
+      "mean_coverage": 0.98,
+      "mean_answered_err": 0.067
+    },
+    {
+      "size_bin": "[300,inf)",
+      "n_sites": 21,
+      "mean_coverage": 0.9856,
+      "mean_answered_err": 0.0595
+    }
+  ],
+  "composition": {
+    "predicted_class": {
+      "tag": "estimated",
+      "positive_fraction": 0.06304811566721973,
+      "n_positive": 1596.0,
+      "n_answered": 25314.0
+    },
+    "bbse_true_class": {
+      "tag": "estimated (label-shift assumption)",
+      "positive_fraction": 0.0857576903004051,
+      "expected_n_positive": 2170.8701722644546,
+      "rho": 0.8296804526028088,
+      "n_answered": 25314.0
+    },
+    "oracle_true_class": {
+      "tag": "diagnostic (oracle)",
+      "positive_fraction": 0.09149087461483764,
+      "n_positive": 2316.0,
+      "n_answered": 25314.0
+    }
+  }
+}

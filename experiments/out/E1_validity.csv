@@ -1,0 +1,1201 @@
+s_u,draw,n_sites,alpha,certified,tau,coverage,n_answered,answered_err_rate,hard,exceed,rm_fresh,rm_exceed,per_site_exceed_frac,deploy_mode,decline_reason
+0.5,0,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,0,208,0.1,True,0.55,0.9918032786885246,968,0.02066115702479339,False,False,0.057202,False,0.05,baseline,
+0.5,1,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,1,208,0.1,True,0.55,0.9880715705765407,497,0.04627766599597585,False,False,0.058539,False,0.055,baseline,
+0.5,2,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,2,208,0.1,True,0.55,0.9702734839476813,816,0.125,True,True,0.058764,False,0.105,baseline,
+0.5,3,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+0.5,3,208,0.1,True,0.55,1.0,37,0.0,False,False,0.059586,False,0.09,baseline,
+0.5,4,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,4,208,0.1,True,0.55,0.9839181286549707,673,0.10104011887072809,False,True,0.061296,False,0.07,baseline,
+0.5,5,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,5,208,0.1,True,0.55,0.9861111111111112,710,0.056338028169014086,False,False,0.059109,False,0.08,baseline,
+0.5,6,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,6,208,0.1,True,0.55,0.9459459459459459,140,0.05714285714285714,False,False,0.058313,False,0.06,baseline,
+0.5,7,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,7,208,0.1,True,0.55,0.9862385321100917,430,0.07674418604651163,False,False,0.057825,False,0.07,baseline,
+0.5,8,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,8,208,0.1,True,0.55,0.9953271028037384,426,0.03051643192488263,False,False,0.059758,False,0.065,baseline,
+0.5,9,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,9,208,0.1,True,0.55,0.9893428063943162,557,0.03231597845601436,False,False,0.060334,False,0.085,baseline,
+0.5,10,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,10,208,0.1,True,0.5900000000000001,0.9697817571348629,1733,0.050778995960761686,False,False,0.054696,False,0.045,baseline,
+0.5,11,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,11,208,0.1,True,0.55,0.9809523809523809,412,0.0412621359223301,False,False,0.056351,False,0.05,baseline,
+0.5,12,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,12,208,0.1,True,0.55,0.9819819819819819,109,0.06422018348623854,False,False,0.058775,False,0.035,baseline,
+0.5,13,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,13,208,0.1,True,0.5900000000000001,0.9736842105263158,259,0.05791505791505792,False,False,0.053608,False,0.055,baseline,
+0.5,14,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,14,208,0.1,True,0.55,0.9900709219858156,698,0.04297994269340974,False,False,0.056034,False,0.04,baseline,
+0.5,15,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,15,208,0.1,True,0.55,0.9777777777777777,88,0.045454545454545456,False,False,0.05987,False,0.075,baseline,
+0.5,16,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,16,208,0.1,True,0.5900000000000001,0.967741935483871,480,0.03333333333333333,False,False,0.051567,False,0.02,baseline,
+0.5,17,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,17,208,0.1,True,0.55,0.9828326180257511,229,0.03056768558951965,False,False,0.056425,False,0.045,baseline,
+0.5,18,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,18,208,0.1,True,0.55,0.9921875,127,0.07874015748031496,False,False,0.059079,False,0.06,baseline,
+0.5,19,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,19,208,0.1,True,0.55,0.9721731448763251,2201,0.12085415720127216,True,True,0.056016,False,0.06,baseline,
+0.5,20,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,20,208,0.1,True,0.55,0.9846827133479212,1350,0.06444444444444444,False,False,0.060769,False,0.1,baseline,
+0.5,21,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+0.5,21,208,0.1,True,0.55,1.0,79,0.0759493670886076,False,False,0.059271,False,0.075,baseline,
+0.5,22,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,22,208,0.1,True,0.55,0.9719525350593312,1802,0.09933407325194228,False,False,0.056743,False,0.06,baseline,
+0.5,23,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,23,208,0.1,True,0.55,0.9945255474452555,545,0.060550458715596334,False,False,0.058296,False,0.04,baseline,
+0.5,24,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,24,208,0.1,True,0.55,0.99,198,0.09090909090909091,False,False,0.060839,False,0.085,baseline,
+0.5,25,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,25,208,0.1,True,0.55,0.9761904761904762,246,0.08943089430894309,False,False,0.055793,False,0.035,baseline,
+0.5,26,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,26,208,0.1,True,0.55,0.9849246231155779,392,0.03571428571428571,False,False,0.057047,False,0.07,baseline,
+0.5,27,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,27,208,0.1,True,0.5700000000000001,0.9875389408099688,317,0.0694006309148265,False,False,0.056427,False,0.075,baseline,
+0.5,28,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,28,208,0.1,True,0.55,0.9866666666666667,148,0.060810810810810814,False,False,0.056945,False,0.055,baseline,
+0.5,29,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,29,208,0.1,True,0.55,0.995049504950495,201,0.09950248756218906,False,False,0.058937,False,0.07,baseline,
+0.5,30,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,30,208,0.1,True,0.55,0.9878934624697336,816,0.06740196078431372,False,False,0.06118,False,0.065,baseline,
+0.5,31,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,31,208,0.1,True,0.55,0.996551724137931,289,0.03460207612456748,False,False,0.054357,False,0.045,baseline,
+0.5,32,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,32,208,0.1,True,0.55,0.9774236387782205,736,0.059782608695652176,False,False,0.056492,False,0.045,baseline,
+0.5,33,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,33,208,0.1,True,0.55,0.9882075471698113,838,0.041766109785202864,False,False,0.055838,False,0.04,baseline,
+0.5,34,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,34,208,0.1,True,0.5700000000000001,0.9793658782083543,1946,0.06474820143884892,False,False,0.058249,False,0.055,baseline,
+0.5,35,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+0.5,35,208,0.1,True,0.55,0.9922480620155039,128,0.0390625,False,False,0.055576,False,0.035,baseline,
+0.5,36,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,36,208,0.1,True,0.55,0.9953051643192489,212,0.05188679245283019,False,False,0.056878,False,0.06,baseline,
+0.5,37,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,37,208,0.1,True,0.55,0.9831683168316832,993,0.07452165156092648,False,False,0.055691,False,0.035,baseline,
+0.5,38,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,38,208,0.1,True,0.55,0.9731182795698925,181,0.07734806629834254,False,False,0.055886,False,0.03,baseline,
+0.5,39,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,39,208,0.1,True,0.55,0.9696356275303644,479,0.04175365344467641,False,False,0.056149,False,0.055,baseline,
+0.5,40,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,40,208,0.1,True,0.55,0.984728161270617,1612,0.07009925558312655,False,False,0.055885,False,0.045,baseline,
+0.5,41,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,41,208,0.1,True,0.55,0.9896373056994818,191,0.05759162303664921,False,False,0.055903,False,0.045,baseline,
+0.5,42,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,42,208,0.1,True,0.55,0.9785276073619632,319,0.05329153605015674,False,False,0.059707,False,0.05,baseline,
+0.5,43,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,43,208,0.1,True,0.55,0.9906542056074766,318,0.1509433962264151,True,True,0.054324,False,0.07,baseline,
+0.5,44,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,44,208,0.1,True,0.55,0.9838028169014085,1397,0.09663564781675017,False,False,0.05842,False,0.045,baseline,
+0.5,45,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,45,208,0.1,True,0.55,0.9925,397,0.06297229219143577,False,False,0.057486,False,0.065,baseline,
+0.5,46,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+0.5,46,208,0.1,True,0.5900000000000001,0.975609756097561,40,0.125,False,True,0.054072,False,0.04,baseline,
+0.5,47,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,47,208,0.1,True,0.55,1.0,59,0.01694915254237288,False,False,0.058185,False,0.05,baseline,
+0.5,48,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,48,208,0.1,True,0.5700000000000001,0.9668367346938775,1137,0.09410729991204925,False,False,0.054835,False,0.03,baseline,
+0.5,49,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+0.5,49,208,0.1,True,0.55,1.0,95,0.042105263157894736,False,False,0.056059,False,0.055,baseline,
+0.5,50,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,50,208,0.1,True,0.55,0.9948453608247423,386,0.07512953367875648,False,False,0.059365,False,0.08,baseline,
+0.5,51,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+0.5,51,208,0.1,True,0.55,0.975,39,0.02564102564102564,False,False,0.058988,False,0.075,baseline,
+0.5,52,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,52,208,0.1,True,0.5700000000000001,0.9767441860465116,126,0.03968253968253968,False,False,0.056261,False,0.065,baseline,
+0.5,53,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,53,208,0.1,True,0.55,0.9880810488676997,829,0.05307599517490953,False,False,0.059035,False,0.075,baseline,
+0.5,54,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,54,208,0.1,True,0.55,0.978494623655914,455,0.12307692307692308,False,True,0.056742,False,0.065,baseline,
+0.5,55,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,55,208,0.1,True,0.5700000000000001,0.9762419006479481,452,0.0420353982300885,False,False,0.058501,False,0.06,baseline,
+0.5,56,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,56,208,0.1,True,0.55,0.9873188405797102,1090,0.043119266055045874,False,False,0.059251,False,0.09,baseline,
+0.5,57,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+0.5,57,208,0.1,True,0.55,0.9761904761904762,82,0.07317073170731707,False,False,0.058905,False,0.06,baseline,
+0.5,58,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,58,208,0.1,True,0.55,0.9716981132075472,103,0.04854368932038835,False,False,0.059156,False,0.085,baseline,
+0.5,59,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,59,208,0.1,True,0.55,0.9815950920245399,160,0.0125,False,False,0.057688,False,0.055,baseline,
+0.5,60,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,60,208,0.1,True,0.55,0.9766593727206418,1339,0.10679611650485436,False,True,0.057528,False,0.035,baseline,
+0.5,61,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,61,208,0.1,True,0.55,0.9787234042553191,92,0.08695652173913043,False,False,0.055477,False,0.035,baseline,
+0.5,62,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,62,208,0.1,True,0.55,0.977027027027027,723,0.09681881051175657,False,False,0.059544,False,0.08,baseline,
+0.5,63,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,63,208,0.1,True,0.55,0.9790996784565916,609,0.0722495894909688,False,False,0.059806,False,0.075,baseline,
+0.5,64,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,64,208,0.1,True,0.55,0.9871134020618557,383,0.028720626631853787,False,False,0.05956,False,0.075,baseline,
+0.5,65,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,65,208,0.1,True,0.55,0.98828125,253,0.06719367588932806,False,False,0.054982,False,0.035,baseline,
+0.5,66,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,66,208,0.1,True,0.55,0.9736842105263158,518,0.08108108108108109,False,False,0.059044,False,0.075,baseline,
+0.5,67,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,67,208,0.1,True,0.5700000000000001,1.0,124,0.11290322580645161,False,True,0.0544,False,0.02,baseline,
+0.5,68,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,68,208,0.1,True,0.55,0.9817629179331308,323,0.07739938080495357,False,False,0.055949,False,0.075,baseline,
+0.5,69,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,69,208,0.1,True,0.55,0.9774078478002378,822,0.0705596107055961,False,False,0.058325,False,0.07,baseline,
+0.5,70,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,70,208,0.1,True,0.55,0.9860515021459227,919,0.04570184983677911,False,False,0.055362,False,0.04,baseline,
+0.5,71,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,71,208,0.1,True,0.55,1.0,194,0.05154639175257732,False,False,0.056539,False,0.055,baseline,
+0.5,72,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,72,208,0.1,True,0.55,0.9862068965517241,143,0.03496503496503497,False,False,0.05501,False,0.025,baseline,
+0.5,73,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,73,208,0.1,True,0.85,0.8710433763188745,743,0.017496635262449527,False,False,0.022673,False,0.0,bbse,
+0.5,74,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,74,208,0.1,True,0.55,0.9967105263157895,303,0.052805280528052806,False,False,0.057293,False,0.055,baseline,
+0.5,75,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,75,208,0.1,True,0.55,0.9824561403508771,224,0.03571428571428571,False,False,0.057985,False,0.04,baseline,
+0.5,76,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,76,208,0.1,True,0.55,0.9813953488372092,211,0.052132701421800945,False,False,0.058139,False,0.065,baseline,
+0.5,77,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,77,208,0.1,True,0.55,0.987220447284345,618,0.09870550161812297,False,False,0.055426,False,0.035,baseline,
+0.5,78,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,78,208,0.1,True,0.55,0.9813953488372092,422,0.08293838862559241,False,False,0.060738,False,0.065,baseline,
+0.5,79,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+0.5,79,208,0.1,True,0.55,0.9868421052631579,75,0.05333333333333334,False,False,0.057156,False,0.07,baseline,
+0.5,80,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,80,208,0.1,True,0.73,0.9318497913769124,670,0.03283582089552239,False,False,0.03538,False,0.01,bbse,
+0.5,81,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+0.5,81,208,0.1,True,0.55,0.9891067538126361,454,0.048458149779735685,False,False,0.055596,False,0.03,baseline,
+0.5,82,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,82,208,0.1,True,0.55,0.9877149877149877,402,0.06218905472636816,False,False,0.055011,False,0.035,baseline,
+0.5,83,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,83,208,0.1,True,0.55,0.9910514541387024,443,0.040632054176072234,False,False,0.056438,False,0.05,baseline,
+0.5,84,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,84,208,0.1,True,0.55,0.9915433403805497,469,0.03837953091684435,False,False,0.059484,False,0.07,baseline,
+0.5,85,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,85,208,0.1,True,0.61,0.9757236227824463,2090,0.02631578947368421,False,False,0.054348,False,0.055,bbse,
+0.5,86,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+0.5,86,208,0.1,True,0.55,0.9863013698630136,72,0.06944444444444445,False,False,0.056628,False,0.07,baseline,
+0.5,87,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,87,208,0.1,True,0.55,0.9772727272727273,43,0.046511627906976744,False,False,0.055721,False,0.04,baseline,
+0.5,88,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,88,208,0.1,True,0.55,0.9824561403508771,56,0.10714285714285714,False,True,0.057033,False,0.05,baseline,
+0.5,89,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,89,208,0.1,True,0.79,0.9298245614035088,1219,0.02132895816242822,False,False,0.032109,False,0.005,bbse,
+0.5,90,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,90,208,0.1,True,0.55,0.9956331877729258,228,0.02631578947368421,False,False,0.056759,False,0.045,baseline,
+0.5,91,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,91,208,0.1,True,0.55,0.9801801801801802,544,0.05330882352941176,False,False,0.057914,False,0.055,baseline,
+0.5,92,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+0.5,92,208,0.1,True,0.55,0.9868421052631579,75,0.02666666666666667,False,False,0.057197,False,0.05,baseline,
+0.5,93,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,93,208,0.1,True,0.55,0.9825834542815675,2031,0.05809945839487937,False,False,0.059099,False,0.08,baseline,
+0.5,94,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,94,208,0.1,True,0.55,0.9841549295774648,559,0.04830053667262969,False,False,0.055052,False,0.03,baseline,
+0.5,95,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+0.5,95,208,0.1,True,0.55,0.9950396825396826,1003,0.02193419740777667,False,False,0.058799,False,0.085,baseline,
+0.5,96,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+0.5,96,208,0.1,True,0.55,1.0,98,0.01020408163265306,False,False,0.059525,False,0.065,baseline,
+0.5,97,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,97,208,0.1,True,0.5700000000000001,0.9779706275033377,1465,0.04436860068259386,False,False,0.054068,False,0.05,baseline,
+0.5,98,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,98,208,0.1,True,0.55,0.9841417910447762,2110,0.08246445497630332,False,False,0.058972,False,0.06,baseline,
+0.5,99,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,99,208,0.1,True,0.55,0.981941309255079,435,0.0735632183908046,False,False,0.05883,False,0.05,baseline,
+0.5,100,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,100,208,0.1,True,0.55,0.9831460674157303,350,0.04285714285714286,False,False,0.056,False,0.05,baseline,
+0.5,101,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,101,208,0.1,True,0.55,0.9775862068965517,567,0.08465608465608465,False,False,0.058644,False,0.07,baseline,
+0.5,102,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,102,208,0.1,True,0.55,0.9878787878787879,163,0.05521472392638037,False,False,0.059295,False,0.07,baseline,
+0.5,103,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,103,208,0.1,True,0.55,0.9938752783964365,3570,0.028011204481792718,False,False,0.058182,False,0.06,baseline,
+0.5,104,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+0.5,104,208,0.1,True,0.5700000000000001,0.9775784753363229,218,0.03669724770642202,False,False,0.056386,False,0.07,baseline,
+0.5,105,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+0.5,105,208,0.1,True,0.55,0.9859154929577465,70,0.04285714285714286,False,False,0.057586,False,0.06,baseline,
+0.5,106,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,106,208,0.1,True,0.55,0.9811320754716981,312,0.060897435897435896,False,False,0.057724,False,0.06,baseline,
+0.5,107,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,107,208,0.1,True,0.55,0.9910380881254668,1327,0.06330067822155237,False,False,0.056903,False,0.05,baseline,
+0.5,108,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,108,208,0.1,True,0.55,0.9929245283018868,421,0.07125890736342043,False,False,0.056842,False,0.025,baseline,
+0.5,109,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,109,208,0.1,True,0.55,0.9903660886319846,1542,0.04215304798962387,False,False,0.054596,False,0.045,baseline,
+0.5,110,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,110,208,0.1,True,0.55,0.9937304075235109,951,0.04100946372239748,False,False,0.056572,False,0.03,baseline,
+0.5,111,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,111,208,0.1,True,0.5700000000000001,0.9755813953488373,1678,0.032777115613825986,False,False,0.056964,False,0.035,baseline,
+0.5,112,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,112,208,0.1,True,0.73,0.9211908931698775,526,0.022813688212927757,False,False,0.03852,False,0.0,bbse,
+0.5,113,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,113,208,0.1,True,0.55,0.9897540983606558,483,0.06418219461697723,False,False,0.061275,False,0.11,baseline,
+0.5,114,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,114,208,0.1,True,0.55,0.9852670349907919,535,0.041121495327102804,False,False,0.053522,False,0.035,baseline,
+0.5,115,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+0.5,115,208,0.1,True,0.55,1.0,118,0.05084745762711865,False,False,0.06284,False,0.1,baseline,
+0.5,116,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,116,208,0.1,True,0.5700000000000001,0.9713375796178344,305,0.07213114754098361,False,False,0.054894,False,0.045,baseline,
+0.5,117,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+0.5,117,208,0.1,True,0.55,0.9873417721518988,78,0.02564102564102564,False,False,0.057044,False,0.045,baseline,
+0.5,118,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,118,208,0.1,True,0.5900000000000001,0.9786780383795309,459,0.05228758169934641,False,False,0.053703,False,0.03,baseline,
+0.5,119,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,119,208,0.1,True,0.55,0.9785522788203753,365,0.12054794520547946,False,True,0.057487,False,0.045,baseline,
+0.5,120,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,120,208,0.1,True,0.55,0.9890590809628009,452,0.030973451327433628,False,False,0.057093,False,0.045,baseline,
+0.5,121,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,121,208,0.1,True,0.55,0.9849187935034803,849,0.04240282685512368,False,False,0.054012,False,0.03,baseline,
+0.5,122,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+0.5,122,208,0.1,True,0.55,1.0,45,0.06666666666666667,False,False,0.060783,False,0.08,baseline,
+0.5,123,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,123,208,0.1,True,0.55,0.9771241830065359,1495,0.0802675585284281,False,False,0.055613,False,0.035,baseline,
+0.5,124,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+0.5,124,208,0.1,True,0.55,0.98,147,0.013605442176870748,False,False,0.058747,False,0.055,baseline,
+0.5,125,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,125,208,0.1,True,0.5700000000000001,0.9944444444444445,179,0.11173184357541899,False,True,0.056477,False,0.055,baseline,
+0.5,126,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,126,208,0.1,True,0.55,0.984375,504,0.03968253968253968,False,False,0.056296,False,0.07,baseline,
+0.5,127,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,127,208,0.1,True,0.55,0.9914163090128756,693,0.03463203463203463,False,False,0.056734,False,0.06,baseline,
+0.5,128,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+0.5,128,208,0.1,True,0.55,0.9833333333333333,59,0.03389830508474576,False,False,0.057712,False,0.035,baseline,
+0.5,129,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+0.5,129,208,0.1,True,0.55,0.96,24,0.0,False,False,0.056067,False,0.015,baseline,
+0.5,130,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,130,208,0.1,True,0.55,0.9876160990712074,638,0.032915360501567396,False,False,0.055894,False,0.065,baseline,
+0.5,131,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,131,208,0.1,True,0.55,0.9925788497217068,535,0.037383177570093455,False,False,0.057409,False,0.05,baseline,
+0.5,132,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+0.5,132,208,0.1,True,0.55,0.9831932773109243,117,0.03418803418803419,False,False,0.059839,False,0.075,baseline,
+0.5,133,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,133,208,0.1,True,0.55,0.9876543209876543,1440,0.04861111111111111,False,False,0.053603,False,0.035,baseline,
+0.5,134,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,134,208,0.1,True,0.55,0.9876543209876543,960,0.042708333333333334,False,False,0.05821,False,0.08,baseline,
+0.5,135,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,135,208,0.1,True,0.55,0.9823008849557522,222,0.08108108108108109,False,False,0.058516,False,0.05,baseline,
+0.5,136,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,136,208,0.1,True,0.55,0.9853420195439739,605,0.03471074380165289,False,False,0.058831,False,0.06,baseline,
+0.5,137,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,137,208,0.1,True,0.55,0.9912280701754386,226,0.061946902654867256,False,False,0.058046,False,0.04,baseline,
+0.5,138,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,138,208,0.1,True,0.5900000000000001,0.9767441860465116,420,0.05476190476190476,False,False,0.052824,False,0.055,baseline,
+0.5,139,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,139,208,0.1,True,0.55,0.984375,252,0.051587301587301584,False,False,0.057286,False,0.045,baseline,
+0.5,140,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,140,208,0.1,True,0.55,0.9870689655172413,458,0.03711790393013101,False,False,0.057275,False,0.055,baseline,
+0.5,141,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,141,208,0.1,True,0.55,0.9963768115942029,275,0.04363636363636364,False,False,0.056101,False,0.06,baseline,
+0.5,142,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,142,208,0.1,True,0.55,0.9793510324483776,664,0.1144578313253012,False,True,0.058047,False,0.04,baseline,
+0.5,143,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,143,208,0.1,True,0.55,0.988734835355286,1141,0.057843996494303246,False,False,0.057193,False,0.065,baseline,
+0.5,144,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,144,208,0.1,True,0.55,0.9816124469589816,694,0.08357348703170028,False,False,0.057199,False,0.05,baseline,
+0.5,145,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,145,208,0.1,True,0.55,0.9743589743589743,76,0.05263157894736842,False,False,0.059556,False,0.06,baseline,
+0.5,146,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,146,208,0.1,True,0.55,0.9890909090909091,544,0.04963235294117647,False,False,0.057047,False,0.065,baseline,
+0.5,147,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,147,208,0.1,True,0.55,0.9862542955326461,287,0.08013937282229965,False,False,0.05638,False,0.07,baseline,
+0.5,148,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+0.5,148,208,0.1,True,0.55,0.9915682967959528,588,0.030612244897959183,False,False,0.055774,False,0.05,baseline,
+0.5,149,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,149,208,0.1,True,0.55,0.9848993288590604,1761,0.05224304372515616,False,False,0.056071,False,0.05,baseline,
+0.5,150,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,150,208,0.1,True,0.55,0.9805996472663139,1668,0.05455635491606715,False,False,0.057436,False,0.055,baseline,
+0.5,151,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,151,208,0.1,True,0.55,0.9803370786516854,349,0.11461318051575932,False,True,0.05366,False,0.05,baseline,
+0.5,152,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+0.5,152,208,0.1,True,0.61,0.9545454545454546,21,0.047619047619047616,False,False,0.049906,False,0.03,baseline,
+0.5,153,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,153,208,0.1,True,0.61,0.9742351046698873,1815,0.020385674931129475,False,False,0.053452,False,0.05,bbse,
+0.5,154,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,154,208,0.1,True,0.55,0.980352644836272,1946,0.046248715313463515,False,False,0.054927,False,0.055,baseline,
+0.5,155,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,155,208,0.1,True,0.5700000000000001,0.9719626168224299,312,0.07051282051282051,False,False,0.055139,False,0.06,baseline,
+0.5,156,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+0.5,156,208,0.1,True,0.55,0.9837133550488599,302,0.019867549668874173,False,False,0.055714,False,0.055,baseline,
+0.5,157,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,157,208,0.1,True,0.55,0.9940119760479041,166,0.04819277108433735,False,False,0.059081,False,0.05,baseline,
+0.5,158,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,158,208,0.1,True,0.55,0.9811320754716981,104,0.08653846153846154,False,False,0.058766,False,0.07,baseline,
+0.5,159,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,159,208,0.1,True,0.55,0.9882352941176471,504,0.03968253968253968,False,False,0.057291,False,0.07,baseline,
+0.5,160,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,160,208,0.1,True,0.5700000000000001,0.9912280701754386,565,0.03893805309734513,False,False,0.055556,False,0.055,baseline,
+0.5,161,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,161,208,0.1,True,0.5700000000000001,0.9826989619377162,284,0.04929577464788732,False,False,0.05791,False,0.055,baseline,
+0.5,162,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,162,208,0.1,True,0.55,0.9760479041916168,163,0.03067484662576687,False,False,0.057278,False,0.07,baseline,
+0.5,163,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,163,208,0.1,True,0.55,0.979381443298969,95,0.031578947368421054,False,False,0.055534,False,0.055,baseline,
+0.5,164,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,164,208,0.1,True,0.55,0.9855072463768116,2176,0.035845588235294115,False,False,0.056523,False,0.04,baseline,
+0.5,165,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+0.5,165,208,0.1,True,0.55,0.9827586206896551,114,0.05263157894736842,False,False,0.05955,False,0.085,baseline,
+0.5,166,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,166,208,0.1,True,0.55,0.9866666666666667,592,0.05405405405405406,False,False,0.058552,False,0.05,baseline,
+0.5,167,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,167,208,0.1,True,0.5900000000000001,0.9647058823529412,82,0.06097560975609756,False,False,0.053073,False,0.035,baseline,
+0.5,168,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,168,208,0.1,True,0.55,0.9857142857142858,138,0.10869565217391304,False,True,0.056012,False,0.03,baseline,
+0.5,169,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,169,208,0.1,True,0.55,0.9931740614334471,291,0.037800687285223365,False,False,0.056165,False,0.04,baseline,
+0.5,170,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,170,208,0.1,True,0.55,0.9908883826879271,870,0.034482758620689655,False,False,0.057068,False,0.06,baseline,
+0.5,171,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,171,208,0.1,True,0.55,0.9876084262701363,1594,0.06398996235884567,False,False,0.058308,False,0.075,baseline,
+0.5,172,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,172,208,0.1,True,0.55,0.9741935483870968,151,0.0728476821192053,False,False,0.060184,False,0.075,baseline,
+0.5,173,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,173,208,0.1,True,0.5700000000000001,0.9810126582278481,155,0.03870967741935484,False,False,0.055457,False,0.035,baseline,
+0.5,174,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,174,208,0.1,True,0.55,0.9936908517350158,315,0.047619047619047616,False,False,0.055369,False,0.06,baseline,
+0.5,175,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,175,208,0.1,True,0.55,0.9829351535836177,288,0.03125,False,False,0.057276,False,0.065,baseline,
+0.5,176,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,176,208,0.1,True,0.55,0.9850187265917603,263,0.06844106463878327,False,False,0.054921,False,0.05,baseline,
+0.5,177,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,177,208,0.1,True,0.55,0.9956709956709957,230,0.06086956521739131,False,False,0.059086,False,0.045,baseline,
+0.5,178,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,178,208,0.1,True,0.5700000000000001,0.9789343246592317,790,0.06455696202531645,False,False,0.054676,False,0.045,baseline,
+0.5,179,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,179,208,0.1,True,0.5700000000000001,0.9748653500897666,543,0.06261510128913444,False,False,0.054655,False,0.045,baseline,
+0.5,180,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,180,208,0.1,True,0.55,0.9869036482694107,1055,0.043601895734597156,False,False,0.0566,False,0.045,baseline,
+0.5,181,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,181,208,0.1,True,0.55,0.9863013698630136,1656,0.06763285024154589,False,False,0.059244,False,0.065,baseline,
+0.5,182,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,182,208,0.1,True,0.5700000000000001,0.9832985386221295,942,0.03821656050955414,False,False,0.057132,False,0.06,baseline,
+0.5,183,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,183,208,0.1,True,0.55,0.9898358092259578,2532,0.03909952606635071,False,False,0.057241,False,0.08,baseline,
+0.5,184,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,184,208,0.1,True,0.55,0.9774436090225563,260,0.046153846153846156,False,False,0.059029,False,0.095,baseline,
+0.5,185,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,185,208,0.1,True,0.55,0.9695121951219512,159,0.0880503144654088,False,False,0.05835,False,0.045,baseline,
+0.5,186,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,186,208,0.1,True,0.55,1.0,71,0.07042253521126761,False,False,0.057296,False,0.035,baseline,
+0.5,187,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,187,208,0.1,True,0.55,0.9781879194630873,583,0.1183533447684391,False,True,0.057853,False,0.08,baseline,
+0.5,188,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,188,208,0.1,True,0.61,0.9765625,250,0.092,False,False,0.050457,False,0.03,baseline,
+0.5,189,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,189,208,0.1,True,0.55,0.9832402234636871,176,0.07954545454545454,False,False,0.058564,False,0.06,baseline,
+0.5,190,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,190,208,0.1,True,0.55,0.9913793103448276,460,0.04782608695652174,False,False,0.057476,False,0.05,baseline,
+0.5,191,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,191,208,0.1,True,0.55,0.9852744310575636,1472,0.046875,False,False,0.057549,False,0.05,baseline,
+0.5,192,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,192,208,0.1,True,0.55,0.9939393939393939,164,0.06707317073170732,False,False,0.059913,False,0.06,baseline,
+0.5,193,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,193,208,0.1,True,0.55,0.9900744416873449,399,0.05263157894736842,False,False,0.060441,False,0.075,baseline,
+0.5,194,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,194,208,0.1,True,0.55,0.98,294,0.061224489795918366,False,False,0.0582,False,0.045,baseline,
+0.5,195,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,195,208,0.1,True,0.55,0.992,620,0.04838709677419355,False,False,0.062123,False,0.075,baseline,
+0.5,196,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,196,208,0.1,True,0.55,0.9607843137254902,49,0.24489795918367346,True,True,0.058174,False,0.075,baseline,
+0.5,197,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,197,208,0.1,True,0.55,0.9810126582278481,930,0.053763440860215055,False,False,0.058839,False,0.085,baseline,
+0.5,198,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,198,208,0.1,True,0.55,0.991869918699187,366,0.040983606557377046,False,False,0.055633,False,0.04,baseline,
+0.5,199,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+0.5,199,208,0.1,True,0.55,0.986046511627907,212,0.03773584905660377,False,False,0.056463,False,0.045,baseline,
+1.0,0,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,0,208,0.1,True,0.61,0.9669631512071156,1522,0.0519053876478318,False,False,0.055713,False,0.11,baseline,
+1.0,1,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,1,208,0.1,True,0.61,0.9659090909090909,170,0.011764705882352941,False,False,0.062082,False,0.195,baseline,
+1.0,2,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,2,208,0.1,True,0.61,0.9624060150375939,256,0.03125,False,False,0.05913,False,0.12,baseline,
+1.0,3,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,3,208,0.1,True,0.5900000000000001,0.9375,330,0.06666666666666667,False,False,0.064641,False,0.2,baseline,
+1.0,4,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,4,208,0.1,True,0.5900000000000001,0.9678407350689127,632,0.05221518987341772,False,False,0.063532,False,0.165,baseline,
+1.0,5,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,5,208,0.1,True,0.55,0.9943693693693694,883,0.01812004530011325,False,False,0.06769,False,0.18,baseline,
+1.0,6,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,6,208,0.1,True,0.63,0.9649122807017544,275,0.08,False,False,0.055561,False,0.115,baseline,
+1.0,7,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,7,208,0.1,True,0.61,0.9734717416378316,844,0.05568720379146919,False,False,0.054983,False,0.1,baseline,
+1.0,8,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,8,208,0.1,True,0.61,0.9649871904355252,1130,0.050442477876106194,False,False,0.059273,False,0.155,baseline,
+1.0,9,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,9,208,0.1,True,0.5900000000000001,0.95,76,0.0,False,False,0.059024,False,0.14,baseline,
+1.0,10,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,10,208,0.1,True,0.5900000000000001,0.9710144927536232,670,0.03880597014925373,False,False,0.058265,False,0.1,baseline,
+1.0,11,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,11,208,0.1,True,0.79,0.9084888621312462,3018,0.015241882041086813,False,False,0.039053,False,0.07,bbse,
+1.0,12,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,12,208,0.1,True,0.65,0.9564393939393939,505,0.0039603960396039604,False,False,0.049078,False,0.085,baseline,
+1.0,13,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,13,208,0.1,True,0.79,0.9018759018759018,1875,0.011733333333333333,False,False,0.031811,False,0.055,bbse,
+1.0,14,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,14,208,0.1,True,0.67,0.9117647058823529,62,0.11290322580645161,False,True,0.053469,False,0.125,baseline,
+1.0,15,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,15,208,0.1,True,0.61,0.9606299212598425,122,0.16393442622950818,True,True,0.058067,False,0.15,baseline,
+1.0,16,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,16,208,0.1,True,0.73,0.9240331491712708,669,0.01046337817638266,False,False,0.047851,False,0.11,bbse,
+1.0,17,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,17,208,0.1,True,0.63,0.9518229166666666,731,0.058823529411764705,False,False,0.051752,False,0.085,baseline,
+1.0,18,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,18,208,0.1,True,0.65,0.9759450171821306,284,0.02464788732394366,False,False,0.053293,False,0.115,baseline,
+1.0,19,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,19,208,0.1,True,0.5900000000000001,0.9664948453608248,375,0.048,False,False,0.058109,False,0.125,baseline,
+1.0,20,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,20,208,0.1,True,0.63,0.9654859218891917,1063,0.030103480714957668,False,False,0.057408,False,0.15,baseline,
+1.0,21,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,21,208,0.1,True,0.61,0.9395017793594306,264,0.06439393939393939,False,False,0.058861,False,0.11,baseline,
+1.0,22,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,22,208,0.1,True,0.67,0.9046121593291404,1726,0.0816917728852839,False,False,0.049022,False,0.09,baseline,
+1.0,23,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,23,208,0.1,True,0.55,0.9754768392370572,358,0.1564245810055866,True,True,0.071716,False,0.215,baseline,
+1.0,24,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,24,208,0.1,True,0.63,0.9523809523809523,140,0.02857142857142857,False,False,0.053052,False,0.13,baseline,
+1.0,25,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,25,208,0.1,True,0.5700000000000001,0.9852289512555391,667,0.029985007496251874,False,False,0.064361,False,0.18,baseline,
+1.0,26,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,26,208,0.1,True,0.5900000000000001,0.946319018404908,1234,0.12965964343598055,True,True,0.059508,False,0.135,baseline,
+1.0,27,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,27,208,0.1,True,0.65,0.9545454545454546,504,0.013888888888888888,False,False,0.049862,False,0.075,baseline,
+1.0,28,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,28,208,0.1,True,0.63,0.9064327485380117,620,0.1629032258064516,True,True,0.057435,False,0.1,baseline,
+1.0,29,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,29,208,0.1,True,0.71,0.9422941590429276,1339,0.016430171769977596,False,False,0.042424,False,0.035,baseline,
+1.0,30,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,30,208,0.1,True,0.65,0.9347826086956522,129,0.11627906976744186,False,True,0.052646,False,0.08,baseline,
+1.0,31,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,31,208,0.1,True,0.5700000000000001,0.9848066298342542,713,0.025245441795231416,False,False,0.06771,False,0.185,baseline,
+1.0,32,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,32,208,0.1,True,0.5900000000000001,0.9861351819757366,569,0.03163444639718805,False,False,0.065217,False,0.17,baseline,
+1.0,33,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,33,208,0.1,True,0.63,0.9662921348314607,86,0.05813953488372093,False,False,0.05497,False,0.15,baseline,
+1.0,34,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,34,208,0.1,True,0.6900000000000001,0.8747591522157996,1362,0.1262848751835536,True,True,0.047642,False,0.105,baseline,
+1.0,35,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,35,208,0.1,True,0.61,0.9118942731277533,207,0.0966183574879227,False,False,0.053627,False,0.115,baseline,
+1.0,36,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,36,208,0.1,True,0.6900000000000001,0.9598173515981735,1051,0.021883920076117985,False,False,0.048908,False,0.11,baseline,
+1.0,37,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,37,208,0.1,True,0.61,0.9516509433962265,807,0.042131350681536554,False,False,0.05658,False,0.115,baseline,
+1.0,38,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,38,208,0.1,True,0.55,0.9690831556503199,909,0.1331133113311331,True,True,0.066087,False,0.16,baseline,
+1.0,39,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,39,208,0.1,True,0.63,0.8706467661691543,175,0.1657142857142857,True,True,0.053295,False,0.115,baseline,
+1.0,40,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,40,208,0.1,True,0.5900000000000001,0.96,120,0.09166666666666666,False,False,0.067334,False,0.195,baseline,
+1.0,41,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,41,208,0.1,True,0.5900000000000001,0.9671052631578947,147,0.04081632653061224,False,False,0.061637,False,0.155,baseline,
+1.0,42,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,42,208,0.1,True,0.65,0.9474671669793621,505,0.0594059405940594,False,False,0.05256,False,0.085,baseline,
+1.0,43,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,43,208,0.1,True,0.63,0.9573934837092731,382,0.05759162303664921,False,False,0.056472,False,0.125,baseline,
+1.0,44,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,44,208,0.1,True,0.63,0.978021978021978,178,0.011235955056179775,False,False,0.057391,False,0.125,baseline,
+1.0,45,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,45,208,0.1,True,0.63,0.9501404494382022,1353,0.03399852180339985,False,False,0.05861,False,0.16,baseline,
+1.0,46,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,46,208,0.1,True,0.65,0.9767441860465116,84,0.047619047619047616,False,False,0.054739,False,0.125,baseline,
+1.0,47,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,47,208,0.1,True,0.67,0.9694656488549618,381,0.023622047244094488,False,False,0.053478,False,0.125,baseline,
+1.0,48,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,48,208,0.1,True,0.61,0.9519572953736655,535,0.09719626168224299,False,False,0.060842,False,0.15,baseline,
+1.0,49,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,49,208,0.1,True,0.65,0.9583333333333334,115,0.034782608695652174,False,False,0.050516,False,0.105,baseline,
+1.0,50,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,50,208,0.1,True,0.67,0.9519650655021834,218,0.0779816513761468,False,False,0.049524,False,0.095,baseline,
+1.0,51,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,51,208,0.1,True,0.6900000000000001,0.9477401129943502,671,0.020864381520119227,False,False,0.048038,False,0.11,baseline,
+1.0,52,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,52,208,0.1,True,0.61,0.9089615931721194,639,0.18309859154929578,True,True,0.054031,False,0.11,baseline,
+1.0,53,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,53,208,0.1,True,0.5900000000000001,0.9812206572769953,209,0.028708133971291867,False,False,0.061855,False,0.165,baseline,
+1.0,54,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,54,208,0.1,True,0.6900000000000001,0.9275590551181102,589,0.025466893039049237,False,False,0.047268,False,0.075,bbse,
+1.0,55,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,55,208,0.1,True,0.63,0.94,94,0.05319148936170213,False,False,0.058697,False,0.155,baseline,
+1.0,56,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,56,208,0.1,True,0.6900000000000001,0.8929633300297324,1802,0.07658157602663707,False,False,0.046309,False,0.08,baseline,
+1.0,57,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,57,208,0.1,True,0.63,0.9251477347340775,1409,0.10645848119233499,False,True,0.057175,False,0.155,baseline,
+1.0,58,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,58,208,0.1,True,0.61,0.9602649006622517,435,0.04367816091954023,False,False,0.061913,False,0.14,baseline,
+1.0,59,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,59,208,0.1,True,0.61,0.9772151898734177,772,0.019430051813471502,False,False,0.062074,False,0.145,baseline,
+1.0,60,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,60,208,0.1,True,0.77,0.9028248587570622,1598,0.02065081351689612,False,False,0.034386,False,0.03,bbse,
+1.0,61,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,61,208,0.1,True,0.5900000000000001,0.9927272727272727,273,0.03663003663003663,False,False,0.059338,False,0.15,baseline,
+1.0,62,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,62,208,0.1,True,0.65,0.9453952730236349,1160,0.04913793103448276,False,False,0.049873,False,0.08,baseline,
+1.0,63,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,63,208,0.1,True,0.63,0.9620814844695442,2385,0.028092243186582808,False,False,0.055351,False,0.11,baseline,
+1.0,64,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,64,208,0.1,True,0.67,0.8739130434782608,201,0.10945273631840796,False,True,0.052312,False,0.13,baseline,
+1.0,65,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,65,208,0.1,True,0.67,0.9444,4722,0.04362558238034731,False,False,0.047941,False,0.105,baseline,
+1.0,66,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,66,208,0.1,True,0.65,0.9531478770131772,1302,0.029953917050691243,False,False,0.05756,False,0.165,bbse,
+1.0,67,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,67,208,0.1,True,0.65,0.9329039184111648,1738,0.06904487917146145,False,False,0.052318,False,0.075,baseline,
+1.0,68,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,68,208,0.1,True,0.67,0.9379310344827586,136,0.051470588235294115,False,False,0.053041,False,0.11,baseline,
+1.0,69,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,69,208,0.1,True,0.65,0.8648648648648649,256,0.1875,True,True,0.047978,False,0.08,baseline,
+1.0,70,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,70,208,0.1,True,0.65,0.9083333333333333,109,0.045871559633027525,False,False,0.0518,False,0.11,baseline,
+1.0,71,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,71,208,0.1,True,0.63,0.88,66,0.07575757575757576,False,False,0.05674,False,0.135,baseline,
+1.0,72,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,72,208,0.1,True,0.67,0.9043478260869565,104,0.057692307692307696,False,False,0.052386,False,0.125,baseline,
+1.0,73,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,73,208,0.1,True,0.61,0.9201388888888888,265,0.06792452830188679,False,False,0.057328,False,0.145,baseline,
+1.0,74,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,74,208,0.1,True,0.5900000000000001,0.9864864864864865,146,0.0273972602739726,False,False,0.061836,False,0.115,baseline,
+1.0,75,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,75,208,0.1,True,0.65,0.970873786407767,200,0.03,False,False,0.056,False,0.135,baseline,
+1.0,76,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,76,208,0.1,True,0.55,0.9731285988483686,1521,0.15976331360946747,True,True,0.065764,False,0.15,baseline,
+1.0,77,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,77,208,0.1,True,0.5900000000000001,0.9607843137254902,98,0.04081632653061224,False,False,0.063837,False,0.175,baseline,
+1.0,78,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,78,208,0.1,True,0.61,0.9724804760133878,2615,0.034034416826003826,False,False,0.058547,False,0.17,baseline,
+1.0,79,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,79,208,0.1,True,0.5900000000000001,0.9820655534941249,1588,0.02518891687657431,False,False,0.063783,False,0.16,bbse,
+1.0,80,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,80,208,0.1,True,0.6900000000000001,0.905982905982906,106,0.08490566037735849,False,False,0.047636,False,0.09,baseline,
+1.0,81,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,81,208,0.1,True,0.71,0.9172932330827067,244,0.045081967213114756,False,False,0.043699,False,0.055,baseline,
+1.0,82,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,82,208,0.1,True,0.65,0.9702380952380952,163,0.03680981595092025,False,False,0.048697,False,0.095,baseline,
+1.0,83,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,83,208,0.1,True,0.67,0.9550561797752809,85,0.07058823529411765,False,False,0.050317,False,0.11,baseline,
+1.0,84,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,84,208,0.1,True,0.61,0.9466666666666667,71,0.08450704225352113,False,False,0.056912,False,0.16,baseline,
+1.0,85,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,85,208,0.1,True,0.61,0.9747899159663865,232,0.04741379310344827,False,False,0.061148,False,0.115,baseline,
+1.0,86,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,86,208,0.1,True,0.5900000000000001,0.9794721407624634,334,0.03293413173652695,False,False,0.058461,False,0.13,baseline,
+1.0,87,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,87,208,0.1,True,0.65,0.9298476090383605,3539,0.08053122350946595,False,False,0.054921,False,0.135,baseline,
+1.0,88,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,88,208,0.1,True,0.63,0.9422442244224423,571,0.05779334500875657,False,False,0.058607,False,0.12,baseline,
+1.0,89,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,89,208,0.1,True,0.5700000000000001,0.975103734439834,235,0.06382978723404255,False,False,0.061929,False,0.115,baseline,
+1.0,90,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,90,208,0.1,True,0.5900000000000001,0.9761092150170648,1430,0.03076923076923077,False,False,0.062409,False,0.19,baseline,
+1.0,91,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,91,208,0.1,True,0.61,0.9805996472663139,556,0.039568345323741004,False,False,0.056509,False,0.16,baseline,
+1.0,92,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,92,208,0.1,True,0.61,0.9540396710208031,1972,0.0603448275862069,False,False,0.060388,False,0.125,baseline,
+1.0,93,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,93,208,0.1,True,0.67,0.9397590361445783,156,0.02564102564102564,False,False,0.052798,False,0.095,baseline,
+1.0,94,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,94,208,0.1,True,0.63,0.9542456718878813,2315,0.05053995680345572,False,False,0.057211,False,0.14,baseline,
+1.0,95,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,95,208,0.1,True,0.5700000000000001,0.9729187562688064,970,0.09381443298969072,False,False,0.063323,False,0.165,baseline,
+1.0,96,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,96,208,0.1,True,0.5900000000000001,0.9801980198019802,99,0.06060606060606061,False,False,0.062645,False,0.16,baseline,
+1.0,97,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,97,208,0.1,True,0.67,0.9588383260919278,4193,0.02122585261149535,False,False,0.054453,False,0.125,baseline,
+1.0,98,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,98,208,0.1,True,0.61,0.9714030384271671,1087,0.01655933762649494,False,False,0.058938,False,0.155,baseline,
+1.0,99,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,99,208,0.1,True,0.71,0.9051724137931034,105,0.047619047619047616,False,False,0.041466,False,0.085,baseline,
+1.0,100,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,100,208,0.1,True,0.6900000000000001,0.9402985074626866,63,0.047619047619047616,False,False,0.045118,False,0.075,baseline,
+1.0,101,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,101,208,0.1,True,0.61,0.963963963963964,428,0.06775700934579439,False,False,0.055368,False,0.13,baseline,
+1.0,102,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,102,208,0.1,True,0.65,0.9467084639498433,302,0.039735099337748346,False,False,0.052314,False,0.075,baseline,
+1.0,103,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,103,208,0.1,True,0.6900000000000001,0.8798076923076923,183,0.18032786885245902,True,True,0.045724,False,0.095,baseline,
+1.0,104,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,104,208,0.1,True,0.5700000000000001,0.9712389380530974,878,0.0774487471526196,False,False,0.064561,False,0.155,baseline,
+1.0,105,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,105,208,0.1,True,0.79,0.9116161616161617,1083,0.017543859649122806,False,False,0.034883,False,0.04,bbse,
+1.0,106,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,106,208,0.1,True,0.5900000000000001,0.9545454545454546,294,0.034013605442176874,False,False,0.071741,False,0.235,baseline,
+1.0,107,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,107,208,0.1,True,0.61,0.9629629629629629,156,0.07051282051282051,False,False,0.059535,False,0.14,baseline,
+1.0,108,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,108,208,0.1,True,0.63,0.9686346863468634,525,0.04380952380952381,False,False,0.05649,False,0.1,baseline,
+1.0,109,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,109,208,0.1,True,0.65,0.8641975308641975,70,0.07142857142857142,False,False,0.052371,False,0.095,baseline,
+1.0,110,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,110,208,0.1,True,0.65,0.8947368421052632,85,0.10588235294117647,False,True,0.051837,False,0.105,baseline,
+1.0,111,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,111,208,0.1,True,0.63,0.9827586206896551,171,0.011695906432748537,False,False,0.059613,False,0.16,baseline,
+1.0,112,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,112,208,0.1,True,0.61,0.9419354838709677,730,0.10410958904109589,False,True,0.057637,False,0.115,baseline,
+1.0,113,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,113,208,0.1,True,0.65,0.9516806722689075,453,0.013245033112582781,False,False,0.058878,False,0.135,baseline,
+1.0,114,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,114,208,0.1,True,0.63,0.9012345679012346,219,0.045662100456621,False,False,0.062207,False,0.155,baseline,
+1.0,115,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,115,208,0.1,True,0.61,0.9161849710982659,317,0.11987381703470032,False,True,0.060549,False,0.12,baseline,
+1.0,116,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,116,208,0.1,True,0.67,0.9445178335535006,1430,0.03776223776223776,False,False,0.052092,False,0.125,baseline,
+1.0,117,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,117,208,0.1,True,0.71,0.9467312348668281,782,0.014066496163682864,False,False,0.04258,False,0.09,baseline,
+1.0,118,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,118,208,0.1,True,0.5700000000000001,0.9873417721518988,156,0.038461538461538464,False,False,0.065884,False,0.2,baseline,
+1.0,119,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,119,208,0.1,True,0.63,0.9572490706319703,515,0.07766990291262135,False,False,0.054291,False,0.12,baseline,
+1.0,120,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,120,208,0.1,True,0.5900000000000001,0.9807692307692307,102,0.049019607843137254,False,False,0.061085,False,0.14,baseline,
+1.0,121,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,121,208,0.1,True,0.5700000000000001,0.9400363416111448,1552,0.24484536082474226,True,True,0.069949,False,0.215,baseline,
+1.0,122,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,122,208,0.1,True,0.61,0.9465346534653465,478,0.0899581589958159,False,False,0.062822,False,0.155,baseline,
+1.0,123,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,123,208,0.1,True,0.55,0.965416818347288,2652,0.18929110105580693,True,True,0.066526,False,0.195,baseline,
+1.0,124,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,124,208,0.1,True,0.61,0.9718723761544921,2315,0.028077753779697623,False,False,0.060291,False,0.16,baseline,
+1.0,125,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,125,208,0.1,True,0.6900000000000001,0.9175531914893617,345,0.03188405797101449,False,False,0.046487,False,0.08,baseline,
+1.0,126,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,126,208,0.1,True,0.63,0.9560260586319218,587,0.05281090289608177,False,False,0.053889,False,0.105,baseline,
+1.0,127,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,127,208,0.1,True,0.61,0.961139896373057,2597,0.06507508663842895,False,False,0.058825,False,0.15,baseline,
+1.0,128,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,128,208,0.1,True,0.61,0.9520295202952029,258,0.08914728682170543,False,False,0.056988,False,0.155,baseline,
+1.0,129,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,129,208,0.1,True,0.5900000000000001,0.9588014981273408,256,0.07421875,False,False,0.058522,False,0.12,baseline,
+1.0,130,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,130,208,0.1,True,0.63,0.9388794567062818,553,0.1301989150090416,True,True,0.054061,False,0.11,baseline,
+1.0,131,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,131,208,0.1,True,0.65,0.9525691699604744,964,0.03630705394190872,False,False,0.055143,False,0.1,baseline,
+1.0,132,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,132,208,0.1,True,0.63,0.946360153256705,247,0.09716599190283401,False,False,0.057111,False,0.115,baseline,
+1.0,133,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,133,208,0.1,True,0.5700000000000001,0.9823182711198428,500,0.076,False,False,0.061435,False,0.12,baseline,
+1.0,134,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,134,208,0.1,True,0.55,0.9897172236503856,385,0.02077922077922078,False,False,0.070925,False,0.205,baseline,
+1.0,135,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,135,208,0.1,True,0.61,0.9289340101522843,183,0.0273224043715847,False,False,0.053784,False,0.115,baseline,
+1.0,136,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,136,208,0.1,True,0.5900000000000001,0.9512937595129376,625,0.0896,False,False,0.062069,False,0.155,baseline,
+1.0,137,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,137,208,0.1,True,0.5900000000000001,0.9514925373134329,255,0.10980392156862745,False,True,0.060683,False,0.16,baseline,
+1.0,138,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,138,208,0.1,True,0.67,0.9481605351170569,1134,0.026455026455026454,False,False,0.052531,False,0.115,bbse,
+1.0,139,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,139,208,0.1,True,0.6900000000000001,0.9276595744680851,218,0.03211009174311927,False,False,0.048785,False,0.11,baseline,
+1.0,140,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,140,208,0.1,True,0.61,0.9619718309859155,683,0.05856515373352855,False,False,0.05605,False,0.115,baseline,
+1.0,141,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,141,208,0.1,True,0.5700000000000001,0.9756554307116105,521,0.0671785028790787,False,False,0.066282,False,0.185,baseline,
+1.0,142,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,142,208,0.1,True,0.6900000000000001,0.9534883720930233,205,0.02926829268292683,False,False,0.04762,False,0.085,baseline,
+1.0,143,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,143,208,0.1,True,0.67,0.919661733615222,435,0.06436781609195402,False,False,0.052784,False,0.135,baseline,
+1.0,144,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,144,208,0.1,True,0.65,0.9623567921440261,588,0.008503401360544218,False,False,0.050003,False,0.07,baseline,
+1.0,145,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,145,208,0.1,True,0.67,0.9133782483156881,949,0.12961011591148577,True,True,0.052556,False,0.125,baseline,
+1.0,146,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,146,208,0.1,True,0.5900000000000001,0.9180327868852459,112,0.1875,True,True,0.062111,False,0.135,baseline,
+1.0,147,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,147,208,0.1,True,0.63,0.9482660602615123,1668,0.0749400479616307,False,False,0.059823,False,0.15,baseline,
+1.0,148,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,148,208,0.1,True,0.61,0.9523809523809523,200,0.095,False,False,0.055117,False,0.15,baseline,
+1.0,149,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,149,208,0.1,True,0.5700000000000001,0.9724770642201835,106,0.02830188679245283,False,False,0.061203,False,0.12,baseline,
+1.0,150,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,150,208,0.1,True,0.67,0.9558173784977909,649,0.01694915254237288,False,False,0.051931,False,0.115,baseline,
+1.0,151,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,151,208,0.1,True,0.65,0.9711934156378601,472,0.0211864406779661,False,False,0.054332,False,0.14,baseline,
+1.0,152,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,152,208,0.1,True,0.67,0.8736654804270463,982,0.13441955193482688,True,True,0.050224,False,0.09,baseline,
+1.0,153,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,153,208,0.1,True,0.77,0.9264069264069265,428,0.004672897196261682,False,False,0.036556,False,0.04,bbse,
+1.0,154,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,154,208,0.1,True,0.63,0.9584055459272097,553,0.03074141048824593,False,False,0.053615,False,0.07,baseline,
+1.0,155,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,155,208,0.1,True,0.61,0.963855421686747,80,0.0375,False,False,0.056153,False,0.11,baseline,
+1.0,156,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,156,208,0.1,True,0.55,0.9821656050955414,771,0.04539559014267185,False,False,0.066919,False,0.165,baseline,
+1.0,157,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,157,208,0.1,True,0.67,1.0,30,0.03333333333333333,False,False,0.051864,False,0.13,baseline,
+1.0,158,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,158,208,0.1,True,0.61,0.9615384615384616,175,0.05142857142857143,False,False,0.051169,False,0.085,baseline,
+1.0,159,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,159,208,0.1,True,0.5900000000000001,0.9740853658536586,1917,0.03390714658320292,False,False,0.062505,False,0.185,baseline,
+1.0,160,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,160,208,0.1,True,0.5900000000000001,0.9720062208398134,625,0.0432,False,False,0.061143,False,0.16,baseline,
+1.0,161,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,161,208,0.1,True,0.67,0.9183168316831684,371,0.11320754716981132,False,True,0.055817,False,0.155,baseline,
+1.0,162,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,162,208,0.1,True,0.6900000000000001,0.9436033308099925,2493,0.01965503409546731,False,False,0.048066,False,0.115,baseline,
+1.0,163,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,163,208,0.1,True,0.65,0.9290780141843972,262,0.04198473282442748,False,False,0.051196,False,0.08,baseline,
+1.0,164,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,164,208,0.1,True,0.61,0.9507692307692308,618,0.04854368932038835,False,False,0.05557,False,0.11,baseline,
+1.0,165,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,165,208,0.1,True,0.6900000000000001,0.925531914893617,87,0.08045977011494253,False,False,0.043444,False,0.06,baseline,
+1.0,166,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,166,208,0.1,True,0.63,0.9642857142857143,27,0.0,False,False,0.059169,False,0.125,baseline,
+1.0,167,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,167,208,0.1,True,0.61,0.9624,4812,0.043848711554447216,False,False,0.0561,False,0.13,baseline,
+1.0,168,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,168,208,0.1,True,0.5700000000000001,0.9850931677018634,793,0.03909205548549811,False,False,0.056953,False,0.14,baseline,
+1.0,169,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,169,208,0.1,True,0.5700000000000001,0.96875,31,0.03225806451612903,False,False,0.068469,False,0.18,baseline,
+1.0,170,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,170,208,0.1,True,0.5900000000000001,0.963265306122449,236,0.038135593220338986,False,False,0.059031,False,0.125,baseline,
+1.0,171,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,171,208,0.1,True,0.55,0.9821673525377229,716,0.04329608938547486,False,False,0.06615,False,0.185,baseline,
+1.0,172,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,172,208,0.1,True,0.5900000000000001,0.9512195121951219,39,0.1794871794871795,True,True,0.060477,False,0.16,baseline,
+1.0,173,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,173,208,0.1,True,0.55,0.95,19,0.05263157894736842,False,False,0.068158,False,0.195,baseline,
+1.0,174,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,174,208,0.1,True,0.5700000000000001,0.990909090909091,218,0.05963302752293578,False,False,0.063558,False,0.16,baseline,
+1.0,175,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,175,208,0.1,True,0.5900000000000001,0.9766949152542372,922,0.02386117136659436,False,False,0.063521,False,0.17,baseline,
+1.0,176,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,176,208,0.1,True,0.67,0.9683908045977011,337,0.03857566765578635,False,False,0.04933,False,0.1,baseline,
+1.0,177,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,177,208,0.1,True,0.5900000000000001,0.9545454545454546,105,0.10476190476190476,False,True,0.062827,False,0.17,baseline,
+1.0,178,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,178,208,0.1,True,0.55,0.9935064935064936,153,0.032679738562091505,False,False,0.06649,False,0.155,baseline,
+1.0,179,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,179,208,0.1,True,0.67,0.9689119170984456,187,0.0374331550802139,False,False,0.054774,False,0.145,baseline,
+1.0,180,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,180,208,0.1,True,0.5900000000000001,0.9555555555555556,301,0.0664451827242525,False,False,0.062843,False,0.145,baseline,
+1.0,181,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,181,208,0.1,True,0.6900000000000001,0.9377777777777778,633,0.04107424960505529,False,False,0.050836,False,0.125,baseline,
+1.0,182,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,182,208,0.1,True,0.5700000000000001,0.9773584905660377,777,0.01673101673101673,False,False,0.063792,False,0.17,baseline,
+1.0,183,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,183,208,0.1,True,0.71,0.9166666666666666,33,0.0,False,False,0.047221,False,0.125,baseline,
+1.0,184,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,184,208,0.1,True,0.77,0.9173478655767484,1010,0.015841584158415842,False,False,0.038254,False,0.055,bbse,
+1.0,185,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,185,208,0.1,True,0.5900000000000001,0.9444444444444444,153,0.05228758169934641,False,False,0.056943,False,0.12,baseline,
+1.0,186,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,186,208,0.1,True,0.61,0.9769938650306749,637,0.04081632653061224,False,False,0.066457,False,0.215,baseline,
+1.0,187,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,187,208,0.1,True,0.63,0.9516129032258065,118,0.0423728813559322,False,False,0.054541,False,0.11,baseline,
+1.0,188,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,188,208,0.1,True,0.5900000000000001,0.990909090909091,109,0.01834862385321101,False,False,0.058328,False,0.13,baseline,
+1.0,189,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,189,208,0.1,True,0.61,0.9571678321678322,1095,0.03561643835616438,False,False,0.058872,False,0.125,baseline,
+1.0,190,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,190,208,0.1,True,0.71,0.9509043927648578,368,0.002717391304347826,False,False,0.052334,False,0.115,baseline,
+1.0,191,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,191,208,0.1,True,0.61,0.9542440318302388,1439,0.11952744961779013,True,True,0.060241,False,0.12,baseline,
+1.0,192,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,192,208,0.1,True,0.55,0.9844961240310077,127,0.05511811023622047,False,False,0.067707,False,0.17,baseline,
+1.0,193,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,193,208,0.1,True,0.63,0.9333333333333333,56,0.07142857142857142,False,False,0.057234,False,0.15,baseline,
+1.0,194,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,194,208,0.1,True,0.63,0.9318181818181818,41,0.024390243902439025,False,False,0.05316,False,0.075,baseline,
+1.0,195,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,195,208,0.1,True,0.61,0.9782608695652174,90,0.03333333333333333,False,False,0.055342,False,0.115,baseline,
+1.0,196,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,196,208,0.1,True,0.65,0.95,247,0.024291497975708502,False,False,0.053852,False,0.12,baseline,
+1.0,197,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,197,208,0.1,True,0.5700000000000001,0.9840425531914894,370,0.013513513513513514,False,False,0.06625,False,0.165,baseline,
+1.0,198,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+1.0,198,208,0.1,True,0.5900000000000001,0.9466,4733,0.13543207268117474,True,True,0.06399,False,0.18,baseline,
+1.0,199,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+1.0,199,208,0.1,True,0.65,0.943502824858757,167,0.03592814371257485,False,False,0.055691,False,0.12,baseline,
+2.0,0,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,0,208,0.1,True,0.77,0.8148148148148148,44,0.0,False,False,0.050205,False,0.155,baseline,
+2.0,1,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,1,208,0.1,True,0.79,0.7610062893081762,242,0.07024793388429752,False,False,0.042922,False,0.1,baseline,
+2.0,2,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,2,208,0.1,True,0.75,0.8257575757575758,109,0.05504587155963303,False,False,0.050195,False,0.175,baseline,
+2.0,3,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,3,208,0.1,True,0.73,0.8666035950804163,916,0.026200873362445413,False,False,0.055728,False,0.11,baseline,
+2.0,4,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,4,208,0.1,True,0.73,0.8758169934640523,134,0.03731343283582089,False,False,0.05793,False,0.19,baseline,
+2.0,5,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,5,208,0.1,True,0.6900000000000001,0.8863636363636364,156,0.04487179487179487,False,False,0.064978,False,0.25,baseline,
+2.0,6,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,6,208,0.1,True,0.67,0.9100817438692098,334,0.02694610778443114,False,False,0.063859,False,0.185,baseline,
+2.0,7,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,7,208,0.1,True,0.77,0.8764752163650669,1114,0.02064631956912029,False,False,0.051261,False,0.185,baseline,
+2.0,8,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,8,208,0.1,True,0.67,0.9142857142857143,160,0.06875,False,False,0.061004,False,0.185,baseline,
+2.0,9,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,9,208,0.1,True,0.75,0.9166666666666666,77,0.0,False,False,0.053118,False,0.19,baseline,
+2.0,10,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,10,208,0.1,True,0.8300000000000001,0.926829268292683,38,0.02631578947368421,False,False,0.037824,False,0.125,baseline,
+2.0,11,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,11,208,0.1,True,0.75,0.6928104575163399,106,0.2358490566037736,True,True,0.052402,False,0.16,baseline,
+2.0,12,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,12,208,0.1,True,0.73,0.8306857807051531,2144,0.06716417910447761,False,False,0.053229,False,0.085,baseline,
+2.0,13,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,13,208,0.1,True,0.81,0.8813018506700702,1381,0.007965242577842143,False,False,0.047028,False,0.185,baseline,
+2.0,14,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,14,208,0.1,True,0.75,0.8930008045052292,1110,0.015315315315315315,False,False,0.05101,False,0.14,baseline,
+2.0,15,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,15,208,0.1,True,0.75,0.9387755102040817,184,0.021739130434782608,False,False,0.055534,False,0.215,baseline,
+2.0,16,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,16,208,0.1,True,0.75,0.7565217391304347,87,0.1839080459770115,True,True,0.050469,False,0.14,baseline,
+2.0,17,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,17,208,0.1,True,0.6900000000000001,0.9057017543859649,413,0.024213075060532687,False,False,0.056616,False,0.16,baseline,
+2.0,18,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,18,208,0.1,True,0.81,0.7885714285714286,138,0.057971014492753624,False,False,0.041388,False,0.13,baseline,
+2.0,19,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,19,208,0.1,True,0.8300000000000001,0.8382352941176471,57,0.0,False,False,0.03623,False,0.135,baseline,
+2.0,20,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,20,208,0.1,True,0.67,0.9030131826741996,1918,0.06360792492179354,False,False,0.065515,False,0.23,baseline,
+2.0,21,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,21,208,0.1,True,0.75,0.8628691983122363,1636,0.023227383863080684,False,False,0.050855,False,0.15,bbse,
+2.0,22,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,22,208,0.1,True,0.6900000000000001,0.8977272727272727,158,0.03164556962025317,False,False,0.058941,False,0.18,baseline,
+2.0,23,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,23,208,0.1,True,0.73,0.8819444444444444,635,0.050393700787401574,False,False,0.054497,False,0.175,baseline,
+2.0,24,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,24,208,0.1,True,0.6900000000000001,0.8091603053435115,636,0.14937106918238993,True,True,0.062997,False,0.215,baseline,
+2.0,25,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,25,208,0.1,True,0.81,0.8184154175588865,1911,0.06698063840920984,False,False,0.049983,False,0.175,baseline,
+2.0,26,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,26,208,0.1,True,0.71,0.8707482993197279,384,0.07291666666666667,False,False,0.054434,False,0.18,baseline,
+2.0,27,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,27,208,0.1,True,0.6900000000000001,0.8479638009049774,937,0.10992529348986126,False,True,0.068671,False,0.265,baseline,
+2.0,28,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,28,208,0.1,True,0.75,0.7423428264373992,2763,0.21208830980817953,True,True,0.058541,False,0.225,baseline,
+2.0,29,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,29,208,0.1,True,0.71,0.836552748885587,563,0.0994671403197158,False,False,0.062066,False,0.21,baseline,
+2.0,30,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,30,208,0.1,True,0.75,0.7793103448275862,113,0.168141592920354,True,True,0.050469,False,0.18,baseline,
+2.0,31,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,31,208,0.1,True,0.71,0.8368495077355836,595,0.12436974789915967,True,True,0.057011,False,0.18,baseline,
+2.0,32,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,32,208,0.1,True,0.77,0.8910891089108911,360,0.002777777777777778,False,False,0.045351,False,0.155,baseline,
+2.0,33,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,33,208,0.1,True,0.71,0.9288256227758007,261,0.034482758620689655,False,False,0.052717,False,0.14,baseline,
+2.0,34,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,34,208,0.1,True,0.75,0.664720027481965,1935,0.26356589147286824,True,True,0.049107,False,0.165,baseline,
+2.0,35,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,35,208,0.1,True,0.71,0.7686567164179104,103,0.14563106796116504,False,True,0.055738,False,0.16,baseline,
+2.0,36,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,36,208,0.1,True,0.81,0.897196261682243,96,0.010416666666666666,False,False,0.039227,False,0.135,baseline,
+2.0,37,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,37,208,0.1,True,0.71,0.9336734693877551,183,0.01092896174863388,False,False,0.046944,False,0.12,baseline,
+2.0,38,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,38,208,0.1,True,0.75,0.6461538461538462,42,0.19047619047619047,True,True,0.055234,False,0.195,baseline,
+2.0,39,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,39,208,0.1,True,0.67,0.8702290076335878,114,0.043859649122807015,False,False,0.066847,False,0.21,baseline,
+2.0,40,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,40,208,0.1,True,0.89,0.867741935483871,269,0.0037174721189591076,False,False,0.039029,False,0.16,baseline,
+2.0,41,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,41,208,0.1,True,0.77,0.8700934579439252,2793,0.021482277121374866,False,False,0.047242,False,0.12,baseline,
+2.0,42,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,42,208,0.1,True,0.81,0.8461538461538461,22,0.045454545454545456,False,False,0.048943,False,0.21,baseline,
+2.0,43,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,43,208,0.1,True,0.77,0.8202080237741456,2760,0.03695652173913044,False,False,0.047256,False,0.09,baseline,
+2.0,44,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,44,208,0.1,True,0.67,0.7896440129449838,244,0.24180327868852458,True,True,0.060998,False,0.16,baseline,
+2.0,45,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,45,208,0.1,True,0.75,0.9052453468697124,535,0.022429906542056073,False,False,0.054487,False,0.17,baseline,
+2.0,46,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,46,208,0.1,True,0.81,0.870020964360587,415,0.01927710843373494,False,False,0.040547,False,0.125,baseline,
+2.0,47,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,47,208,0.1,True,0.73,0.8850574712643678,231,0.030303030303030304,False,False,0.054853,False,0.15,baseline,
+2.0,48,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,48,208,0.1,True,0.73,0.9310344827586207,108,0.046296296296296294,False,False,0.048966,False,0.135,baseline,
+2.0,49,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,49,208,0.1,True,0.73,0.9071698113207547,2404,0.01747088186356073,False,False,0.054214,False,0.155,baseline,
+2.0,50,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,50,208,0.1,True,0.75,0.7242937853107345,641,0.1622464898595944,True,True,0.054135,False,0.225,baseline,
+2.0,51,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,51,208,0.1,True,0.67,0.8855780691299165,743,0.07940780619111709,False,False,0.065003,False,0.17,baseline,
+2.0,52,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,52,208,0.1,True,0.85,0.7995226730310262,335,0.03582089552238806,False,False,0.036391,False,0.11,baseline,
+2.0,53,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,53,208,0.1,True,0.77,0.9036402569593148,844,0.011848341232227487,False,False,0.052202,False,0.19,baseline,
+2.0,54,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,54,208,0.1,True,0.71,0.8908450704225352,1012,0.058300395256917,False,False,0.057019,False,0.19,baseline,
+2.0,55,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,55,208,0.1,True,0.71,0.9450980392156862,241,0.004149377593360996,False,False,0.063258,False,0.23,baseline,
+2.0,56,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,56,208,0.1,True,0.73,0.8288043478260869,305,0.08524590163934426,False,False,0.052059,False,0.175,baseline,
+2.0,57,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,57,208,0.1,True,0.75,0.9235880398671097,278,0.014388489208633094,False,False,0.052971,False,0.195,baseline,
+2.0,58,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,58,208,0.1,True,0.77,0.8739255014326648,305,0.029508196721311476,False,False,0.045367,False,0.12,baseline,
+2.0,59,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,59,208,0.1,True,0.71,0.9313725490196079,95,0.0,False,False,0.069082,False,0.285,baseline,
+2.0,60,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,60,208,0.1,True,0.77,0.8818181818181818,291,0.010309278350515464,False,False,0.049416,False,0.12,baseline,
+2.0,61,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,61,208,0.1,True,0.65,0.9406060606060606,776,0.028350515463917526,False,False,0.062183,False,0.195,baseline,
+2.0,62,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,62,208,0.1,True,0.73,0.9054441260744985,316,0.028481012658227847,False,False,0.052008,False,0.155,baseline,
+2.0,63,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,63,208,0.1,True,0.77,0.8095238095238095,204,0.024509803921568627,False,False,0.042491,False,0.06,baseline,
+2.0,64,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,64,208,0.1,True,0.8300000000000001,0.905982905982906,106,0.02830188679245283,False,False,0.050447,False,0.185,baseline,
+2.0,65,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,65,208,0.1,True,0.75,0.88,462,0.023809523809523808,False,False,0.049783,False,0.155,baseline,
+2.0,66,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,66,208,0.1,True,0.85,0.5361407919547454,853,0.20984759671746775,True,True,0.036228,False,0.165,baseline,
+2.0,67,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,67,208,0.1,True,0.73,0.8636363636363636,114,0.07017543859649122,False,False,0.051417,False,0.11,baseline,
+2.0,68,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,68,208,0.1,True,0.75,0.680672268907563,405,0.23703703703703705,True,True,0.052541,False,0.18,baseline,
+2.0,69,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,69,208,0.1,True,0.79,0.9411764705882353,192,0.015625,False,False,0.05283,False,0.22,baseline,
+2.0,70,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,70,208,0.1,True,0.71,0.9308588064046579,1279,0.029710711493354185,False,False,0.061844,False,0.22,baseline,
+2.0,71,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,71,208,0.1,True,0.73,0.8306451612903226,103,0.05825242718446602,False,False,0.04948,False,0.14,baseline,
+2.0,72,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,72,208,0.1,True,0.75,0.8333333333333334,70,0.08571428571428572,False,False,0.049358,False,0.15,baseline,
+2.0,73,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,73,208,0.1,True,0.65,0.8842105263157894,168,0.125,False,True,0.06353,False,0.165,baseline,
+2.0,74,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,74,208,0.1,True,0.79,0.9179331306990881,1812,0.009381898454746136,False,False,0.051235,False,0.195,baseline,
+2.0,75,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,75,208,0.1,True,0.73,0.8913857677902621,238,0.02100840336134454,False,False,0.053969,False,0.16,baseline,
+2.0,76,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,76,208,0.1,True,0.77,0.6761487964989059,309,0.15210355987055016,True,True,0.046812,False,0.15,baseline,
+2.0,77,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,77,208,0.1,True,0.73,0.8873239436619719,63,0.015873015873015872,False,False,0.052496,False,0.12,baseline,
+2.0,78,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,78,208,0.1,True,0.79,0.8730434782608696,502,0.013944223107569721,False,False,0.043385,False,0.135,baseline,
+2.0,79,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,79,208,0.1,True,0.75,0.8970588235294118,244,0.00819672131147541,False,False,0.048256,False,0.155,baseline,
+2.0,80,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,80,208,0.1,True,0.71,0.9266666666666666,139,0.014388489208633094,False,False,0.058149,False,0.195,baseline,
+2.0,81,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,81,208,0.1,True,0.75,0.9034090909090909,159,0.018867924528301886,False,False,0.049759,False,0.13,baseline,
+2.0,82,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,82,208,0.1,True,0.73,0.8595994775794514,3949,0.04963281843504685,False,False,0.058045,False,0.21,baseline,
+2.0,83,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,83,208,0.1,True,0.73,0.9496402877697842,132,0.022727272727272728,False,False,0.056689,False,0.215,baseline,
+2.0,84,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,84,208,0.1,True,0.79,0.889171974522293,698,0.011461318051575931,False,False,0.036737,False,0.105,baseline,
+2.0,85,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,85,208,0.1,True,0.79,0.8078602620087336,370,0.07837837837837838,False,False,0.048046,False,0.155,baseline,
+2.0,86,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,86,208,0.1,True,0.8300000000000001,0.8842105263157894,84,0.023809523809523808,False,False,0.049212,False,0.22,baseline,
+2.0,87,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,87,208,0.1,True,0.6900000000000001,0.9428571428571428,330,0.04242424242424243,False,False,0.061087,False,0.205,baseline,
+2.0,88,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,88,208,0.1,True,0.65,0.9578947368421052,91,0.054945054945054944,False,False,0.062277,False,0.185,baseline,
+2.0,89,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,89,208,0.1,True,0.75,0.8765112262521589,1015,0.03251231527093596,False,False,0.048955,False,0.165,baseline,
+2.0,90,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,90,208,0.1,True,0.77,0.8715596330275229,95,0.021052631578947368,False,False,0.046779,False,0.17,baseline,
+2.0,91,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,91,208,0.1,True,0.8300000000000001,0.8555240793201133,1208,0.014072847682119206,False,False,0.039146,False,0.145,baseline,
+2.0,92,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,92,208,0.1,True,0.77,0.8827884022208513,1431,0.01607267645003494,False,False,0.051211,False,0.165,bbse,
+2.0,93,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,93,208,0.1,True,0.71,0.8887262079062958,2428,0.022240527182866558,False,False,0.056326,False,0.15,baseline,
+2.0,94,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,94,208,0.1,True,0.79,0.8592178770949721,1538,0.0188556566970091,False,False,0.042221,False,0.135,bbse,
+2.0,95,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,95,208,0.1,True,0.75,0.9189873417721519,726,0.015151515151515152,False,False,0.043021,False,0.12,baseline,
+2.0,96,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,96,208,0.1,True,0.71,0.8944444444444445,161,0.037267080745341616,False,False,0.053883,False,0.13,baseline,
+2.0,97,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,97,208,0.1,True,0.6900000000000001,0.896797153024911,252,0.03571428571428571,False,False,0.058955,False,0.14,baseline,
+2.0,98,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,98,208,0.1,True,0.79,0.7695167286245354,207,0.13526570048309178,True,True,0.042556,False,0.11,baseline,
+2.0,99,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,99,208,0.1,True,0.75,0.7019681349578257,749,0.27636849132176233,True,True,0.052305,False,0.17,baseline,
+2.0,100,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,100,208,0.1,True,0.71,0.9233630952380952,3723,0.028471662637657803,False,False,0.06184,False,0.2,baseline,
+2.0,101,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,101,208,0.1,True,0.73,0.8817733990147784,716,0.02653631284916201,False,False,0.049976,False,0.135,baseline,
+2.0,102,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,102,208,0.1,True,0.73,0.8990683229813664,579,0.03281519861830743,False,False,0.051912,False,0.16,baseline,
+2.0,103,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,103,208,0.1,True,0.73,0.8477272727272728,373,0.04825737265415549,False,False,0.051971,False,0.165,baseline,
+2.0,104,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,104,208,0.1,True,0.71,0.8703703703703703,141,0.03546099290780142,False,False,0.056843,False,0.17,baseline,
+2.0,105,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,105,208,0.1,True,0.67,0.9084967320261438,278,0.050359712230215826,False,False,0.060293,False,0.2,baseline,
+2.0,106,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,106,208,0.1,True,0.81,0.8192307692307692,213,0.023474178403755867,False,False,0.045433,False,0.16,baseline,
+2.0,107,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,107,208,0.1,True,0.79,0.8936095505617978,2545,0.007858546168958742,False,False,0.048875,False,0.15,baseline,
+2.0,108,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,108,208,0.1,True,0.77,0.8,16,0.0,False,False,0.043053,False,0.12,baseline,
+2.0,109,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,109,208,0.1,True,0.73,0.8221841052029731,1438,0.09735744089012517,False,False,0.056115,False,0.205,baseline,
+2.0,110,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,110,208,0.1,True,0.75,0.9166666666666666,88,0.022727272727272728,False,False,0.053017,False,0.185,baseline,
+2.0,111,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,111,208,0.1,True,0.87,0.780114722753346,408,0.029411764705882353,False,False,0.036542,False,0.15,baseline,
+2.0,112,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,112,208,0.1,True,0.71,0.9185185185185185,124,0.024193548387096774,False,False,0.051947,False,0.125,baseline,
+2.0,113,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,113,208,0.1,True,0.71,0.8614457831325302,143,0.06993006993006994,False,False,0.057193,False,0.175,baseline,
+2.0,114,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,114,208,0.1,True,0.75,0.9138576779026217,244,0.01639344262295082,False,False,0.049597,False,0.16,baseline,
+2.0,115,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,115,208,0.1,True,0.75,0.9027777777777778,130,0.03076923076923077,False,False,0.049894,False,0.135,baseline,
+2.0,116,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,116,208,0.1,True,0.79,0.6761904761904762,71,0.07042253521126761,False,False,0.043916,False,0.145,baseline,
+2.0,117,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,117,208,0.1,True,0.6900000000000001,0.9292452830188679,591,0.0338409475465313,False,False,0.05829,False,0.185,baseline,
+2.0,118,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,118,208,0.1,True,0.73,0.8410041841004184,201,0.029850746268656716,False,False,0.057291,False,0.195,baseline,
+2.0,119,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,119,208,0.1,True,0.75,0.890652557319224,1010,0.01881188118811881,False,False,0.050113,False,0.15,baseline,
+2.0,120,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,120,208,0.1,True,0.77,0.9018691588785047,772,0.011658031088082901,False,False,0.055773,False,0.22,bbse,
+2.0,121,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,121,208,0.1,True,0.75,0.6914285714285714,121,0.21487603305785125,True,True,0.048542,False,0.175,baseline,
+2.0,122,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,122,208,0.1,True,0.75,0.887459807073955,276,0.018115942028985508,False,False,0.05177,False,0.18,baseline,
+2.0,123,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,123,208,0.1,True,0.73,0.8905447070914697,1733,0.029428736295441432,False,False,0.051342,False,0.145,bbse,
+2.0,124,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,124,208,0.1,True,0.77,0.8526315789473684,891,0.02244668911335578,False,False,0.046051,False,0.095,baseline,
+2.0,125,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,125,208,0.1,True,0.77,0.9024390243902439,37,0.0,False,False,0.049787,False,0.175,baseline,
+2.0,126,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,126,208,0.1,True,0.79,0.5773195876288659,168,0.2857142857142857,True,True,0.04848,False,0.17,baseline,
+2.0,127,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,127,208,0.1,True,0.75,0.9183673469387755,135,0.022222222222222223,False,False,0.050713,False,0.175,baseline,
+2.0,128,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,128,208,0.1,True,0.81,0.8930041152263375,434,0.0069124423963133645,False,False,0.055166,False,0.22,baseline,
+2.0,129,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,129,208,0.1,True,0.71,0.8633308439133682,1156,0.04238754325259515,False,False,0.051935,False,0.115,baseline,
+2.0,130,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,130,208,0.1,True,0.6900000000000001,0.9325581395348838,802,0.028678304239401497,False,False,0.054745,False,0.135,baseline,
+2.0,131,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,131,208,0.1,True,0.75,0.9008264462809917,109,0.03669724770642202,False,False,0.04811,False,0.11,baseline,
+2.0,132,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,132,208,0.1,True,0.73,0.8817891373801917,828,0.06038647342995169,False,False,0.054025,False,0.2,baseline,
+2.0,133,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,133,208,0.1,True,0.73,0.8274173806609547,676,0.07840236686390532,False,False,0.049937,False,0.13,baseline,
+2.0,134,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,134,208,0.1,True,0.73,0.863905325443787,146,0.08904109589041095,False,False,0.045718,False,0.105,baseline,
+2.0,135,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,135,208,0.1,True,0.79,0.828125,106,0.08490566037735849,False,False,0.054065,False,0.24,baseline,
+2.0,136,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,136,208,0.1,True,0.77,0.8997555012224939,1104,0.014492753623188406,False,False,0.050364,False,0.2,baseline,
+2.0,137,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,137,208,0.1,True,0.65,0.9366906474820144,651,0.018433179723502304,False,False,0.066861,False,0.195,baseline,
+2.0,138,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,138,208,0.1,True,0.71,0.8970588235294118,305,0.006557377049180328,False,False,0.05328,False,0.135,baseline,
+2.0,139,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,139,208,0.1,True,0.75,0.9047005795235029,1405,0.021352313167259787,False,False,0.050847,False,0.175,baseline,
+2.0,140,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,140,208,0.1,True,0.8300000000000001,0.871413390010627,820,0.0024390243902439024,False,False,0.048205,False,0.18,baseline,
+2.0,141,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,141,208,0.1,True,0.73,0.8432835820895522,113,0.05309734513274336,False,False,0.055535,False,0.22,baseline,
+2.0,142,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,142,208,0.1,True,0.77,0.8980392156862745,458,0.034934497816593885,False,False,0.048952,False,0.14,baseline,
+2.0,143,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,143,208,0.1,True,0.75,0.8892128279883382,610,0.014754098360655738,False,False,0.050508,False,0.17,baseline,
+2.0,144,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,144,208,0.1,True,0.67,0.9346590909090909,329,0.03951367781155015,False,False,0.066271,False,0.21,baseline,
+2.0,145,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,145,208,0.1,True,0.6900000000000001,0.9059955588452998,1224,0.05718954248366013,False,False,0.070751,False,0.3,baseline,
+2.0,146,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,146,208,0.1,True,0.73,0.861764705882353,293,0.034129692832764506,False,False,0.053666,False,0.1,baseline,
+2.0,147,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,147,208,0.1,True,0.8300000000000001,0.7821576763485477,377,0.042440318302387266,False,False,0.037393,False,0.135,baseline,
+2.0,148,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,148,208,0.1,True,0.81,0.8478906714200832,2854,0.01296426068675543,False,False,0.036206,False,0.095,bbse,
+2.0,149,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,149,208,0.1,True,0.75,0.9219653179190751,319,0.04075235109717868,False,False,0.046276,False,0.13,baseline,
+2.0,150,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,150,208,0.1,True,0.77,0.8373205741626795,175,0.03428571428571429,False,False,0.043691,False,0.085,baseline,
+2.0,151,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,151,208,0.1,True,0.71,0.8871745419479267,920,0.03369565217391304,False,False,0.054331,False,0.155,baseline,
+2.0,152,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,152,208,0.1,True,0.81,0.8353413654618473,208,0.019230769230769232,False,False,0.043689,False,0.145,baseline,
+2.0,153,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,153,208,0.1,True,0.8300000000000001,0.7535171637591446,1339,0.07169529499626587,False,False,0.039159,False,0.14,baseline,
+2.0,154,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,154,208,0.1,True,0.67,0.9368421052631579,178,0.011235955056179775,False,False,0.075083,False,0.245,baseline,
+2.0,155,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,155,208,0.1,True,0.73,0.9165733482642777,1637,0.020769700671960906,False,False,0.053509,False,0.17,baseline,
+2.0,156,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,156,208,0.1,True,0.73,0.9016314779270633,1879,0.022352315061202766,False,False,0.052021,False,0.13,baseline,
+2.0,157,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,157,208,0.1,True,0.73,0.864696734059098,556,0.08453237410071943,False,False,0.048182,False,0.125,baseline,
+2.0,158,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,158,208,0.1,True,0.6900000000000001,0.90625,1218,0.07471264367816093,False,False,0.067889,False,0.22,baseline,
+2.0,159,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,159,208,0.1,True,0.65,0.9243697478991597,110,0.01818181818181818,False,False,0.075935,False,0.28,baseline,
+2.0,160,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,160,208,0.1,True,0.6900000000000001,0.8208955223880597,165,0.12121212121212122,False,True,0.053137,False,0.105,baseline,
+2.0,161,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,161,208,0.1,True,0.73,0.709280303030303,749,0.20694259012016022,True,True,0.057511,False,0.17,baseline,
+2.0,162,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,162,208,0.1,True,0.8300000000000001,0.8662420382165605,136,0.0,False,False,0.035356,False,0.075,baseline,
+2.0,163,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,163,208,0.1,True,0.8300000000000001,0.8101851851851852,175,0.02857142857142857,False,False,0.032191,False,0.06,baseline,
+2.0,164,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,164,208,0.1,True,0.6900000000000001,0.9375,255,0.023529411764705882,False,False,0.064567,False,0.22,baseline,
+2.0,165,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,165,208,0.1,True,0.81,0.8042117245304496,1413,0.01910828025477707,False,False,0.037253,False,0.045,bbse,
+2.0,166,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,166,208,0.1,True,0.71,0.9230769230769231,72,0.027777777777777776,False,False,0.052319,False,0.115,baseline,
+2.0,167,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,167,208,0.1,True,0.8300000000000001,0.8708487084870848,236,0.012711864406779662,False,False,0.04104,False,0.14,baseline,
+2.0,168,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,168,208,0.1,True,0.77,0.8553054662379421,266,0.018796992481203006,False,False,0.046945,False,0.12,baseline,
+2.0,169,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,169,208,0.1,True,0.71,0.8913187541418157,1345,0.03494423791821561,False,False,0.056699,False,0.18,baseline,
+2.0,170,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,170,208,0.1,True,0.77,0.838074398249453,383,0.05221932114882506,False,False,0.04639,False,0.155,baseline,
+2.0,171,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,171,208,0.1,True,0.85,0.7355533790401567,751,0.06125166444740346,False,False,0.031782,False,0.08,baseline,
+2.0,172,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,172,208,0.1,True,0.85,0.8693931398416886,659,0.012139605462822459,False,False,0.030117,False,0.1,baseline,
+2.0,173,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,173,208,0.1,True,0.71,0.7515923566878981,118,0.09322033898305085,False,False,0.056593,False,0.18,baseline,
+2.0,174,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,174,208,0.1,True,0.6900000000000001,0.9386733416770964,750,0.016,False,False,0.065632,False,0.26,baseline,
+2.0,175,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,175,208,0.1,True,0.85,0.48128342245989303,90,0.3333333333333333,True,True,0.044063,False,0.16,baseline,
+2.0,176,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,176,208,0.1,True,0.73,0.8629441624365483,170,0.041176470588235294,False,False,0.053393,False,0.205,baseline,
+2.0,177,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,177,208,0.1,True,0.75,0.9111111111111111,41,0.04878048780487805,False,False,0.050954,False,0.14,baseline,
+2.0,178,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,178,208,0.1,True,0.79,0.89,89,0.011235955056179775,False,False,0.049394,False,0.17,baseline,
+2.0,179,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,179,208,0.1,True,0.77,0.9170731707317074,2632,0.0243161094224924,False,False,0.056533,False,0.215,baseline,
+2.0,180,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,180,208,0.1,True,0.77,0.8636363636363636,57,0.0,False,False,0.042847,False,0.12,baseline,
+2.0,181,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,181,208,0.1,True,0.79,0.7906976744186046,34,0.08823529411764706,False,False,0.048532,False,0.18,baseline,
+2.0,182,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,182,208,0.1,True,0.75,0.8305882352941176,353,0.06515580736543909,False,False,0.047564,False,0.1,baseline,
+2.0,183,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,183,208,0.1,True,0.6900000000000001,0.9256965944272446,299,0.03678929765886288,False,False,0.063796,False,0.24,baseline,
+2.0,184,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,184,208,0.1,True,0.73,0.9156626506024096,152,0.013157894736842105,False,False,0.054667,False,0.18,baseline,
+2.0,185,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,185,208,0.1,True,0.75,0.8788903924221921,1299,0.026943802925327175,False,False,0.050466,False,0.14,bbse,
+2.0,186,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,186,208,0.1,True,0.79,0.8149779735682819,740,0.043243243243243246,False,False,0.042236,False,0.105,baseline,
+2.0,187,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,187,208,0.1,True,0.73,0.8636363636363636,76,0.039473684210526314,False,False,0.054413,False,0.18,baseline,
+2.0,188,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,188,208,0.1,True,0.75,0.8783783783783784,65,0.03076923076923077,False,False,0.046503,False,0.14,baseline,
+2.0,189,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,189,208,0.1,True,0.75,0.8214285714285714,414,0.08695652173913043,False,False,0.051475,False,0.16,baseline,
+2.0,190,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,190,208,0.1,True,0.71,0.8925233644859814,573,0.04712041884816754,False,False,0.055567,False,0.15,baseline,
+2.0,191,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,191,208,0.1,True,0.73,0.9025974025974026,556,0.017985611510791366,False,False,0.051609,False,0.125,baseline,
+2.0,192,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,192,208,0.1,True,0.71,0.9,108,0.027777777777777776,False,False,0.05182,False,0.165,baseline,
+2.0,193,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,193,208,0.1,True,0.73,0.8803149606299212,559,0.025044722719141325,False,False,0.049606,False,0.1,baseline,
+2.0,194,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,194,208,0.1,True,0.6900000000000001,0.9412568306010929,689,0.010159651669085631,False,False,0.072137,False,0.285,baseline,
+2.0,195,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,195,208,0.1,True,0.77,0.8502202643171806,193,0.07253886010362694,False,False,0.043678,False,0.135,baseline,
+2.0,196,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,196,208,0.1,True,0.71,0.8992346938775511,705,0.029787234042553193,False,False,0.052908,False,0.165,baseline,
+2.0,197,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,197,208,0.1,True,0.6900000000000001,0.918918918918919,884,0.03733031674208145,False,False,0.063486,False,0.235,baseline,
+2.0,198,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""bbse-misspecified""}"
+2.0,198,208,0.1,True,0.73,0.912568306010929,167,0.041916167664670656,False,False,0.055605,False,0.17,baseline,
+2.0,199,208,0.05,False,,0.0,0,nan,False,False,,,,,"{""baseline"": ""failsafe"", ""bbse"": ""failsafe""}"
+2.0,199,208,0.1,True,0.75,0.8992562542258282,1330,0.041353383458646614,False,False,0.057018,False,0.205,baseline,

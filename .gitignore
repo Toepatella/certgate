@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# scratch / backups
+*.bak
+_full.bak
+
+# NOTE: experiments/out/ is intentionally tracked — the CSVs/PNGs/summary.md
+# are paper deliverables (reproducible via `python -m experiments.run_synthetic`).
+# The EICU_* artifacts that land there are aggregate-only BY CONSTRUCTION
+# (run_eicu.assert_aggregate_only gates every write), so they stay tracked too.
+
+# ---------------------------------------------------------------------------
+# eICU-CRD v2.0 — the extract is NOT redistributable and MUST NOT be committed
+# ---------------------------------------------------------------------------
+# PhysioNet Credentialed Health Data License 1.5.0 + DUA 1.5.0: the data require
+# CITI training, a signed DUA and credentialed access, and they restrict DERIVED
+# RECORD-LEVEL artifacts as well as the raw tables. Deny by default here for the
+# same reason the feature allowlist does: a gitignore miss is unrecoverable once
+# it is pushed.
+
+# any gzipped CSV anywhere — an eICU table or a generated mock corpus is the
+# only thing that shape can be in this repo; no deliverable is a .csv.gz
+*.csv.gz
+*.csv.bz2
+*.csv.zip
+
+# the released zip and the files that ship beside it
+eicu*.zip
+eicu-collaborative-research-database*/
+SHA256SUMS.txt
+
+# conventional extract / mock-corpus directories (eicu-mock, eicu_data,
+# eicu-full, ...). Directory-only patterns, so experiments/eicu_etl.py and
+# experiments/eicu_mock.py stay tracked.
+eicu-*/
+eicu_*/
+*/eicu-*/
+*/eicu_*/
+/data/
+/extract/
+
+# record-level derivatives, wherever they land
+*.eicu.npy
+*.eicu.npz
+EICU_records*
+EICU_*_records.*
