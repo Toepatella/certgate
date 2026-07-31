@@ -1,0 +1,219 @@
+{
+  "target_label": "eicu-target-pool",
+  "reason": null,
+  "certified": [
+    {
+      "alpha": 0.05,
+      "tier": "certified",
+      "status": "declined",
+      "reasons": {
+        "baseline": "failsafe",
+        "bbse": "failsafe"
+      }
+    },
+    {
+      "alpha": 0.1,
+      "tier": "certified",
+      "status": "certified",
+      "tau": 0.85,
+      "tau_idx": 15,
+      "deploy_mode": "baseline",
+      "modes": [
+        "baseline"
+      ],
+      "mode_outcomes": {
+        "baseline": "covering",
+        "bbse": "failsafe"
+      },
+      "coverage": 0.8375796178343949,
+      "statement": "Under the tagged assumption (exchangeability), with probability >= 0.95 over the draw of calibration sites, the M=100 influence-weighted answered-set risk, averaged over the population of sites from which the calibration sites were drawn, is <= 0.1. This bounds a site-population average, NOT any individual site's answered error rate: under between-site heterogeneity individual sites can exceed alpha while the average stays within budget, at a rate this certificate does not measure or bound. It is NOT a bound on this batch's realized error count, which exceeds alpha at binomial-dispersion rates even under a valid certificate. In the exchangeable mode the certified thresholds are a function of the calibration draw alone -- one 1-0.05 event shared by every target pool the certificate is applied to. The operative rung is the strictest certified alpha, a data-driven selection over the {0.05, 0.1} ladder; the selected claim holds jointly at probability >= 0.90. Concept shift and combined shift are OUT OF SCOPE and undetectable from unlabeled data -- the certificate is void there."
+    }
+  ],
+  "operative": {
+    "alpha": 0.1,
+    "tau": 0.85,
+    "tau_idx": 15,
+    "deploy_mode": "baseline",
+    "modes": [
+      "baseline"
+    ]
+  },
+  "estimated": {
+    "tier": "estimated",
+    "point": 0.04091936004426207,
+    "ci95": [
+      0.03659437101900392,
+      0.04545684464507819
+    ],
+    "n_boot": 500,
+    "n_attempts": 500,
+    "weighting": "baseline"
+  },
+  "diagnostic": {
+    "tier": "diagnostic",
+    "n_target": 12246,
+    "coverage": 0.8375796178343949,
+    "n_cal": 67,
+    "n_cal_carrying": 67,
+    "feasibility": {
+      "0.05": {
+        "margin": 0.017455139504656096,
+        "floor": 0.04247680089367599,
+        "ratio": 0.41093347750806825
+      },
+      "0.1": {
+        "margin": 0.04751546068019548,
+        "floor": 0.04024117979400883,
+        "ratio": 1.1807670879289094
+      }
+    },
+    "capped_influence_share": 0.8818062903887077,
+    "rm_vs_unweighted": {
+      "r_m": 0.0391134537522793,
+      "unweighted_risk": 0.04091936004426207,
+      "gap": -0.0018059062919827673
+    },
+    "composition": {
+      "predicted_class": {
+        "tag": "estimated",
+        "positive_fraction": 0.007799551525787267,
+        "n_positive": 80,
+        "n_answered": 10257
+      },
+      "bbse_true_class": {
+        "tag": "estimated (label-shift assumption)",
+        "positive_fraction": 0.05983767788731159,
+        "expected_n_positive": 613.755062090155,
+        "rho": 1.4031528108482363,
+        "n_answered": 10257
+      },
+      "oracle_true_class": {
+        "tag": "diagnostic (oracle)",
+        "positive_fraction": 0.058594130837476846,
+        "n_positive": 601,
+        "n_answered": 10257
+      }
+    },
+    "abstention_profile": {
+      "n_answered": 10257,
+      "n_declined": 1989,
+      "gap_ranking": [
+        {
+          "feature": "aps_motor",
+          "gap": -0.161857
+        },
+        {
+          "feature": "aps_fio2",
+          "gap": -0.151335
+        },
+        {
+          "feature": "aps_ph",
+          "gap": -0.133525
+        },
+        {
+          "feature": "aps_intubated",
+          "gap": -0.112917
+        },
+        {
+          "feature": "apv_oobintubday1",
+          "gap": -0.101814
+        },
+        {
+          "feature": "aps_eyes",
+          "gap": -0.090479
+        },
+        {
+          "feature": "aps_temperature",
+          "gap": -0.070218
+        },
+        {
+          "feature": "aps_pco2",
+          "gap": -0.065982
+        },
+        {
+          "feature": "aps_bun",
+          "gap": -0.062228
+        },
+        {
+          "feature": "aps_pao2",
+          "gap": -0.060894
+        }
+      ]
+    },
+    "bbse": {
+      "n_target": 12246,
+      "n_target_sites": 24,
+      "min_target_sites": null,
+      "q_target": 0.03968642822146007,
+      "q_ci": [
+        0.024357800271588747,
+        0.0601376090349376
+      ],
+      "c0": 0.016103805827492323,
+      "c1": 0.23868312757201646,
+      "pi_s": 0.07788045510389402,
+      "c0_ci": [
+        0.006148308107252866,
+        0.024027146084472026
+      ],
+      "c1_ci": [
+        0.1595588570807105,
+        0.29681683148177773
+      ],
+      "pi_s_ci": [
+        0.06001063999106993,
+        0.09595505737218966
+      ],
+      "gap_lo": 0.13553171099623845,
+      "n_boot": 2000,
+      "n_attempts": 2000,
+      "rho_lo": 0.011433915284047658,
+      "rho_hi": 8.505956803704647,
+      "rho_point": 1.4031528108482363
+    },
+    "target_site_id_supplied": true
+  },
+  "decline_partition": {
+    "answered": 10257,
+    "below_tau": 1989,
+    "failsafe": 0,
+    "pool-too-small": 0,
+    "insufficient-clusters": 0
+  },
+  "n_answered": 10257,
+  "provenance": {
+    "python": "3.13.3",
+    "packages": {
+      "numpy": "2.5.0",
+      "scipy": "1.18.0",
+      "scikit-learn": "1.9.0"
+    },
+    "seed": 20260721,
+    "input_hashes": {
+      "train_x": "a3d2537e0d7599922e5e72a40b4a735dc49d38f7b6f09787c8bb66d52581e06a",
+      "train_y": "2c00341259da76951a2caa89fe5769ea4cb49cc21b0b041afdf7dbf3a11d260c",
+      "train_site_id": "a90243aafea3b2c8f68411f6b078373ec658af097b2927c35e9da312d9849815",
+      "aux_x": "a8577cf6a3685c60032fc6778ea6d9a7149cb6cdb0b25dcb92431c964527fde0",
+      "aux_y": "a5a06f16b3433032031962c28df1c956ddf2f4ed6927e2854713c9211d67b594",
+      "aux_site_id": "2ab03c8216ed77819219bd5b45b153095ecc1cdc32920b4ebfa49fd51ed69554",
+      "cal_x": "4b469832c1dc3f7c5a451b09481762a0b12643e3ab1d8b67cc27edbdb2a6da4c",
+      "cal_y": "eabebbc409cf67d7cc1a54f108f9f36ba628899bae51eb69f4167452d94f3ee4",
+      "cal_site_id": "f8fb4f748898678e7b92857834bdc90cc959bc6cc78c792606c4faf5fb3591ce",
+      "target_x": "18b98e8f2dae3c59eef151bbe3c967e74fe555fe087d99b2ece3aba796dd5939",
+      "target_site_id": "1075d9e28b1f1f028abfdc25cb09b21f068e996a6acc404bb94073f57cce6dcd",
+      "target_site_labels": "dfec0e1730365ccb56d72b18ce2e995c4dedf2e87f8609019e96c792451d10c8"
+    },
+    "meta": {
+      "target_label": "eicu-target-pool",
+      "modes": [
+        "baseline",
+        "bbse"
+      ],
+      "alphas": [
+        0.05,
+        0.1
+      ]
+    },
+    "timestamp_utc": "2026-07-31T07:28:16.416235+00:00"
+  }
+}

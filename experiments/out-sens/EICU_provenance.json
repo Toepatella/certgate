@@ -1,0 +1,21 @@
+{
+  "python": "3.13.3",
+  "packages": {
+    "numpy": "2.5.0",
+    "scipy": "1.18.0",
+    "scikit-learn": "1.9.0"
+  },
+  "seed": 20260721,
+  "input_hashes": {},
+  "meta": {
+    "mode": "FULL",
+    "arm": "apache-complete",
+    "replicates": 20,
+    "quick": false,
+    "preflight": false,
+    "data_sha": "3744bf912e9196b44123a8d13c52faeb1a55e45a705250511c536ce7739ac26d",
+    "protocol": "EICU-PROTOCOL.md",
+    "n_features": 161
+  },
+  "timestamp_utc": "2026-07-31T07:37:39.738945+00:00"
+}

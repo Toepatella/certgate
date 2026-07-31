@@ -1,0 +1,961 @@
+replicate,arm,site,alpha,n_target,reason,certified,tau,coverage,n_answered,answered_err_rate,hard,numbedscategory,teachingstatus,region,aps_coverage,apv_coverage
+0,apache-complete,hosp-60,0.05,233,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+0,apache-complete,hosp-60,0.1,233,bbse:bbse-misspecified,True,0.85,0.9099,212,0.033,False,<100,f,Midwest,1.0,1.0
+0,apache-complete,hosp-90,0.05,11,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+0,apache-complete,hosp-90,0.1,11,bbse:bbse-misspecified,True,0.85,0.8182,9,0.1111,False,<100,f,Midwest,1.0,1.0
+0,apache-complete,hosp-112,0.05,302,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,South,1.0,1.0
+0,apache-complete,hosp-112,0.1,302,bbse:failsafe,True,0.85,0.8245,249,0.0361,False,250 - 499,f,South,1.0,1.0
+0,apache-complete,hosp-115,0.05,26,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,South,1.0,1.0
+0,apache-complete,hosp-115,0.1,26,bbse:bbse-misspecified,True,0.85,0.8462,22,0.0909,False,<100,f,South,1.0,1.0
+0,apache-complete,hosp-122,0.05,2534,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,f,South,1.0,1.0
+0,apache-complete,hosp-122,0.1,2534,bbse:failsafe,True,0.85,0.8808,2232,0.0551,False,>= 500,f,South,1.0,1.0
+0,apache-complete,hosp-135,0.05,8,pool-too-small,False,,,0,,False,<100,f,South,1.0,1.0
+0,apache-complete,hosp-135,0.1,8,pool-too-small,False,,,0,,False,<100,f,South,1.0,1.0
+0,apache-complete,hosp-142,0.05,1251,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,f,South,1.0,1.0
+0,apache-complete,hosp-142,0.1,1251,bbse:failsafe,True,0.85,0.8257,1033,0.0736,False,>= 500,f,South,1.0,1.0
+0,apache-complete,hosp-206,0.05,767,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,Northeast,1.0,1.0
+0,apache-complete,hosp-206,0.1,767,bbse:failsafe,True,0.85,0.7966,611,0.0638,False,250 - 499,f,Northeast,1.0,1.0
+0,apache-complete,hosp-209,0.05,99,baseline:failsafe|bbse:failsafe,False,,,0,,False,,f,,1.0,1.0
+0,apache-complete,hosp-209,0.1,99,bbse:failsafe,True,0.85,0.8384,83,0.0241,False,,f,,1.0,1.0
+0,apache-complete,hosp-217,0.05,954,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,South,1.0,1.0
+0,apache-complete,hosp-217,0.1,954,bbse:failsafe,True,0.85,0.7369,703,0.0356,False,250 - 499,f,South,1.0,1.0
+0,apache-complete,hosp-226,0.05,751,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,West,1.0,1.0
+0,apache-complete,hosp-226,0.1,751,bbse:failsafe,True,0.85,0.8349,627,0.0702,False,250 - 499,f,West,1.0,1.0
+0,apache-complete,hosp-249,0.05,335,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+0,apache-complete,hosp-249,0.1,335,bbse:bbse-misspecified,True,0.85,0.8985,301,0.0399,False,<100,f,Midwest,1.0,1.0
+0,apache-complete,hosp-253,0.05,408,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+0,apache-complete,hosp-253,0.1,408,bbse:failsafe,True,0.85,0.8039,328,0.0518,False,100 - 249,f,Midwest,1.0,1.0
+0,apache-complete,hosp-301,0.05,897,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,South,1.0,1.0
+0,apache-complete,hosp-301,0.1,897,bbse:failsafe,True,0.85,0.8896,798,0.0263,False,100 - 249,f,South,1.0,1.0
+0,apache-complete,hosp-318,0.05,969,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,South,1.0,1.0
+0,apache-complete,hosp-318,0.1,969,bbse:failsafe,True,0.85,0.872,845,0.0604,False,250 - 499,f,South,1.0,1.0
+0,apache-complete,hosp-356,0.05,38,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+0,apache-complete,hosp-356,0.1,38,bbse:bbse-misspecified,True,0.85,0.9211,35,0.1143,False,<100,f,Midwest,1.0,1.0
+0,apache-complete,hosp-387,0.05,476,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,f,West,1.0,1.0
+0,apache-complete,hosp-387,0.1,476,bbse:failsafe,True,0.85,0.8971,427,0.0351,False,>= 500,f,West,1.0,1.0
+0,apache-complete,hosp-392,0.05,555,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,West,1.0,1.0
+0,apache-complete,hosp-392,0.1,555,bbse:failsafe,True,0.85,0.8937,496,0.0867,False,250 - 499,f,West,1.0,1.0
+0,apache-complete,hosp-393,0.05,117,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,West,1.0,1.0
+0,apache-complete,hosp-393,0.1,117,bbse:bbse-misspecified,True,0.85,0.9915,116,0.0086,False,<100,f,West,1.0,1.0
+0,apache-complete,hosp-405,0.05,280,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,West,1.0,1.0
+0,apache-complete,hosp-405,0.1,280,bbse:failsafe,True,0.85,0.8929,250,0.02,False,100 - 249,f,West,1.0,1.0
+0,apache-complete,hosp-433,0.05,97,baseline:failsafe|bbse:failsafe,False,,,0,,False,,f,South,1.0,1.0
+0,apache-complete,hosp-433,0.1,97,bbse:failsafe,True,0.85,0.6186,60,0.0667,False,,f,South,1.0,1.0
+0,apache-complete,hosp-438,0.05,148,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,,f,South,1.0,1.0
+0,apache-complete,hosp-438,0.1,148,bbse:bbse-misspecified,True,0.85,0.8581,127,0.0236,False,,f,South,1.0,1.0
+0,apache-complete,hosp-445,0.05,281,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+0,apache-complete,hosp-445,0.1,281,bbse:bbse-misspecified,True,0.85,0.8399,236,0.0424,False,100 - 249,f,Midwest,1.0,1.0
+0,apache-complete,hosp-452,0.05,709,baseline:failsafe|bbse:failsafe,False,,,0,,False,,f,Midwest,1.0,1.0
+0,apache-complete,hosp-452,0.1,709,bbse:failsafe,True,0.85,0.6347,450,0.06,False,,f,Midwest,1.0,1.0
+1,apache-complete,hosp-59,0.05,409,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+1,apache-complete,hosp-59,0.1,409,bbse:bbse-misspecified,True,0.87,0.9071,371,0.0108,False,<100,f,Midwest,1.0,1.0
+1,apache-complete,hosp-63,0.05,891,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+1,apache-complete,hosp-63,0.1,891,bbse:failsafe,True,0.87,0.8754,780,0.0231,False,100 - 249,f,Midwest,1.0,1.0
+1,apache-complete,hosp-86,0.05,10,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,,f,Midwest,1.0,1.0
+1,apache-complete,hosp-86,0.1,10,bbse:bbse-misspecified,True,0.87,0.6,6,0.0,False,,f,Midwest,1.0,1.0
+1,apache-complete,hosp-92,0.05,508,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,250 - 499,f,Midwest,1.0,1.0
+1,apache-complete,hosp-92,0.1,508,bbse:bbse-misspecified,True,0.87,0.8917,453,0.0287,False,250 - 499,f,Midwest,1.0,1.0
+1,apache-complete,hosp-120,0.05,91,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,South,1.0,1.0
+1,apache-complete,hosp-120,0.1,91,bbse:bbse-misspecified,True,0.87,0.9231,84,0.0595,False,100 - 249,f,South,1.0,1.0
+1,apache-complete,hosp-123,0.05,110,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,South,1.0,1.0
+1,apache-complete,hosp-123,0.1,110,bbse:bbse-misspecified,True,0.87,0.8091,89,0.0562,False,100 - 249,f,South,1.0,1.0
+1,apache-complete,hosp-148,0.05,1237,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,West,1.0,1.0
+1,apache-complete,hosp-148,0.1,1237,bbse:failsafe,True,0.87,0.7316,905,0.0221,False,250 - 499,f,West,1.0,1.0
+1,apache-complete,hosp-181,0.05,793,baseline:failsafe|bbse:failsafe,False,,,0,,False,,f,South,1.0,1.0
+1,apache-complete,hosp-181,0.1,793,bbse:failsafe,True,0.87,0.768,609,0.0394,False,,f,South,1.0,1.0
+1,apache-complete,hosp-182,0.05,263,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,South,1.0,1.0
+1,apache-complete,hosp-182,0.1,263,bbse:bbse-misspecified,True,0.87,0.8099,213,0.0235,False,100 - 249,f,South,1.0,1.0
+1,apache-complete,hosp-210,0.05,476,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,South,1.0,1.0
+1,apache-complete,hosp-210,0.1,476,bbse:failsafe,True,0.87,0.8214,391,0.0332,False,100 - 249,f,South,1.0,1.0
+1,apache-complete,hosp-227,0.05,1108,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,West,1.0,1.0
+1,apache-complete,hosp-227,0.1,1108,bbse:failsafe,True,0.87,0.87,964,0.0436,False,250 - 499,f,West,1.0,1.0
+1,apache-complete,hosp-244,0.05,1052,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,South,1.0,1.0
+1,apache-complete,hosp-244,0.1,1052,bbse:bbse-misspecified,True,0.87,0.8802,926,0.0356,False,100 - 249,f,South,1.0,1.0
+1,apache-complete,hosp-248,0.05,1496,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+1,apache-complete,hosp-248,0.1,1496,bbse:failsafe,True,0.87,0.8416,1259,0.0334,False,100 - 249,f,Midwest,1.0,1.0
+1,apache-complete,hosp-262,0.05,154,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+1,apache-complete,hosp-262,0.1,154,bbse:bbse-misspecified,True,0.87,0.8636,133,0.0451,False,<100,f,Midwest,1.0,1.0
+1,apache-complete,hosp-265,0.05,6,pool-too-small,False,,,0,,False,,f,Midwest,1.0,1.0
+1,apache-complete,hosp-265,0.1,6,pool-too-small,False,,,0,,False,,f,Midwest,1.0,1.0
+1,apache-complete,hosp-303,0.05,130,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,,f,,1.0,1.0
+1,apache-complete,hosp-303,0.1,130,bbse:bbse-misspecified,True,0.87,0.7462,97,0.0,False,,f,,1.0,1.0
+1,apache-complete,hosp-352,0.05,32,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,,f,,1.0,1.0
+1,apache-complete,hosp-352,0.1,32,bbse:bbse-misspecified,True,0.87,0.7188,23,0.0435,False,,f,,1.0,1.0
+1,apache-complete,hosp-358,0.05,284,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+1,apache-complete,hosp-358,0.1,284,bbse:bbse-misspecified,True,0.87,0.8627,245,0.0408,False,100 - 249,f,Midwest,1.0,1.0
+1,apache-complete,hosp-360,0.05,202,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+1,apache-complete,hosp-360,0.1,202,bbse:bbse-misspecified,True,0.87,0.8366,169,0.0769,False,100 - 249,f,Midwest,1.0,1.0
+1,apache-complete,hosp-388,0.05,825,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,West,1.0,1.0
+1,apache-complete,hosp-388,0.1,825,bbse:failsafe,True,0.87,0.8327,687,0.0539,False,100 - 249,f,West,1.0,1.0
+1,apache-complete,hosp-416,0.05,1608,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,t,Midwest,1.0,1.0
+1,apache-complete,hosp-416,0.1,1608,bbse:failsafe,True,0.87,0.8744,1406,0.0249,False,>= 500,t,Midwest,1.0,1.0
+1,apache-complete,hosp-433,0.05,97,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,,f,South,1.0,1.0
+1,apache-complete,hosp-433,0.1,97,bbse:bbse-misspecified,True,0.87,0.5773,56,0.0357,False,,f,South,1.0,1.0
+1,apache-complete,hosp-438,0.05,148,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,,f,South,1.0,1.0
+1,apache-complete,hosp-438,0.1,148,bbse:bbse-misspecified,True,0.87,0.8311,123,0.0163,False,,f,South,1.0,1.0
+1,apache-complete,hosp-459,0.05,531,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,South,1.0,1.0
+1,apache-complete,hosp-459,0.1,531,bbse:failsafe,True,0.87,0.7646,406,0.032,False,100 - 249,f,South,1.0,1.0
+2,apache-complete,hosp-66,0.05,722,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+2,apache-complete,hosp-66,0.1,722,bbse:bbse-misspecified,True,0.83,0.8989,649,0.0293,False,100 - 249,f,Midwest,1.0,1.0
+2,apache-complete,hosp-73,0.05,5125,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,t,Midwest,1.0,1.0
+2,apache-complete,hosp-73,0.1,5125,bbse:failsafe,True,0.83,0.8868,4545,0.0301,False,>= 500,t,Midwest,1.0,1.0
+2,apache-complete,hosp-108,0.05,312,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,250 - 499,f,Midwest,1.0,1.0
+2,apache-complete,hosp-108,0.1,312,bbse:bbse-misspecified,True,0.83,0.9423,294,0.0476,False,250 - 499,f,Midwest,1.0,1.0
+2,apache-complete,hosp-115,0.05,26,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,South,1.0,1.0
+2,apache-complete,hosp-115,0.1,26,bbse:bbse-misspecified,True,0.83,0.8846,23,0.087,False,<100,f,South,1.0,1.0
+2,apache-complete,hosp-184,0.05,741,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,South,1.0,1.0
+2,apache-complete,hosp-184,0.1,741,bbse:failsafe,True,0.83,0.776,575,0.0487,False,250 - 499,f,South,1.0,1.0
+2,apache-complete,hosp-198,0.05,532,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,t,South,1.0,1.0
+2,apache-complete,hosp-198,0.1,532,bbse:failsafe,True,0.83,0.7951,423,0.0284,False,>= 500,t,South,1.0,1.0
+2,apache-complete,hosp-200,0.05,342,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Northeast,1.0,1.0
+2,apache-complete,hosp-200,0.1,342,bbse:bbse-misspecified,True,0.83,0.845,289,0.0484,False,100 - 249,f,Northeast,1.0,1.0
+2,apache-complete,hosp-201,0.05,87,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,,1.0,1.0
+2,apache-complete,hosp-201,0.1,87,bbse:bbse-misspecified,True,0.83,0.8736,76,0.0132,False,100 - 249,f,,1.0,1.0
+2,apache-complete,hosp-244,0.05,1052,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,South,1.0,1.0
+2,apache-complete,hosp-244,0.1,1052,bbse:bbse-misspecified,True,0.83,0.9106,958,0.0428,False,100 - 249,f,South,1.0,1.0
+2,apache-complete,hosp-249,0.05,335,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+2,apache-complete,hosp-249,0.1,335,bbse:bbse-misspecified,True,0.83,0.9313,312,0.0417,False,<100,f,Midwest,1.0,1.0
+2,apache-complete,hosp-254,0.05,324,baseline:failsafe|bbse:failsafe,False,,,0,,False,,f,Midwest,1.0,1.0
+2,apache-complete,hosp-254,0.1,324,bbse:failsafe,True,0.83,0.8056,261,0.0383,False,,f,Midwest,1.0,1.0
+2,apache-complete,hosp-264,0.05,4334,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,t,Midwest,1.0,1.0
+2,apache-complete,hosp-264,0.1,4334,bbse:failsafe,True,0.83,0.844,3658,0.0418,False,>= 500,t,Midwest,1.0,1.0
+2,apache-complete,hosp-279,0.05,656,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+2,apache-complete,hosp-279,0.1,656,bbse:bbse-misspecified,True,0.83,0.904,593,0.0337,False,100 - 249,f,Midwest,1.0,1.0
+2,apache-complete,hosp-280,0.05,899,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,250 - 499,f,Midwest,1.0,1.0
+2,apache-complete,hosp-280,0.1,899,bbse:bbse-misspecified,True,0.83,0.9088,817,0.0318,False,250 - 499,f,Midwest,1.0,1.0
+2,apache-complete,hosp-303,0.05,130,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,,f,,1.0,1.0
+2,apache-complete,hosp-303,0.1,130,bbse:bbse-misspecified,True,0.83,0.7923,103,0.0097,False,,f,,1.0,1.0
+2,apache-complete,hosp-336,0.05,833,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+2,apache-complete,hosp-336,0.1,833,bbse:failsafe,True,0.83,0.8391,699,0.0429,False,100 - 249,f,Midwest,1.0,1.0
+2,apache-complete,hosp-351,0.05,2,pool-too-small,False,,,0,,False,,f,,1.0,1.0
+2,apache-complete,hosp-351,0.1,2,pool-too-small,False,,,0,,False,,f,,1.0,1.0
+2,apache-complete,hosp-352,0.05,32,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,,f,,1.0,1.0
+2,apache-complete,hosp-352,0.1,32,bbse:bbse-misspecified,True,0.83,0.75,24,0.0417,False,,f,,1.0,1.0
+2,apache-complete,hosp-392,0.05,555,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,250 - 499,f,West,1.0,1.0
+2,apache-complete,hosp-392,0.1,555,bbse:bbse-misspecified,True,0.83,0.8721,484,0.0847,False,250 - 499,f,West,1.0,1.0
+2,apache-complete,hosp-405,0.05,280,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,West,1.0,1.0
+2,apache-complete,hosp-405,0.1,280,bbse:bbse-misspecified,True,0.83,0.9,252,0.0198,False,100 - 249,f,West,1.0,1.0
+2,apache-complete,hosp-408,0.05,170,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,West,1.0,1.0
+2,apache-complete,hosp-408,0.1,170,bbse:bbse-misspecified,True,0.83,0.9824,167,0.0419,False,<100,f,West,1.0,1.0
+2,apache-complete,hosp-413,0.05,1375,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,,f,West,1.0,1.0
+2,apache-complete,hosp-413,0.1,1375,bbse:bbse-misspecified,True,0.83,0.9302,1279,0.0266,False,,f,West,1.0,1.0
+2,apache-complete,hosp-422,0.05,239,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Northeast,1.0,1.0
+2,apache-complete,hosp-422,0.1,239,bbse:bbse-misspecified,True,0.83,0.887,212,0.033,False,100 - 249,f,Northeast,1.0,1.0
+2,apache-complete,hosp-437,0.05,48,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,South,1.0,1.0
+2,apache-complete,hosp-437,0.1,48,bbse:bbse-misspecified,True,0.83,0.7708,37,0.0541,False,<100,f,South,1.0,1.0
+3,apache-complete,hosp-73,0.05,5125,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,t,Midwest,1.0,1.0
+3,apache-complete,hosp-73,0.1,5125,bbse:failsafe,True,0.83,0.8878,4550,0.031,False,>= 500,t,Midwest,1.0,1.0
+3,apache-complete,hosp-94,0.05,7,pool-too-small,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+3,apache-complete,hosp-94,0.1,7,pool-too-small,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+3,apache-complete,hosp-141,0.05,1263,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,South,1.0,1.0
+3,apache-complete,hosp-141,0.1,1263,bbse:failsafe,True,0.83,0.8646,1092,0.0311,False,250 - 499,f,South,1.0,1.0
+3,apache-complete,hosp-143,0.05,640,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,,1.0,1.0
+3,apache-complete,hosp-143,0.1,640,bbse:failsafe,True,0.83,0.8984,575,0.033,False,250 - 499,f,,1.0,1.0
+3,apache-complete,hosp-156,0.05,13,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,West,1.0,1.0
+3,apache-complete,hosp-156,0.1,13,bbse:bbse-misspecified,True,0.83,1.0,13,0.0,False,<100,f,West,1.0,1.0
+3,apache-complete,hosp-184,0.05,741,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,South,1.0,1.0
+3,apache-complete,hosp-184,0.1,741,bbse:failsafe,True,0.83,0.8016,594,0.0539,False,250 - 499,f,South,1.0,1.0
+3,apache-complete,hosp-188,0.05,2913,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,t,South,1.0,1.0
+3,apache-complete,hosp-188,0.1,2913,bbse:failsafe,True,0.83,0.8459,2464,0.0426,False,>= 500,t,South,1.0,1.0
+3,apache-complete,hosp-208,0.05,2549,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,f,South,1.0,1.0
+3,apache-complete,hosp-208,0.1,2549,bbse:failsafe,True,0.83,0.896,2284,0.0683,False,>= 500,f,South,1.0,1.0
+3,apache-complete,hosp-209,0.05,99,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,,f,,1.0,1.0
+3,apache-complete,hosp-209,0.1,99,bbse:bbse-misspecified,True,0.83,0.899,89,0.0337,False,,f,,1.0,1.0
+3,apache-complete,hosp-220,0.05,652,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,250 - 499,t,South,1.0,1.0
+3,apache-complete,hosp-220,0.1,652,bbse:bbse-misspecified,True,0.83,0.8758,571,0.028,False,250 - 499,t,South,1.0,1.0
+3,apache-complete,hosp-243,0.05,2403,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,f,South,1.0,1.0
+3,apache-complete,hosp-243,0.1,2403,bbse:failsafe,True,0.83,0.8256,1984,0.0403,False,>= 500,f,South,1.0,1.0
+3,apache-complete,hosp-249,0.05,335,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+3,apache-complete,hosp-249,0.1,335,bbse:bbse-misspecified,True,0.83,0.8925,299,0.0368,False,<100,f,Midwest,1.0,1.0
+3,apache-complete,hosp-253,0.05,408,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+3,apache-complete,hosp-253,0.1,408,bbse:failsafe,True,0.83,0.8284,338,0.0621,False,100 - 249,f,Midwest,1.0,1.0
+3,apache-complete,hosp-258,0.05,292,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+3,apache-complete,hosp-258,0.1,292,bbse:bbse-misspecified,True,0.83,0.887,259,0.0193,False,<100,f,Midwest,1.0,1.0
+3,apache-complete,hosp-277,0.05,1281,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+3,apache-complete,hosp-277,0.1,1281,bbse:failsafe,True,0.83,0.8532,1093,0.0293,False,100 - 249,f,Midwest,1.0,1.0
+3,apache-complete,hosp-282,0.05,771,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+3,apache-complete,hosp-282,0.1,771,bbse:bbse-misspecified,True,0.83,0.9014,695,0.0245,False,100 - 249,f,Midwest,1.0,1.0
+3,apache-complete,hosp-381,0.05,201,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,West,1.0,1.0
+3,apache-complete,hosp-381,0.1,201,bbse:bbse-misspecified,True,0.83,0.8657,174,0.023,False,<100,f,West,1.0,1.0
+3,apache-complete,hosp-389,0.05,406,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,West,1.0,1.0
+3,apache-complete,hosp-389,0.1,406,bbse:bbse-misspecified,True,0.83,0.9064,368,0.0435,False,<100,f,West,1.0,1.0
+3,apache-complete,hosp-390,0.05,895,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,,1.0,1.0
+3,apache-complete,hosp-390,0.1,895,bbse:failsafe,True,0.83,0.838,750,0.0493,False,250 - 499,f,,1.0,1.0
+3,apache-complete,hosp-404,0.05,368,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,West,1.0,1.0
+3,apache-complete,hosp-404,0.1,368,bbse:bbse-misspecified,True,0.83,0.9049,333,0.033,False,<100,f,West,1.0,1.0
+3,apache-complete,hosp-405,0.05,280,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,West,1.0,1.0
+3,apache-complete,hosp-405,0.1,280,bbse:failsafe,True,0.83,0.8821,247,0.0243,False,100 - 249,f,West,1.0,1.0
+3,apache-complete,hosp-416,0.05,1608,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,>= 500,t,Midwest,1.0,1.0
+3,apache-complete,hosp-416,0.1,1608,bbse:bbse-misspecified,True,0.83,0.916,1473,0.0353,False,>= 500,t,Midwest,1.0,1.0
+3,apache-complete,hosp-420,0.05,3374,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,t,Northeast,1.0,1.0
+3,apache-complete,hosp-420,0.1,3374,bbse:failsafe,True,0.83,0.858,2895,0.066,False,>= 500,t,Northeast,1.0,1.0
+3,apache-complete,hosp-424,0.05,355,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Northeast,1.0,1.0
+3,apache-complete,hosp-424,0.1,355,bbse:bbse-misspecified,True,0.83,0.9324,331,0.0181,False,<100,f,Northeast,1.0,1.0
+4,apache-complete,hosp-66,0.05,722,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+4,apache-complete,hosp-66,0.1,722,bbse:bbse-misspecified,True,0.87,0.8532,616,0.0211,False,100 - 249,f,Midwest,1.0,1.0
+4,apache-complete,hosp-68,0.05,346,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+4,apache-complete,hosp-68,0.1,346,bbse:bbse-misspecified,True,0.87,0.8121,281,0.0,False,<100,f,Midwest,1.0,1.0
+4,apache-complete,hosp-71,0.05,435,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+4,apache-complete,hosp-71,0.1,435,bbse:bbse-misspecified,True,0.87,0.8644,376,0.0133,False,100 - 249,f,Midwest,1.0,1.0
+4,apache-complete,hosp-144,0.05,637,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,South,1.0,1.0
+4,apache-complete,hosp-144,0.1,637,bbse:failsafe,True,0.87,0.8273,527,0.0398,False,100 - 249,f,South,1.0,1.0
+4,apache-complete,hosp-164,0.05,109,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,West,1.0,1.0
+4,apache-complete,hosp-164,0.1,109,bbse:bbse-misspecified,True,0.87,0.9174,100,0.06,False,<100,f,West,1.0,1.0
+4,apache-complete,hosp-180,0.05,351,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,South,1.0,1.0
+4,apache-complete,hosp-180,0.1,351,bbse:bbse-misspecified,True,0.87,0.8034,282,0.0106,False,100 - 249,f,South,1.0,1.0
+4,apache-complete,hosp-203,0.05,104,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,,1.0,1.0
+4,apache-complete,hosp-203,0.1,104,bbse:bbse-misspecified,True,0.87,0.8269,86,0.0698,False,100 - 249,f,,1.0,1.0
+4,apache-complete,hosp-207,0.05,202,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,South,1.0,1.0
+4,apache-complete,hosp-207,0.1,202,bbse:bbse-misspecified,True,0.87,0.8168,165,0.0667,False,<100,f,South,1.0,1.0
+4,apache-complete,hosp-220,0.05,652,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,t,South,1.0,1.0
+4,apache-complete,hosp-220,0.1,652,bbse:failsafe,True,0.87,0.7669,500,0.02,False,250 - 499,t,South,1.0,1.0
+4,apache-complete,hosp-227,0.05,1108,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,West,1.0,1.0
+4,apache-complete,hosp-227,0.1,1108,bbse:failsafe,True,0.87,0.8845,980,0.051,False,250 - 499,f,West,1.0,1.0
+4,apache-complete,hosp-243,0.05,2403,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,f,South,1.0,1.0
+4,apache-complete,hosp-243,0.1,2403,bbse:failsafe,True,0.87,0.7774,1868,0.0327,False,>= 500,f,South,1.0,1.0
+4,apache-complete,hosp-248,0.05,1496,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+4,apache-complete,hosp-248,0.1,1496,bbse:failsafe,True,0.87,0.867,1297,0.0362,False,100 - 249,f,Midwest,1.0,1.0
+4,apache-complete,hosp-251,0.05,278,baseline:failsafe|bbse:failsafe,False,,,0,,False,<100,f,Midwest,1.0,1.0
+4,apache-complete,hosp-251,0.1,278,bbse:failsafe,True,0.87,0.8165,227,0.0088,False,<100,f,Midwest,1.0,1.0
+4,apache-complete,hosp-252,0.05,2715,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,t,Midwest,1.0,1.0
+4,apache-complete,hosp-252,0.1,2715,bbse:failsafe,True,0.87,0.8018,2177,0.0478,False,>= 500,t,Midwest,1.0,1.0
+4,apache-complete,hosp-269,0.05,632,baseline:failsafe|bbse:failsafe,False,,,0,,False,,f,,1.0,1.0
+4,apache-complete,hosp-269,0.1,632,bbse:failsafe,True,0.87,0.9066,573,0.0366,False,,f,,1.0,1.0
+4,apache-complete,hosp-323,0.05,9,pool-too-small,False,,,0,,False,,f,,1.0,1.0
+4,apache-complete,hosp-323,0.1,9,pool-too-small,False,,,0,,False,,f,,1.0,1.0
+4,apache-complete,hosp-345,0.05,1568,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,South,1.0,1.0
+4,apache-complete,hosp-345,0.1,1568,bbse:failsafe,True,0.87,0.8176,1282,0.0273,False,250 - 499,f,South,1.0,1.0
+4,apache-complete,hosp-360,0.05,202,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+4,apache-complete,hosp-360,0.1,202,bbse:bbse-misspecified,True,0.87,0.8366,169,0.0769,False,100 - 249,f,Midwest,1.0,1.0
+4,apache-complete,hosp-385,0.05,1,pool-too-small,False,,,0,,False,,f,,1.0,1.0
+4,apache-complete,hosp-385,0.1,1,pool-too-small,False,,,0,,False,,f,,1.0,1.0
+4,apache-complete,hosp-396,0.05,542,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,West,1.0,1.0
+4,apache-complete,hosp-396,0.1,542,bbse:failsafe,True,0.87,0.7546,409,0.0293,False,100 - 249,f,West,1.0,1.0
+4,apache-complete,hosp-400,0.05,1350,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,West,1.0,1.0
+4,apache-complete,hosp-400,0.1,1350,bbse:failsafe,True,0.87,0.7896,1066,0.0666,False,250 - 499,f,West,1.0,1.0
+4,apache-complete,hosp-402,0.05,375,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,West,1.0,1.0
+4,apache-complete,hosp-402,0.1,375,bbse:bbse-misspecified,True,0.87,0.8053,302,0.0232,False,<100,f,West,1.0,1.0
+4,apache-complete,hosp-413,0.05,1375,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,,f,West,1.0,1.0
+4,apache-complete,hosp-413,0.1,1375,bbse:bbse-misspecified,True,0.87,0.9018,1240,0.0258,False,,f,West,1.0,1.0
+4,apache-complete,hosp-437,0.05,48,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,South,1.0,1.0
+4,apache-complete,hosp-437,0.1,48,bbse:bbse-misspecified,True,0.87,0.7292,35,0.0571,False,<100,f,South,1.0,1.0
+5,apache-complete,hosp-59,0.05,409,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+5,apache-complete,hosp-59,0.1,409,bbse:bbse-misspecified,True,0.81,0.9413,385,0.0156,False,<100,f,Midwest,1.0,1.0
+5,apache-complete,hosp-120,0.05,91,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,South,1.0,1.0
+5,apache-complete,hosp-120,0.1,91,bbse:bbse-misspecified,True,0.81,0.9341,85,0.0471,False,100 - 249,f,South,1.0,1.0
+5,apache-complete,hosp-125,0.05,199,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,South,1.0,1.0
+5,apache-complete,hosp-125,0.1,199,bbse:bbse-misspecified,True,0.81,0.9598,191,0.0262,False,<100,f,South,1.0,1.0
+5,apache-complete,hosp-146,0.05,478,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,West,1.0,1.0
+5,apache-complete,hosp-146,0.1,478,bbse:failsafe,True,0.81,0.8452,404,0.0569,False,250 - 499,f,West,1.0,1.0
+5,apache-complete,hosp-171,0.05,808,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,West,1.0,1.0
+5,apache-complete,hosp-171,0.1,808,bbse:failsafe,True,0.81,0.901,728,0.033,False,100 - 249,f,West,1.0,1.0
+5,apache-complete,hosp-175,0.05,270,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,West,1.0,1.0
+5,apache-complete,hosp-175,0.1,270,bbse:failsafe,True,0.81,0.8889,240,0.0375,False,100 - 249,f,West,1.0,1.0
+5,apache-complete,hosp-197,0.05,1498,baseline:failsafe|bbse:failsafe,False,,,0,,False,,f,South,1.0,1.0
+5,apache-complete,hosp-197,0.1,1498,bbse:failsafe,True,0.81,0.9092,1362,0.0352,False,,f,South,1.0,1.0
+5,apache-complete,hosp-203,0.05,104,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,,1.0,1.0
+5,apache-complete,hosp-203,0.1,104,bbse:bbse-misspecified,True,0.81,0.8846,92,0.0761,False,100 - 249,f,,1.0,1.0
+5,apache-complete,hosp-209,0.05,99,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,,f,,1.0,1.0
+5,apache-complete,hosp-209,0.1,99,bbse:bbse-misspecified,True,0.81,0.8889,88,0.0227,False,,f,,1.0,1.0
+5,apache-complete,hosp-226,0.05,751,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,West,1.0,1.0
+5,apache-complete,hosp-226,0.1,751,bbse:failsafe,True,0.81,0.8642,649,0.0724,False,250 - 499,f,West,1.0,1.0
+5,apache-complete,hosp-251,0.05,278,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+5,apache-complete,hosp-251,0.1,278,bbse:bbse-misspecified,True,0.81,0.9029,251,0.0319,False,<100,f,Midwest,1.0,1.0
+5,apache-complete,hosp-254,0.05,324,baseline:failsafe|bbse:failsafe,False,,,0,,False,,f,Midwest,1.0,1.0
+5,apache-complete,hosp-254,0.1,324,bbse:failsafe,True,0.81,0.8426,273,0.044,False,,f,Midwest,1.0,1.0
+5,apache-complete,hosp-273,0.05,129,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+5,apache-complete,hosp-273,0.1,129,bbse:bbse-misspecified,True,0.81,0.4961,64,0.1875,True,100 - 249,f,Midwest,1.0,1.0
+5,apache-complete,hosp-307,0.05,1552,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,South,1.0,1.0
+5,apache-complete,hosp-307,0.1,1552,bbse:failsafe,True,0.81,0.8473,1315,0.0441,False,250 - 499,f,South,1.0,1.0
+5,apache-complete,hosp-323,0.05,9,pool-too-small,False,,,0,,False,,f,,1.0,1.0
+5,apache-complete,hosp-323,0.1,9,pool-too-small,False,,,0,,False,,f,,1.0,1.0
+5,apache-complete,hosp-351,0.05,2,pool-too-small,False,,,0,,False,,f,,1.0,1.0
+5,apache-complete,hosp-351,0.1,2,pool-too-small,False,,,0,,False,,f,,1.0,1.0
+5,apache-complete,hosp-389,0.05,406,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,West,1.0,1.0
+5,apache-complete,hosp-389,0.1,406,bbse:bbse-misspecified,True,0.81,0.9236,375,0.0427,False,<100,f,West,1.0,1.0
+5,apache-complete,hosp-407,0.05,267,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,West,1.0,1.0
+5,apache-complete,hosp-407,0.1,267,bbse:bbse-misspecified,True,0.81,0.9326,249,0.0402,False,100 - 249,f,West,1.0,1.0
+5,apache-complete,hosp-420,0.05,3374,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,t,Northeast,1.0,1.0
+5,apache-complete,hosp-420,0.1,3374,bbse:failsafe,True,0.81,0.8666,2924,0.0663,False,>= 500,t,Northeast,1.0,1.0
+5,apache-complete,hosp-425,0.05,184,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Northeast,1.0,1.0
+5,apache-complete,hosp-425,0.1,184,bbse:bbse-misspecified,True,0.81,0.9402,173,0.0347,False,100 - 249,f,Northeast,1.0,1.0
+5,apache-complete,hosp-435,0.05,1232,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,South,1.0,1.0
+5,apache-complete,hosp-435,0.1,1232,bbse:failsafe,True,0.81,0.8831,1088,0.0524,False,250 - 499,f,South,1.0,1.0
+5,apache-complete,hosp-439,0.05,284,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,South,1.0,1.0
+5,apache-complete,hosp-439,0.1,284,bbse:failsafe,True,0.81,0.8415,239,0.1213,False,100 - 249,f,South,1.0,1.0
+5,apache-complete,hosp-440,0.05,1028,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,South,1.0,1.0
+5,apache-complete,hosp-440,0.1,1028,bbse:failsafe,True,0.81,0.8473,871,0.0436,False,250 - 499,f,South,1.0,1.0
+5,apache-complete,hosp-444,0.05,1210,baseline:failsafe|bbse:failsafe,False,,,0,,False,,f,Midwest,1.0,1.0
+5,apache-complete,hosp-444,0.1,1210,bbse:failsafe,True,0.81,0.9455,1144,0.0428,False,,f,Midwest,1.0,1.0
+6,apache-complete,hosp-59,0.05,409,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+6,apache-complete,hosp-59,0.1,409,bbse:bbse-misspecified,True,0.89,0.8606,352,0.0114,False,<100,f,Midwest,1.0,1.0
+6,apache-complete,hosp-67,0.05,280,baseline:failsafe|bbse:failsafe,False,,,0,,False,,f,Midwest,1.0,1.0
+6,apache-complete,hosp-67,0.1,280,bbse:failsafe,True,0.89,0.75,210,0.019,False,,f,Midwest,1.0,1.0
+6,apache-complete,hosp-110,0.05,1494,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,South,1.0,1.0
+6,apache-complete,hosp-110,0.1,1494,bbse:failsafe,True,0.89,0.8447,1262,0.0293,False,100 - 249,f,South,1.0,1.0
+6,apache-complete,hosp-125,0.05,199,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,South,1.0,1.0
+6,apache-complete,hosp-125,0.1,199,bbse:bbse-misspecified,True,0.89,0.8995,179,0.0168,False,<100,f,South,1.0,1.0
+6,apache-complete,hosp-133,0.05,194,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,,f,South,1.0,1.0
+6,apache-complete,hosp-133,0.1,194,bbse:bbse-misspecified,True,0.89,0.9124,177,0.0113,False,,f,South,1.0,1.0
+6,apache-complete,hosp-158,0.05,147,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,West,1.0,1.0
+6,apache-complete,hosp-158,0.1,147,bbse:failsafe,True,0.89,0.7755,114,0.0175,False,100 - 249,f,West,1.0,1.0
+6,apache-complete,hosp-182,0.05,263,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,South,1.0,1.0
+6,apache-complete,hosp-182,0.1,263,bbse:bbse-misspecified,True,0.89,0.7148,188,0.0266,False,100 - 249,f,South,1.0,1.0
+6,apache-complete,hosp-194,0.05,294,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,South,1.0,1.0
+6,apache-complete,hosp-194,0.1,294,bbse:failsafe,True,0.89,0.8367,246,0.0244,False,100 - 249,f,South,1.0,1.0
+6,apache-complete,hosp-196,0.05,316,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,South,1.0,1.0
+6,apache-complete,hosp-196,0.1,316,bbse:bbse-misspecified,True,0.89,0.8576,271,0.0185,False,<100,f,South,1.0,1.0
+6,apache-complete,hosp-207,0.05,202,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,South,1.0,1.0
+6,apache-complete,hosp-207,0.1,202,bbse:bbse-misspecified,True,0.89,0.802,162,0.0679,False,<100,f,South,1.0,1.0
+6,apache-complete,hosp-226,0.05,751,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,West,1.0,1.0
+6,apache-complete,hosp-226,0.1,751,bbse:failsafe,True,0.89,0.7457,560,0.0411,False,250 - 499,f,West,1.0,1.0
+6,apache-complete,hosp-227,0.05,1108,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,West,1.0,1.0
+6,apache-complete,hosp-227,0.1,1108,bbse:failsafe,True,0.89,0.8421,933,0.0386,False,250 - 499,f,West,1.0,1.0
+6,apache-complete,hosp-243,0.05,2403,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,f,South,1.0,1.0
+6,apache-complete,hosp-243,0.1,2403,bbse:failsafe,True,0.89,0.7499,1802,0.03,False,>= 500,f,South,1.0,1.0
+6,apache-complete,hosp-245,0.05,566,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,South,1.0,1.0
+6,apache-complete,hosp-245,0.1,566,bbse:bbse-misspecified,True,0.89,0.8728,494,0.0121,False,100 - 249,f,South,1.0,1.0
+6,apache-complete,hosp-256,0.05,564,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+6,apache-complete,hosp-256,0.1,564,bbse:bbse-misspecified,True,0.89,0.8262,466,0.0193,False,100 - 249,f,Midwest,1.0,1.0
+6,apache-complete,hosp-258,0.05,292,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+6,apache-complete,hosp-258,0.1,292,bbse:bbse-misspecified,True,0.89,0.8356,244,0.0123,False,<100,f,Midwest,1.0,1.0
+6,apache-complete,hosp-265,0.05,6,pool-too-small,False,,,0,,False,,f,Midwest,1.0,1.0
+6,apache-complete,hosp-265,0.1,6,pool-too-small,False,,,0,,False,,f,Midwest,1.0,1.0
+6,apache-complete,hosp-312,0.05,556,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,South,1.0,1.0
+6,apache-complete,hosp-312,0.1,556,bbse:failsafe,True,0.89,0.7878,438,0.0434,False,100 - 249,f,South,1.0,1.0
+6,apache-complete,hosp-393,0.05,117,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,West,1.0,1.0
+6,apache-complete,hosp-393,0.1,117,bbse:bbse-misspecified,True,0.89,0.9316,109,0.0,False,<100,f,West,1.0,1.0
+6,apache-complete,hosp-396,0.05,542,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,West,1.0,1.0
+6,apache-complete,hosp-396,0.1,542,bbse:failsafe,True,0.89,0.8007,434,0.0323,False,100 - 249,f,West,1.0,1.0
+6,apache-complete,hosp-417,0.05,1620,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,South,1.0,1.0
+6,apache-complete,hosp-417,0.1,1620,bbse:failsafe,True,0.89,0.8142,1319,0.0387,False,250 - 499,f,South,1.0,1.0
+6,apache-complete,hosp-421,0.05,522,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Northeast,1.0,1.0
+6,apache-complete,hosp-421,0.1,522,bbse:bbse-misspecified,True,0.89,0.8391,438,0.0594,False,<100,f,Northeast,1.0,1.0
+6,apache-complete,hosp-433,0.05,97,baseline:failsafe|bbse:failsafe,False,,,0,,False,,f,South,1.0,1.0
+6,apache-complete,hosp-433,0.1,97,bbse:failsafe,True,0.89,0.4742,46,0.0435,False,,f,South,1.0,1.0
+6,apache-complete,hosp-459,0.05,531,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,South,1.0,1.0
+6,apache-complete,hosp-459,0.1,531,bbse:failsafe,True,0.89,0.7062,375,0.0213,False,100 - 249,f,South,1.0,1.0
+7,apache-complete,hosp-56,0.05,188,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+7,apache-complete,hosp-56,0.1,188,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+7,apache-complete,hosp-58,0.05,200,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+7,apache-complete,hosp-58,0.1,200,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+7,apache-complete,hosp-61,0.05,143,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+7,apache-complete,hosp-61,0.1,143,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+7,apache-complete,hosp-108,0.05,312,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,250 - 499,f,Midwest,1.0,1.0
+7,apache-complete,hosp-108,0.1,312,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,250 - 499,f,Midwest,1.0,1.0
+7,apache-complete,hosp-115,0.05,26,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,South,1.0,1.0
+7,apache-complete,hosp-115,0.1,26,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,South,1.0,1.0
+7,apache-complete,hosp-133,0.05,194,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,,f,South,1.0,1.0
+7,apache-complete,hosp-133,0.1,194,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,,f,South,1.0,1.0
+7,apache-complete,hosp-148,0.05,1237,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,West,1.0,1.0
+7,apache-complete,hosp-148,0.1,1237,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,West,1.0,1.0
+7,apache-complete,hosp-152,0.05,851,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,West,1.0,1.0
+7,apache-complete,hosp-152,0.1,851,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,West,1.0,1.0
+7,apache-complete,hosp-158,0.05,147,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,West,1.0,1.0
+7,apache-complete,hosp-158,0.1,147,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,West,1.0,1.0
+7,apache-complete,hosp-171,0.05,808,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,West,1.0,1.0
+7,apache-complete,hosp-171,0.1,808,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,West,1.0,1.0
+7,apache-complete,hosp-182,0.05,263,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,South,1.0,1.0
+7,apache-complete,hosp-182,0.1,263,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,South,1.0,1.0
+7,apache-complete,hosp-209,0.05,99,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,,f,,1.0,1.0
+7,apache-complete,hosp-209,0.1,99,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,,f,,1.0,1.0
+7,apache-complete,hosp-227,0.05,1108,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,West,1.0,1.0
+7,apache-complete,hosp-227,0.1,1108,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,West,1.0,1.0
+7,apache-complete,hosp-252,0.05,2715,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,t,Midwest,1.0,1.0
+7,apache-complete,hosp-252,0.1,2715,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,t,Midwest,1.0,1.0
+7,apache-complete,hosp-262,0.05,154,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+7,apache-complete,hosp-262,0.1,154,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+7,apache-complete,hosp-360,0.05,202,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+7,apache-complete,hosp-360,0.1,202,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+7,apache-complete,hosp-383,0.05,419,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,West,1.0,1.0
+7,apache-complete,hosp-383,0.1,419,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,West,1.0,1.0
+7,apache-complete,hosp-398,0.05,288,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,West,1.0,1.0
+7,apache-complete,hosp-398,0.1,288,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,West,1.0,1.0
+7,apache-complete,hosp-399,0.05,174,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,West,1.0,1.0
+7,apache-complete,hosp-399,0.1,174,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,West,1.0,1.0
+7,apache-complete,hosp-400,0.05,1350,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,West,1.0,1.0
+7,apache-complete,hosp-400,0.1,1350,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,West,1.0,1.0
+7,apache-complete,hosp-421,0.05,522,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Northeast,1.0,1.0
+7,apache-complete,hosp-421,0.1,522,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Northeast,1.0,1.0
+7,apache-complete,hosp-439,0.05,284,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,South,1.0,1.0
+7,apache-complete,hosp-439,0.1,284,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,South,1.0,1.0
+7,apache-complete,hosp-443,0.05,2992,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,t,South,1.0,1.0
+7,apache-complete,hosp-443,0.1,2992,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,t,South,1.0,1.0
+7,apache-complete,hosp-449,0.05,1905,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,t,Midwest,1.0,1.0
+7,apache-complete,hosp-449,0.1,1905,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,t,Midwest,1.0,1.0
+8,apache-complete,hosp-67,0.05,280,baseline:failsafe|bbse:failsafe,False,,,0,,False,,f,Midwest,1.0,1.0
+8,apache-complete,hosp-67,0.1,280,bbse:failsafe,True,0.89,0.7464,209,0.0191,False,,f,Midwest,1.0,1.0
+8,apache-complete,hosp-95,0.05,227,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+8,apache-complete,hosp-95,0.1,227,bbse:bbse-misspecified,True,0.89,0.8811,200,0.01,False,100 - 249,f,Midwest,1.0,1.0
+8,apache-complete,hosp-96,0.05,18,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,,f,,1.0,1.0
+8,apache-complete,hosp-96,0.1,18,bbse:bbse-misspecified,True,0.89,0.6111,11,0.0,False,,f,,1.0,1.0
+8,apache-complete,hosp-136,0.05,2,pool-too-small,False,,,0,,False,<100,f,South,1.0,1.0
+8,apache-complete,hosp-136,0.1,2,pool-too-small,False,,,0,,False,<100,f,South,1.0,1.0
+8,apache-complete,hosp-144,0.05,637,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,South,1.0,1.0
+8,apache-complete,hosp-144,0.1,637,bbse:failsafe,True,0.89,0.7771,495,0.0303,False,100 - 249,f,South,1.0,1.0
+8,apache-complete,hosp-146,0.05,478,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,West,1.0,1.0
+8,apache-complete,hosp-146,0.1,478,bbse:failsafe,True,0.89,0.7469,357,0.0392,False,250 - 499,f,West,1.0,1.0
+8,apache-complete,hosp-148,0.05,1237,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,West,1.0,1.0
+8,apache-complete,hosp-148,0.1,1237,bbse:failsafe,True,0.89,0.6936,858,0.0186,False,250 - 499,f,West,1.0,1.0
+8,apache-complete,hosp-157,0.05,834,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,West,1.0,1.0
+8,apache-complete,hosp-157,0.1,834,bbse:failsafe,True,0.89,0.5516,460,0.0261,False,250 - 499,f,West,1.0,1.0
+8,apache-complete,hosp-175,0.05,270,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,West,1.0,1.0
+8,apache-complete,hosp-175,0.1,270,bbse:failsafe,True,0.89,0.8333,225,0.0311,False,100 - 249,f,West,1.0,1.0
+8,apache-complete,hosp-182,0.05,263,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,South,1.0,1.0
+8,apache-complete,hosp-182,0.1,263,bbse:bbse-misspecified,True,0.89,0.7376,194,0.0258,False,100 - 249,f,South,1.0,1.0
+8,apache-complete,hosp-200,0.05,342,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Northeast,1.0,1.0
+8,apache-complete,hosp-200,0.1,342,bbse:bbse-misspecified,True,0.89,0.7661,262,0.0496,False,100 - 249,f,Northeast,1.0,1.0
+8,apache-complete,hosp-207,0.05,202,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,South,1.0,1.0
+8,apache-complete,hosp-207,0.1,202,bbse:bbse-misspecified,True,0.89,0.7871,159,0.0566,False,<100,f,South,1.0,1.0
+8,apache-complete,hosp-251,0.05,278,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+8,apache-complete,hosp-251,0.1,278,bbse:bbse-misspecified,True,0.89,0.7878,219,0.0137,False,<100,f,Midwest,1.0,1.0
+8,apache-complete,hosp-280,0.05,899,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,250 - 499,f,Midwest,1.0,1.0
+8,apache-complete,hosp-280,0.1,899,bbse:bbse-misspecified,True,0.89,0.8676,780,0.0231,False,250 - 499,f,Midwest,1.0,1.0
+8,apache-complete,hosp-312,0.05,556,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,South,1.0,1.0
+8,apache-complete,hosp-312,0.1,556,bbse:failsafe,True,0.89,0.8058,448,0.0446,False,100 - 249,f,South,1.0,1.0
+8,apache-complete,hosp-331,0.05,996,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,,f,,1.0,1.0
+8,apache-complete,hosp-331,0.1,996,bbse:bbse-misspecified,True,0.89,0.8665,863,0.0243,False,,f,,1.0,1.0
+8,apache-complete,hosp-352,0.05,32,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,,f,,1.0,1.0
+8,apache-complete,hosp-352,0.1,32,bbse:bbse-misspecified,True,0.89,0.6562,21,0.0476,False,,f,,1.0,1.0
+8,apache-complete,hosp-357,0.05,638,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,,f,Midwest,1.0,1.0
+8,apache-complete,hosp-357,0.1,638,bbse:bbse-misspecified,True,0.89,0.8621,550,0.0273,False,,f,Midwest,1.0,1.0
+8,apache-complete,hosp-397,0.05,204,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,,1.0,1.0
+8,apache-complete,hosp-397,0.1,204,bbse:bbse-misspecified,True,0.89,0.7843,160,0.05,False,100 - 249,f,,1.0,1.0
+8,apache-complete,hosp-405,0.05,280,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,West,1.0,1.0
+8,apache-complete,hosp-405,0.1,280,bbse:failsafe,True,0.89,0.8143,228,0.0219,False,100 - 249,f,West,1.0,1.0
+8,apache-complete,hosp-424,0.05,355,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Northeast,1.0,1.0
+8,apache-complete,hosp-424,0.1,355,bbse:bbse-misspecified,True,0.89,0.8761,311,0.0161,False,<100,f,Northeast,1.0,1.0
+8,apache-complete,hosp-440,0.05,1028,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,South,1.0,1.0
+8,apache-complete,hosp-440,0.1,1028,bbse:failsafe,True,0.89,0.7325,753,0.0292,False,250 - 499,f,South,1.0,1.0
+8,apache-complete,hosp-458,0.05,3094,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,f,South,1.0,1.0
+8,apache-complete,hosp-458,0.1,3094,bbse:failsafe,True,0.89,0.7889,2441,0.0336,False,>= 500,f,South,1.0,1.0
+8,apache-complete,hosp-459,0.05,531,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,South,1.0,1.0
+8,apache-complete,hosp-459,0.1,531,bbse:failsafe,True,0.89,0.7062,375,0.024,False,100 - 249,f,South,1.0,1.0
+9,apache-complete,hosp-68,0.05,346,baseline:failsafe|bbse:failsafe,False,,,0,,False,<100,f,Midwest,1.0,1.0
+9,apache-complete,hosp-68,0.1,346,bbse:failsafe,True,0.85,0.7977,276,0.0,False,<100,f,Midwest,1.0,1.0
+9,apache-complete,hosp-108,0.05,312,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,250 - 499,f,Midwest,1.0,1.0
+9,apache-complete,hosp-108,0.1,312,bbse:bbse-misspecified,True,0.85,0.9455,295,0.0407,False,250 - 499,f,Midwest,1.0,1.0
+9,apache-complete,hosp-142,0.05,1251,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,f,South,1.0,1.0
+9,apache-complete,hosp-142,0.1,1251,bbse:failsafe,True,0.85,0.8169,1022,0.0685,False,>= 500,f,South,1.0,1.0
+9,apache-complete,hosp-188,0.05,2913,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,t,South,1.0,1.0
+9,apache-complete,hosp-188,0.1,2913,bbse:failsafe,True,0.85,0.8047,2344,0.0401,False,>= 500,t,South,1.0,1.0
+9,apache-complete,hosp-194,0.05,294,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,South,1.0,1.0
+9,apache-complete,hosp-194,0.1,294,bbse:failsafe,True,0.85,0.8435,248,0.0282,False,100 - 249,f,South,1.0,1.0
+9,apache-complete,hosp-196,0.05,316,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,South,1.0,1.0
+9,apache-complete,hosp-196,0.1,316,bbse:bbse-misspecified,True,0.85,0.8861,280,0.0214,False,<100,f,South,1.0,1.0
+9,apache-complete,hosp-215,0.05,589,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,t,South,1.0,1.0
+9,apache-complete,hosp-215,0.1,589,bbse:failsafe,True,0.85,0.7334,432,0.0162,False,100 - 249,t,South,1.0,1.0
+9,apache-complete,hosp-220,0.05,652,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,t,South,1.0,1.0
+9,apache-complete,hosp-220,0.1,652,bbse:failsafe,True,0.85,0.819,534,0.0225,False,250 - 499,t,South,1.0,1.0
+9,apache-complete,hosp-250,0.05,202,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+9,apache-complete,hosp-250,0.1,202,bbse:bbse-misspecified,True,0.85,0.9505,192,0.0312,False,100 - 249,f,Midwest,1.0,1.0
+9,apache-complete,hosp-251,0.05,278,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+9,apache-complete,hosp-251,0.1,278,bbse:bbse-misspecified,True,0.85,0.8993,250,0.028,False,<100,f,Midwest,1.0,1.0
+9,apache-complete,hosp-272,0.05,984,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+9,apache-complete,hosp-272,0.1,984,bbse:bbse-misspecified,True,0.85,0.8465,833,0.0252,False,100 - 249,f,Midwest,1.0,1.0
+9,apache-complete,hosp-279,0.05,656,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+9,apache-complete,hosp-279,0.1,656,bbse:bbse-misspecified,True,0.85,0.8887,583,0.0274,False,100 - 249,f,Midwest,1.0,1.0
+9,apache-complete,hosp-318,0.05,969,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,South,1.0,1.0
+9,apache-complete,hosp-318,0.1,969,bbse:failsafe,True,0.85,0.8679,841,0.0606,False,250 - 499,f,South,1.0,1.0
+9,apache-complete,hosp-338,0.05,3424,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,f,Midwest,1.0,1.0
+9,apache-complete,hosp-338,0.1,3424,bbse:failsafe,True,0.85,0.823,2818,0.0302,False,>= 500,f,Midwest,1.0,1.0
+9,apache-complete,hosp-364,0.05,258,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+9,apache-complete,hosp-364,0.1,258,bbse:bbse-misspecified,True,0.85,0.8953,231,0.0433,False,100 - 249,f,Midwest,1.0,1.0
+9,apache-complete,hosp-388,0.05,825,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,West,1.0,1.0
+9,apache-complete,hosp-388,0.1,825,bbse:failsafe,True,0.85,0.8521,703,0.0569,False,100 - 249,f,West,1.0,1.0
+9,apache-complete,hosp-390,0.05,895,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,,1.0,1.0
+9,apache-complete,hosp-390,0.1,895,bbse:failsafe,True,0.85,0.8391,751,0.0506,False,250 - 499,f,,1.0,1.0
+9,apache-complete,hosp-397,0.05,204,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,,1.0,1.0
+9,apache-complete,hosp-397,0.1,204,bbse:bbse-misspecified,True,0.85,0.848,173,0.0578,False,100 - 249,f,,1.0,1.0
+9,apache-complete,hosp-401,0.05,8,pool-too-small,False,,,0,,False,,f,,1.0,1.0
+9,apache-complete,hosp-401,0.1,8,pool-too-small,False,,,0,,False,,f,,1.0,1.0
+9,apache-complete,hosp-422,0.05,239,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Northeast,1.0,1.0
+9,apache-complete,hosp-422,0.1,239,bbse:bbse-misspecified,True,0.85,0.8828,211,0.0332,False,100 - 249,f,Northeast,1.0,1.0
+9,apache-complete,hosp-423,0.05,133,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Northeast,1.0,1.0
+9,apache-complete,hosp-423,0.1,133,bbse:bbse-misspecified,True,0.85,0.8647,115,0.0348,False,<100,f,Northeast,1.0,1.0
+9,apache-complete,hosp-429,0.05,238,baseline:failsafe|bbse:failsafe,False,,,0,,False,,f,South,1.0,1.0
+9,apache-complete,hosp-429,0.1,238,bbse:failsafe,True,0.85,0.7353,175,0.04,False,,f,South,1.0,1.0
+9,apache-complete,hosp-435,0.05,1232,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,South,1.0,1.0
+9,apache-complete,hosp-435,0.1,1232,bbse:failsafe,True,0.85,0.8636,1064,0.0508,False,250 - 499,f,South,1.0,1.0
+9,apache-complete,hosp-443,0.05,2992,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,t,South,1.0,1.0
+9,apache-complete,hosp-443,0.1,2992,bbse:failsafe,True,0.85,0.8406,2515,0.0525,False,>= 500,t,South,1.0,1.0
+10,apache-complete,hosp-59,0.05,409,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+10,apache-complete,hosp-59,0.1,409,bbse:bbse-misspecified,True,0.85,0.9169,375,0.0133,False,<100,f,Midwest,1.0,1.0
+10,apache-complete,hosp-67,0.05,280,baseline:failsafe|bbse:failsafe,False,,,0,,False,,f,Midwest,1.0,1.0
+10,apache-complete,hosp-67,0.1,280,bbse:failsafe,True,0.85,0.8286,232,0.0259,False,,f,Midwest,1.0,1.0
+10,apache-complete,hosp-68,0.05,346,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+10,apache-complete,hosp-68,0.1,346,bbse:bbse-misspecified,True,0.85,0.8584,297,0.0,False,<100,f,Midwest,1.0,1.0
+10,apache-complete,hosp-71,0.05,435,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+10,apache-complete,hosp-71,0.1,435,bbse:bbse-misspecified,True,0.85,0.8667,377,0.0133,False,100 - 249,f,Midwest,1.0,1.0
+10,apache-complete,hosp-84,0.05,38,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+10,apache-complete,hosp-84,0.1,38,bbse:bbse-misspecified,True,0.85,0.7105,27,0.0,False,<100,f,Midwest,1.0,1.0
+10,apache-complete,hosp-90,0.05,11,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+10,apache-complete,hosp-90,0.1,11,bbse:bbse-misspecified,True,0.85,0.8182,9,0.1111,False,<100,f,Midwest,1.0,1.0
+10,apache-complete,hosp-94,0.05,7,pool-too-small,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+10,apache-complete,hosp-94,0.1,7,pool-too-small,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+10,apache-complete,hosp-133,0.05,194,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,,f,South,1.0,1.0
+10,apache-complete,hosp-133,0.1,194,bbse:bbse-misspecified,True,0.85,0.9227,179,0.0112,False,,f,South,1.0,1.0
+10,apache-complete,hosp-143,0.05,640,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,,1.0,1.0
+10,apache-complete,hosp-143,0.1,640,bbse:failsafe,True,0.85,0.9047,579,0.0328,False,250 - 499,f,,1.0,1.0
+10,apache-complete,hosp-174,0.05,61,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,West,1.0,1.0
+10,apache-complete,hosp-174,0.1,61,bbse:bbse-misspecified,True,0.85,0.8525,52,0.0962,False,<100,f,West,1.0,1.0
+10,apache-complete,hosp-183,0.05,1258,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,f,South,1.0,1.0
+10,apache-complete,hosp-183,0.1,1258,bbse:failsafe,True,0.85,0.7846,987,0.0436,False,>= 500,f,South,1.0,1.0
+10,apache-complete,hosp-198,0.05,532,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,t,South,1.0,1.0
+10,apache-complete,hosp-198,0.1,532,bbse:failsafe,True,0.85,0.8233,438,0.0365,False,>= 500,t,South,1.0,1.0
+10,apache-complete,hosp-250,0.05,202,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+10,apache-complete,hosp-250,0.1,202,bbse:bbse-misspecified,True,0.85,0.9406,190,0.0316,False,100 - 249,f,Midwest,1.0,1.0
+10,apache-complete,hosp-258,0.05,292,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+10,apache-complete,hosp-258,0.1,292,bbse:bbse-misspecified,True,0.85,0.8767,256,0.0156,False,<100,f,Midwest,1.0,1.0
+10,apache-complete,hosp-264,0.05,4334,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,t,Midwest,1.0,1.0
+10,apache-complete,hosp-264,0.1,4334,bbse:failsafe,True,0.85,0.8184,3547,0.0381,False,>= 500,t,Midwest,1.0,1.0
+10,apache-complete,hosp-351,0.05,2,pool-too-small,False,,,0,,False,,f,,1.0,1.0
+10,apache-complete,hosp-351,0.1,2,pool-too-small,False,,,0,,False,,f,,1.0,1.0
+10,apache-complete,hosp-353,0.05,575,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+10,apache-complete,hosp-353,0.1,575,bbse:failsafe,True,0.85,0.88,506,0.0573,False,100 - 249,f,Midwest,1.0,1.0
+10,apache-complete,hosp-363,0.05,62,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+10,apache-complete,hosp-363,0.1,62,bbse:bbse-misspecified,True,0.85,0.9839,61,0.0492,False,<100,f,Midwest,1.0,1.0
+10,apache-complete,hosp-385,0.05,1,pool-too-small,False,,,0,,False,,f,,1.0,1.0
+10,apache-complete,hosp-385,0.1,1,pool-too-small,False,,,0,,False,,f,,1.0,1.0
+10,apache-complete,hosp-396,0.05,542,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,West,1.0,1.0
+10,apache-complete,hosp-396,0.1,542,bbse:failsafe,True,0.85,0.8321,451,0.0399,False,100 - 249,f,West,1.0,1.0
+10,apache-complete,hosp-399,0.05,174,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,West,1.0,1.0
+10,apache-complete,hosp-399,0.1,174,bbse:bbse-misspecified,True,0.85,0.9368,163,0.0307,False,<100,f,West,1.0,1.0
+10,apache-complete,hosp-401,0.05,8,pool-too-small,False,,,0,,False,,f,,1.0,1.0
+10,apache-complete,hosp-401,0.1,8,pool-too-small,False,,,0,,False,,f,,1.0,1.0
+10,apache-complete,hosp-407,0.05,267,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,West,1.0,1.0
+10,apache-complete,hosp-407,0.1,267,bbse:bbse-misspecified,True,0.85,0.8689,232,0.0345,False,100 - 249,f,West,1.0,1.0
+10,apache-complete,hosp-416,0.05,1608,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,>= 500,t,Midwest,1.0,1.0
+10,apache-complete,hosp-416,0.1,1608,bbse:bbse-misspecified,True,0.85,0.8912,1433,0.0293,False,>= 500,t,Midwest,1.0,1.0
+11,apache-complete,hosp-108,0.05,312,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,250 - 499,f,Midwest,1.0,1.0
+11,apache-complete,hosp-108,0.1,312,bbse:bbse-misspecified,True,0.87,0.9231,288,0.0417,False,250 - 499,f,Midwest,1.0,1.0
+11,apache-complete,hosp-110,0.05,1494,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,South,1.0,1.0
+11,apache-complete,hosp-110,0.1,1494,bbse:failsafe,True,0.87,0.8782,1312,0.0305,False,100 - 249,f,South,1.0,1.0
+11,apache-complete,hosp-122,0.05,2534,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,f,South,1.0,1.0
+11,apache-complete,hosp-122,0.1,2534,bbse:failsafe,True,0.87,0.8418,2133,0.0483,False,>= 500,f,South,1.0,1.0
+11,apache-complete,hosp-135,0.05,8,pool-too-small,False,,,0,,False,<100,f,South,1.0,1.0
+11,apache-complete,hosp-135,0.1,8,pool-too-small,False,,,0,,False,<100,f,South,1.0,1.0
+11,apache-complete,hosp-146,0.05,478,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,West,1.0,1.0
+11,apache-complete,hosp-146,0.1,478,bbse:failsafe,True,0.87,0.7741,370,0.0432,False,250 - 499,f,West,1.0,1.0
+11,apache-complete,hosp-164,0.05,109,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,West,1.0,1.0
+11,apache-complete,hosp-164,0.1,109,bbse:bbse-misspecified,True,0.87,0.9083,99,0.0606,False,<100,f,West,1.0,1.0
+11,apache-complete,hosp-181,0.05,793,baseline:failsafe|bbse:failsafe,False,,,0,,False,,f,South,1.0,1.0
+11,apache-complete,hosp-181,0.1,793,bbse:failsafe,True,0.87,0.7629,605,0.0331,False,,f,South,1.0,1.0
+11,apache-complete,hosp-182,0.05,263,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,South,1.0,1.0
+11,apache-complete,hosp-182,0.1,263,bbse:bbse-misspecified,True,0.87,0.7795,205,0.0244,False,100 - 249,f,South,1.0,1.0
+11,apache-complete,hosp-207,0.05,202,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,South,1.0,1.0
+11,apache-complete,hosp-207,0.1,202,bbse:bbse-misspecified,True,0.87,0.8317,168,0.0714,False,<100,f,South,1.0,1.0
+11,apache-complete,hosp-226,0.05,751,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,West,1.0,1.0
+11,apache-complete,hosp-226,0.1,751,bbse:failsafe,True,0.87,0.8136,611,0.0638,False,250 - 499,f,West,1.0,1.0
+11,apache-complete,hosp-262,0.05,154,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+11,apache-complete,hosp-262,0.1,154,bbse:bbse-misspecified,True,0.87,0.8636,133,0.0526,False,<100,f,Midwest,1.0,1.0
+11,apache-complete,hosp-277,0.05,1281,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+11,apache-complete,hosp-277,0.1,1281,bbse:failsafe,True,0.87,0.8283,1061,0.0245,False,100 - 249,f,Midwest,1.0,1.0
+11,apache-complete,hosp-310,0.05,465,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+11,apache-complete,hosp-310,0.1,465,bbse:bbse-misspecified,True,0.87,0.8731,406,0.0197,False,100 - 249,f,Midwest,1.0,1.0
+11,apache-complete,hosp-328,0.05,194,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+11,apache-complete,hosp-328,0.1,194,bbse:bbse-misspecified,True,0.87,0.9485,184,0.0109,False,<100,f,Midwest,1.0,1.0
+11,apache-complete,hosp-338,0.05,3424,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,f,Midwest,1.0,1.0
+11,apache-complete,hosp-338,0.1,3424,bbse:failsafe,True,0.87,0.8274,2833,0.0297,False,>= 500,f,Midwest,1.0,1.0
+11,apache-complete,hosp-357,0.05,638,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,,f,Midwest,1.0,1.0
+11,apache-complete,hosp-357,0.1,638,bbse:bbse-misspecified,True,0.87,0.9107,581,0.0293,False,,f,Midwest,1.0,1.0
+11,apache-complete,hosp-386,0.05,406,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,West,1.0,1.0
+11,apache-complete,hosp-386,0.1,406,bbse:failsafe,True,0.87,0.7759,315,0.0476,False,100 - 249,f,West,1.0,1.0
+11,apache-complete,hosp-389,0.05,406,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,West,1.0,1.0
+11,apache-complete,hosp-389,0.1,406,bbse:bbse-misspecified,True,0.87,0.8768,356,0.0421,False,<100,f,West,1.0,1.0
+11,apache-complete,hosp-392,0.05,555,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,250 - 499,f,West,1.0,1.0
+11,apache-complete,hosp-392,0.1,555,bbse:bbse-misspecified,True,0.87,0.8432,468,0.0791,False,250 - 499,f,West,1.0,1.0
+11,apache-complete,hosp-399,0.05,174,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,West,1.0,1.0
+11,apache-complete,hosp-399,0.1,174,bbse:bbse-misspecified,True,0.87,0.9023,157,0.0191,False,<100,f,West,1.0,1.0
+11,apache-complete,hosp-405,0.05,280,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,West,1.0,1.0
+11,apache-complete,hosp-405,0.1,280,bbse:failsafe,True,0.87,0.8536,239,0.0209,False,100 - 249,f,West,1.0,1.0
+11,apache-complete,hosp-411,0.05,506,baseline:failsafe|bbse:failsafe,False,,,0,,False,,f,West,1.0,1.0
+11,apache-complete,hosp-411,0.1,506,bbse:failsafe,True,0.87,0.8063,408,0.0613,False,,f,West,1.0,1.0
+11,apache-complete,hosp-417,0.05,1620,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,South,1.0,1.0
+11,apache-complete,hosp-417,0.1,1620,bbse:failsafe,True,0.87,0.8506,1378,0.0421,False,250 - 499,f,South,1.0,1.0
+11,apache-complete,hosp-449,0.05,1905,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,t,Midwest,1.0,1.0
+11,apache-complete,hosp-449,0.1,1905,bbse:failsafe,True,0.87,0.7711,1469,0.0388,False,>= 500,t,Midwest,1.0,1.0
+12,apache-complete,hosp-61,0.05,143,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+12,apache-complete,hosp-61,0.1,143,bbse:bbse-misspecified,True,0.83,0.9021,129,0.0233,False,<100,f,Midwest,1.0,1.0
+12,apache-complete,hosp-73,0.05,5125,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,t,Midwest,1.0,1.0
+12,apache-complete,hosp-73,0.1,5125,bbse:failsafe,True,0.83,0.8923,4573,0.0324,False,>= 500,t,Midwest,1.0,1.0
+12,apache-complete,hosp-92,0.05,508,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,250 - 499,f,Midwest,1.0,1.0
+12,apache-complete,hosp-92,0.1,508,bbse:bbse-misspecified,True,0.83,0.937,476,0.0315,False,250 - 499,f,Midwest,1.0,1.0
+12,apache-complete,hosp-108,0.05,312,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,250 - 499,f,Midwest,1.0,1.0
+12,apache-complete,hosp-108,0.1,312,bbse:bbse-misspecified,True,0.83,0.9551,298,0.0503,False,250 - 499,f,Midwest,1.0,1.0
+12,apache-complete,hosp-120,0.05,91,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,South,1.0,1.0
+12,apache-complete,hosp-120,0.1,91,bbse:bbse-misspecified,True,0.83,0.9231,84,0.0476,False,100 - 249,f,South,1.0,1.0
+12,apache-complete,hosp-122,0.05,2534,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,f,South,1.0,1.0
+12,apache-complete,hosp-122,0.1,2534,bbse:failsafe,True,0.83,0.8658,2194,0.0515,False,>= 500,f,South,1.0,1.0
+12,apache-complete,hosp-156,0.05,13,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,West,1.0,1.0
+12,apache-complete,hosp-156,0.1,13,bbse:bbse-misspecified,True,0.83,1.0,13,0.0,False,<100,f,West,1.0,1.0
+12,apache-complete,hosp-167,0.05,2286,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,t,West,1.0,1.0
+12,apache-complete,hosp-167,0.1,2286,bbse:failsafe,True,0.83,0.846,1934,0.0471,False,>= 500,t,West,1.0,1.0
+12,apache-complete,hosp-181,0.05,793,baseline:failsafe|bbse:failsafe,False,,,0,,False,,f,South,1.0,1.0
+12,apache-complete,hosp-181,0.1,793,bbse:failsafe,True,0.83,0.8045,638,0.0408,False,,f,South,1.0,1.0
+12,apache-complete,hosp-202,0.05,758,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,Northeast,1.0,1.0
+12,apache-complete,hosp-202,0.1,758,bbse:failsafe,True,0.83,0.8377,635,0.0409,False,100 - 249,f,Northeast,1.0,1.0
+12,apache-complete,hosp-226,0.05,751,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,West,1.0,1.0
+12,apache-complete,hosp-226,0.1,751,bbse:failsafe,True,0.83,0.8415,632,0.0728,False,250 - 499,f,West,1.0,1.0
+12,apache-complete,hosp-259,0.05,502,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,t,Midwest,1.0,1.0
+12,apache-complete,hosp-259,0.1,502,bbse:failsafe,True,0.83,0.7012,352,0.0653,False,250 - 499,t,Midwest,1.0,1.0
+12,apache-complete,hosp-269,0.05,632,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,,f,,1.0,1.0
+12,apache-complete,hosp-269,0.1,632,bbse:bbse-misspecified,True,0.83,0.9288,587,0.0392,False,,f,,1.0,1.0
+12,apache-complete,hosp-273,0.05,129,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+12,apache-complete,hosp-273,0.1,129,bbse:bbse-misspecified,True,0.83,0.4419,57,0.1754,True,100 - 249,f,Midwest,1.0,1.0
+12,apache-complete,hosp-310,0.05,465,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+12,apache-complete,hosp-310,0.1,465,bbse:bbse-misspecified,True,0.83,0.9183,427,0.0234,False,100 - 249,f,Midwest,1.0,1.0
+12,apache-complete,hosp-338,0.05,3424,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,f,Midwest,1.0,1.0
+12,apache-complete,hosp-338,0.1,3424,bbse:failsafe,True,0.83,0.8616,2950,0.0353,False,>= 500,f,Midwest,1.0,1.0
+12,apache-complete,hosp-353,0.05,575,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+12,apache-complete,hosp-353,0.1,575,bbse:failsafe,True,0.83,0.9148,526,0.057,False,100 - 249,f,Midwest,1.0,1.0
+12,apache-complete,hosp-360,0.05,202,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+12,apache-complete,hosp-360,0.1,202,bbse:bbse-misspecified,True,0.83,0.8762,177,0.0791,False,100 - 249,f,Midwest,1.0,1.0
+12,apache-complete,hosp-401,0.05,8,pool-too-small,False,,,0,,False,,f,,1.0,1.0
+12,apache-complete,hosp-401,0.1,8,pool-too-small,False,,,0,,False,,f,,1.0,1.0
+12,apache-complete,hosp-403,0.05,818,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,250 - 499,f,West,1.0,1.0
+12,apache-complete,hosp-403,0.1,818,bbse:bbse-misspecified,True,0.83,0.9034,739,0.0501,False,250 - 499,f,West,1.0,1.0
+12,apache-complete,hosp-433,0.05,97,baseline:failsafe|bbse:failsafe,False,,,0,,False,,f,South,1.0,1.0
+12,apache-complete,hosp-433,0.1,97,bbse:failsafe,True,0.83,0.6907,67,0.0597,False,,f,South,1.0,1.0
+12,apache-complete,hosp-438,0.05,148,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,,f,South,1.0,1.0
+12,apache-complete,hosp-438,0.1,148,bbse:bbse-misspecified,True,0.83,0.8446,125,0.016,False,,f,South,1.0,1.0
+12,apache-complete,hosp-439,0.05,284,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,South,1.0,1.0
+12,apache-complete,hosp-439,0.1,284,bbse:failsafe,True,0.83,0.8099,230,0.1174,False,100 - 249,f,South,1.0,1.0
+12,apache-complete,hosp-452,0.05,709,baseline:failsafe|bbse:failsafe,False,,,0,,False,,f,Midwest,1.0,1.0
+12,apache-complete,hosp-452,0.1,709,bbse:failsafe,True,0.83,0.7447,528,0.0739,False,,f,Midwest,1.0,1.0
+13,apache-complete,hosp-60,0.05,233,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+13,apache-complete,hosp-60,0.1,233,bbse:bbse-misspecified,True,0.83,0.9185,214,0.0327,False,<100,f,Midwest,1.0,1.0
+13,apache-complete,hosp-68,0.05,346,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+13,apache-complete,hosp-68,0.1,346,bbse:bbse-misspecified,True,0.83,0.922,319,0.0125,False,<100,f,Midwest,1.0,1.0
+13,apache-complete,hosp-71,0.05,435,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+13,apache-complete,hosp-71,0.1,435,bbse:bbse-misspecified,True,0.83,0.8851,385,0.0156,False,100 - 249,f,Midwest,1.0,1.0
+13,apache-complete,hosp-84,0.05,38,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+13,apache-complete,hosp-84,0.1,38,bbse:bbse-misspecified,True,0.83,0.7895,30,0.0,False,<100,f,Midwest,1.0,1.0
+13,apache-complete,hosp-122,0.05,2534,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,f,South,1.0,1.0
+13,apache-complete,hosp-122,0.1,2534,bbse:failsafe,True,0.83,0.8769,2222,0.0563,False,>= 500,f,South,1.0,1.0
+13,apache-complete,hosp-138,0.05,152,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+13,apache-complete,hosp-138,0.1,152,bbse:bbse-misspecified,True,0.83,0.9737,148,0.0,False,<100,f,Midwest,1.0,1.0
+13,apache-complete,hosp-164,0.05,109,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,West,1.0,1.0
+13,apache-complete,hosp-164,0.1,109,bbse:bbse-misspecified,True,0.83,0.9266,101,0.0594,False,<100,f,West,1.0,1.0
+13,apache-complete,hosp-264,0.05,4334,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,t,Midwest,1.0,1.0
+13,apache-complete,hosp-264,0.1,4334,bbse:failsafe,True,0.83,0.8512,3689,0.0426,False,>= 500,t,Midwest,1.0,1.0
+13,apache-complete,hosp-272,0.05,984,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+13,apache-complete,hosp-272,0.1,984,bbse:bbse-misspecified,True,0.83,0.9309,916,0.0306,False,100 - 249,f,Midwest,1.0,1.0
+13,apache-complete,hosp-282,0.05,771,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+13,apache-complete,hosp-282,0.1,771,bbse:bbse-misspecified,True,0.83,0.8949,690,0.0232,False,100 - 249,f,Midwest,1.0,1.0
+13,apache-complete,hosp-310,0.05,465,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+13,apache-complete,hosp-310,0.1,465,bbse:bbse-misspecified,True,0.83,0.8903,414,0.0169,False,100 - 249,f,Midwest,1.0,1.0
+13,apache-complete,hosp-338,0.05,3424,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,f,Midwest,1.0,1.0
+13,apache-complete,hosp-338,0.1,3424,bbse:failsafe,True,0.83,0.8624,2953,0.0339,False,>= 500,f,Midwest,1.0,1.0
+13,apache-complete,hosp-351,0.05,2,pool-too-small,False,,,0,,False,,f,,1.0,1.0
+13,apache-complete,hosp-351,0.1,2,pool-too-small,False,,,0,,False,,f,,1.0,1.0
+13,apache-complete,hosp-358,0.05,284,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+13,apache-complete,hosp-358,0.1,284,bbse:bbse-misspecified,True,0.83,0.8908,253,0.0435,False,100 - 249,f,Midwest,1.0,1.0
+13,apache-complete,hosp-360,0.05,202,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+13,apache-complete,hosp-360,0.1,202,bbse:bbse-misspecified,True,0.83,0.8762,177,0.0847,False,100 - 249,f,Midwest,1.0,1.0
+13,apache-complete,hosp-365,0.05,1241,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,,t,Midwest,1.0,1.0
+13,apache-complete,hosp-365,0.1,1241,bbse:bbse-misspecified,True,0.83,0.9122,1132,0.0186,False,,t,Midwest,1.0,1.0
+13,apache-complete,hosp-384,0.05,808,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,West,1.0,1.0
+13,apache-complete,hosp-384,0.1,808,bbse:failsafe,True,0.83,0.8812,712,0.0604,False,250 - 499,f,West,1.0,1.0
+13,apache-complete,hosp-396,0.05,542,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,West,1.0,1.0
+13,apache-complete,hosp-396,0.1,542,bbse:failsafe,True,0.83,0.8137,441,0.034,False,100 - 249,f,West,1.0,1.0
+13,apache-complete,hosp-402,0.05,375,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,West,1.0,1.0
+13,apache-complete,hosp-402,0.1,375,bbse:bbse-misspecified,True,0.83,0.8933,335,0.0299,False,<100,f,West,1.0,1.0
+13,apache-complete,hosp-403,0.05,818,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,250 - 499,f,West,1.0,1.0
+13,apache-complete,hosp-403,0.1,818,bbse:bbse-misspecified,True,0.83,0.9071,742,0.0512,False,250 - 499,f,West,1.0,1.0
+13,apache-complete,hosp-412,0.05,190,baseline:failsafe|bbse:failsafe,False,,,0,,False,<100,f,West,1.0,1.0
+13,apache-complete,hosp-412,0.1,190,bbse:failsafe,True,0.83,0.7421,141,0.0284,False,<100,f,West,1.0,1.0
+13,apache-complete,hosp-424,0.05,355,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Northeast,1.0,1.0
+13,apache-complete,hosp-424,0.1,355,bbse:bbse-misspecified,True,0.83,0.938,333,0.021,False,<100,f,Northeast,1.0,1.0
+13,apache-complete,hosp-429,0.05,238,baseline:failsafe|bbse:failsafe,False,,,0,,False,,f,South,1.0,1.0
+13,apache-complete,hosp-429,0.1,238,bbse:failsafe,True,0.83,0.7899,188,0.0426,False,,f,South,1.0,1.0
+13,apache-complete,hosp-439,0.05,284,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,South,1.0,1.0
+13,apache-complete,hosp-439,0.1,284,bbse:bbse-misspecified,True,0.83,0.8415,239,0.1213,False,100 - 249,f,South,1.0,1.0
+14,apache-complete,hosp-59,0.05,409,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+14,apache-complete,hosp-59,0.1,409,bbse:bbse-misspecified,True,0.89,0.8875,363,0.011,False,<100,f,Midwest,1.0,1.0
+14,apache-complete,hosp-90,0.05,11,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+14,apache-complete,hosp-90,0.1,11,bbse:bbse-misspecified,True,0.89,0.8182,9,0.1111,False,<100,f,Midwest,1.0,1.0
+14,apache-complete,hosp-108,0.05,312,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,250 - 499,f,Midwest,1.0,1.0
+14,apache-complete,hosp-108,0.1,312,bbse:bbse-misspecified,True,0.89,0.8814,275,0.04,False,250 - 499,f,Midwest,1.0,1.0
+14,apache-complete,hosp-136,0.05,2,pool-too-small,False,,,0,,False,<100,f,South,1.0,1.0
+14,apache-complete,hosp-136,0.1,2,pool-too-small,False,,,0,,False,<100,f,South,1.0,1.0
+14,apache-complete,hosp-142,0.05,1251,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,f,South,1.0,1.0
+14,apache-complete,hosp-142,0.1,1251,bbse:failsafe,True,0.89,0.7802,976,0.0553,False,>= 500,f,South,1.0,1.0
+14,apache-complete,hosp-175,0.05,270,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,West,1.0,1.0
+14,apache-complete,hosp-175,0.1,270,bbse:failsafe,True,0.89,0.8333,225,0.0356,False,100 - 249,f,West,1.0,1.0
+14,apache-complete,hosp-184,0.05,741,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,South,1.0,1.0
+14,apache-complete,hosp-184,0.1,741,bbse:failsafe,True,0.89,0.7126,528,0.036,False,250 - 499,f,South,1.0,1.0
+14,apache-complete,hosp-197,0.05,1498,baseline:failsafe|bbse:failsafe,False,,,0,,False,,f,South,1.0,1.0
+14,apache-complete,hosp-197,0.1,1498,bbse:failsafe,True,0.89,0.8785,1316,0.0319,False,,f,South,1.0,1.0
+14,apache-complete,hosp-202,0.05,758,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,Northeast,1.0,1.0
+14,apache-complete,hosp-202,0.1,758,bbse:failsafe,True,0.89,0.7718,585,0.0325,False,100 - 249,f,Northeast,1.0,1.0
+14,apache-complete,hosp-217,0.05,954,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,South,1.0,1.0
+14,apache-complete,hosp-217,0.1,954,bbse:failsafe,True,0.89,0.6321,603,0.0249,False,250 - 499,f,South,1.0,1.0
+14,apache-complete,hosp-243,0.05,2403,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,f,South,1.0,1.0
+14,apache-complete,hosp-243,0.1,2403,bbse:failsafe,True,0.89,0.7749,1862,0.0322,False,>= 500,f,South,1.0,1.0
+14,apache-complete,hosp-248,0.05,1496,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+14,apache-complete,hosp-248,0.1,1496,bbse:bbse-misspecified,True,0.89,0.8636,1292,0.0364,False,100 - 249,f,Midwest,1.0,1.0
+14,apache-complete,hosp-265,0.05,6,pool-too-small,False,,,0,,False,,f,Midwest,1.0,1.0
+14,apache-complete,hosp-265,0.1,6,pool-too-small,False,,,0,,False,,f,Midwest,1.0,1.0
+14,apache-complete,hosp-283,0.05,1683,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,Midwest,1.0,1.0
+14,apache-complete,hosp-283,0.1,1683,bbse:failsafe,True,0.89,0.8247,1388,0.0353,False,250 - 499,f,Midwest,1.0,1.0
+14,apache-complete,hosp-303,0.05,130,baseline:failsafe|bbse:failsafe,False,,,0,,False,,f,,1.0,1.0
+14,apache-complete,hosp-303,0.1,130,bbse:failsafe,True,0.89,0.7308,95,0.0,False,,f,,1.0,1.0
+14,apache-complete,hosp-328,0.05,194,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+14,apache-complete,hosp-328,0.1,194,bbse:bbse-misspecified,True,0.89,0.9227,179,0.0056,False,<100,f,Midwest,1.0,1.0
+14,apache-complete,hosp-331,0.05,996,baseline:failsafe|bbse:failsafe,False,,,0,,False,,f,,1.0,1.0
+14,apache-complete,hosp-331,0.1,996,bbse:failsafe,True,0.89,0.8474,844,0.0213,False,,f,,1.0,1.0
+14,apache-complete,hosp-351,0.05,2,pool-too-small,False,,,0,,False,,f,,1.0,1.0
+14,apache-complete,hosp-351,0.1,2,pool-too-small,False,,,0,,False,,f,,1.0,1.0
+14,apache-complete,hosp-390,0.05,895,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,,1.0,1.0
+14,apache-complete,hosp-390,0.1,895,bbse:failsafe,True,0.89,0.7989,715,0.0406,False,250 - 499,f,,1.0,1.0
+14,apache-complete,hosp-412,0.05,190,baseline:failsafe|bbse:failsafe,False,,,0,,False,<100,f,West,1.0,1.0
+14,apache-complete,hosp-412,0.1,190,bbse:failsafe,True,0.89,0.7368,140,0.0286,False,<100,f,West,1.0,1.0
+14,apache-complete,hosp-423,0.05,133,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Northeast,1.0,1.0
+14,apache-complete,hosp-423,0.1,133,bbse:bbse-misspecified,True,0.89,0.782,104,0.0385,False,<100,f,Northeast,1.0,1.0
+14,apache-complete,hosp-424,0.05,355,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Northeast,1.0,1.0
+14,apache-complete,hosp-424,0.1,355,bbse:bbse-misspecified,True,0.89,0.8592,305,0.0098,False,<100,f,Northeast,1.0,1.0
+14,apache-complete,hosp-436,0.05,275,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,South,1.0,1.0
+14,apache-complete,hosp-436,0.1,275,bbse:bbse-misspecified,True,0.89,0.8182,225,0.0311,False,100 - 249,f,South,1.0,1.0
+14,apache-complete,hosp-443,0.05,2992,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,t,South,1.0,1.0
+14,apache-complete,hosp-443,0.1,2992,bbse:failsafe,True,0.89,0.8346,2497,0.0549,False,>= 500,t,South,1.0,1.0
+15,apache-complete,hosp-66,0.05,722,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+15,apache-complete,hosp-66,0.1,722,bbse:bbse-misspecified,True,0.87,0.8463,611,0.0229,False,100 - 249,f,Midwest,1.0,1.0
+15,apache-complete,hosp-67,0.05,280,baseline:failsafe|bbse:failsafe,False,,,0,,False,,f,Midwest,1.0,1.0
+15,apache-complete,hosp-67,0.1,280,bbse:failsafe,True,0.87,0.7893,221,0.0181,False,,f,Midwest,1.0,1.0
+15,apache-complete,hosp-91,0.05,12,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,,f,Midwest,1.0,1.0
+15,apache-complete,hosp-91,0.1,12,bbse:bbse-misspecified,True,0.87,0.5833,7,0.2857,False,,f,Midwest,1.0,1.0
+15,apache-complete,hosp-123,0.05,110,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,South,1.0,1.0
+15,apache-complete,hosp-123,0.1,110,bbse:bbse-misspecified,True,0.87,0.7909,87,0.0575,False,100 - 249,f,South,1.0,1.0
+15,apache-complete,hosp-141,0.05,1263,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,South,1.0,1.0
+15,apache-complete,hosp-141,0.1,1263,bbse:failsafe,True,0.87,0.8282,1046,0.0296,False,250 - 499,f,South,1.0,1.0
+15,apache-complete,hosp-143,0.05,640,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,,1.0,1.0
+15,apache-complete,hosp-143,0.1,640,bbse:failsafe,True,0.87,0.8844,566,0.03,False,250 - 499,f,,1.0,1.0
+15,apache-complete,hosp-175,0.05,270,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,West,1.0,1.0
+15,apache-complete,hosp-175,0.1,270,bbse:failsafe,True,0.87,0.8556,231,0.0346,False,100 - 249,f,West,1.0,1.0
+15,apache-complete,hosp-180,0.05,351,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,South,1.0,1.0
+15,apache-complete,hosp-180,0.1,351,bbse:failsafe,True,0.87,0.7664,269,0.0074,False,100 - 249,f,South,1.0,1.0
+15,apache-complete,hosp-183,0.05,1258,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,f,South,1.0,1.0
+15,apache-complete,hosp-183,0.1,1258,bbse:failsafe,True,0.87,0.7305,919,0.0403,False,>= 500,f,South,1.0,1.0
+15,apache-complete,hosp-188,0.05,2913,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,t,South,1.0,1.0
+15,apache-complete,hosp-188,0.1,2913,bbse:failsafe,True,0.87,0.7844,2285,0.0381,False,>= 500,t,South,1.0,1.0
+15,apache-complete,hosp-197,0.05,1498,baseline:failsafe|bbse:failsafe,False,,,0,,False,,f,South,1.0,1.0
+15,apache-complete,hosp-197,0.1,1498,bbse:failsafe,True,0.87,0.8498,1273,0.0259,False,,f,South,1.0,1.0
+15,apache-complete,hosp-224,0.05,445,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,South,1.0,1.0
+15,apache-complete,hosp-224,0.1,445,bbse:failsafe,True,0.87,0.6382,284,0.0387,False,100 - 249,f,South,1.0,1.0
+15,apache-complete,hosp-251,0.05,278,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+15,apache-complete,hosp-251,0.1,278,bbse:bbse-misspecified,True,0.87,0.8022,223,0.009,False,<100,f,Midwest,1.0,1.0
+15,apache-complete,hosp-259,0.05,502,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,t,Midwest,1.0,1.0
+15,apache-complete,hosp-259,0.1,502,bbse:failsafe,True,0.87,0.6036,303,0.0561,False,250 - 499,t,Midwest,1.0,1.0
+15,apache-complete,hosp-262,0.05,154,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+15,apache-complete,hosp-262,0.1,154,bbse:bbse-misspecified,True,0.87,0.8701,134,0.0448,False,<100,f,Midwest,1.0,1.0
+15,apache-complete,hosp-264,0.05,4334,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,t,Midwest,1.0,1.0
+15,apache-complete,hosp-264,0.1,4334,bbse:failsafe,True,0.87,0.7663,3321,0.0322,False,>= 500,t,Midwest,1.0,1.0
+15,apache-complete,hosp-272,0.05,984,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+15,apache-complete,hosp-272,0.1,984,bbse:bbse-misspecified,True,0.87,0.8801,866,0.0266,False,100 - 249,f,Midwest,1.0,1.0
+15,apache-complete,hosp-281,0.05,2033,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,Midwest,1.0,1.0
+15,apache-complete,hosp-281,0.1,2033,bbse:failsafe,True,0.87,0.8219,1671,0.0329,False,250 - 499,f,Midwest,1.0,1.0
+15,apache-complete,hosp-307,0.05,1552,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,South,1.0,1.0
+15,apache-complete,hosp-307,0.1,1552,bbse:failsafe,True,0.87,0.7977,1238,0.0396,False,250 - 499,f,South,1.0,1.0
+15,apache-complete,hosp-345,0.05,1568,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,South,1.0,1.0
+15,apache-complete,hosp-345,0.1,1568,bbse:failsafe,True,0.87,0.8673,1360,0.0316,False,250 - 499,f,South,1.0,1.0
+15,apache-complete,hosp-358,0.05,284,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+15,apache-complete,hosp-358,0.1,284,bbse:bbse-misspecified,True,0.87,0.8345,237,0.038,False,100 - 249,f,Midwest,1.0,1.0
+15,apache-complete,hosp-403,0.05,818,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,250 - 499,f,West,1.0,1.0
+15,apache-complete,hosp-403,0.1,818,bbse:bbse-misspecified,True,0.87,0.8545,699,0.0443,False,250 - 499,f,West,1.0,1.0
+15,apache-complete,hosp-407,0.05,267,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,West,1.0,1.0
+15,apache-complete,hosp-407,0.1,267,bbse:bbse-misspecified,True,0.87,0.8427,225,0.0222,False,100 - 249,f,West,1.0,1.0
+15,apache-complete,hosp-429,0.05,238,baseline:failsafe|bbse:failsafe,False,,,0,,False,,f,South,1.0,1.0
+15,apache-complete,hosp-429,0.1,238,bbse:failsafe,True,0.87,0.6513,155,0.0323,False,,f,South,1.0,1.0
+16,apache-complete,hosp-60,0.05,233,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+16,apache-complete,hosp-60,0.1,233,bbse:bbse-misspecified,True,0.85,0.8584,200,0.03,False,<100,f,Midwest,1.0,1.0
+16,apache-complete,hosp-66,0.05,722,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+16,apache-complete,hosp-66,0.1,722,bbse:bbse-misspecified,True,0.85,0.8421,608,0.0197,False,100 - 249,f,Midwest,1.0,1.0
+16,apache-complete,hosp-79,0.05,1161,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,f,Midwest,1.0,1.0
+16,apache-complete,hosp-79,0.1,1161,bbse:failsafe,True,0.85,0.7175,833,0.048,False,>= 500,f,Midwest,1.0,1.0
+16,apache-complete,hosp-83,0.05,49,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,,f,,1.0,1.0
+16,apache-complete,hosp-83,0.1,49,bbse:bbse-misspecified,True,0.85,0.7755,38,0.0526,False,,f,,1.0,1.0
+16,apache-complete,hosp-102,0.05,27,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,,f,,1.0,1.0
+16,apache-complete,hosp-102,0.1,27,bbse:bbse-misspecified,True,0.85,0.5926,16,0.0,False,,f,,1.0,1.0
+16,apache-complete,hosp-133,0.05,194,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,,f,South,1.0,1.0
+16,apache-complete,hosp-133,0.1,194,bbse:bbse-misspecified,True,0.85,0.9175,178,0.0112,False,,f,South,1.0,1.0
+16,apache-complete,hosp-140,0.05,502,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,t,South,1.0,1.0
+16,apache-complete,hosp-140,0.1,502,bbse:failsafe,True,0.85,0.8347,419,0.043,False,100 - 249,t,South,1.0,1.0
+16,apache-complete,hosp-182,0.05,263,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,South,1.0,1.0
+16,apache-complete,hosp-182,0.1,263,bbse:bbse-misspecified,True,0.85,0.7909,208,0.0288,False,100 - 249,f,South,1.0,1.0
+16,apache-complete,hosp-201,0.05,87,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,,1.0,1.0
+16,apache-complete,hosp-201,0.1,87,bbse:bbse-misspecified,True,0.85,0.8506,74,0.0135,False,100 - 249,f,,1.0,1.0
+16,apache-complete,hosp-202,0.05,758,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,Northeast,1.0,1.0
+16,apache-complete,hosp-202,0.1,758,bbse:failsafe,True,0.85,0.8232,624,0.0337,False,100 - 249,f,Northeast,1.0,1.0
+16,apache-complete,hosp-215,0.05,589,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,t,South,1.0,1.0
+16,apache-complete,hosp-215,0.1,589,bbse:failsafe,True,0.85,0.7317,431,0.0162,False,100 - 249,t,South,1.0,1.0
+16,apache-complete,hosp-256,0.05,564,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+16,apache-complete,hosp-256,0.1,564,bbse:bbse-misspecified,True,0.85,0.8706,491,0.0285,False,100 - 249,f,Midwest,1.0,1.0
+16,apache-complete,hosp-283,0.05,1683,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,Midwest,1.0,1.0
+16,apache-complete,hosp-283,0.1,1683,bbse:failsafe,True,0.85,0.7784,1310,0.029,False,250 - 499,f,Midwest,1.0,1.0
+16,apache-complete,hosp-301,0.05,897,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,South,1.0,1.0
+16,apache-complete,hosp-301,0.1,897,bbse:failsafe,True,0.85,0.8696,780,0.0269,False,100 - 249,f,South,1.0,1.0
+16,apache-complete,hosp-310,0.05,465,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+16,apache-complete,hosp-310,0.1,465,bbse:bbse-misspecified,True,0.85,0.871,405,0.0173,False,100 - 249,f,Midwest,1.0,1.0
+16,apache-complete,hosp-364,0.05,258,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+16,apache-complete,hosp-364,0.1,258,bbse:bbse-misspecified,True,0.85,0.876,226,0.0442,False,100 - 249,f,Midwest,1.0,1.0
+16,apache-complete,hosp-386,0.05,406,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,West,1.0,1.0
+16,apache-complete,hosp-386,0.1,406,bbse:failsafe,True,0.85,0.7759,315,0.0508,False,100 - 249,f,West,1.0,1.0
+16,apache-complete,hosp-398,0.05,288,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,West,1.0,1.0
+16,apache-complete,hosp-398,0.1,288,bbse:bbse-misspecified,True,0.85,0.8125,234,0.0556,False,<100,f,West,1.0,1.0
+16,apache-complete,hosp-416,0.05,1608,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,>= 500,t,Midwest,1.0,1.0
+16,apache-complete,hosp-416,0.1,1608,bbse:bbse-misspecified,True,0.85,0.8588,1381,0.0232,False,>= 500,t,Midwest,1.0,1.0
+16,apache-complete,hosp-424,0.05,355,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Northeast,1.0,1.0
+16,apache-complete,hosp-424,0.1,355,bbse:bbse-misspecified,True,0.85,0.9042,321,0.0187,False,<100,f,Northeast,1.0,1.0
+16,apache-complete,hosp-425,0.05,184,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Northeast,1.0,1.0
+16,apache-complete,hosp-425,0.1,184,bbse:bbse-misspecified,True,0.85,0.9076,167,0.0299,False,100 - 249,f,Northeast,1.0,1.0
+16,apache-complete,hosp-429,0.05,238,baseline:failsafe|bbse:failsafe,False,,,0,,False,,f,South,1.0,1.0
+16,apache-complete,hosp-429,0.1,238,bbse:failsafe,True,0.85,0.6849,163,0.0368,False,,f,South,1.0,1.0
+16,apache-complete,hosp-437,0.05,48,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,South,1.0,1.0
+16,apache-complete,hosp-437,0.1,48,bbse:bbse-misspecified,True,0.85,0.7917,38,0.0789,False,<100,f,South,1.0,1.0
+16,apache-complete,hosp-444,0.05,1210,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,,f,Midwest,1.0,1.0
+16,apache-complete,hosp-444,0.1,1210,bbse:bbse-misspecified,True,0.85,0.9083,1099,0.0355,False,,f,Midwest,1.0,1.0
+17,apache-complete,hosp-58,0.05,200,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+17,apache-complete,hosp-58,0.1,200,bbse:bbse-misspecified,True,0.85,0.84,168,0.0179,False,100 - 249,f,Midwest,1.0,1.0
+17,apache-complete,hosp-84,0.05,38,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+17,apache-complete,hosp-84,0.1,38,bbse:bbse-misspecified,True,0.85,0.7632,29,0.0345,False,<100,f,Midwest,1.0,1.0
+17,apache-complete,hosp-95,0.05,227,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+17,apache-complete,hosp-95,0.1,227,bbse:bbse-misspecified,True,0.85,0.9251,210,0.0095,False,100 - 249,f,Midwest,1.0,1.0
+17,apache-complete,hosp-138,0.05,152,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+17,apache-complete,hosp-138,0.1,152,bbse:bbse-misspecified,True,0.85,0.9671,147,0.0,False,<100,f,Midwest,1.0,1.0
+17,apache-complete,hosp-140,0.05,502,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,t,South,1.0,1.0
+17,apache-complete,hosp-140,0.1,502,bbse:failsafe,True,0.85,0.8825,443,0.0519,False,100 - 249,t,South,1.0,1.0
+17,apache-complete,hosp-157,0.05,834,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,West,1.0,1.0
+17,apache-complete,hosp-157,0.1,834,bbse:failsafe,True,0.85,0.6115,510,0.0451,False,250 - 499,f,West,1.0,1.0
+17,apache-complete,hosp-171,0.05,808,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,West,1.0,1.0
+17,apache-complete,hosp-171,0.1,808,bbse:failsafe,True,0.85,0.8639,698,0.0287,False,100 - 249,f,West,1.0,1.0
+17,apache-complete,hosp-176,0.05,1760,baseline:failsafe|bbse:failsafe,False,,,0,,False,,f,,1.0,1.0
+17,apache-complete,hosp-176,0.1,1760,bbse:failsafe,True,0.85,0.8358,1471,0.0279,False,,f,,1.0,1.0
+17,apache-complete,hosp-200,0.05,342,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Northeast,1.0,1.0
+17,apache-complete,hosp-200,0.1,342,bbse:bbse-misspecified,True,0.85,0.8246,282,0.0461,False,100 - 249,f,Northeast,1.0,1.0
+17,apache-complete,hosp-217,0.05,954,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,South,1.0,1.0
+17,apache-complete,hosp-217,0.1,954,bbse:failsafe,True,0.85,0.7034,671,0.0298,False,250 - 499,f,South,1.0,1.0
+17,apache-complete,hosp-220,0.05,652,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,t,South,1.0,1.0
+17,apache-complete,hosp-220,0.1,652,bbse:failsafe,True,0.85,0.8098,528,0.0246,False,250 - 499,t,South,1.0,1.0
+17,apache-complete,hosp-251,0.05,278,baseline:failsafe|bbse:failsafe,False,,,0,,False,<100,f,Midwest,1.0,1.0
+17,apache-complete,hosp-251,0.1,278,bbse:failsafe,True,0.85,0.795,221,0.0181,False,<100,f,Midwest,1.0,1.0
+17,apache-complete,hosp-259,0.05,502,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,t,Midwest,1.0,1.0
+17,apache-complete,hosp-259,0.1,502,bbse:failsafe,True,0.85,0.6235,313,0.0575,False,250 - 499,t,Midwest,1.0,1.0
+17,apache-complete,hosp-271,0.05,840,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,,f,Midwest,1.0,1.0
+17,apache-complete,hosp-271,0.1,840,bbse:bbse-misspecified,True,0.85,0.8964,753,0.0212,False,,f,Midwest,1.0,1.0
+17,apache-complete,hosp-275,0.05,527,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+17,apache-complete,hosp-275,0.1,527,bbse:failsafe,True,0.85,0.778,410,0.022,False,100 - 249,f,Midwest,1.0,1.0
+17,apache-complete,hosp-279,0.05,656,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+17,apache-complete,hosp-279,0.1,656,bbse:bbse-misspecified,True,0.85,0.8765,575,0.033,False,100 - 249,f,Midwest,1.0,1.0
+17,apache-complete,hosp-300,0.05,2938,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,t,Midwest,1.0,1.0
+17,apache-complete,hosp-300,0.1,2938,bbse:failsafe,True,0.85,0.8792,2583,0.0453,False,>= 500,t,Midwest,1.0,1.0
+17,apache-complete,hosp-328,0.05,194,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+17,apache-complete,hosp-328,0.1,194,bbse:bbse-misspecified,True,0.85,0.9381,182,0.0165,False,<100,f,Midwest,1.0,1.0
+17,apache-complete,hosp-365,0.05,1241,baseline:failsafe|bbse:failsafe,False,,,0,,False,,t,Midwest,1.0,1.0
+17,apache-complete,hosp-365,0.1,1241,bbse:failsafe,True,0.85,0.8791,1091,0.0137,False,,t,Midwest,1.0,1.0
+17,apache-complete,hosp-396,0.05,542,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,West,1.0,1.0
+17,apache-complete,hosp-396,0.1,542,bbse:failsafe,True,0.85,0.7694,417,0.0336,False,100 - 249,f,West,1.0,1.0
+17,apache-complete,hosp-400,0.05,1350,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,West,1.0,1.0
+17,apache-complete,hosp-400,0.1,1350,bbse:failsafe,True,0.85,0.8163,1102,0.0699,False,250 - 499,f,West,1.0,1.0
+17,apache-complete,hosp-420,0.05,3374,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,t,Northeast,1.0,1.0
+17,apache-complete,hosp-420,0.1,3374,bbse:failsafe,True,0.85,0.8429,2844,0.0643,False,>= 500,t,Northeast,1.0,1.0
+17,apache-complete,hosp-434,0.05,309,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,South,1.0,1.0
+17,apache-complete,hosp-434,0.1,309,bbse:bbse-misspecified,True,0.85,0.7994,247,0.0486,False,<100,f,South,1.0,1.0
+17,apache-complete,hosp-459,0.05,531,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,South,1.0,1.0
+17,apache-complete,hosp-459,0.1,531,bbse:bbse-misspecified,True,0.85,0.7947,422,0.0355,False,100 - 249,f,South,1.0,1.0
+18,apache-complete,hosp-56,0.05,188,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+18,apache-complete,hosp-56,0.1,188,bbse:bbse-misspecified,True,0.83,0.9309,175,0.0286,False,<100,f,Midwest,1.0,1.0
+18,apache-complete,hosp-102,0.05,27,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,,f,,1.0,1.0
+18,apache-complete,hosp-102,0.1,27,bbse:bbse-misspecified,True,0.83,0.7037,19,0.0526,False,,f,,1.0,1.0
+18,apache-complete,hosp-115,0.05,26,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,South,1.0,1.0
+18,apache-complete,hosp-115,0.1,26,bbse:bbse-misspecified,True,0.83,0.8846,23,0.087,False,<100,f,South,1.0,1.0
+18,apache-complete,hosp-125,0.05,199,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,South,1.0,1.0
+18,apache-complete,hosp-125,0.1,199,bbse:bbse-misspecified,True,0.83,0.9598,191,0.0262,False,<100,f,South,1.0,1.0
+18,apache-complete,hosp-136,0.05,2,pool-too-small,False,,,0,,False,<100,f,South,1.0,1.0
+18,apache-complete,hosp-136,0.1,2,pool-too-small,False,,,0,,False,<100,f,South,1.0,1.0
+18,apache-complete,hosp-143,0.05,640,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,,1.0,1.0
+18,apache-complete,hosp-143,0.1,640,bbse:failsafe,True,0.83,0.9219,590,0.0373,False,250 - 499,f,,1.0,1.0
+18,apache-complete,hosp-171,0.05,808,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,West,1.0,1.0
+18,apache-complete,hosp-171,0.1,808,bbse:failsafe,True,0.83,0.9072,733,0.0327,False,100 - 249,f,West,1.0,1.0
+18,apache-complete,hosp-182,0.05,263,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,South,1.0,1.0
+18,apache-complete,hosp-182,0.1,263,bbse:bbse-misspecified,True,0.83,0.8555,225,0.0311,False,100 - 249,f,South,1.0,1.0
+18,apache-complete,hosp-198,0.05,532,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,t,South,1.0,1.0
+18,apache-complete,hosp-198,0.1,532,bbse:failsafe,True,0.83,0.8665,461,0.0477,False,>= 500,t,South,1.0,1.0
+18,apache-complete,hosp-203,0.05,104,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,,1.0,1.0
+18,apache-complete,hosp-203,0.1,104,bbse:bbse-misspecified,True,0.83,0.8846,92,0.0761,False,100 - 249,f,,1.0,1.0
+18,apache-complete,hosp-217,0.05,954,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,South,1.0,1.0
+18,apache-complete,hosp-217,0.1,954,bbse:failsafe,True,0.83,0.7243,691,0.0318,False,250 - 499,f,South,1.0,1.0
+18,apache-complete,hosp-269,0.05,632,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,,f,,1.0,1.0
+18,apache-complete,hosp-269,0.1,632,bbse:bbse-misspecified,True,0.83,0.9351,591,0.0389,False,,f,,1.0,1.0
+18,apache-complete,hosp-271,0.05,840,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,,f,Midwest,1.0,1.0
+18,apache-complete,hosp-271,0.1,840,bbse:bbse-misspecified,True,0.83,0.931,782,0.0269,False,,f,Midwest,1.0,1.0
+18,apache-complete,hosp-307,0.05,1552,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,South,1.0,1.0
+18,apache-complete,hosp-307,0.1,1552,bbse:failsafe,True,0.83,0.8582,1332,0.0465,False,250 - 499,f,South,1.0,1.0
+18,apache-complete,hosp-312,0.05,556,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,South,1.0,1.0
+18,apache-complete,hosp-312,0.1,556,bbse:failsafe,True,0.83,0.8633,480,0.0563,False,100 - 249,f,South,1.0,1.0
+18,apache-complete,hosp-351,0.05,2,pool-too-small,False,,,0,,False,,f,,1.0,1.0
+18,apache-complete,hosp-351,0.1,2,pool-too-small,False,,,0,,False,,f,,1.0,1.0
+18,apache-complete,hosp-363,0.05,62,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+18,apache-complete,hosp-363,0.1,62,bbse:bbse-misspecified,True,0.83,1.0,62,0.0484,False,<100,f,Midwest,1.0,1.0
+18,apache-complete,hosp-381,0.05,201,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,West,1.0,1.0
+18,apache-complete,hosp-381,0.1,201,bbse:bbse-misspecified,True,0.83,0.8557,172,0.0291,False,<100,f,West,1.0,1.0
+18,apache-complete,hosp-385,0.05,1,pool-too-small,False,,,0,,False,,f,,1.0,1.0
+18,apache-complete,hosp-385,0.1,1,pool-too-small,False,,,0,,False,,f,,1.0,1.0
+18,apache-complete,hosp-396,0.05,542,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,West,1.0,1.0
+18,apache-complete,hosp-396,0.1,542,bbse:failsafe,True,0.83,0.7989,433,0.0346,False,100 - 249,f,West,1.0,1.0
+18,apache-complete,hosp-416,0.05,1608,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,>= 500,t,Midwest,1.0,1.0
+18,apache-complete,hosp-416,0.1,1608,bbse:bbse-misspecified,True,0.83,0.9129,1468,0.0327,False,>= 500,t,Midwest,1.0,1.0
+18,apache-complete,hosp-417,0.05,1620,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,250 - 499,f,South,1.0,1.0
+18,apache-complete,hosp-417,0.1,1620,bbse:bbse-misspecified,True,0.83,0.9148,1482,0.0547,False,250 - 499,f,South,1.0,1.0
+18,apache-complete,hosp-439,0.05,284,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,South,1.0,1.0
+18,apache-complete,hosp-439,0.1,284,bbse:failsafe,True,0.83,0.8169,232,0.1207,False,100 - 249,f,South,1.0,1.0
+18,apache-complete,hosp-444,0.05,1210,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,,f,Midwest,1.0,1.0
+18,apache-complete,hosp-444,0.1,1210,bbse:bbse-misspecified,True,0.83,0.943,1141,0.0438,False,,f,Midwest,1.0,1.0
+19,apache-complete,hosp-90,0.05,11,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+19,apache-complete,hosp-90,0.1,11,bbse:bbse-misspecified,True,0.87,0.8182,9,0.1111,False,<100,f,Midwest,1.0,1.0
+19,apache-complete,hosp-91,0.05,12,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,,f,Midwest,1.0,1.0
+19,apache-complete,hosp-91,0.1,12,bbse:bbse-misspecified,True,0.87,0.6667,8,0.25,False,,f,Midwest,1.0,1.0
+19,apache-complete,hosp-110,0.05,1494,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,South,1.0,1.0
+19,apache-complete,hosp-110,0.1,1494,bbse:failsafe,True,0.87,0.8902,1330,0.0376,False,100 - 249,f,South,1.0,1.0
+19,apache-complete,hosp-112,0.05,302,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,South,1.0,1.0
+19,apache-complete,hosp-112,0.1,302,bbse:failsafe,True,0.87,0.7815,236,0.0339,False,250 - 499,f,South,1.0,1.0
+19,apache-complete,hosp-123,0.05,110,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,South,1.0,1.0
+19,apache-complete,hosp-123,0.1,110,bbse:bbse-misspecified,True,0.87,0.8364,92,0.0543,False,100 - 249,f,South,1.0,1.0
+19,apache-complete,hosp-142,0.05,1251,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,f,South,1.0,1.0
+19,apache-complete,hosp-142,0.1,1251,bbse:failsafe,True,0.87,0.809,1012,0.0662,False,>= 500,f,South,1.0,1.0
+19,apache-complete,hosp-155,0.05,197,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,West,1.0,1.0
+19,apache-complete,hosp-155,0.1,197,bbse:failsafe,True,0.87,0.6802,134,0.0448,False,100 - 249,f,West,1.0,1.0
+19,apache-complete,hosp-175,0.05,270,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,West,1.0,1.0
+19,apache-complete,hosp-175,0.1,270,bbse:failsafe,True,0.87,0.8519,230,0.0348,False,100 - 249,f,West,1.0,1.0
+19,apache-complete,hosp-180,0.05,351,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,South,1.0,1.0
+19,apache-complete,hosp-180,0.1,351,bbse:bbse-misspecified,True,0.87,0.8063,283,0.0141,False,100 - 249,f,South,1.0,1.0
+19,apache-complete,hosp-184,0.05,741,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,South,1.0,1.0
+19,apache-complete,hosp-184,0.1,741,bbse:failsafe,True,0.87,0.6991,518,0.0405,False,250 - 499,f,South,1.0,1.0
+19,apache-complete,hosp-188,0.05,2913,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,t,South,1.0,1.0
+19,apache-complete,hosp-188,0.1,2913,bbse:failsafe,True,0.87,0.816,2377,0.0387,False,>= 500,t,South,1.0,1.0
+19,apache-complete,hosp-202,0.05,758,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,Northeast,1.0,1.0
+19,apache-complete,hosp-202,0.1,758,bbse:failsafe,True,0.87,0.8219,623,0.0385,False,100 - 249,f,Northeast,1.0,1.0
+19,apache-complete,hosp-207,0.05,202,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,South,1.0,1.0
+19,apache-complete,hosp-207,0.1,202,bbse:bbse-misspecified,True,0.87,0.8564,173,0.0809,False,<100,f,South,1.0,1.0
+19,apache-complete,hosp-224,0.05,445,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,South,1.0,1.0
+19,apache-complete,hosp-224,0.1,445,bbse:failsafe,True,0.87,0.6787,302,0.0364,False,100 - 249,f,South,1.0,1.0
+19,apache-complete,hosp-269,0.05,632,baseline:failsafe|bbse:failsafe,False,,,0,,False,,f,,1.0,1.0
+19,apache-complete,hosp-269,0.1,632,bbse:failsafe,True,0.87,0.8972,567,0.0388,False,,f,,1.0,1.0
+19,apache-complete,hosp-277,0.05,1281,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,Midwest,1.0,1.0
+19,apache-complete,hosp-277,0.1,1281,bbse:failsafe,True,0.87,0.8244,1056,0.0218,False,100 - 249,f,Midwest,1.0,1.0
+19,apache-complete,hosp-281,0.05,2033,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,Midwest,1.0,1.0
+19,apache-complete,hosp-281,0.1,2033,bbse:failsafe,True,0.87,0.7914,1609,0.0311,False,250 - 499,f,Midwest,1.0,1.0
+19,apache-complete,hosp-307,0.05,1552,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,South,1.0,1.0
+19,apache-complete,hosp-307,0.1,1552,bbse:failsafe,True,0.87,0.7887,1224,0.0384,False,250 - 499,f,South,1.0,1.0
+19,apache-complete,hosp-323,0.05,9,pool-too-small,False,,,0,,False,,f,,1.0,1.0
+19,apache-complete,hosp-323,0.1,9,pool-too-small,False,,,0,,False,,f,,1.0,1.0
+19,apache-complete,hosp-328,0.05,194,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,1.0,1.0
+19,apache-complete,hosp-328,0.1,194,bbse:bbse-misspecified,True,0.87,0.9381,182,0.011,False,<100,f,Midwest,1.0,1.0
+19,apache-complete,hosp-384,0.05,808,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,West,1.0,1.0
+19,apache-complete,hosp-384,0.1,808,bbse:failsafe,True,0.87,0.849,686,0.0466,False,250 - 499,f,West,1.0,1.0
+19,apache-complete,hosp-397,0.05,204,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,,1.0,1.0
+19,apache-complete,hosp-397,0.1,204,bbse:bbse-misspecified,True,0.87,0.7843,160,0.0437,False,100 - 249,f,,1.0,1.0
+19,apache-complete,hosp-403,0.05,818,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,250 - 499,f,West,1.0,1.0
+19,apache-complete,hosp-403,0.1,818,bbse:bbse-misspecified,True,0.87,0.8496,695,0.0432,False,250 - 499,f,West,1.0,1.0
+19,apache-complete,hosp-438,0.05,148,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,,f,South,1.0,1.0
+19,apache-complete,hosp-438,0.1,148,bbse:bbse-misspecified,True,0.87,0.8108,120,0.0167,False,,f,South,1.0,1.0
