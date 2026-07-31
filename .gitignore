@@ -49,3 +49,15 @@ eicu_*/
 *.eicu.npz
 EICU_records*
 EICU_*_records.*
+
+# ---------------------------------------------------------------------------
+# Dashboards built from the REAL extract embed RECORD-LEVEL data by design
+# ---------------------------------------------------------------------------
+# examples/explain_dashboard.py inlines every displayed case's raw feature
+# vector so the page can recompute the head's arithmetic offline. That is
+# harmless for the synthetic demo (explain_dashboard.html, committed) and is a
+# DUA violation for anything built from eICU. Deny by default: the analyst
+# keeps these LOCAL, exactly as with the extract itself (2026-07-31).
+explain_dashboard_eicu*.html
+*_eicu_dashboard.html
+*-eicu-dashboard.html
