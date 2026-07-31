@@ -76,6 +76,112 @@ _MAX_ANSWERED_SHOWN = 60
 _MAX_DECLINED_SHOWN = 500
 _MISSING_SUFFIXES = ("__missing", " (not recorded)")
 
+# The nine APACHE flags whose MEASUREMENT TIMING could not be verified from the
+# source documentation (EICU-PROTOCOL amendment A3, §5.4a). They are settled
+# from data by `outcome_screen`, not from DDL comments -- and the glossary says
+# so rather than inventing a confident definition.
+_TIMING_UNVERIFIED = {
+    "activetx", "thrombolytics", "graftcount", "electivesurgery", "ventday1",
+    "oobventday1", "oobintubday1", "ima", "midur",
+}
+
+# Plain-English meanings. `d` is what a clinician-facing reader sees; `t` adds
+# units / normal ranges for the analyst view. Entries are keyed by the RAW stem
+# (block prefix and missingness suffix stripped). Anything not listed simply
+# shows no tooltip -- an absent gloss is better than a guessed one.
+_GLOSSARY = {
+    # ---- admission / demographics ----
+    "age": ("Age in years at ICU admission.",
+            "Ages over 89 arrive as the token '> 89' and are stored as 90.0 "
+            "(HIPAA top-coding); see age_masked."),
+    "age_masked": ("Marker: this patient's age was recorded as 'over 89' "
+                   "rather than an exact number, for privacy.", ""),
+    "admissionheight": ("Height measured at admission.", "cm."),
+    "admissionweight": ("Weight measured at admission.", "kg."),
+    "pre_icu_hours": ("How long the patient was in the hospital before "
+                      "arriving in the ICU.",
+                      "Hours, derived from hospitaladmitoffset."),
+    "gender": ("Sex as recorded in the hospital record.", ""),
+    "ethnicity": ("Ethnicity as recorded in the hospital record.", ""),
+    "hospitaladmitsource": ("Where the patient came from when admitted to the "
+                            "hospital (emergency department, another floor, "
+                            "another hospital…).", ""),
+    "unitadmitsource": ("Where the patient came from when admitted to this "
+                        "ICU.", ""),
+    "unittype": ("What kind of ICU this is (medical, surgical, cardiac, "
+                 "neurological…).", ""),
+    "unitstaytype": ("Whether this ICU stay was a first admission, a "
+                     "readmission, or a transfer.", ""),
+    # ---- day-1 physiology (APACHE APS) ----
+    "intubated": ("A breathing tube was in place.", "0/1 on day 1."),
+    "vent": ("The patient was on a mechanical ventilator.", "0/1 on day 1."),
+    "dialysis": ("The patient received dialysis (machine support for failing "
+                 "kidneys).", "0/1 on day 1."),
+    "eyes": ("Coma scale — eye opening. 1 means none, 4 means opens "
+             "spontaneously. Lower is worse.",
+             "Glasgow Coma Scale eye component, 1–4."),
+    "motor": ("Coma scale — best movement response. 1 means none, 6 means "
+              "follows commands. Lower is worse.",
+              "Glasgow Coma Scale motor component, 1–6."),
+    "verbal": ("Coma scale — speech response. 1 means none, 5 means fully "
+               "oriented. Lower is worse.",
+               "Glasgow Coma Scale verbal component, 1–5."),
+    "meds": ("Medication flag recorded alongside the coma-scale assessment "
+             "(e.g. sedation that affects the score).", ""),
+    "urine": ("How much urine the patient produced on the first day. Very "
+              "little can mean the kidneys are struggling.", "mL over 24h."),
+    "wbc": ("White blood cell count — the infection-fighting cells. Very high "
+            "or very low can signal serious infection.", "×10⁹/L."),
+    "temperature": ("Body temperature.", "°C after unit normalisation "
+                    "(Fahrenheit values are converted)."),
+    "respiratoryrate": ("Breaths per minute.", "breaths/min."),
+    "sodium": ("Sodium level in the blood — a basic salt balance measure.",
+               "mEq/L."),
+    "heartrate": ("Heart beats per minute.", "beats/min."),
+    "meanbp": ("Average blood pressure. Low values mean organs may not be "
+               "getting enough blood.", "Mean arterial pressure, mmHg."),
+    "ph": ("How acidic the blood is. Normal is roughly 7.35–7.45; lower is "
+           "usually a sign of serious illness.", "Arterial pH."),
+    "hematocrit": ("The share of blood made up of red cells.", "%."),
+    "creatinine": ("A waste product the kidneys clear. Higher means the "
+                   "kidneys are working less well.", "mg/dL."),
+    "albumin": ("A blood protein. Low levels go with poor nutrition or liver "
+                "disease.", "g/dL."),
+    "pao2": ("How much oxygen is dissolved in the arterial blood.", "mmHg."),
+    "pco2": ("How much carbon dioxide is in the arterial blood.", "mmHg."),
+    "bun": ("Blood urea nitrogen — another measure of kidney function.",
+            "mg/dL."),
+    "glucose": ("Blood sugar.", "mg/dL."),
+    "bilirubin": ("A pigment the liver clears. High levels suggest the liver "
+                  "is struggling.", "mg/dL."),
+    "fio2": ("How much oxygen the patient is being given. 0.21 is ordinary "
+             "room air; 1.0 is pure oxygen.",
+             "Fraction, 0.21–1.0; percent values are normalised."),
+    # ---- chronic conditions / treatment (APACHE predictor variables) ----
+    "aids": ("Recorded chronic condition: AIDS.", "0/1."),
+    "hepaticfailure": ("Recorded chronic condition: liver failure.", "0/1."),
+    "lymphoma": ("Recorded chronic condition: lymphoma.", "0/1."),
+    "metastaticcancer": ("Recorded chronic condition: cancer that has spread.",
+                         "0/1."),
+    "leukemia": ("Recorded chronic condition: leukaemia.", "0/1."),
+    "immunosuppression": ("Immune system weakened, by disease or by "
+                          "treatment.", "0/1."),
+    "cirrhosis": ("Recorded chronic condition: cirrhosis of the liver.", "0/1."),
+    "diabetes": ("Recorded chronic condition: diabetes.", "0/1."),
+    "ejectfx": ("How much blood the heart's main chamber pumps out with each "
+                "beat.", "Ejection fraction, %."),
+    "readmit": ("This ICU stay was a readmission.", "0/1."),
+    "electivesurgery": ("Admitted for planned (not emergency) surgery.", "0/1."),
+    "activetx": ("Recorded as receiving active treatment.", "0/1."),
+    "thrombolytics": ("Clot-dissolving drugs were given.", "0/1."),
+    "graftcount": ("Number of bypass grafts (heart surgery).", "count."),
+    "ventday1": ("Recorded as ventilated on day 1.", "0/1."),
+    "oobventday1": ("An APACHE ventilation field.", ""),
+    "oobintubday1": ("An APACHE intubation field.", ""),
+    "ima": ("Internal mammary artery graft used (heart surgery).", "0/1."),
+    "midur": ("An APACHE duration field.", ""),
+}
+
 
 def _pretty(name):
     """Display name: drop the block prefix, say 'not recorded' in words."""
@@ -182,6 +288,39 @@ def build_dashboard(head, x, tau_star, out_path, feature_names=None,
     feature_names = list(feature_names)
     display = [_pretty(nm) for nm in feature_names]
     groups, onehot, flag_of = _classify(feature_names)
+
+    def _gloss(raw):
+        """(plain meaning, technical note) for one feature, or None."""
+        base = raw
+        for pre in ("aps_", "apv_"):
+            if base.startswith(pre):
+                base = base[len(pre):]
+        is_flag = _stem(base) is not None
+        if is_flag:
+            base = _stem(base)
+        if "=" in base:
+            base = base.split("=", 1)[0]
+        e = _GLOSSARY.get(base.strip().lower())
+        if e is None:
+            return None
+        plain, tech = e
+        if is_flag:
+            plain = ("Marker: this value was never recorded for this patient. "
+                     "The number shown beside it is a stand-in the model fills "
+                     "in — not a measurement. (" + plain + ")")
+            tech = ("Missingness indicator; parent imputed from the training "
+                    "split. " + tech).strip()
+        if base.strip().lower() in _TIMING_UNVERIFIED:
+            tech = (tech + " MEASUREMENT TIMING NOT VERIFIED from the source "
+                    "documentation (protocol A3): settled from data by "
+                    "outcome_screen, not from a DDL comment.").strip()
+        return [plain, tech]
+
+    glossary = {}
+    for j, raw in enumerate(feature_names):
+        g = _gloss(raw)
+        if g is not None:
+            glossary[str(j)] = g
     binary = [bool(np.all(np.isin(np.unique(x[:, j]), (0.0, 1.0))))
               for j in range(d)]
 
@@ -292,6 +431,7 @@ def build_dashboard(head, x, tau_star, out_path, feature_names=None,
         "feature_names": display,
         "raw_names": feature_names,
         "groups": groups,
+        "glossary": glossary,
         "onehot": onehot,
         "flag_of": {str(k): v for k, v in flag_of.items()},
         "binary": binary,
@@ -461,6 +601,20 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
   .tabpane { display:none; }
   .tabpane.on { display:block; }
   body.simple #tab-decision { display:block !important; }
+  /* TWO AUDIENCES, ONE FILE: each register is written twice and the body class
+     picks one. Losing these two rules renders BOTH at once and the modes look
+     identical -- exactly the regression this comment exists to prevent. */
+  body.simple .advonly { display:none !important; }
+  body.adv .simponly { display:none !important; }
+  /* the modes should not merely read differently, they should FEEL different */
+  body.simple { font-size:15.5px; }
+  body.simple main { max-width:980px; }
+  body.simple .card { padding:18px 20px; margin:14px 0; }
+  body.simple .srow { grid-template-columns:190px 1fr 92px 18px; }
+  body.simple .barlab, body.simple .srow label { font-size:13px; }
+  body.simple h2 { font-size:15px; }
+  body.adv main { max-width:1240px; }
+  body.adv .strip { gap:14px; }
   .statusbar { display:flex; gap:16px; flex-wrap:wrap; margin-top:12px;
                padding:7px 10px; border:1px solid var(--line); border-radius:8px;
                background:var(--bg); font-size:11.5px; color:var(--mut);
@@ -493,20 +647,98 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
   body.dark .outc.s { background:#14351f; color:#86efac; }
   @media print {
     .side,.fence,.modebar,.hist,.gaxis,footer,.tabs,.statusbar,#cohortstrip,
-    .helpov,button,.sub,#profpanel { display:none !important; }
+    .helpov,button,.sub,#profpanel,#legendcard { display:none !important; }
     .card { box-shadow:none; border-color:#bbb; page-break-inside:avoid; }
     body { background:#fff; }
+  }
+
+  /* ===================================================================
+     UI/UX pass — priorities 1,2,5,6,7,10. Each rule below fixes a
+     specific violation found by auditing this page against them.
+     =================================================================== */
+
+  /* P6 typography: 16px base, nothing below 12px, 1.5 line-height. */
+  body { font-size:16px; line-height:1.55; }
+  body.adv { font-size:14px; }
+  body.simple { font-size:16.5px; }
+  .note, .tag, .barval, .cl div, .chip, button, th, td, .statusbar,
+  .profrow .plab, .profrow .pval, .srow label, .srow .v, .barlab,
+  .gaxis, .sub, footer { font-size:12.5px; }
+  body.simple .note, body.simple .cl div, body.simple .srow label,
+  body.simple .barlab, body.simple button, body.simple .chip { font-size:13.5px; }
+  svg text { font-size:12px; }
+  .badge, .outc { font-size:12px; }
+
+  /* P1 accessibility: every clickable is reachable and shows focus.
+     .chip and the case rows are spans/divs, so they carry role=button and
+     tabindex in the markup; these give them a real focus ring. */
+  :where(a,button,select,input,[role="button"],summary):focus-visible {
+    outline:3px solid var(--pos); outline-offset:2px; border-radius:6px; }
+  .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+             overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
+
+  /* P2 touch targets: 44x44 minimum with >=8px separation. */
+  .chip { min-height:44px; display:inline-flex; align-items:center;
+          padding:0 14px; margin:0 4px 6px 0; }
+  button { min-height:44px; padding:8px 14px; margin:0 8px 8px 0; }
+  .rst { min-width:44px; min-height:44px; display:inline-flex;
+         align-items:center; justify-content:center; font-size:16px; }
+  .cl div { min-height:44px; display:flex; align-items:center; gap:6px; }
+  .tabbtn { min-height:44px; display:inline-flex; align-items:center; }
+  input[type=text], select { min-height:44px; }
+  input[type=range] { height:44px; }        /* P2: a slider is a touch target too */
+  input[type=checkbox] { width:22px; height:22px; }
+  summary { min-height:44px; display:flex; align-items:center; gap:6px; }
+
+  /* P10 charts: never colour alone — legends carry a shape/word too. */
+  .legend { display:flex; gap:14px; flex-wrap:wrap; margin-top:6px;
+            font-size:12.5px; color:var(--mut); align-items:center; }
+  .legend i { width:12px; height:12px; border-radius:3px; display:inline-block;
+              margin-right:5px; vertical-align:-1px; }
+
+  /* P6 tokens: the outcome pills were raw hex. */
+  :root { --died-bg:#fee2e2; --died-fg:#991b1b; --surv-bg:#dcfce7; --surv-fg:#166534; }
+  body.dark { --died-bg:#4a1d1d; --died-fg:#fca5a5; --surv-bg:#14351f; --surv-fg:#86efac; }
+  .outc.d { background:var(--died-bg); color:var(--died-fg); }
+  .outc.s { background:var(--surv-bg); color:var(--surv-fg); }
+
+  /* P5 responsive: no fixed-px grid on small screens, no horizontal scroll.
+     Wide tables scroll inside their own box, never the page body. */
+  .tblwrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  @media (max-width: 720px) {
+    header, main, footer { padding-left:14px; padding-right:14px; }
+    .side { flex:1 1 100%; }
+    .srow, body.simple .srow { grid-template-columns:1fr auto; gap:6px 10px; }
+    .srow label { text-align:left; grid-column:1 / -1; white-space:normal; }
+    .srow input[type=range] { grid-column:1 / 2; }
+    .srow .v { grid-column:2 / 3; }
+    .srow .rst { grid-column:2 / 3; justify-self:end; }
+    .barlab, .profrow .plab { width:104px; }
+    .profrow .pval { width:auto; }
+    .modebar { float:none; margin-bottom:8px; }
+  }
+
+  /* P7 motion: 150-300ms, and honour the OS setting. */
+  .bar, .needle { transition-duration:200ms; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition:none !important; animation:none !important;
+                             scroll-behavior:auto !important; }
   }
 </style>
 </head>
 <body class="simple">
 <header>
   <div class="modebar" style="float:right;display:flex;gap:6px;flex-wrap:wrap">
-    <span class="chip on" id="modeSimple" title="everyday language, no jargon">Plain language</span>
-    <span class="chip" id="modeAdv" title="analyst workbench">Advanced</span>
-    <span class="chip" id="outcT" title="reveal what actually happened (retrospective)">Outcomes</span>
-    <span class="chip" id="darkT" title="dark mode">&#9789;</span>
-    <span class="chip" id="printT" title="print the selected case">Print</span>
+    <span class="chip on" id="modeSimple" role="button" tabindex="0"
+      aria-pressed="true" title="everyday language, no jargon">Plain language</span>
+    <span class="chip" id="modeAdv" role="button" tabindex="0"
+      aria-pressed="false" title="analyst workbench">Advanced</span>
+    <span class="chip" id="outcT" role="button" tabindex="0" aria-pressed="false"
+      title="reveal what actually happened (retrospective)">Outcomes</span>
+    <span class="chip" id="darkT" role="button" tabindex="0" aria-pressed="false"
+      aria-label="Toggle dark mode" title="dark mode">&#9789;</span>
+    <span class="chip" id="printT" role="button" tabindex="0"
+      title="print the selected case">Print</span>
   </div>
   <h1>CertGate Explain</h1>
   <div class="sub">
@@ -543,6 +775,16 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
     </span>
   </div>
 
+  <details class="card" id="legendcard" style="margin-top:0">
+    <summary><b>What do these measurements mean?</b> <span class="note">plain-language
+      legend for every input the model uses</span></summary>
+    <div style="margin-top:8px">
+      <label for="glossQ" class="note">Search the legend</label>
+      <input type="text" id="glossQ" placeholder="e.g. creatinine" style="max-width:320px">
+    </div>
+    <div id="glossbox" style="margin-top:8px"></div>
+  </details>
+
   <details class="simponly card" style="margin-top:0">
     <summary>How to read this page (30 seconds)</summary>
     <ol class="note">
@@ -570,17 +812,21 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
       <span class="advonly">Confidence-score distribution over all
         <span id="ntot"></span> cases; red bins sit below &#964;* =
         <span id="taulab"></span>. Click a bin to filter the case list.</span></div>
+    <div class="legend"><span><i style="background:var(--histbar)"></i>answered
+      (at or above the bar)</span><span><i style="background:var(--histdec)"></i>handed
+      to a person (below the bar)</span><span>&#9474; dark line = the bar</span></div>
     <div class="advonly" id="profpanel" style="margin-top:12px"></div>
   </div>
 
   <div class="cols">
     <div class="side card">
       <h2>Cases</h2>
-      <span class="chip" data-f="all">all</span>
-      <span class="chip on" data-f="declined"><span class="simponly">handed over</span><span class="advonly">declined</span></span>
-      <span class="chip" data-f="answered">answered</span>
-      <span class="chip" id="binclear" style="display:none">score filter &#10005;</span>
-      <div style="margin:8px 0 4px"><input type="text" id="search" placeholder="search case number&#8230;" aria-label="search cases"></div>
+      <span class="chip" data-f="all" role="button" tabindex="0" aria-pressed="false">all</span>
+      <span class="chip on" data-f="declined" role="button" tabindex="0" aria-pressed="true"><span class="simponly">handed over</span><span class="advonly">declined</span></span>
+      <span class="chip" data-f="answered" role="button" tabindex="0" aria-pressed="false">answered</span>
+      <span class="chip" id="binclear" role="button" tabindex="0" style="display:none">score filter &#10005;</span>
+      <label for="search" class="note">Find a case by number</label>
+      <input type="text" id="search" placeholder="e.g. 11354">
       <div id="sitewrap" style="margin-bottom:4px"></div>
       <select id="sortSel" aria-label="sort cases">
         <option value="margin_asc">most borderline first</option>
@@ -670,6 +916,41 @@ const riskOf = x => sigmoid(logitOf(x));
 const phiOf = x => H.coef.map((c,j) => c*(x[j]-H.mu[j])/H.sd[j]);
 
 const dual = (s,a) => "<span class='simponly'>"+s+"</span><span class='advonly'>"+a+"</span>";
+const GLOSS = DATA.glossary || {};
+function tip(j) {                       // hover text for any feature label
+  const g = GLOSS[String(j)];
+  if (!g) return NAMES[j];
+  const adv = document.body.classList.contains("adv");
+  return NAMES[j] + " — " + g[0] + (adv && g[1] ? "  [" + g[1] + "]" : "");
+}
+function renderLegend() {
+  const q = (document.getElementById("glossQ") || {}).value || "";
+  const ql = q.trim().toLowerCase();
+  const seen = new Set(), rows = [];
+  NAMES.forEach((nm, j) => {
+    const g = GLOSS[String(j)];
+    if (!g) return;
+    const key = nm.replace(/=.*$/, "").replace(/ \(not recorded\)$/, "");
+    if (seen.has(key)) return;          // one row per concept, not per level
+    if (ql && !(key.toLowerCase().includes(ql) || g[0].toLowerCase().includes(ql)))
+      return;
+    seen.add(key);
+    rows.push("<tr><td style='white-space:nowrap'><b>" + key + "</b></td><td>" +
+      g[0] + (g[1] ? "<span class='advonly note'> " + g[1] + "</span>" : "") +
+      "</td></tr>");
+  });
+  const box = document.getElementById("glossbox");
+  if (!box) return;
+  box.innerHTML = rows.length
+    ? "<div class='tblwrap'><table>" + rows.join("") + "</table></div><p class='note'>" +
+      dual("These describe what each measurement is, not what any value means " +
+           "for a particular patient.",
+           "Definitions are for orientation; units and normal ranges are " +
+           "indicative. Fields whose measurement timing could not be verified " +
+           "from source documentation are marked and are settled from data by " +
+           "outcome_screen (protocol A3).") + "</p>"
+    : "<p class='note'>Nothing matches “" + q + "”.</p>";
+}
 function kindOf(j) {
   if (MEMBER_GROUP[j] !== undefined) return "category";
   if (PARENT_OF[j] !== undefined) return "recording";
@@ -688,12 +969,23 @@ function setMode(m) {
   document.body.classList.add(m);
   document.getElementById("modeSimple").classList.toggle("on", m === "simple");
   document.getElementById("modeAdv").classList.toggle("on", m === "adv");
+  press(document.getElementById("modeSimple"), m === "simple");
+  press(document.getElementById("modeAdv"), m === "adv");
+  renderLegend();
   if (m === "adv") redrawAdvanced();
 }
+// Enter/Space activate any role=button span, so nothing is mouse-only (P1).
+document.addEventListener("keydown", e => {
+  const t = e.target;
+  if ((e.key === "Enter" || e.key === " ") && t && t.getAttribute &&
+      t.getAttribute("role") === "button") { e.preventDefault(); t.click(); } });
+function press(el, on) { if (el) el.setAttribute("aria-pressed", on ? "true" : "false"); }
 document.getElementById("modeSimple").onclick = () => setMode("simple");
 document.getElementById("modeAdv").onclick = () => setMode("adv");
 document.getElementById("darkT").onclick = e => {
-  document.body.classList.toggle("dark"); e.target.classList.toggle("on"); };
+  const el = document.getElementById("darkT");
+  document.body.classList.toggle("dark"); el.classList.toggle("on");
+  press(el, document.body.classList.contains("dark")); };
 document.getElementById("printT").onclick = () => window.print();
 let showOutcomes = false;
 const outcChip = document.getElementById("outcT");
@@ -702,7 +994,7 @@ if (!DATA.include_outcomes) { outcChip.style.opacity = .4;
 outcChip.onclick = () => {
   if (!DATA.include_outcomes) return;
   showOutcomes = !showOutcomes;
-  outcChip.classList.toggle("on", showOutcomes);
+  outcChip.classList.toggle("on", showOutcomes); press(outcChip, showOutcomes);
   rebuildList(order[cur]); };
 
 // ---- certification banner ----
@@ -787,7 +1079,10 @@ document.getElementById("binclear").onclick = () => {
   const mx = Math.max(...P.mean_abs_phi_answered, ...P.mean_abs_phi_declined, 1e-9);
   let h = "<h2>Cohort abstention profile <span class='note'>mean |&#966;| per feature, " +
     "answered ("+P.n_answered.toLocaleString()+") vs declined ("+P.n_declined.toLocaleString()+
-    "), full cohort · top 14 by gap</span></h2>";
+    "), full cohort · top 14 by gap</span></h2>"+
+    "<div class='legend'><span><i style='background:var(--ans)'></i>answered</span>"+
+    "<span><i style='background:var(--dec)'></i>declined</span>"+
+    "<span>each bar's value is printed beside it, so colour is never the only cue</span></div>";
   idx.forEach(j => {
     const a = P.mean_abs_phi_answered[j], d = P.mean_abs_phi_declined[j];
     h += "<div class='profrow'><div class='plab' title='"+NAMES[j]+"'>"+NAMES[j]+"</div>"+
@@ -861,6 +1156,8 @@ function rebuildList(keepCase) {
           "declined · margin "+sigfmt(c.margin_to_answer))
         : "answered")+extra+"</span>";
     if (k === cur) row.className = "sel";
+    row.setAttribute("role", "button"); row.tabIndex = 0;
+    row.setAttribute("aria-label", "case " + c.idx + (c.site ? ", hospital " + c.site : ""));
     row.onclick = () => { cur = k; selectCase(); };
     caseList.appendChild(row); });
   const S = DATA.shown;
@@ -888,7 +1185,7 @@ function bars(phi, lead, idxs) {
     const v = phi[j]*lead, w = Math.abs(v)/mx*50;
     const bar = v >= 0 ? "<div class='bar pos' style='width:"+w+"%'></div>"
       : "<div class='bar neg' style='width:"+w+"%;margin-left:"+(50-w)+"%'></div>";
-    return "<div class='barrow'><div class='barlab' title='"+NAMES[j]+"'>"+NAMES[j]+
+    return "<div class='barrow'><div class='barlab' title='"+tip(j).replace(/'/g,"&#39;")+"'>"+NAMES[j]+
       "</div><div class='barbox'><div class='mid'></div>"+bar+"</div>"+
       "<div class='barval num'>"+sigfmt(v)+"</div></div>"; }).join(""); }
 
@@ -926,7 +1223,7 @@ function responseHTML(j) {
   if (g !== undefined) {                       // categorical: level table
     let h = "<p class='note'>Exact effect of switching <b>"+g+"</b> to each of "+
       "its levels, all other inputs held at their current what-if values.</p>"+
-      "<table><tr><th>level</th><th>risk</th><th>confidence</th><th>gate</th></tr>";
+      "<div class='tblwrap'><table><tr><th>level</th><th>risk</th><th>confidence</th><th>gate</th></tr>";
     ONEHOT[g].forEach(([jj,level]) => {
       const t = xCur.slice();
       ONEHOT[g].forEach(([kk]) => t[kk] = 0.0); t[jj] = 1.0;
@@ -934,16 +1231,16 @@ function responseHTML(j) {
       h += "<tr"+(on?" style='font-weight:600'":"")+"><td>"+level+(on?" ← current":"")+
         "</td><td class='num'>"+(riskOf(t)*100).toFixed(1)+"%</td><td class='num'>"+
         sc.toFixed(4)+"</td><td>"+(sc>=TAU?"answers":"declines")+"</td></tr>"; });
-    return h+"</table>"; }
+    return h+"</table></div>"; }
   if (DATA.binary[j]) {
     let h = "<p class='note'>Exact effect of each state of <b>"+NAMES[j]+"</b>.</p>"+
-      "<table><tr><th>state</th><th>risk</th><th>confidence</th><th>gate</th></tr>";
+      "<div class='tblwrap'><table><tr><th>state</th><th>risk</th><th>confidence</th><th>gate</th></tr>";
     [0,1].forEach(v => { const t = xCur.slice(); t[j] = v; const sc = scoreOf(t);
       h += "<tr"+(xCur[j]===v?" style='font-weight:600'":"")+"><td>"+(v?"yes":"no")+
         (xCur[j]===v?" ← current":"")+"</td><td class='num'>"+(riskOf(t)*100).toFixed(1)+
         "%</td><td class='num'>"+sc.toFixed(4)+"</td><td>"+(sc>=TAU?"answers":"declines")+
         "</td></tr>"; });
-    return h+"</table>"; }
+    return h+"</table></div>"; }
   const lo = H.mu[j]-4*H.sd[j], hi = H.mu[j]+4*H.sd[j];
   const W = 660, Hh = 190, PX = 46, PY = 16;
   const X = t => PX+(t-lo)/(hi-lo)*(W-PX-10), Y = s => Hh-24-(s-0.5)/0.5*(Hh-24-PY);
@@ -971,7 +1268,7 @@ function responseHTML(j) {
 
 function numbersHTML() {
   const c = DATA.cases[order[cur]], phi = phiOf(xCur);
-  let h = "<table><tr><th>j</th><th>feature</th><th>kind</th><th>x now</th>"+
+  let h = "<div class='tblwrap'><table><tr><th>j</th><th>feature</th><th>kind</th><th>x now</th>"+
     "<th>x recorded</th><th>z</th><th>w</th><th>&#966;</th></tr>";
   const ord = NAMES.map((_,j)=>j).sort((a,b)=>Math.abs(phi[b])-Math.abs(phi[a]));
   ord.slice(0,40).forEach(j => {
@@ -979,7 +1276,7 @@ function numbersHTML() {
       "</td><td class='num'>"+sigfmt(xCur[j],5)+"</td><td class='num'>"+sigfmt(c.x[j],5)+
       "</td><td class='num'>"+sigfmt((xCur[j]-H.mu[j])/H.sd[j],4)+"</td><td class='num'>"+
       sigfmt(H.coef[j],4)+"</td><td class='num'>"+sigfmt(phi[j],4)+"</td></tr>"; });
-  h += "</table><p class='note'>Top 40 of "+D+" by |&#966;|. intercept "+
+  h += "</table></div><p class='note'>Top 40 of "+D+" by |&#966;|. intercept "+
     sigfmt(H.intercept,5)+" · logit "+sigfmt(logitOf(xCur),6)+" · L* "+
     L_STAR.toFixed(6)+"</p><button id='copyJson'>Copy case as JSON</button>"+
     "<button id='copyCsv'>Copy attributions as CSV</button>"+
@@ -991,7 +1288,7 @@ function hospitalsHTML() {
   let h = "<p class='note'>The hospital is the unit the guarantee is stated over. "+
     "Coverage and answered-error are computed over ALL cases at this hospital, "+
     "not just the ones embedded above."+(DATA.has_oracle?" Error columns are "+
-    "RETROSPECTIVE (oracle labels).":"")+"</p><table><tr><th>hospital</th><th>n</th>"+
+    "RETROSPECTIVE (oracle labels).":"")+"</p><div class='tblwrap'><table><tr><th>hospital</th><th>n</th>"+
     "<th>answered</th><th>coverage</th>"+(DATA.has_oracle?
     "<th>answered error</th><th>answered positives</th>":"")+"</tr>";
   DATA.per_site.slice(0,40).forEach(r => {
@@ -999,7 +1296,7 @@ function hospitalsHTML() {
       r.n_answered+"</td><td class='num'>"+fmt(r.coverage)+"</td>"+
       (DATA.has_oracle ? "<td class='num'>"+fmt(r.answered_err)+"</td><td class='num'>"+
         fmt(r.answered_pos_frac)+"</td>" : "")+"</tr>"; });
-  return h+"</table><p class='note'>Showing "+Math.min(40,DATA.per_site.length)+
+  return h+"</table></div><p class='note'>Showing "+Math.min(40,DATA.per_site.length)+
     " of "+DATA.per_site.length+" hospitals, largest first.</p>"; }
 
 function calibrationHTML() {
@@ -1025,12 +1322,12 @@ function calibrationHTML() {
   s += "<path class='curve' d='"+path+"'/>";
   s += "<text x='"+(W/2)+"' y='"+(Hh-6)+"' text-anchor='middle'>mean predicted risk "+
     "(axis max "+(mx*100).toFixed(0)+"%)</text></svg>";
-  s += "<table><tr><th>predicted band</th><th>n answered</th><th>mean predicted</th>"+
+  s += "<div class='tblwrap'><table><tr><th>predicted band</th><th>n answered</th><th>mean predicted</th>"+
     "<th>observed</th></tr>";
   R.forEach(b => { s += "<tr><td>"+(b.lo*100).toFixed(0)+"–"+(b.hi*100).toFixed(0)+
     "%</td><td class='num'>"+b.n+"</td><td class='num'>"+(b.mean_predicted*100).toFixed(1)+
     "%</td><td class='num'>"+(b.observed*100).toFixed(1)+"%</td></tr>"; });
-  return s+"</table>"; }
+  return s+"</table></div>"; }
 
 function redrawAdvanced() {
   if (!order.length || xCur === null) return;
@@ -1136,7 +1433,7 @@ function updateLiveThrottled() {
 function renderDetail() {
   const c = DATA.cases[order[cur]];
   visIdx = computeVisIdx();
-  let h = "<p><span class='verdict' id='verdictPill'></span>"+
+  let h = "<p><span class='verdict' id='verdictPill' role='status' aria-live='polite'></span>"+
     "<span class='badge' id='modBadge' style='display:none'>"+
     dual("you changed the inputs — a what-if, not the real case",
          "inputs modified — live what-if")+"</span>"+
@@ -1183,7 +1480,8 @@ function renderDetail() {
     const id = "oh_"+g.replace(/\W/g,"_");
     const on = ONEHOT[g].find(([jj]) => xCur[jj] >= 0.5);
     const orig = ONEHOT[g].find(([jj]) => c.x[jj] >= 0.5);
-    h += "<div class='srow'><label title='"+g+"'>"+g+"</label>"+
+    h += "<div class='srow'><label title='"+tip(ONEHOT[g][0][0]).replace(/'/g,"&#39;")+
+      "'>"+g+"</label>"+
       "<select id='"+id+"' data-g='"+g+"' aria-label='what-if level for "+g+"'>"+
       ONEHOT[g].map(([jj,lv]) => "<option value='"+jj+"'"+
         (on && on[0]===jj ? " selected" : "")+">"+lv+"</option>").join("")+
@@ -1203,7 +1501,7 @@ function renderDetail() {
     byGroup[g].forEach(j => {
       const f = FLAG_OF[String(j)], notrec = f !== undefined && xCur[f] >= 0.5;
       const lab = "<label id='lb"+j+"' class='"+(notrec?"notrec":"")+"' data-j='"+j+
-        "' title='"+NAMES[j]+"'>"+NAMES[j]+"</label>";
+        "' title='"+tip(j).replace(/'/g,"&#39;")+"'>"+NAMES[j]+"</label>";
       if (DATA.binary[j]) {
         h += "<div class='srow'>"+lab+"<span><input type='checkbox' data-j='"+j+"'"+
           (xCur[j]>=0.5?" checked":"")+" aria-label='toggle "+NAMES[j]+
@@ -1237,7 +1535,8 @@ function renderDetail() {
       "<th class='advonly'>std &#916;z</th><th>"+dual("kind","kind")+"</th><th>"+
       dual("it would then say","answers as")+"</th></tr>";
     c.counterfactuals.forEach(cf => {
-      h += "<tr><td>"+NAMES[cf.j]+"</td><td class='num'>"+signed(cf.delta_x)+
+      h += "<tr><td title='"+tip(cf.j).replace(/'/g,"&#39;")+"'>"+NAMES[cf.j]+
+        "</td><td class='num'>"+signed(cf.delta_x)+
         "</td><td class='num advonly'>"+signed(cf.delta_z)+"</td><td>"+
         (kindTag(cf.j) || "<span class='tag'>"+dual("measurement","clinical")+"</span>")+
         "</td><td>"+dual(cf.answers_as==="predicted-positive"?"higher risk":"lower risk",
@@ -1282,6 +1581,9 @@ function renderDetail() {
   box.querySelectorAll(".rst[data-j]").forEach(rs => {
     rs.addEventListener("click", () => { const j = +rs.dataset.j;
       xCur[j] = c.x[j]; logEvt(NAMES[j]+": restored"); setControls(); updateLive(); }); });
+  box.querySelectorAll(".rst[data-j],.rst[data-g]").forEach(rs => {
+    rs.setAttribute("role", "button"); rs.tabIndex = 0;
+    rs.setAttribute("aria-label", "restore recorded value"); });
   box.querySelectorAll(".rst[data-g]").forEach(rs => {
     rs.addEventListener("click", () => { const g = rs.dataset.g;
       ONEHOT[g].forEach(([jj]) => xCur[jj] = c.x[jj]);
@@ -1320,7 +1622,9 @@ function renderDetail() {
 // ---- controls ----
 document.querySelectorAll(".side .chip[data-f]").forEach(ch => ch.onclick = () => {
   document.querySelectorAll(".side .chip[data-f]").forEach(c => c.classList.remove("on"));
-  ch.classList.add("on"); filter = ch.dataset.f; rebuildList(); });
+  ch.classList.add("on");
+  document.querySelectorAll(".side .chip[data-f]").forEach(c => press(c, c === ch));
+  filter = ch.dataset.f; rebuildList(); });
 document.getElementById("search").addEventListener("input", e => {
   query = e.target.value.trim(); rebuildList(); });
 document.getElementById("sortSel").addEventListener("change", e => {
@@ -1358,6 +1662,9 @@ function exploreUpdate() {
       (n-ans).toLocaleString()+" declined)"); }
 tX.addEventListener("input", exploreUpdate);
 exploreUpdate();
+const gq = document.getElementById("glossQ");
+if (gq) gq.addEventListener("input", renderLegend);
+renderLegend();
 rebuildList();
 </script>
 </body>
