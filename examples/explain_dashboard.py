@@ -266,7 +266,8 @@ def _case_payload(head, x_row, idx, tau_star, names, site=None, outcome=None):
 
 def build_dashboard(head, x, tau_star, out_path, feature_names=None,
                     oracle_y=None, cohort_label="synthetic demonstration cohort",
-                    certificate=None, site_ids=None, include_outcomes=False):
+                    certificate=None, site_ids=None, include_outcomes=False,
+                    provenance=None):
     """Write a self-contained interactive explanation dashboard for ``x``.
 
     ``feature_names`` are RAW model names (``aps_ph``, ``gender=Male``,
@@ -278,6 +279,13 @@ def build_dashboard(head, x, tau_star, out_path, feature_names=None,
     the per-hospital panel. ``oracle_y`` enables the AGGREGATE retrospective
     panels (composition, reliability); per-case outcome reveal additionally
     requires ``include_outcomes=True`` and is always labelled retrospective.
+
+    ``provenance`` answers the first question a reader asks — *why are there
+    only N cases when the dataset has far more?* — by stating where this pool
+    sits in the site-level split, e.g. ``dict(pool="24 held-out hospitals",
+    cohort_total=164322, cohort_sites=207,
+    splits="73 train / 36 aux / 74 calibration", replicate=0)``. Omitted, the
+    page says nothing rather than guessing.
 
     Display caps are disclosed on the page, never silent. Returns ``out_path``.
     """
@@ -423,6 +431,7 @@ def build_dashboard(head, x, tau_star, out_path, feature_names=None,
     payload = {
         "tau_star": float(tau_star),
         "cohort_label": cohort_label,
+        "provenance": provenance,
         "certificate": certificate,
         "n_total": int(n),
         "n_answered": int(answered.sum()),
@@ -802,6 +811,7 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
 
   <div class="card">
     <div class="strip" id="cohortstrip"></div>
+    <div id="provbox"></div>
     <div class="hist" id="hist"></div>
     <div class="gaxis">
       <span><span class="simponly">totally unsure (50/50)</span><span class="advonly">score 0.50</span></span>
@@ -1041,6 +1051,28 @@ if (CP.oracle_positive_fraction_answered !== null) {
   stat("of handed-over: truly higher-risk","declined oracle-positive (retrospective)",
        CP.oracle_positive_fraction_declined,true);
 }
+
+// ---- provenance: where this pool sits in the site-level split ----
+(function(){
+  const P = DATA.provenance, box = document.getElementById("provbox");
+  if (!P || !box) return;
+  const tot = P.cohort_total ? P.cohort_total.toLocaleString() : null;
+  const rep = (P.replicate === undefined || P.replicate === null)
+    ? "" : " (split " + P.replicate + " of the validity arm; each split holds " +
+      "out a different set of hospitals)";
+  box.innerHTML = "<p class='note' style='margin:6px 0 0'>" + dual(
+    "These " + DATA.n_total.toLocaleString() + " cases come from <b>" + P.pool +
+      "</b>" + (tot ? " — the rest of the " + tot + " patients" +
+      (P.cohort_sites ? " across " + P.cohort_sites + " hospitals" : "") +
+      " were used to build the model and set its safety bar, so showing them " +
+      "here would flatter it" : "") + ". These hospitals the model has never " +
+      "seen in any form: they stand in for a hospital adopting it tomorrow" + rep + ".",
+    "Pool: <b>" + P.pool + "</b>" + (tot ? " of " + tot + " cohort stays" +
+      (P.cohort_sites ? " over " + P.cohort_sites + " hospitals" : "") : "") +
+      (P.splits ? "; the remainder splits " + P.splits +
+       " — displaying them would be optimistic (train) or circular (calibration, " +
+       "which selected τ*)" : "") + rep + ".") + "</p>";
+})();
 
 // ---- histogram ----
 const NB = 50, bins = new Array(NB).fill(0);
@@ -1682,7 +1714,12 @@ def main():
     out = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                        "explain_dashboard.html")
     path = build_dashboard(head, pool.x, tau_star=0.77, out_path=out,
-                           oracle_y=pool.y, site_ids=list(pool.site_id))
+                           oracle_y=pool.y, site_ids=list(pool.site_id),
+                           provenance=dict(
+                               pool=f"{len(set(pool.site_id))} held-out demo sites",
+                               cohort_total=coh.n + pool.n,
+                               cohort_sites=len(set(coh.site_id)) + len(set(pool.site_id)),
+                               splits="train / aux / calibration sites"))
     n_declined = int((head.score(pool.x) < 0.77).sum())
     print(f"[dashboard] wrote {path} ({pool.n} cases, {n_declined} declined)")
 
