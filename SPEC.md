@@ -311,6 +311,44 @@ def cohort_abstention_profile(head, x, answered_mask) -> dict
     # mean |phi_j| answered vs declined + gap ranking. When EITHER population is empty the
     # gap is undefined: gap_ranking is an EMPTY array, never argsort of all-NaN (which
     # returns the identity permutation and fabricates feature 0 as top driver — audit V22).
+def counterfactual_to_answer(head, x_row, tau_star) -> dict
+    # Minimal counterfactuals into the answer region (2026-07-31; the contrastive
+    # form the reject-explanation literature is ahead on — R3-15/R3-16). The head is
+    # linear in z = (x-mu)/sd, so the smallest standardized-L2 move that makes a declined
+    # case answerable on its current side (s = sign(logit), tie at 0 -> +1; s is also
+    # returned as `direction`) is closed-form:
+    #   delta_z* = s*m*coef/||coef||^2, distance m/||coef||_2, m = max(L* - |logit|, 0);
+    # the single-feature counterfactual is delta_z_j = s*m/coef_j (raw delta_x_j =
+    # sd_j*delta_z_j), +/-inf where coef_j == 0, ranked ascending |delta_z_j| over the
+    # finite entries. The REPORTED distances (l2_distance_z, single_feature_delta_*)
+    # are these exact real-arithmetic minima. The RETURNED delta vectors carry an
+    # additional _EPS_ANSWER_LOGIT = 1e-9 of logit-space headroom (i.e. they are
+    # computed from m + 1e-9), because a delta that lands EXACTLY on |logit| = L* is
+    # DECLINED by the deployed float64 answering rule head.score(x) >= tau on a
+    # measurable fraction of cases: sigmoid(log(tau/(1-tau))) < tau in float64 for 6 of
+    # the 23 frozen TAU_GRID thresholds (each by 1 ULP), summation-order noise between
+    # the attribution sum and Head.logit's BLAS dot reaches ~3e-14, and the raw-space
+    # round trip adds ~1e-12 — an exact landing failed the deployed rule on 18.2% of
+    # the fixture head's declined cases (adversarial verification 2026-07-31). The
+    # 1e-9 headroom dominates every measured shortfall while moving the realized
+    # confidence by < 3e-10. flip_verified re-evaluates THE DEPLOYED RULE
+    # head.score(x + delta_x_min_l2) >= tau_star with NO tolerance — the exact
+    # comparison pipeline.py answers with; a permissive |logit|-with-tolerance check
+    # is exactly what let the boundary defect through. confidence_at_flip is the
+    # REALIZED head.score at the flipped point (>= tau_star, within ~3e-10 above it:
+    # still the weakest answerable answer, and saying so is part of the artifact's
+    # honesty) and answered_class_on_flip the current side's predicted class; BOTH are
+    # None unless (declined and flip_verified). opposite_side_distance_z =
+    # (L* + |logit|)/||coef|| (formula pinned by test) is reported so the same-side
+    # minimum is visibly minimal (crossing sides answers as the OTHER class).
+    # Answered cases return zero deltas, distance 0, and an EMPTY ranking — never the
+    # argsort-of-degenerate identity permutation (audit V22 pattern); an all-zero head
+    # (coef == 0) cannot flip: distance inf, flip_verified False, empty ranking.
+    # These are SCORE-SPACE recourse statements about the gate, never causal or
+    # clinically achievable actions: features are not independently manipulable (a
+    # __missing indicator cannot "move 0.4"), and the artifact answers "what would the
+    # gate need", not "what should the clinician do". That caveat travels with the
+    # artifact wherever it is displayed.
 def composition(head, target_x, answered_mask, rho_point=None, oracle_y=None) -> dict
     # three tagged objects (audit F25): predicted-class (estimated);
     # BBSE-implied true-class from (c0,c1,q) inversion if rho given (estimated, tagged);
@@ -515,7 +553,18 @@ per file below; regressions to any of them are regressions to V6.
   (fixture audit 2026-07-25): full fit, empty-target and target-clustering declines all
   emit bbse_diagnostics()'s exact key set.
 - `test_explain.py` — sum(phi) + base == logit to 1e-10; abstention margin > 0 iff declined;
-  composition three objects present with correct tags.
+  composition three objects present with correct tags; counterfactual_to_answer: the
+  minimal-L2 and top single-feature deltas FLIP the case under the DEPLOYED rule
+  head.score(x_cf) >= tau (no tolerance) — including at the float64-hostile grid
+  thresholds 0.63 and 0.93 where sigmoid(L*) < tau, the regression for the 2026-07-31
+  boundary finding — while (1 - 1e-4) of either delta still declines under the same
+  rule; no standardized move of norm below the reported exact minimum flips in ANY
+  direction (Cauchy–Schwarz, checked over random directions); the delta's norm exceeds
+  the reported exact minimum by exactly the documented headroom; coef_j == 0 gives inf
+  and is excluded from the ranking; answered cases return zero deltas, an EMPTY ranking
+  and None flip fields; the all-zero head reports distance inf with flip_verified
+  False; opposite_side_distance_z equals (L* + |logit|)/||coef|| to 1e-12 (formula
+  pinned, not just the ordering).
 - `test_report.py` — unit-pins `_combine_alpha`'s OR-rule delta accounting (REVIEW-FABLE A-1)
   against DIVERGENT mode results: deploy = max tau across modes' own deployed thresholds; a
   mode appears in `modes` ONLY if the deployed tau_idx is in its own certified list (subset-

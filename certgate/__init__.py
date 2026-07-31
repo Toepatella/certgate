@@ -18,7 +18,7 @@ from certgate.certify import (influence_atoms, wsr_reject, margin_floor,
                               certification_rng)
 from certgate.shift import BBSEFit, fit_bbse, certify_bbse
 from certgate.explain import (global_importance, local_attribution,
-                              abstention_explanation,
+                              abstention_explanation, counterfactual_to_answer,
                               cohort_abstention_profile, composition)
 from certgate.harness import (wilson_lcb, hard_violation,
                               exceedance_reference, SIZE_BINS)
@@ -36,7 +36,7 @@ __all__ = [
     "fixed_sequence_walk", "certification_rng",
     "BBSEFit", "fit_bbse", "certify_bbse",
     "global_importance", "local_attribution", "abstention_explanation",
-    "cohort_abstention_profile", "composition",
+    "counterfactual_to_answer", "cohort_abstention_profile", "composition",
     "wilson_lcb", "hard_violation", "exceedance_reference", "SIZE_BINS",
     "provenance", "build_report", "render_text",
     "run_certgate",
