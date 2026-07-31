@@ -1,0 +1,10 @@
+step,n_stays,n_sites,n_positive,prevalence,arm
+raw-unit-stays,200859,208,18004,0.089635,primary
+site-parseable,200859,208,18004,0.089635,primary
+outcome-known,199108,207,18004,0.090423,primary
+adult,198490,207,17982,0.090594,primary
+first-stay,164322,207,14603,0.088868,primary
+primary-cohort,164322,207,14603,0.088868,primary
+apache-aps-linked,157403,207,14285,0.090754,primary
+apache-result-linked,138496,190,12270,0.088595,primary
+apache-complete-arm,135127,190,11959,0.088502,primary

@@ -10,6 +10,38 @@ A selective-prediction gate that certifies, with finite-sample confidence 1−δ
 
 **Provenance:** this is a deliberately simplified v2 restart of an audited v1 testbed. Every scope cut (covariate-shift mode, kNN screen, temporal machinery, preregistration apparatus) and every hardening (loud input validation, sha256-only seeds, record-carrying cluster gate, bootstrap top-up-or-decline, provenance blocks, pinned deps, literal-pinned constants test) traces to a specific v1 audit finding. The audit lessons are native to this design — **do not regress them.**
 
+## REAL DATA RAN AND CERTIFIED (2026-07-31)
+
+The eICU-CRD v2.0 extract arrived and the frozen operator checklist was executed end to end.
+**Headline: α=0.10 certified on all 20 replicates, α=0.05 on none; mean coverage 0.890 (τ mean
+0.793); F-A's fresh-pool `rm_exceed` fired 0/20; all five pre-declared failure criteria
+(F-A–F-E) clear; leak_alarm 0/20.** Replicate 0: τ=0.85, coverage 0.855, answered-set risk
+0.0387 (95% cluster-bootstrap 0.0356–0.0422), baseline mode, 74 calibration hospitals.
+Cohort 164,322 first-stays over 207 hospitals, prevalence 8.89%. All five reference row
+counts matched the published totals exactly and every header read `lower` — the E-13 fix
+held on the genuine extract. **The E-9 leak screen INVERTED:** ratio 0.506 vs cap 2.0,
+APACHE-absent stays have *lower* mortality (4.6% vs 9.1%) and shorter stays — early
+*discharge*, not early death, dominates. F-D's three legs clear (head AUC 0.867 max vs
+ceiling 0.90; ablation drop 0.0036 vs cap 0.05; **0 of 161 features** past the 0.75 outcome
+screen, settling A3's nine timing-unverified flags from data). Zero categorical drift — the
+pre-frozen level tuples were right. Predictions: **P1/P3/P6/P7 confirmed, P2/P4/P5
+falsified** — and P4's falsification is the *desired* outcome (top abstention drivers are
+physiology: `aps_motor`, `aps_fio2`, `aps_ph`, `aps_intubated`, not missingness; under A1 a
+confirmed P4 would have been the leak's signature). Honest caveat for the paper: among
+answered cases the oracle positive rate is 4.6% vs 8.9% cohort-wide — the gate earns its low
+error partly by abstaining where deaths concentrate (three-way composition disclosure).
+APACHE-IVa comparator on the same answered set: AUC 0.820, Brier 0.038. Per-hospital arm
+477/480 certified, 7/480 per-site hard violations (1.5% < δ). Egress check clean; the
+extract is gitignored and was never committed.
+
+**Amendment A6 is the ONE post-hoc amendment** (logged data-seen=YES, the only one that
+relaxes rather than tightens): the released extract carries exactly one negative-not-`-1`
+cell in ~4.1M (`apacheApsVar.urine = -11245.5648`, stay 1805017, in cohort) against an
+otherwise contiguous non-negative support, so `unexpected-negative-sentinel` now aborts only
+above the already-frozen `EICU_MAX_UNPARSEABLE_SHARE = 0.01`. No new constant, no computed
+number changes (the cell mapped to NaN either way) — but **every figure from this extract
+must carry the post-hoc label**.
+
 ## Status (2026-07-25)
 
 Built, tested, and validated end-to-end on synthetic data. Suite **190 passed / 3 skipped green** (~30s; three off-default arms gated behind `CERTGATE_FIXTURE=1` / `CERTGATE_EICU=1` / `CERTGATE_EICU_LARGE=1`). The **eICU-CRD v2.0 real-data path** landed 2026-07-30 against a protocol frozen *before* any eICU byte was read (`EICU-PROTOCOL.md`, SPEC §"Real-data protocol"); it runs end to end today on a schema-faithful mock corpus and awaits the credentialed extract — see the eICU section below. **A 2026-07-31 three-verifier ingest audit found one CRITICAL and six major defects in that path; all are fixed** (SPEC first, then code, then tests) — see the eICU section. **A same-day three-agent arrival-day audit (attack corpora, not code reading) found one further CRITICAL and one major, both fixed as E-21/E-22 (amendment A5, threats T-26/T-27):** an absent or UNLINKED APACHE block — float-formatted join keys, a header-only child table, or a key shift with row counts intact — certified silently with 89/161 constant columns and E-9's gate unevaluable (`gate_applies=false` at zero coverage); now `unparseable-join-key` + `apache-coverage-collapse` abort in `build_raw` and preflight projects both. The `unrecognised-null-token` gate was APACHE-only; it now covers the patient numerics too (whose `hospitaladmitoffset` doubles as the first-stay tie-breaker, so its silent loss also reordered cohort selection). The 2026-07-25 correctness audit (`CODE-AUDIT.md`, V1–V27) confirmed the betting core sound under six independent attacks and found the damage in the **claims around it**; every finding is fixed (SPEC first, then code), a second adversarial verification pass then broke and re-fixed the fixes themselves (21 demonstrated findings, including a false BBSE-row estimand clause, a tiny-K q-bootstrap hole closed by `BBSE_MIN_TARGET_SITES`, and a data-seeded BBSE bootstrap replacing label-seeding), and 22/22 verified mutations now go red against the hardened suite (the original 14 were 0/14). The two criticals: (V1) the certificate claimed a per-target-site bound where the math proves a **site-population average** — the guarantee text, SPEC, METHODS, and E1's conformance metric now state the estimand honestly, with a mandatory dispersion clause; (V2) BBSE treated the target predicted-positive rate `q_t` as exact — it now carries its own confidence share (Clopper–Pearson / cluster bootstrap, `BBSE_BONFERRONI = 4`, 16-corner box). Earlier passes: internal red-team 2026-07-22 (`REDTEAM.md`, R1 fixed); the 2026-07-25 editorial panel on the *manuscript* returned major revision (`paper/review/`). Headline results (full grid R=200, rerun 2026-07-25, `experiments/out/summary.md`):

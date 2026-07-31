@@ -1,0 +1,2470 @@
+{
+  "data_dir": "./eicu-extract",
+  "tables": {
+    "patient": {
+      "path": "patient.csv.gz",
+      "rows": 200859,
+      "header": [
+        "patientunitstayid",
+        "patienthealthsystemstayid",
+        "gender",
+        "age",
+        "ethnicity",
+        "hospitalid",
+        "wardid",
+        "apacheadmissiondx",
+        "admissionheight",
+        "hospitaladmittime24",
+        "hospitaladmitoffset",
+        "hospitaladmitsource",
+        "hospitaldischargeyear",
+        "hospitaldischargetime24",
+        "hospitaldischargeoffset",
+        "hospitaldischargelocation",
+        "hospitaldischargestatus",
+        "unittype",
+        "unitadmittime24",
+        "unitadmitsource",
+        "unitvisitnumber",
+        "unitstaytype",
+        "admissionweight",
+        "dischargeweight",
+        "unitdischargetime24",
+        "unitdischargeoffset",
+        "unitdischargelocation",
+        "unitdischargestatus",
+        "uniquepid"
+      ],
+      "header_raw": [
+        "patientunitstayid",
+        "patienthealthsystemstayid",
+        "gender",
+        "age",
+        "ethnicity",
+        "hospitalid",
+        "wardid",
+        "apacheadmissiondx",
+        "admissionheight",
+        "hospitaladmittime24",
+        "hospitaladmitoffset",
+        "hospitaladmitsource",
+        "hospitaldischargeyear",
+        "hospitaldischargetime24",
+        "hospitaldischargeoffset",
+        "hospitaldischargelocation",
+        "hospitaldischargestatus",
+        "unittype",
+        "unitadmittime24",
+        "unitadmitsource",
+        "unitvisitnumber",
+        "unitstaytype",
+        "admissionweight",
+        "dischargeweight",
+        "unitdischargetime24",
+        "unitdischargeoffset",
+        "unitdischargelocation",
+        "unitdischargestatus",
+        "uniquepid"
+      ],
+      "header_case_as_read": "lower",
+      "n_names_with_uppercase": 0,
+      "reference_rows": 200859,
+      "rows_match_reference": true
+    },
+    "hospital": {
+      "path": "hospital.csv.gz",
+      "rows": 208,
+      "header": [
+        "hospitalid",
+        "numbedscategory",
+        "teachingstatus",
+        "region"
+      ],
+      "header_raw": [
+        "hospitalid",
+        "numbedscategory",
+        "teachingstatus",
+        "region"
+      ],
+      "header_case_as_read": "lower",
+      "n_names_with_uppercase": 0,
+      "reference_rows": 208,
+      "rows_match_reference": true
+    },
+    "apacheApsVar": {
+      "path": "apacheApsVar.csv.gz",
+      "rows": 171177,
+      "header": [
+        "apacheapsvarid",
+        "patientunitstayid",
+        "intubated",
+        "vent",
+        "dialysis",
+        "eyes",
+        "motor",
+        "verbal",
+        "meds",
+        "urine",
+        "wbc",
+        "temperature",
+        "respiratoryrate",
+        "sodium",
+        "heartrate",
+        "meanbp",
+        "ph",
+        "hematocrit",
+        "creatinine",
+        "albumin",
+        "pao2",
+        "pco2",
+        "bun",
+        "glucose",
+        "bilirubin",
+        "fio2"
+      ],
+      "header_raw": [
+        "apacheapsvarid",
+        "patientunitstayid",
+        "intubated",
+        "vent",
+        "dialysis",
+        "eyes",
+        "motor",
+        "verbal",
+        "meds",
+        "urine",
+        "wbc",
+        "temperature",
+        "respiratoryrate",
+        "sodium",
+        "heartrate",
+        "meanbp",
+        "ph",
+        "hematocrit",
+        "creatinine",
+        "albumin",
+        "pao2",
+        "pco2",
+        "bun",
+        "glucose",
+        "bilirubin",
+        "fio2"
+      ],
+      "header_case_as_read": "lower",
+      "n_names_with_uppercase": 0,
+      "reference_rows": 171177,
+      "rows_match_reference": true
+    },
+    "apachePredVar": {
+      "path": "apachePredVar.csv.gz",
+      "rows": 171177,
+      "header": [
+        "apachepredvarid",
+        "patientunitstayid",
+        "sicuday",
+        "saps3day1",
+        "saps3today",
+        "saps3yesterday",
+        "gender",
+        "teachtype",
+        "region",
+        "bedcount",
+        "admitsource",
+        "graftcount",
+        "meds",
+        "verbal",
+        "motor",
+        "eyes",
+        "age",
+        "admitdiagnosis",
+        "thrombolytics",
+        "diedinhospital",
+        "aids",
+        "hepaticfailure",
+        "lymphoma",
+        "metastaticcancer",
+        "leukemia",
+        "immunosuppression",
+        "cirrhosis",
+        "electivesurgery",
+        "activetx",
+        "readmit",
+        "ima",
+        "midur",
+        "ventday1",
+        "oobventday1",
+        "oobintubday1",
+        "diabetes",
+        "managementsystem",
+        "var03hspxlos",
+        "pao2",
+        "fio2",
+        "ejectfx",
+        "creatinine",
+        "dischargelocation",
+        "visitnumber",
+        "amilocation",
+        "day1meds",
+        "day1verbal",
+        "day1motor",
+        "day1eyes",
+        "day1pao2",
+        "day1fio2"
+      ],
+      "header_raw": [
+        "apachepredvarid",
+        "patientunitstayid",
+        "sicuday",
+        "saps3day1",
+        "saps3today",
+        "saps3yesterday",
+        "gender",
+        "teachtype",
+        "region",
+        "bedcount",
+        "admitsource",
+        "graftcount",
+        "meds",
+        "verbal",
+        "motor",
+        "eyes",
+        "age",
+        "admitdiagnosis",
+        "thrombolytics",
+        "diedinhospital",
+        "aids",
+        "hepaticfailure",
+        "lymphoma",
+        "metastaticcancer",
+        "leukemia",
+        "immunosuppression",
+        "cirrhosis",
+        "electivesurgery",
+        "activetx",
+        "readmit",
+        "ima",
+        "midur",
+        "ventday1",
+        "oobventday1",
+        "oobintubday1",
+        "diabetes",
+        "managementsystem",
+        "var03hspxlos",
+        "pao2",
+        "fio2",
+        "ejectfx",
+        "creatinine",
+        "dischargelocation",
+        "visitnumber",
+        "amilocation",
+        "day1meds",
+        "day1verbal",
+        "day1motor",
+        "day1eyes",
+        "day1pao2",
+        "day1fio2"
+      ],
+      "header_case_as_read": "lower",
+      "n_names_with_uppercase": 0,
+      "reference_rows": 171177,
+      "rows_match_reference": true
+    },
+    "apachePatientResult": {
+      "path": "apachePatientResult.csv.gz",
+      "rows": 297064,
+      "header": [
+        "apachepatientresultsid",
+        "patientunitstayid",
+        "physicianspeciality",
+        "physicianinterventioncategory",
+        "acutephysiologyscore",
+        "apachescore",
+        "apacheversion",
+        "predictedicumortality",
+        "actualicumortality",
+        "predictediculos",
+        "actualiculos",
+        "predictedhospitalmortality",
+        "actualhospitalmortality",
+        "predictedhospitallos",
+        "actualhospitallos",
+        "preopmi",
+        "preopcardiaccath",
+        "ptcawithin24h",
+        "unabridgedunitlos",
+        "unabridgedhosplos",
+        "actualventdays",
+        "predventdays",
+        "unabridgedactualventdays"
+      ],
+      "header_raw": [
+        "apachepatientresultsid",
+        "patientunitstayid",
+        "physicianspeciality",
+        "physicianinterventioncategory",
+        "acutephysiologyscore",
+        "apachescore",
+        "apacheversion",
+        "predictedicumortality",
+        "actualicumortality",
+        "predictediculos",
+        "actualiculos",
+        "predictedhospitalmortality",
+        "actualhospitalmortality",
+        "predictedhospitallos",
+        "actualhospitallos",
+        "preopmi",
+        "preopcardiaccath",
+        "ptcawithin24h",
+        "unabridgedunitlos",
+        "unabridgedhosplos",
+        "actualventdays",
+        "predventdays",
+        "unabridgedactualventdays"
+      ],
+      "header_case_as_read": "lower",
+      "n_names_with_uppercase": 0,
+      "reference_rows": 297064,
+      "rows_match_reference": true
+    }
+  },
+  "patient": {
+    "n_rows": 200859,
+    "n_hospitals": 208,
+    "n_uniquepid": 139367,
+    "n_hospitals_cohort": 207,
+    "n_uniquepid_cohort": 137773,
+    "n_healthsystemstays": 164322,
+    "age_tokens": {
+      "__numeric__": 193683,
+      "> 89": 7081,
+      "__blank__": 95
+    },
+    "gender": {
+      "Female": 92303,
+      "Male": 108379,
+      "": 134,
+      "Unknown": 35,
+      "Other": 8
+    },
+    "ethnicity": {
+      "Caucasian": 155285,
+      "African American": 21308,
+      "": 2290,
+      "Hispanic": 7464,
+      "Asian": 3270,
+      "Native American": 1700,
+      "Other/Unknown": 9542
+    },
+    "hospitaldischargestatus": {
+      "Expired": 18004,
+      "Alive": 181104,
+      "": 1751
+    },
+    "unitdischargestatus": {
+      "Expired": 10907,
+      "Alive": 189918,
+      "": 34
+    },
+    "hospitaldischargeyear": {
+      "2015": 105346,
+      "2014": 95513
+    },
+    "unittype": {
+      "Med-Surg ICU": 113222,
+      "CTICU": 6158,
+      "SICU": 12181,
+      "CCU-CTICU": 15290,
+      "MICU": 17465,
+      "Neuro ICU": 14451,
+      "Cardiac ICU": 12467,
+      "CSICU": 9625
+    },
+    "unitstaytype": {
+      "admit": 154948,
+      "stepdown/other": 25239,
+      "readmit": 9947,
+      "transfer": 10725
+    },
+    "hospitaladmitsource": {
+      "Direct Admit": 12369,
+      "Emergency Department": 82504,
+      "Floor": 18111,
+      "Operating Room": 19377,
+      "": 49464,
+      "Other Hospital": 3825,
+      "Other ICU": 431,
+      "ICU to SDU": 86,
+      "Step-Down Unit (SDU)": 2413,
+      "Recovery Room": 6622,
+      "Chest Pain Center": 321,
+      "Acute Care/Floor": 3685,
+      "PACU": 1561,
+      "Observation": 26,
+      "ICU": 55,
+      "Other": 9
+    },
+    "unitadmitsource": {
+      "Direct Admit": 12672,
+      "Emergency Department": 89594,
+      "ICU to SDU": 13827,
+      "Floor": 24368,
+      "Operating Room": 24305,
+      "Other Hospital": 4323,
+      "": 1090,
+      "Step-Down Unit (SDU)": 5450,
+      "Other ICU": 4264,
+      "Recovery Room": 7844,
+      "Chest Pain Center": 336,
+      "ICU": 5439,
+      "Acute Care/Floor": 5604,
+      "PACU": 1714,
+      "Observation": 19,
+      "Other": 10
+    },
+    "hospitaladmitoffset_sign": {
+      "zero": 6817,
+      "negative": 192665,
+      "positive": 1377
+    },
+    "unitvisitnumber_hist": {
+      "1": 158442,
+      "2": 33734,
+      "3": 5598,
+      "4": 2050,
+      "5": 566,
+      "6": 265,
+      "7": 97,
+      "9": 20,
+      "8": 50,
+      "10": 13,
+      "11": 9,
+      "13": 3,
+      "12": 5,
+      "15": 2,
+      "14": 1,
+      "16": 2,
+      "17": 1,
+      "18": 1
+    },
+    "n_admissions_min_visit_not_1": 7856,
+    "site_prevalence": {
+      "mean": 0.08228731921695658,
+      "sd": 0.044350469335185654,
+      "p10": 0.03531271126052877,
+      "p50": 0.07692307692307693,
+      "p90": 0.1329223996734576,
+      "n_sites": 207,
+      "overall": 0.08886819780674529
+    }
+  },
+  "cross_site_patients": {
+    "n_uniquepid": 137773,
+    "n_uniquepid_multi_hospital": 3996,
+    "share": 0.029004231598353813,
+    "cap": 0.01
+  },
+  "site_stay_counts": {
+    "raw-unit-stays": {
+      "min": 3.0,
+      "q1": 221.5,
+      "median": 557.5,
+      "q3": 1239.0,
+      "max": 7059.0,
+      "mean": 965.6682692307693,
+      "n_below_20": 9,
+      "n_below_50": 20,
+      "n_below_100": 33,
+      "n_below_500": 99,
+      "n_sites": 208
+    },
+    "site-parseable": {
+      "min": 3.0,
+      "q1": 221.5,
+      "median": 557.5,
+      "q3": 1239.0,
+      "max": 7059.0,
+      "mean": 965.6682692307693,
+      "n_below_20": 9,
+      "n_below_50": 20,
+      "n_below_100": 33,
+      "n_below_500": 99,
+      "n_sites": 208
+    },
+    "outcome-known": {
+      "min": 3.0,
+      "q1": 223.5,
+      "median": 548.0,
+      "q3": 1209.0,
+      "max": 7058.0,
+      "mean": 961.8743961352657,
+      "n_below_20": 8,
+      "n_below_50": 19,
+      "n_below_100": 32,
+      "n_below_500": 99,
+      "n_sites": 207
+    },
+    "adult": {
+      "min": 3.0,
+      "q1": 222.5,
+      "median": 548.0,
+      "q3": 1207.5,
+      "max": 7049.0,
+      "mean": 958.8888888888889,
+      "n_below_20": 11,
+      "n_below_50": 19,
+      "n_below_100": 32,
+      "n_below_500": 100,
+      "n_sites": 207
+    },
+    "first-stay": {
+      "min": 3.0,
+      "q1": 213.0,
+      "median": 475.0,
+      "q3": 1066.5,
+      "max": 5499.0,
+      "mean": 793.8260869565217,
+      "n_below_20": 12,
+      "n_below_50": 21,
+      "n_below_100": 32,
+      "n_below_500": 108,
+      "n_sites": 207
+    },
+    "primary-cohort": {
+      "min": 3.0,
+      "q1": 213.0,
+      "median": 475.0,
+      "q3": 1066.5,
+      "max": 5499.0,
+      "mean": 793.8260869565217,
+      "n_below_20": 12,
+      "n_below_50": 21,
+      "n_below_100": 32,
+      "n_below_500": 108,
+      "n_sites": 207
+    },
+    "apache-aps-linked": {
+      "min": 1.0,
+      "q1": 207.5,
+      "median": 458.0,
+      "q3": 1063.0,
+      "max": 5471.0,
+      "mean": 760.4009661835748,
+      "n_below_20": 15,
+      "n_below_50": 23,
+      "n_below_100": 34,
+      "n_below_500": 109,
+      "n_sites": 207
+    },
+    "apache-result-linked": {
+      "min": 1.0,
+      "q1": 203.25,
+      "median": 430.0,
+      "q3": 904.5,
+      "max": 5217.0,
+      "mean": 728.9263157894737,
+      "n_below_20": 14,
+      "n_below_50": 20,
+      "n_below_100": 25,
+      "n_below_500": 102,
+      "n_sites": 190
+    },
+    "apache-complete-arm": {
+      "min": 1.0,
+      "q1": 191.0,
+      "median": 424.5,
+      "q3": 896.5,
+      "max": 5125.0,
+      "mean": 711.1947368421053,
+      "n_below_20": 14,
+      "n_below_50": 22,
+      "n_below_100": 28,
+      "n_below_500": 102,
+      "n_sites": 190
+    }
+  },
+  "apache": {
+    "apacheApsVar": {
+      "n_rows": 171177,
+      "n_distinct_stays": 171177,
+      "rows_per_stay_hist": {
+        "1": 171177
+      },
+      "n_stays_gt1_row": 0
+    },
+    "apachePredVar": {
+      "n_rows": 171177,
+      "n_distinct_stays": 171177,
+      "rows_per_stay_hist": {
+        "1": 171177
+      },
+      "n_stays_gt1_row": 0
+    },
+    "apachePatientResult": {
+      "n_rows": 297064,
+      "n_distinct_stays": 148532,
+      "rows_per_stay_hist": {
+        "2": 148532
+      },
+      "n_stays_gt1_row": 148532
+    }
+  },
+  "apache_versions": {
+    "value_counts": {
+      "IV": 148532,
+      "IVa": 148532
+    },
+    "version_x_pred_unavailable": {
+      "IV": {
+        "available": 136236,
+        "minus_one": 12296,
+        "empty": 0
+      },
+      "IVa": {
+        "available": 136236,
+        "minus_one": 12296,
+        "empty": 0
+      }
+    },
+    "preference": [
+      "IVa",
+      "IV"
+    ]
+  },
+  "sentinels": {
+    "patient": {
+      "age": {
+        "n": 200859,
+        "n_empty": 95,
+        "n_minus_one": 0,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 23,
+        "min_positive": 1.0,
+        "p01": 20.0,
+        "p50": 65.0,
+        "p99": 90.0,
+        "max": 90.0
+      },
+      "admissionheight": {
+        "n": 200859,
+        "n_empty": 4215,
+        "n_minus_one": 0,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 43,
+        "min_positive": 0.12,
+        "p01": 144.086,
+        "p50": 170.0,
+        "p99": 193.0,
+        "max": 612.6
+      },
+      "admissionweight": {
+        "n": 200859,
+        "n_empty": 16718,
+        "n_minus_one": 0,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 16,
+        "min_positive": 0.4,
+        "p01": 40.8,
+        "p50": 80.0,
+        "p99": 170.3,
+        "max": 953.0
+      },
+      "hospitaladmitoffset": {
+        "n": 200859,
+        "n_empty": 0,
+        "n_minus_one": 2153,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 6817,
+        "min_positive": 1.0,
+        "p01": -28998.52,
+        "p50": -303.0,
+        "p99": 0.0,
+        "max": 388370.0
+      }
+    },
+    "apacheApsVar": {
+      "intubated": {
+        "n": 171177,
+        "n_empty": 0,
+        "n_minus_one": 0,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 145779,
+        "min_positive": 1.0,
+        "p01": 0.0,
+        "p50": 0.0,
+        "p99": 1.0,
+        "max": 1.0
+      },
+      "vent": {
+        "n": 171177,
+        "n_empty": 0,
+        "n_minus_one": 0,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 129829,
+        "min_positive": 1.0,
+        "p01": 0.0,
+        "p50": 0.0,
+        "p99": 1.0,
+        "max": 1.0
+      },
+      "dialysis": {
+        "n": 171177,
+        "n_empty": 0,
+        "n_minus_one": 0,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 164868,
+        "min_positive": 1.0,
+        "p01": 0.0,
+        "p50": 0.0,
+        "p99": 1.0,
+        "max": 1.0
+      },
+      "eyes": {
+        "n": 171177,
+        "n_empty": 0,
+        "n_minus_one": 5525,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 0,
+        "min_positive": 1.0,
+        "p01": 1.0,
+        "p50": 4.0,
+        "p99": 4.0,
+        "max": 4.0
+      },
+      "motor": {
+        "n": 171177,
+        "n_empty": 0,
+        "n_minus_one": 5525,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 0,
+        "min_positive": 1.0,
+        "p01": 1.0,
+        "p50": 6.0,
+        "p99": 6.0,
+        "max": 6.0
+      },
+      "verbal": {
+        "n": 171177,
+        "n_empty": 0,
+        "n_minus_one": 5525,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 0,
+        "min_positive": 1.0,
+        "p01": 1.0,
+        "p50": 5.0,
+        "p99": 5.0,
+        "max": 5.0
+      },
+      "meds": {
+        "n": 171177,
+        "n_empty": 0,
+        "n_minus_one": 3729,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 165652,
+        "min_positive": 1.0,
+        "p01": 0.0,
+        "p50": 0.0,
+        "p99": 1.0,
+        "max": 1.0
+      },
+      "urine": {
+        "n": 171177,
+        "n_empty": 0,
+        "n_minus_one": 87114,
+        "n_other_negative": 1,
+        "n_unparseable": 0,
+        "n_zero": 1824,
+        "min_positive": 0.6912,
+        "p01": 0.0,
+        "p50": 1447.632,
+        "p99": 7338.748608000007,
+        "max": 269323.7472
+      },
+      "wbc": {
+        "n": 171177,
+        "n_empty": 0,
+        "n_minus_one": 43564,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 0,
+        "min_positive": 0.01,
+        "p01": 1.8,
+        "p50": 10.4,
+        "p99": 38.8,
+        "max": 198.1
+      },
+      "temperature": {
+        "n": 171177,
+        "n_empty": 0,
+        "n_minus_one": 12351,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 0,
+        "min_positive": 20.0,
+        "p01": 32.9,
+        "p50": 36.5,
+        "p99": 39.4,
+        "max": 42.3
+      },
+      "respiratoryrate": {
+        "n": 171177,
+        "n_empty": 0,
+        "n_minus_one": 3526,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 0,
+        "min_positive": 4.0,
+        "p01": 4.0,
+        "p50": 27.0,
+        "p99": 59.0,
+        "max": 60.0
+      },
+      "sodium": {
+        "n": 171177,
+        "n_empty": 0,
+        "n_minus_one": 36466,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 0,
+        "min_positive": 91.0,
+        "p01": 122.0,
+        "p50": 138.0,
+        "p99": 154.0,
+        "max": 195.0
+      },
+      "heartrate": {
+        "n": 171177,
+        "n_empty": 0,
+        "n_minus_one": 2741,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 0,
+        "min_positive": 20.0,
+        "p01": 35.0,
+        "p50": 104.0,
+        "p99": 169.0,
+        "max": 220.0
+      },
+      "meanbp": {
+        "n": 171177,
+        "n_empty": 0,
+        "n_minus_one": 3173,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 0,
+        "min_positive": 40.0,
+        "p01": 40.0,
+        "p50": 66.0,
+        "p99": 192.0,
+        "max": 200.0
+      },
+      "ph": {
+        "n": 171177,
+        "n_empty": 0,
+        "n_minus_one": 132105,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 0,
+        "min_positive": 6.531,
+        "p01": 7.03,
+        "p50": 7.36,
+        "p99": 7.568,
+        "max": 7.81
+      },
+      "hematocrit": {
+        "n": 171177,
+        "n_empty": 0,
+        "n_minus_one": 40083,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 0,
+        "min_positive": 6.0,
+        "p01": 17.7,
+        "p50": 32.6,
+        "p99": 49.0,
+        "max": 72.7
+      },
+      "creatinine": {
+        "n": 171177,
+        "n_empty": 0,
+        "n_minus_one": 37090,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 0,
+        "min_positive": 0.1,
+        "p01": 0.35,
+        "p50": 1.0,
+        "p99": 9.4,
+        "max": 24.95
+      },
+      "albumin": {
+        "n": 171177,
+        "n_empty": 0,
+        "n_minus_one": 104254,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 0,
+        "min_positive": 1.0,
+        "p01": 1.3,
+        "p50": 2.9,
+        "p99": 4.4,
+        "max": 7.4
+      },
+      "pao2": {
+        "n": 171177,
+        "n_empty": 0,
+        "n_minus_one": 132105,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 0,
+        "min_positive": 9.0,
+        "p01": 35.31300000000001,
+        "p50": 102.0,
+        "p99": 459.2900000000009,
+        "max": 636.0
+      },
+      "pco2": {
+        "n": 171177,
+        "n_empty": 0,
+        "n_minus_one": 132105,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 0,
+        "min_positive": 6.5,
+        "p01": 20.5,
+        "p50": 40.6,
+        "p99": 90.0,
+        "max": 147.3
+      },
+      "bun": {
+        "n": 171177,
+        "n_empty": 0,
+        "n_minus_one": 37667,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 0,
+        "min_positive": 1.0,
+        "p01": 4.0,
+        "p50": 20.0,
+        "p99": 110.0,
+        "max": 254.0
+      },
+      "glucose": {
+        "n": 171177,
+        "n_empty": 0,
+        "n_minus_one": 23063,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 0,
+        "min_positive": 1.0,
+        "p01": 48.0,
+        "p50": 135.0,
+        "p99": 520.0,
+        "max": 2357.0
+      },
+      "bilirubin": {
+        "n": 171177,
+        "n_empty": 0,
+        "n_minus_one": 110465,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 0,
+        "min_positive": 0.1,
+        "p01": 0.2,
+        "p50": 0.7,
+        "p99": 12.026699999999982,
+        "max": 60.2
+      },
+      "fio2": {
+        "n": 171177,
+        "n_empty": 0,
+        "n_minus_one": 132105,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 0,
+        "min_positive": 21.0,
+        "p01": 21.0,
+        "p50": 50.0,
+        "p99": 100.0,
+        "max": 100.0
+      }
+    },
+    "apachePredVar": {
+      "graftcount": {
+        "n": 171177,
+        "n_empty": 0,
+        "n_minus_one": 0,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 0,
+        "min_positive": 1.0,
+        "p01": 3.0,
+        "p50": 3.0,
+        "p99": 3.0,
+        "max": 8.0
+      },
+      "thrombolytics": {
+        "n": 171177,
+        "n_empty": 0,
+        "n_minus_one": 0,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 168405,
+        "min_positive": 1.0,
+        "p01": 0.0,
+        "p50": 0.0,
+        "p99": 1.0,
+        "max": 1.0
+      },
+      "aids": {
+        "n": 171177,
+        "n_empty": 0,
+        "n_minus_one": 0,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 170987,
+        "min_positive": 1.0,
+        "p01": 0.0,
+        "p50": 0.0,
+        "p99": 0.0,
+        "max": 1.0
+      },
+      "hepaticfailure": {
+        "n": 171177,
+        "n_empty": 0,
+        "n_minus_one": 0,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 168459,
+        "min_positive": 1.0,
+        "p01": 0.0,
+        "p50": 0.0,
+        "p99": 1.0,
+        "max": 1.0
+      },
+      "lymphoma": {
+        "n": 171177,
+        "n_empty": 0,
+        "n_minus_one": 0,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 170399,
+        "min_positive": 1.0,
+        "p01": 0.0,
+        "p50": 0.0,
+        "p99": 0.0,
+        "max": 1.0
+      },
+      "metastaticcancer": {
+        "n": 171177,
+        "n_empty": 0,
+        "n_minus_one": 0,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 167562,
+        "min_positive": 1.0,
+        "p01": 0.0,
+        "p50": 0.0,
+        "p99": 1.0,
+        "max": 1.0
+      },
+      "leukemia": {
+        "n": 171177,
+        "n_empty": 0,
+        "n_minus_one": 0,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 169892,
+        "min_positive": 1.0,
+        "p01": 0.0,
+        "p50": 0.0,
+        "p99": 0.0,
+        "max": 1.0
+      },
+      "immunosuppression": {
+        "n": 171177,
+        "n_empty": 0,
+        "n_minus_one": 0,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 166444,
+        "min_positive": 1.0,
+        "p01": 0.0,
+        "p50": 0.0,
+        "p99": 1.0,
+        "max": 1.0
+      },
+      "cirrhosis": {
+        "n": 171177,
+        "n_empty": 0,
+        "n_minus_one": 0,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 168020,
+        "min_positive": 1.0,
+        "p01": 0.0,
+        "p50": 0.0,
+        "p99": 1.0,
+        "max": 1.0
+      },
+      "electivesurgery": {
+        "n": 171177,
+        "n_empty": 137921,
+        "n_minus_one": 0,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 3551,
+        "min_positive": 1.0,
+        "p01": 0.0,
+        "p50": 1.0,
+        "p99": 1.0,
+        "max": 1.0
+      },
+      "activetx": {
+        "n": 171177,
+        "n_empty": 0,
+        "n_minus_one": 0,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 73240,
+        "min_positive": 1.0,
+        "p01": 0.0,
+        "p50": 1.0,
+        "p99": 1.0,
+        "max": 1.0
+      },
+      "readmit": {
+        "n": 171177,
+        "n_empty": 0,
+        "n_minus_one": 0,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 161020,
+        "min_positive": 1.0,
+        "p01": 0.0,
+        "p50": 0.0,
+        "p99": 1.0,
+        "max": 1.0
+      },
+      "ima": {
+        "n": 171177,
+        "n_empty": 0,
+        "n_minus_one": 0,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 166191,
+        "min_positive": 1.0,
+        "p01": 0.0,
+        "p50": 0.0,
+        "p99": 1.0,
+        "max": 1.0
+      },
+      "midur": {
+        "n": 171177,
+        "n_empty": 0,
+        "n_minus_one": 0,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 169641,
+        "min_positive": 1.0,
+        "p01": 0.0,
+        "p50": 0.0,
+        "p99": 0.0,
+        "max": 1.0
+      },
+      "ventday1": {
+        "n": 171177,
+        "n_empty": 0,
+        "n_minus_one": 0,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 129829,
+        "min_positive": 1.0,
+        "p01": 0.0,
+        "p50": 0.0,
+        "p99": 1.0,
+        "max": 1.0
+      },
+      "oobventday1": {
+        "n": 171177,
+        "n_empty": 0,
+        "n_minus_one": 0,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 114647,
+        "min_positive": 1.0,
+        "p01": 0.0,
+        "p50": 0.0,
+        "p99": 1.0,
+        "max": 1.0
+      },
+      "oobintubday1": {
+        "n": 171177,
+        "n_empty": 0,
+        "n_minus_one": 0,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 126647,
+        "min_positive": 1.0,
+        "p01": 0.0,
+        "p50": 0.0,
+        "p99": 1.0,
+        "max": 1.0
+      },
+      "diabetes": {
+        "n": 171177,
+        "n_empty": 0,
+        "n_minus_one": 0,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 131869,
+        "min_positive": 1.0,
+        "p01": 0.0,
+        "p50": 0.0,
+        "p99": 1.0,
+        "max": 1.0
+      },
+      "ejectfx": {
+        "n": 171177,
+        "n_empty": 0,
+        "n_minus_one": 168124,
+        "n_other_negative": 0,
+        "n_unparseable": 0,
+        "n_zero": 8,
+        "min_positive": 1.0,
+        "p01": 15.0,
+        "p50": 55.0,
+        "p99": 75.0,
+        "max": 88.0
+      }
+    }
+  },
+  "sentinel_site_dispersion": {
+    "patient": {
+      "age": {
+        "mean_site_minus_one_rate": 0.0,
+        "sd_site_minus_one_rate": 0.0,
+        "p10": 0.0,
+        "p50": 0.0,
+        "p90": 0.0,
+        "mean_site_missing_rate": 0.0,
+        "sd_site_missing_rate": 0.0
+      },
+      "admissionheight": {
+        "mean_site_minus_one_rate": 0.0,
+        "sd_site_minus_one_rate": 0.0,
+        "p10": 0.0020869166380002298,
+        "p50": 0.017857142857142856,
+        "p90": 0.11473356009070301,
+        "mean_site_missing_rate": 0.04550290470194569,
+        "sd_site_missing_rate": 0.08715223802506986
+      },
+      "admissionweight": {
+        "mean_site_minus_one_rate": 0.0,
+        "sd_site_minus_one_rate": 0.0,
+        "p10": 0.0,
+        "p50": 0.011286681715575621,
+        "p90": 0.15531068344714744,
+        "mean_site_missing_rate": 0.04652862700294007,
+        "sd_site_missing_rate": 0.09453613790570241
+      },
+      "pre_icu_hours": {
+        "mean_site_minus_one_rate": 0.0,
+        "sd_site_minus_one_rate": 0.0,
+        "p10": 0.0,
+        "p50": 0.00429553264604811,
+        "p90": 0.02364010467648175,
+        "mean_site_missing_rate": 0.010982009019276828,
+        "sd_site_missing_rate": 0.02521625580262771
+      }
+    },
+    "apacheApsVar": {
+      "intubated": {
+        "mean_site_minus_one_rate": 0.0,
+        "sd_site_minus_one_rate": 0.0,
+        "p10": 0.0,
+        "p50": 0.0,
+        "p90": 0.0,
+        "mean_site_missing_rate": 0.0,
+        "sd_site_missing_rate": 0.0
+      },
+      "vent": {
+        "mean_site_minus_one_rate": 0.0,
+        "sd_site_minus_one_rate": 0.0,
+        "p10": 0.0,
+        "p50": 0.0,
+        "p90": 0.0,
+        "mean_site_missing_rate": 0.0,
+        "sd_site_missing_rate": 0.0
+      },
+      "dialysis": {
+        "mean_site_minus_one_rate": 0.0,
+        "sd_site_minus_one_rate": 0.0,
+        "p10": 0.0,
+        "p50": 0.0,
+        "p90": 0.0,
+        "mean_site_missing_rate": 0.0,
+        "sd_site_missing_rate": 0.0
+      },
+      "eyes": {
+        "mean_site_minus_one_rate": 0.04629703992477879,
+        "sd_site_minus_one_rate": 0.09586645036338273,
+        "p10": 0.0013250881339310415,
+        "p50": 0.014285714285714285,
+        "p90": 0.11837584591358669,
+        "mean_site_missing_rate": 0.04629703992477879,
+        "sd_site_missing_rate": 0.09586645036338273
+      },
+      "motor": {
+        "mean_site_minus_one_rate": 0.04629703992477879,
+        "sd_site_minus_one_rate": 0.09586645036338273,
+        "p10": 0.0013250881339310415,
+        "p50": 0.014285714285714285,
+        "p90": 0.11837584591358669,
+        "mean_site_missing_rate": 0.04629703992477879,
+        "sd_site_missing_rate": 0.09586645036338273
+      },
+      "verbal": {
+        "mean_site_minus_one_rate": 0.04629703992477879,
+        "sd_site_minus_one_rate": 0.09586645036338273,
+        "p10": 0.0013250881339310415,
+        "p50": 0.014285714285714285,
+        "p90": 0.11837584591358669,
+        "mean_site_missing_rate": 0.04629703992477879,
+        "sd_site_missing_rate": 0.09586645036338273
+      },
+      "meds": {
+        "mean_site_minus_one_rate": 0.03558532891094138,
+        "sd_site_minus_one_rate": 0.08893150619208498,
+        "p10": 0.0005888125613346432,
+        "p50": 0.0103359173126615,
+        "p90": 0.08115733876945887,
+        "mean_site_missing_rate": 0.03558532891094138,
+        "sd_site_missing_rate": 0.08893150619208498
+      },
+      "urine": {
+        "mean_site_minus_one_rate": 0.5206430018304947,
+        "sd_site_minus_one_rate": 0.3181399162915279,
+        "p10": 0.09283036242846807,
+        "p50": 0.5219417475728155,
+        "p90": 1.0,
+        "mean_site_missing_rate": 0.5206430018304947,
+        "sd_site_missing_rate": 0.3181399162915279
+      },
+      "wbc": {
+        "mean_site_minus_one_rate": 0.3201462087837893,
+        "sd_site_minus_one_rate": 0.17712337141716536,
+        "p10": 0.12943898443898444,
+        "p50": 0.2922374429223744,
+        "p90": 0.5248890049621311,
+        "mean_site_missing_rate": 0.3201462087837893,
+        "sd_site_missing_rate": 0.17712337141716536
+      },
+      "temperature": {
+        "mean_site_minus_one_rate": 0.11808127466825218,
+        "sd_site_minus_one_rate": 0.20335399886633873,
+        "p10": 0.0104895066708036,
+        "p50": 0.041666666666666664,
+        "p90": 0.2758241758241759,
+        "mean_site_missing_rate": 0.11808127466825218,
+        "sd_site_missing_rate": 0.20335399886633873
+      },
+      "respiratoryrate": {
+        "mean_site_minus_one_rate": 0.03473459558567875,
+        "sd_site_minus_one_rate": 0.08491040781292282,
+        "p10": 0.0,
+        "p50": 0.009900990099009901,
+        "p90": 0.08731658242135745,
+        "mean_site_missing_rate": 0.03473459558567875,
+        "sd_site_missing_rate": 0.08491040781292282
+      },
+      "sodium": {
+        "mean_site_minus_one_rate": 0.2648443860301743,
+        "sd_site_minus_one_rate": 0.1599379701775109,
+        "p10": 0.09550985554685833,
+        "p50": 0.2402116402116402,
+        "p90": 0.44292004880895536,
+        "mean_site_missing_rate": 0.2648443860301743,
+        "sd_site_missing_rate": 0.1599379701775109
+      },
+      "heartrate": {
+        "mean_site_minus_one_rate": 0.029946671505643892,
+        "sd_site_minus_one_rate": 0.08716154695611815,
+        "p10": 0.0,
+        "p50": 0.006309148264984227,
+        "p90": 0.06180681818181822,
+        "mean_site_missing_rate": 0.029946671505643892,
+        "sd_site_missing_rate": 0.08716154695611815
+      },
+      "meanbp": {
+        "mean_site_minus_one_rate": 0.03630125465195658,
+        "sd_site_minus_one_rate": 0.09435949038970477,
+        "p10": 0.0,
+        "p50": 0.008252063015753939,
+        "p90": 0.07359997872038589,
+        "mean_site_missing_rate": 0.03630125465195658,
+        "sd_site_missing_rate": 0.09435949038970477
+      },
+      "ph": {
+        "mean_site_minus_one_rate": 0.8218674404926396,
+        "sd_site_minus_one_rate": 0.13808884683342781,
+        "p10": 0.6427381792519408,
+        "p50": 0.8184438040345822,
+        "p90": 1.0,
+        "mean_site_missing_rate": 0.8218674404926396,
+        "sd_site_missing_rate": 0.13808884683342781
+      },
+      "hematocrit": {
+        "mean_site_minus_one_rate": 0.3007470811534142,
+        "sd_site_minus_one_rate": 0.17137689732188682,
+        "p10": 0.12356117585475385,
+        "p50": 0.26991150442477874,
+        "p90": 0.5,
+        "mean_site_missing_rate": 0.3007470811534142,
+        "sd_site_missing_rate": 0.17137689732188682
+      },
+      "creatinine": {
+        "mean_site_minus_one_rate": 0.2673894879822072,
+        "sd_site_minus_one_rate": 0.16016758019721886,
+        "p10": 0.09890932738758826,
+        "p50": 0.24290220820189273,
+        "p90": 0.44279529740043905,
+        "mean_site_missing_rate": 0.2673894879822072,
+        "sd_site_missing_rate": 0.16016758019721886
+      },
+      "albumin": {
+        "mean_site_minus_one_rate": 0.6109365072325107,
+        "sd_site_minus_one_rate": 0.15672238726158963,
+        "p10": 0.4104838709677419,
+        "p50": 0.6067864271457086,
+        "p90": 0.7876605909610475,
+        "mean_site_missing_rate": 0.6109365072325107,
+        "sd_site_missing_rate": 0.15672238726158963
+      },
+      "pao2": {
+        "mean_site_minus_one_rate": 0.8218674404926396,
+        "sd_site_minus_one_rate": 0.13808884683342781,
+        "p10": 0.6427381792519408,
+        "p50": 0.8184438040345822,
+        "p90": 1.0,
+        "mean_site_missing_rate": 0.8218674404926396,
+        "sd_site_missing_rate": 0.13808884683342781
+      },
+      "pco2": {
+        "mean_site_minus_one_rate": 0.8218674404926396,
+        "sd_site_minus_one_rate": 0.13808884683342781,
+        "p10": 0.6427381792519408,
+        "p50": 0.8184438040345822,
+        "p90": 1.0,
+        "mean_site_missing_rate": 0.8218674404926396,
+        "sd_site_missing_rate": 0.13808884683342781
+      },
+      "bun": {
+        "mean_site_minus_one_rate": 0.2699295166306485,
+        "sd_site_minus_one_rate": 0.16178007358913418,
+        "p10": 0.09883376687724514,
+        "p50": 0.24750499001996007,
+        "p90": 0.44634615913528974,
+        "mean_site_missing_rate": 0.2699295166306485,
+        "sd_site_missing_rate": 0.16178007358913418
+      },
+      "glucose": {
+        "mean_site_minus_one_rate": 0.189910970552957,
+        "sd_site_minus_one_rate": 0.1569375878965624,
+        "p10": 0.05109711214974373,
+        "p50": 0.15938864628820962,
+        "p90": 0.3296969696969697,
+        "mean_site_missing_rate": 0.189910970552957,
+        "sd_site_missing_rate": 0.1569375878965624
+      },
+      "bilirubin": {
+        "mean_site_minus_one_rate": 0.6473990850947623,
+        "sd_site_minus_one_rate": 0.15779140726130328,
+        "p10": 0.44256934213054905,
+        "p50": 0.6479481641468683,
+        "p90": 0.8430354084379043,
+        "mean_site_missing_rate": 0.6473990850947623,
+        "sd_site_missing_rate": 0.15779140726130328
+      },
+      "fio2": {
+        "mean_site_minus_one_rate": 0.8218674404926396,
+        "sd_site_minus_one_rate": 0.13808884683342781,
+        "p10": 0.6427381792519408,
+        "p50": 0.8184438040345822,
+        "p90": 1.0,
+        "mean_site_missing_rate": 0.8218674404926396,
+        "sd_site_missing_rate": 0.13808884683342781
+      }
+    },
+    "apachePredVar": {
+      "graftcount": {
+        "mean_site_minus_one_rate": 0.0,
+        "sd_site_minus_one_rate": 0.0,
+        "p10": 0.0,
+        "p50": 0.0,
+        "p90": 0.0,
+        "mean_site_missing_rate": 0.0,
+        "sd_site_missing_rate": 0.0
+      },
+      "thrombolytics": {
+        "mean_site_minus_one_rate": 0.0,
+        "sd_site_minus_one_rate": 0.0,
+        "p10": 0.0,
+        "p50": 0.0,
+        "p90": 0.0,
+        "mean_site_missing_rate": 0.0,
+        "sd_site_missing_rate": 0.0
+      },
+      "aids": {
+        "mean_site_minus_one_rate": 0.0,
+        "sd_site_minus_one_rate": 0.0,
+        "p10": 0.0,
+        "p50": 0.0,
+        "p90": 0.0,
+        "mean_site_missing_rate": 0.0,
+        "sd_site_missing_rate": 0.0
+      },
+      "hepaticfailure": {
+        "mean_site_minus_one_rate": 0.0,
+        "sd_site_minus_one_rate": 0.0,
+        "p10": 0.0,
+        "p50": 0.0,
+        "p90": 0.0,
+        "mean_site_missing_rate": 0.0,
+        "sd_site_missing_rate": 0.0
+      },
+      "lymphoma": {
+        "mean_site_minus_one_rate": 0.0,
+        "sd_site_minus_one_rate": 0.0,
+        "p10": 0.0,
+        "p50": 0.0,
+        "p90": 0.0,
+        "mean_site_missing_rate": 0.0,
+        "sd_site_missing_rate": 0.0
+      },
+      "metastaticcancer": {
+        "mean_site_minus_one_rate": 0.0,
+        "sd_site_minus_one_rate": 0.0,
+        "p10": 0.0,
+        "p50": 0.0,
+        "p90": 0.0,
+        "mean_site_missing_rate": 0.0,
+        "sd_site_missing_rate": 0.0
+      },
+      "leukemia": {
+        "mean_site_minus_one_rate": 0.0,
+        "sd_site_minus_one_rate": 0.0,
+        "p10": 0.0,
+        "p50": 0.0,
+        "p90": 0.0,
+        "mean_site_missing_rate": 0.0,
+        "sd_site_missing_rate": 0.0
+      },
+      "immunosuppression": {
+        "mean_site_minus_one_rate": 0.0,
+        "sd_site_minus_one_rate": 0.0,
+        "p10": 0.0,
+        "p50": 0.0,
+        "p90": 0.0,
+        "mean_site_missing_rate": 0.0,
+        "sd_site_missing_rate": 0.0
+      },
+      "cirrhosis": {
+        "mean_site_minus_one_rate": 0.0,
+        "sd_site_minus_one_rate": 0.0,
+        "p10": 0.0,
+        "p50": 0.0,
+        "p90": 0.0,
+        "mean_site_missing_rate": 0.0,
+        "sd_site_missing_rate": 0.0
+      },
+      "electivesurgery": {
+        "mean_site_minus_one_rate": 0.0,
+        "sd_site_minus_one_rate": 0.0,
+        "p10": 0.0,
+        "p50": 0.0,
+        "p90": 0.0,
+        "mean_site_missing_rate": 0.8572810187982371,
+        "sd_site_missing_rate": 0.11525642540360564
+      },
+      "activetx": {
+        "mean_site_minus_one_rate": 0.0,
+        "sd_site_minus_one_rate": 0.0,
+        "p10": 0.0,
+        "p50": 0.0,
+        "p90": 0.0,
+        "mean_site_missing_rate": 0.0,
+        "sd_site_missing_rate": 0.0
+      },
+      "readmit": {
+        "mean_site_minus_one_rate": 0.0,
+        "sd_site_minus_one_rate": 0.0,
+        "p10": 0.0,
+        "p50": 0.0,
+        "p90": 0.0,
+        "mean_site_missing_rate": 0.0,
+        "sd_site_missing_rate": 0.0
+      },
+      "ima": {
+        "mean_site_minus_one_rate": 0.0,
+        "sd_site_minus_one_rate": 0.0,
+        "p10": 0.0,
+        "p50": 0.0,
+        "p90": 0.0,
+        "mean_site_missing_rate": 0.0,
+        "sd_site_missing_rate": 0.0
+      },
+      "midur": {
+        "mean_site_minus_one_rate": 0.0,
+        "sd_site_minus_one_rate": 0.0,
+        "p10": 0.0,
+        "p50": 0.0,
+        "p90": 0.0,
+        "mean_site_missing_rate": 0.0,
+        "sd_site_missing_rate": 0.0
+      },
+      "ventday1": {
+        "mean_site_minus_one_rate": 0.0,
+        "sd_site_minus_one_rate": 0.0,
+        "p10": 0.0,
+        "p50": 0.0,
+        "p90": 0.0,
+        "mean_site_missing_rate": 0.0,
+        "sd_site_missing_rate": 0.0
+      },
+      "oobventday1": {
+        "mean_site_minus_one_rate": 0.0,
+        "sd_site_minus_one_rate": 0.0,
+        "p10": 0.0,
+        "p50": 0.0,
+        "p90": 0.0,
+        "mean_site_missing_rate": 0.0,
+        "sd_site_missing_rate": 0.0
+      },
+      "oobintubday1": {
+        "mean_site_minus_one_rate": 0.0,
+        "sd_site_minus_one_rate": 0.0,
+        "p10": 0.0,
+        "p50": 0.0,
+        "p90": 0.0,
+        "mean_site_missing_rate": 0.0,
+        "sd_site_missing_rate": 0.0
+      },
+      "diabetes": {
+        "mean_site_minus_one_rate": 0.0,
+        "sd_site_minus_one_rate": 0.0,
+        "p10": 0.0,
+        "p50": 0.0,
+        "p90": 0.0,
+        "mean_site_missing_rate": 0.0,
+        "sd_site_missing_rate": 0.0
+      },
+      "ejectfx": {
+        "mean_site_minus_one_rate": 0.9906244163673973,
+        "sd_site_minus_one_rate": 0.024451217111515895,
+        "p10": 0.9734194883642577,
+        "p50": 1.0,
+        "p90": 1.0,
+        "mean_site_missing_rate": 0.9906244163673973,
+        "sd_site_missing_rate": 0.024451217111515895
+      }
+    }
+  },
+  "apache_coverage_by_site": {
+    "apacheApsVar": {
+      "mean": 0.9483347640127467,
+      "sd": 0.13194924922368337,
+      "p10": 0.8937019732015291,
+      "p50": 0.9914529914529915,
+      "p90": 1.0,
+      "n_sites_zero": 0,
+      "n_sites_below_0.2": 2,
+      "n_linked_stays": 157403
+    },
+    "apachePredVar": {
+      "mean": 0.9483347640127467,
+      "sd": 0.13194924922368337,
+      "p10": 0.8937019732015291,
+      "p50": 0.9914529914529915,
+      "p90": 1.0,
+      "n_sites_zero": 0,
+      "n_sites_below_0.2": 2,
+      "n_linked_stays": 157403
+    },
+    "apachePatientResult": {
+      "mean": 0.7818837424799141,
+      "sd": 0.282675328677439,
+      "p10": 0.31428571428571433,
+      "p50": 0.9109026963657679,
+      "p90": 0.9745252945252946,
+      "n_sites_zero": 17,
+      "n_sites_below_0.2": 17,
+      "n_linked_stays": 138496
+    }
+  },
+  "hospital": {
+    "numbedscategory": {
+      "<100": 46,
+      "100 - 249": 62,
+      "": 42,
+      ">= 500": 23,
+      "250 - 499": 35
+    },
+    "teachingstatus": {
+      "f": 189,
+      "t": 19
+    },
+    "region": {
+      "Midwest": 70,
+      "": 26,
+      "South": 56,
+      "West": 43,
+      "Northeast": 13
+    }
+  },
+  "categorical_drift": {
+    "gender": {
+      "other_share": 0.0,
+      "other_count": 0,
+      "top_unlisted": [],
+      "exceeds_cap": false
+    },
+    "ethnicity": {
+      "other_share": 0.0,
+      "other_count": 0,
+      "top_unlisted": [],
+      "exceeds_cap": false
+    },
+    "hospitaladmitsource": {
+      "other_share": 0.0,
+      "other_count": 0,
+      "top_unlisted": [],
+      "exceeds_cap": false
+    },
+    "unitadmitsource": {
+      "other_share": 0.0,
+      "other_count": 0,
+      "top_unlisted": [],
+      "exceeds_cap": false
+    },
+    "unittype": {
+      "other_share": 0.0,
+      "other_count": 0,
+      "top_unlisted": [],
+      "exceeds_cap": false
+    },
+    "unitstaytype": {
+      "other_share": 0.0,
+      "other_count": 0,
+      "top_unlisted": [],
+      "exceeds_cap": false
+    }
+  },
+  "outcome_stratified_missingness": {
+    "aps_present": {
+      "feature": "aps_present",
+      "n_missing": 6919,
+      "n_present": 157403,
+      "prevalence_missing": 0.04596,
+      "prevalence_present": 0.090754,
+      "prevalence_ratio": 0.5064,
+      "cap": 2.0,
+      "gate_applies": true
+    },
+    "aps_intubated__missing": {
+      "feature": "aps_intubated__missing",
+      "n_missing": 6919,
+      "n_present": 157403,
+      "prevalence_missing": 0.04596,
+      "prevalence_present": 0.090754,
+      "prevalence_ratio": 0.5064,
+      "cap": 2.0,
+      "gate_applies": true
+    },
+    "aps_vent__missing": {
+      "feature": "aps_vent__missing",
+      "n_missing": 6919,
+      "n_present": 157403,
+      "prevalence_missing": 0.04596,
+      "prevalence_present": 0.090754,
+      "prevalence_ratio": 0.5064,
+      "cap": 2.0,
+      "gate_applies": true
+    },
+    "aps_dialysis__missing": {
+      "feature": "aps_dialysis__missing",
+      "n_missing": 6919,
+      "n_present": 157403,
+      "prevalence_missing": 0.04596,
+      "prevalence_present": 0.090754,
+      "prevalence_ratio": 0.5064,
+      "cap": 2.0,
+      "gate_applies": true
+    },
+    "aps_eyes__missing": {
+      "feature": "aps_eyes__missing",
+      "n_missing": 11316,
+      "n_present": 153006,
+      "prevalence_missing": 0.094203,
+      "prevalence_present": 0.088474,
+      "prevalence_ratio": 1.0648,
+      "cap": 2.0,
+      "gate_applies": true
+    },
+    "aps_motor__missing": {
+      "feature": "aps_motor__missing",
+      "n_missing": 11316,
+      "n_present": 153006,
+      "prevalence_missing": 0.094203,
+      "prevalence_present": 0.088474,
+      "prevalence_ratio": 1.0648,
+      "cap": 2.0,
+      "gate_applies": true
+    },
+    "aps_verbal__missing": {
+      "feature": "aps_verbal__missing",
+      "n_missing": 11316,
+      "n_present": 153006,
+      "prevalence_missing": 0.094203,
+      "prevalence_present": 0.088474,
+      "prevalence_ratio": 1.0648,
+      "cap": 2.0,
+      "gate_applies": true
+    },
+    "aps_meds__missing": {
+      "feature": "aps_meds__missing",
+      "n_missing": 9689,
+      "n_present": 154633,
+      "prevalence_missing": 0.071524,
+      "prevalence_present": 0.089955,
+      "prevalence_ratio": 0.7951,
+      "cap": 2.0,
+      "gate_applies": true
+    },
+    "aps_urine__missing": {
+      "feature": "aps_urine__missing",
+      "n_missing": 86012,
+      "n_present": 78310,
+      "prevalence_missing": 0.097591,
+      "prevalence_present": 0.079287,
+      "prevalence_ratio": 1.2309,
+      "cap": 2.0,
+      "gate_applies": true
+    },
+    "aps_wbc__missing": {
+      "feature": "aps_wbc__missing",
+      "n_missing": 46486,
+      "n_present": 117836,
+      "prevalence_missing": 0.082907,
+      "prevalence_present": 0.09122,
+      "prevalence_ratio": 0.9089,
+      "cap": 2.0,
+      "gate_applies": true
+    },
+    "aps_temperature__missing": {
+      "feature": "aps_temperature__missing",
+      "n_missing": 17742,
+      "n_present": 146580,
+      "prevalence_missing": 0.102807,
+      "prevalence_present": 0.087181,
+      "prevalence_ratio": 1.1792,
+      "cap": 2.0,
+      "gate_applies": true
+    },
+    "aps_respiratoryrate__missing": {
+      "feature": "aps_respiratoryrate__missing",
+      "n_missing": 9608,
+      "n_present": 154714,
+      "prevalence_missing": 0.061511,
+      "prevalence_present": 0.090567,
+      "prevalence_ratio": 0.6792,
+      "cap": 2.0,
+      "gate_applies": true
+    },
+    "aps_sodium__missing": {
+      "feature": "aps_sodium__missing",
+      "n_missing": 39841,
+      "n_present": 124481,
+      "prevalence_missing": 0.078713,
+      "prevalence_present": 0.092118,
+      "prevalence_ratio": 0.8545,
+      "cap": 2.0,
+      "gate_applies": true
+    },
+    "aps_heartrate__missing": {
+      "feature": "aps_heartrate__missing",
+      "n_missing": 8899,
+      "n_present": 155423,
+      "prevalence_missing": 0.058434,
+      "prevalence_present": 0.090611,
+      "prevalence_ratio": 0.6449,
+      "cap": 2.0,
+      "gate_applies": true
+    },
+    "aps_meanbp__missing": {
+      "feature": "aps_meanbp__missing",
+      "n_missing": 9260,
+      "n_present": 155062,
+      "prevalence_missing": 0.066631,
+      "prevalence_present": 0.090196,
+      "prevalence_ratio": 0.7387,
+      "cap": 2.0,
+      "gate_applies": true
+    },
+    "aps_ph__missing": {
+      "feature": "aps_ph__missing",
+      "n_missing": 128882,
+      "n_present": 35440,
+      "prevalence_missing": 0.063508,
+      "prevalence_present": 0.181095,
+      "prevalence_ratio": 0.3507,
+      "cap": 2.0,
+      "gate_applies": true
+    },
+    "aps_hematocrit__missing": {
+      "feature": "aps_hematocrit__missing",
+      "n_missing": 43291,
+      "n_present": 121031,
+      "prevalence_missing": 0.082026,
+      "prevalence_present": 0.091315,
+      "prevalence_ratio": 0.8983,
+      "cap": 2.0,
+      "gate_applies": true
+    },
+    "aps_creatinine__missing": {
+      "feature": "aps_creatinine__missing",
+      "n_missing": 40354,
+      "n_present": 123968,
+      "prevalence_missing": 0.081528,
+      "prevalence_present": 0.091257,
+      "prevalence_ratio": 0.8934,
+      "cap": 2.0,
+      "gate_applies": true
+    },
+    "aps_albumin__missing": {
+      "feature": "aps_albumin__missing",
+      "n_missing": 102392,
+      "n_present": 61930,
+      "prevalence_missing": 0.07358,
+      "prevalence_present": 0.114145,
+      "prevalence_ratio": 0.6446,
+      "cap": 2.0,
+      "gate_applies": true
+    },
+    "aps_pao2__missing": {
+      "feature": "aps_pao2__missing",
+      "n_missing": 128882,
+      "n_present": 35440,
+      "prevalence_missing": 0.063508,
+      "prevalence_present": 0.181095,
+      "prevalence_ratio": 0.3507,
+      "cap": 2.0,
+      "gate_applies": true
+    },
+    "aps_pco2__missing": {
+      "feature": "aps_pco2__missing",
+      "n_missing": 128882,
+      "n_present": 35440,
+      "prevalence_missing": 0.063508,
+      "prevalence_present": 0.181095,
+      "prevalence_ratio": 0.3507,
+      "cap": 2.0,
+      "gate_applies": true
+    },
+    "aps_bun__missing": {
+      "feature": "aps_bun__missing",
+      "n_missing": 40914,
+      "n_present": 123408,
+      "prevalence_missing": 0.08051,
+      "prevalence_present": 0.091639,
+      "prevalence_ratio": 0.8786,
+      "cap": 2.0,
+      "gate_applies": true
+    },
+    "aps_glucose__missing": {
+      "feature": "aps_glucose__missing",
+      "n_missing": 27641,
+      "n_present": 136681,
+      "prevalence_missing": 0.078977,
+      "prevalence_present": 0.090869,
+      "prevalence_ratio": 0.8691,
+      "cap": 2.0,
+      "gate_applies": true
+    },
+    "aps_bilirubin__missing": {
+      "feature": "aps_bilirubin__missing",
+      "n_missing": 107937,
+      "n_present": 56385,
+      "prevalence_missing": 0.074117,
+      "prevalence_present": 0.117106,
+      "prevalence_ratio": 0.6329,
+      "cap": 2.0,
+      "gate_applies": true
+    },
+    "aps_fio2__missing": {
+      "feature": "aps_fio2__missing",
+      "n_missing": 128882,
+      "n_present": 35440,
+      "prevalence_missing": 0.063508,
+      "prevalence_present": 0.181095,
+      "prevalence_ratio": 0.3507,
+      "cap": 2.0,
+      "gate_applies": true
+    },
+    "apv_present": {
+      "feature": "apv_present",
+      "n_missing": 6919,
+      "n_present": 157403,
+      "prevalence_missing": 0.04596,
+      "prevalence_present": 0.090754,
+      "prevalence_ratio": 0.5064,
+      "cap": 2.0,
+      "gate_applies": true
+    },
+    "apv_graftcount__missing": {
+      "feature": "apv_graftcount__missing",
+      "n_missing": 6919,
+      "n_present": 157403,
+      "prevalence_missing": 0.04596,
+      "prevalence_present": 0.090754,
+      "prevalence_ratio": 0.5064,
+      "cap": 2.0,
+      "gate_applies": true
+    },
+    "apv_thrombolytics__missing": {
+      "feature": "apv_thrombolytics__missing",
+      "n_missing": 6919,
+      "n_present": 157403,
+      "prevalence_missing": 0.04596,
+      "prevalence_present": 0.090754,
+      "prevalence_ratio": 0.5064,
+      "cap": 2.0,
+      "gate_applies": true
+    },
+    "apv_aids__missing": {
+      "feature": "apv_aids__missing",
+      "n_missing": 6919,
+      "n_present": 157403,
+      "prevalence_missing": 0.04596,
+      "prevalence_present": 0.090754,
+      "prevalence_ratio": 0.5064,
+      "cap": 2.0,
+      "gate_applies": true
+    },
+    "apv_hepaticfailure__missing": {
+      "feature": "apv_hepaticfailure__missing",
+      "n_missing": 6919,
+      "n_present": 157403,
+      "prevalence_missing": 0.04596,
+      "prevalence_present": 0.090754,
+      "prevalence_ratio": 0.5064,
+      "cap": 2.0,
+      "gate_applies": true
+    },
+    "apv_lymphoma__missing": {
+      "feature": "apv_lymphoma__missing",
+      "n_missing": 6919,
+      "n_present": 157403,
+      "prevalence_missing": 0.04596,
+      "prevalence_present": 0.090754,
+      "prevalence_ratio": 0.5064,
+      "cap": 2.0,
+      "gate_applies": true
+    },
+    "apv_metastaticcancer__missing": {
+      "feature": "apv_metastaticcancer__missing",
+      "n_missing": 6919,
+      "n_present": 157403,
+      "prevalence_missing": 0.04596,
+      "prevalence_present": 0.090754,
+      "prevalence_ratio": 0.5064,
+      "cap": 2.0,
+      "gate_applies": true
+    },
+    "apv_leukemia__missing": {
+      "feature": "apv_leukemia__missing",
+      "n_missing": 6919,
+      "n_present": 157403,
+      "prevalence_missing": 0.04596,
+      "prevalence_present": 0.090754,
+      "prevalence_ratio": 0.5064,
+      "cap": 2.0,
+      "gate_applies": true
+    },
+    "apv_immunosuppression__missing": {
+      "feature": "apv_immunosuppression__missing",
+      "n_missing": 6919,
+      "n_present": 157403,
+      "prevalence_missing": 0.04596,
+      "prevalence_present": 0.090754,
+      "prevalence_ratio": 0.5064,
+      "cap": 2.0,
+      "gate_applies": true
+    },
+    "apv_cirrhosis__missing": {
+      "feature": "apv_cirrhosis__missing",
+      "n_missing": 6919,
+      "n_present": 157403,
+      "prevalence_missing": 0.04596,
+      "prevalence_present": 0.090754,
+      "prevalence_ratio": 0.5064,
+      "cap": 2.0,
+      "gate_applies": true
+    },
+    "apv_electivesurgery__missing": {
+      "feature": "apv_electivesurgery__missing",
+      "n_missing": 133738,
+      "n_present": 30584,
+      "prevalence_missing": 0.100532,
+      "prevalence_present": 0.037863,
+      "prevalence_ratio": 2.6552,
+      "cap": 2.0,
+      "gate_applies": true
+    },
+    "apv_activetx__missing": {
+      "feature": "apv_activetx__missing",
+      "n_missing": 6919,
+      "n_present": 157403,
+      "prevalence_missing": 0.04596,
+      "prevalence_present": 0.090754,
+      "prevalence_ratio": 0.5064,
+      "cap": 2.0,
+      "gate_applies": true
+    },
+    "apv_readmit__missing": {
+      "feature": "apv_readmit__missing",
+      "n_missing": 6919,
+      "n_present": 157403,
+      "prevalence_missing": 0.04596,
+      "prevalence_present": 0.090754,
+      "prevalence_ratio": 0.5064,
+      "cap": 2.0,
+      "gate_applies": true
+    },
+    "apv_ima__missing": {
+      "feature": "apv_ima__missing",
+      "n_missing": 6919,
+      "n_present": 157403,
+      "prevalence_missing": 0.04596,
+      "prevalence_present": 0.090754,
+      "prevalence_ratio": 0.5064,
+      "cap": 2.0,
+      "gate_applies": true
+    },
+    "apv_midur__missing": {
+      "feature": "apv_midur__missing",
+      "n_missing": 6919,
+      "n_present": 157403,
+      "prevalence_missing": 0.04596,
+      "prevalence_present": 0.090754,
+      "prevalence_ratio": 0.5064,
+      "cap": 2.0,
+      "gate_applies": true
+    },
+    "apv_ventday1__missing": {
+      "feature": "apv_ventday1__missing",
+      "n_missing": 6919,
+      "n_present": 157403,
+      "prevalence_missing": 0.04596,
+      "prevalence_present": 0.090754,
+      "prevalence_ratio": 0.5064,
+      "cap": 2.0,
+      "gate_applies": true
+    },
+    "apv_oobventday1__missing": {
+      "feature": "apv_oobventday1__missing",
+      "n_missing": 6919,
+      "n_present": 157403,
+      "prevalence_missing": 0.04596,
+      "prevalence_present": 0.090754,
+      "prevalence_ratio": 0.5064,
+      "cap": 2.0,
+      "gate_applies": true
+    },
+    "apv_oobintubday1__missing": {
+      "feature": "apv_oobintubday1__missing",
+      "n_missing": 6919,
+      "n_present": 157403,
+      "prevalence_missing": 0.04596,
+      "prevalence_present": 0.090754,
+      "prevalence_ratio": 0.5064,
+      "cap": 2.0,
+      "gate_applies": true
+    },
+    "apv_diabetes__missing": {
+      "feature": "apv_diabetes__missing",
+      "n_missing": 6919,
+      "n_present": 157403,
+      "prevalence_missing": 0.04596,
+      "prevalence_present": 0.090754,
+      "prevalence_ratio": 0.5064,
+      "cap": 2.0,
+      "gate_applies": true
+    },
+    "apv_ejectfx__missing": {
+      "feature": "apv_ejectfx__missing",
+      "n_missing": 161531,
+      "n_present": 2791,
+      "prevalence_missing": 0.090045,
+      "prevalence_present": 0.020781,
+      "prevalence_ratio": 4.333,
+      "cap": 2.0,
+      "gate_applies": true
+    }
+  },
+  "apache_absent_los": {
+    "unit": "hours",
+    "note": "unitdischargeoffset is a DENYLISTED feature read here as a diagnostic ONLY (E-9). If APACHE-absent stays are systematically shorter, absence is outcome-informative: the day-1 window did not close because the stay ended.",
+    "aps_absent": {
+      "n": 6919,
+      "min": -128.11666666666667,
+      "q1": 15.516666666666667,
+      "median": 27.766666666666666,
+      "q3": 52.891666666666666,
+      "max": 1401.2,
+      "mean": 42.977821939586654
+    },
+    "aps_present": {
+      "n": 157403,
+      "min": 0.0,
+      "q1": 21.95,
+      "median": 40.7,
+      "q3": 73.68333333333334,
+      "max": 12152.933333333332,
+      "mean": 67.85701447875834
+    },
+    "aps_absent_positive": {
+      "n": 318,
+      "min": 0.0,
+      "q1": 7.6875,
+      "median": 28.675,
+      "q3": 62.262499999999996,
+      "max": 1367.0166666666667,
+      "mean": 60.87945492662473
+    },
+    "n_los_unavailable": 0
+  },
+  "unparseable_tokens": {
+    "apacheApsVar": {},
+    "apachePredVar": {},
+    "over_cap": {},
+    "cap": 0.01
+  },
+  "join_key_unparseable": {
+    "apacheApsVar": {
+      "n_rows": 171177,
+      "n_key_unparseable": 0
+    },
+    "apachePredVar": {
+      "n_rows": 171177,
+      "n_key_unparseable": 0
+    }
+  },
+  "attrition": [
+    {
+      "step": "raw-unit-stays",
+      "n_stays": 200859,
+      "n_sites": 208,
+      "n_positive": 18004,
+      "prevalence": 0.08963501759941053
+    },
+    {
+      "step": "site-parseable",
+      "n_stays": 200859,
+      "n_sites": 208,
+      "n_positive": 18004,
+      "prevalence": 0.08963501759941053
+    },
+    {
+      "step": "outcome-known",
+      "n_stays": 199108,
+      "n_sites": 207,
+      "n_positive": 18004,
+      "prevalence": 0.09042328786387287
+    },
+    {
+      "step": "adult",
+      "n_stays": 198490,
+      "n_sites": 207,
+      "n_positive": 17982,
+      "prevalence": 0.09059398458360622
+    },
+    {
+      "step": "first-stay",
+      "n_stays": 164322,
+      "n_sites": 207,
+      "n_positive": 14603,
+      "prevalence": 0.08886819780674529
+    },
+    {
+      "step": "primary-cohort",
+      "n_stays": 164322,
+      "n_sites": 207,
+      "n_positive": 14603,
+      "prevalence": 0.08886819780674529
+    },
+    {
+      "step": "apache-aps-linked",
+      "n_stays": 157403,
+      "n_sites": 207,
+      "n_positive": 14285,
+      "prevalence": 0.09075430582644549
+    },
+    {
+      "step": "apache-result-linked",
+      "n_stays": 138496,
+      "n_sites": 190,
+      "n_positive": 12270,
+      "prevalence": 0.08859461645101664
+    },
+    {
+      "step": "apache-complete-arm",
+      "n_stays": 135127,
+      "n_sites": 190,
+      "n_positive": 11959,
+      "prevalence": 0.08850192781605452
+    }
+  ],
+  "fio2_convention": {
+    "apacheApsVar": {
+      "n_minus_one": 132105,
+      "n_gt_1": 39072,
+      "n_in_pct_window": 37402,
+      "n_out_of_both": 1670,
+      "n_eq_pct_floor": 1670
+    },
+    "apachePredVar": {
+      "n_minus_one": 132105,
+      "n_gt_1": 39072,
+      "n_in_pct_window": 37402,
+      "n_out_of_both": 1670,
+      "n_eq_pct_floor": 1670
+    }
+  },
+  "temperature_convention": {
+    "apacheApsVar": {
+      "n_in_c_window": 158764,
+      "n_minus_one": 12351,
+      "n_out_of_both": 62
+    },
+    "apachePredVar": {}
+  },
+  "ordinal_value_sets": {
+    "intubated": {
+      "0": 145779,
+      "1": 25398
+    },
+    "vent": {
+      "0": 129829,
+      "1": 41348
+    },
+    "dialysis": {
+      "0": 164868,
+      "1": 6309
+    },
+    "eyes": {
+      "4": 118477,
+      "-1": 5525,
+      "3": 24483,
+      "1": 14421,
+      "2": 8271
+    },
+    "motor": {
+      "6": 131358,
+      "-1": 5525,
+      "3": 1038,
+      "1": 9691,
+      "4": 8639,
+      "5": 14286,
+      "2": 640
+    },
+    "verbal": {
+      "5": 105573,
+      "-1": 5525,
+      "4": 21189,
+      "1": 29599,
+      "3": 5582,
+      "2": 3709
+    },
+    "meds": {
+      "0": 165652,
+      "-1": 3729,
+      "1": 1796
+    }
+  },
+  "reference_check": {
+    "expect_reference": true,
+    "ok": true,
+    "mismatches": [],
+    "split_projection": {
+      "n_sites": 207,
+      "n_target": 24,
+      "rest": 183,
+      "n_train": 73,
+      "n_aux": 36,
+      "n_cal": 74,
+      "min_cal_clusters": 50,
+      "cal_ok": true,
+      "min_total_sites": 149,
+      "total_sites_ok": true
+    },
+    "invalid_conditions": []
+  },
+  "predictions": [
+    {
+      "id": "P1",
+      "prediction": "At 208 hospitals (75 calibration sites), alpha = 0.10 certifies on the pooled arm and alpha = 0.05 does not, in >= 15 of the 20 replicates. Basis: E4's synthetic frontier -- alpha=0.10 certifies from ~150 sites, alpha=0.05 first appears ~300 and is reliable only by 400.",
+      "settled_by": "EICU_pooled.csv `certified` by `alpha`"
+    },
+    {
+      "id": "P2",
+      "prediction": "The per-site dispersion diagnostic on the pooled target pool at the deployed tau (_per_site_exceed_frac) is > 0.02 and lands in [0.05, 0.30] -- real hospitals are more heterogeneous than the synthetic generator at s_u = 0.5 (which gave 0.02) and closer to its s_u = 2.0 arm (0.10).",
+      "settled_by": "EICU_pooled.csv `per_site_exceed_frac`"
+    },
+    {
+      "id": "P3",
+      "prediction": "BBSE contributes no certificate: it declines on >= 90% of the 25 pools per replicate, with bbse-misspecified or bbse-ill-conditioned the modal reason. Basis: E2's 200/200 declines, plus the coarse 2000-draw q_t tail widening the 16-corner box. Falsified if BBSE certifies a tau the baseline walk does not.",
+      "settled_by": "`decline_reason` / `mode_outcomes` columns"
+    },
+    {
+      "id": "P4",
+      "prediction": "APACHE-absence features (aps_present, apv_present, or an aps_*__missing / apv_*__missing sibling) appear in the top 3 of the abstention gap_ranking on the pooled arm. Basis: absence is site-correlated by the dataset authors' own account.",
+      "settled_by": "EICU_diagnostics.json `abstention_gap_ranking`"
+    },
+    {
+      "id": "P5",
+      "prediction": "The per-hospital arm returns pool-too-small for >= 1 and <= 6 of the 24 target hospitals (heavy-tailed hospital sizes; ~78% of hospitals have < 500 stays).",
+      "settled_by": "EICU_per_site.csv `reason`"
+    },
+    {
+      "id": "P6",
+      "prediction": "Mean coverage at the operative rung on the pooled arm is in [0.60, 0.95].",
+      "settled_by": "EICU_pooled.csv `coverage`"
+    },
+    {
+      "id": "P7",
+      "prediction": "Primary-cohort size lands in [130 000, 175 000] stays across 208 sites, and apache-result-linked retains <= 195 sites -- i.e. the APACHE-result restriction visibly deletes >= 13 hospitals.",
+      "settled_by": "EICU_attrition.csv"
+    }
+  ],
+  "warnings": [
+    "[MEASURE] T-5: 3996 uniquepid (0.0290 > cap 0.01) appear at more than one hospitalid; assert_site_disjoint compares site LABELS only, so these are correlated records across splits. This is a LOWER bound (de-identification may split one person across several uniquepid) and is disclosed, never filtered -- a filter would itself be site-correlated",
+    "[MEASURE] T-8: 148532 stays carry >1 apachePatientResult row (297,064 != 2 x 171,177 in the released extract); dedup is min(apachepatientresultsid) within (stay, version) with version preference ('IVa', 'IV'), counted in meta['dedup_counts'] -- a naive join would silently duplicate records and inflate the cluster sizes feeding the influence cap",
+    "[MEASURE] T-4: 17 hospitals have ZERO apachePatientResult rows. The primary arm draws NO feature from that table: restricting to APACHE-covered stays would delete those hospitals and CHANGE THE SITE POPULATION the site-population-average estimand refers to (audit V1)",
+    "[MEASURE] E-9: OUTCOME-informative missingness -- 2 indicator(s) show an absent:present outcome prevalence ratio over the cap 2.0; worst [('apv_ejectfx__missing', 4.333), ('apv_electivesurgery__missing', 2.6552)]. APACHE day-1 rows do not exist for a stay that ends because the patient died, so this channel is a LEAK, not the site channel T-3 describes, and prediction P4 being satisfied is its SIGNATURE rather than a confirmation",
+    "[MEASURE] T-2/A6: apacheApsVar carries negative mass NOT at exactly -1.0 in {'urine': 1}, BELOW the 0.01 abort threshold: the cells map to missing and the run proceeds (amendment A6, POST-HOC). Inspect the column's support before trusting it",
+    "[MEASURE] T-10/E-18: apacheApsVar.fio2 has 1670 of 39072 observed values outside BOTH frozen windows (0.0427); those become missing. The fio2 windows are lower-CLOSED so room air (0.21 / 21) is kept; a large residue here means a third unit convention, and the fix is a SPEC + constants diff, not a silent loss",
+    "[MEASURE] T-10/E-18: apachePredVar.fio2 has 1670 of 39072 observed values outside BOTH frozen windows (0.0427); those become missing. The fio2 windows are lower-CLOSED so room air (0.21 / 21) is kept; a large residue here means a third unit convention, and the fix is a SPEC + constants diff, not a silent loss"
+  ]
+}
