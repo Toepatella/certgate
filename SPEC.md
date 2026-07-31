@@ -829,9 +829,21 @@ strata and as an ATTRITION LEDGER (`EICU_ATTRITION_STEPS`, recording `n_stays` A
 **The `-1` sentinel is dual-channel and first-class.** For every allowlisted APACHE
 numeric, BOTH `''` (the documented SQL NULL: the MIT-LCP loader is `NULL ''`) AND the
 literal `-1` map to missing. Handling only one poisons the matrix with a finite `-1`.
-Any negative mass NOT at exactly `-1.0` raises `reason=unexpected-negative-sentinel` —
-every allowlisted column has non-negative physiological support, so an unrecognised
-negative is a new sentinel and must abort, not flow. `fio2` and `temperature` carry the
+Any negative mass NOT at exactly `-1.0` maps to missing and is counted; it raises
+`reason=unexpected-negative-sentinel` when a column's share of such cells exceeds the
+frozen `EICU_MAX_UNPARSEABLE_SHARE = 0.01` — every allowlisted column has non-negative
+physiological support, so an unrecognised negative at any material rate is a new sentinel
+and must abort, not flow. Below the threshold the cells still become missing (they always
+did) and `preflight`/`build_raw` emit a `[MEASURE]` warning naming column, count and
+share. **This threshold is protocol amendment A6 (2026-07-31), the one POST-HOC amendment
+and the only one that relaxes a refusal** — the released extract carries exactly one such
+cell in ~4.1M (`apacheApsVar.urine = -11245.5648`, stay 1805017, in cohort) against a
+support otherwise contiguous and non-negative (min 0, median 1447.6, max 269323.7). §5.3
+of `EICU-PROTOCOL.md` pre-specified that the "value < 0 ⇒ missing" rule is adopted *only
+after the histogram proves the support is contiguous and non-negative*; that histogram was
+run and it does. The abort was a look-at-this gate, not a correctness gate: the value maps
+to NaN either way, so **no computed number changes** — but every figure derived from this
+extract carries the post-hoc label per `EICU-PROTOCOL.md` §0. `fio2` and `temperature` carry the
 two frozen, NON-OVERLAPPING unit normalisations (fraction/percent; Celsius/Fahrenheit),
 counted in `meta["unit_conversions"]`; anything outside both windows becomes missing.
 **The `fio2` windows are lower-CLOSED** — `EICU_WINDOW_FIO2_FRAC = (0.21, 1.0)` and

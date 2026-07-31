@@ -1476,17 +1476,39 @@ def build_raw(data_dir, *, arm="primary", strict_levels=True, verbose=True):
     x[:, _IDX_APS_PRESENT] = aps_present.astype(np.float64)
     x[:, _IDX_APV_PRESENT] = apv_present.astype(np.float64)
 
-    # ---- unrecognised-sentinel abort (T-2) ---------------------------------
+    # ---- unrecognised-sentinel abort (T-2; threshold = amendment A6) -------
+    # The cells ALWAYS become missing (_parse_apache_cell maps v < 0 to NaN).
+    # The raise is a look-at-this gate, and it fires once a column's share of
+    # such cells is material: EICU_MAX_UNPARSEABLE_SHARE, the same frozen
+    # constant E-15/E-21 use. Sub-threshold mass is reported, not aborted --
+    # the released extract carries ONE such cell in ~4.1M
+    # (apacheApsVar.urine = -11245.5648) against an otherwise contiguous
+    # non-negative support, and refusing the study over it would be theatre.
+    # A6 is POST-HOC (the extract had been read); EICU-PROTOCOL.md SS0 requires
+    # every number derived from this extract to carry that label.
     negatives = {k: v["other_negative"] for k, v in sent.items()
                  if k.startswith(("aps_", "apv_")) and v["other_negative"]}
-    if negatives:
+    over_neg = {k: {"n_other_negative": int(v), "share": round(v / n, 8)}
+                for k, v in negatives.items()
+                if n and (v / n) > EICU_MAX_UNPARSEABLE_SHARE}
+    if over_neg:
         raise _err("build_raw",
-                   "allowlisted APACHE numeric(s) carry negative mass NOT at "
-                   "exactly -1.0; every allowlisted column has non-negative "
-                   "physiological support, so this is an UNRECOGNISED sentinel "
-                   "and must abort rather than flow into the matrix "
-                   "(column -> count)", dict(sorted(negatives.items())),
+                   f"allowlisted APACHE numeric(s) carry negative mass NOT at "
+                   f"exactly -1.0 in more than "
+                   f"EICU_MAX_UNPARSEABLE_SHARE={EICU_MAX_UNPARSEABLE_SHARE} "
+                   f"of cohort rows; every allowlisted column has non-negative "
+                   f"physiological support, so this is an UNRECOGNISED sentinel "
+                   f"at a material rate and must abort rather than flow into "
+                   f"the matrix (column -> count/share)",
+                   dict(sorted(over_neg.items())),
                    reason="unexpected-negative-sentinel")
+    if negatives:
+        warn.append(
+            f"[MEASURE] T-2/A6: negative mass NOT at exactly -1.0, below the "
+            f"{EICU_MAX_UNPARSEABLE_SHARE} abort threshold, mapped to missing "
+            f"in {dict(sorted(negatives.items()))!r} over {n} cohort rows. "
+            f"A6 is the one POST-HOC protocol amendment; label every number "
+            f"derived from this extract accordingly")
 
     # ---- unrecognised-NULL-token abort (E-15/E-22) -------------------------
     # The -1 gate protects one direction only. A re-export whose NULL token is
@@ -2647,13 +2669,24 @@ def preflight(data_dir, *, expect_reference=False, verbose=True) -> dict:
     for label, block in (("apacheApsVar", aps), ("apachePredVar", apv)):
         bad = {c: e["n_other_negative"] for c, e in block["sentinels"].items()
                if e["n_other_negative"]}
-        if bad:
+        over = {c: k for c, k in bad.items()
+                if block["sentinels"][c]["n"]
+                and (k / block["sentinels"][c]["n"]) > EICU_MAX_UNPARSEABLE_SHARE}
+        if over:
             warnings.append(
                 f"[MEASURE] T-2: {label} carries negative mass NOT at exactly "
-                f"-1.0 in {dict(sorted(bad.items()))!r}; build_raw will raise "
+                f"-1.0 in {dict(sorted(over.items()))!r}, over "
+                f"{EICU_MAX_UNPARSEABLE_SHARE} of rows; build_raw WILL raise "
                 f"unexpected-negative-sentinel. The rule 'value < 0 => missing' "
                 f"is adopted only AFTER the histogram proves the support is "
                 f"contiguous and non-negative -- do not widen it here")
+        elif bad:
+            warnings.append(
+                f"[MEASURE] T-2/A6: {label} carries negative mass NOT at "
+                f"exactly -1.0 in {dict(sorted(bad.items()))!r}, BELOW the "
+                f"{EICU_MAX_UNPARSEABLE_SHARE} abort threshold: the cells map "
+                f"to missing and the run proceeds (amendment A6, POST-HOC). "
+                f"Inspect the column's support before trusting it")
 
     # ---- unrecognised NULL TOKEN (E-15/E-22): opposite direction of T-2 ----
     unparseable_over = {}
@@ -2756,7 +2789,9 @@ def preflight(data_dir, *, expect_reference=False, verbose=True) -> dict:
             invalid.append(f"build_raw(strict_levels=True) will raise "
                            f"categorical-level-drift on {col!r}")
     for label, block in (("apacheApsVar", aps), ("apachePredVar", apv)):
-        if any(e["n_other_negative"] for e in block["sentinels"].values()):
+        if any(e["n_other_negative"] and e["n"]
+               and (e["n_other_negative"] / e["n"]) > EICU_MAX_UNPARSEABLE_SHARE
+               for e in block["sentinels"].values()):
             invalid.append(f"build_raw will raise unexpected-negative-sentinel "
                            f"on {label}")
     if unparseable_over:

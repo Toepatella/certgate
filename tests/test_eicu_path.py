@@ -1099,6 +1099,47 @@ def test_unexpected_negative_sentinel_aborts(tmp_path):
         etl.build_raw(dst, verbose=False)
 
 
+def test_sub_threshold_negative_sentinel_flows_as_missing(tmp_path):
+    """Amendment A6 (POST-HOC, 2026-07-31): negative-not-`-1` mass below
+    `EICU_MAX_UNPARSEABLE_SHARE` maps to missing and WARNS instead of aborting.
+
+    The released extract carries exactly one such cell in ~4.1M
+    (`apacheApsVar.urine = -11245.5648`, stay 1805017) against an otherwise
+    contiguous non-negative support. The cells always became NaN; the raise was
+    a look-at-this gate, so no computed number changes. Above the threshold the
+    abort must still fire -- pinned by the test above at a 1-in-2 rate.
+    """
+    n = 200                                    # 1/200 = 0.005 < 0.01
+    rows = {"patient": [], "hospital": [_hospital(1)],
+            "apacheApsVar": [], "apachePredVar": [],
+            "apachePatientResult": []}
+    for i in range(1, n + 1):
+        rows["patient"].append(_patient(
+            i, hospitaldischargestatus="Expired" if i % 7 == 0 else "Alive"))
+        over = {"urine": "-11245.5648"} if i == 3 else {}
+        rows["apacheApsVar"].append(_aps(i, i, **over))
+        rows["apachePredVar"].append(_apv(i, i))
+    dst = _write_corpus(str(tmp_path / "subthreshold"), rows)
+
+    x_raw, names, meta = etl.build_raw(dst, verbose=False)
+    assert x_raw.shape[0] == n
+    assert meta["sentinel_counts"]["aps_urine"]["other_negative"] == 1
+    assert any("A6" in w for w in meta["warnings"]), (
+        "a post-hoc relaxation must announce itself in the warnings")
+    # the offending cell is MISSING, never a finite negative
+    r = _row_of(meta, 3)
+    assert np.isnan(x_raw[r, _col_of(names, "aps_urine")])
+    assert x_raw[r, _col_of(names, "aps_urine__missing")] == 1.0
+    # and no finite negative urine survives anywhere
+    col = x_raw[:, _col_of(names, "aps_urine")]
+    assert not np.any(col[np.isfinite(col)] < 0.0)
+
+    pf = etl.preflight(dst, verbose=False)
+    assert not any("unexpected-negative-sentinel" in c
+                   for c in pf["reference_check"]["invalid_conditions"])
+    assert any("A6" in w for w in pf["warnings"])
+
+
 def test_age_over_89_is_kept_and_flagged(tmp_path):
     """The HIPAA ceiling token. Dropping `'> 89'` (the common benchmark's
     `max_age=89`) removes a mortality-enriched stratum whose SHARE VARIES BY
