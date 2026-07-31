@@ -36,7 +36,7 @@ from certgate.model import fit_head
 from certgate.pipeline import run_certgate
 from certgate.explain import (global_importance, local_attribution,
                               abstention_explanation, cohort_abstention_profile,
-                              composition)
+                              composition, counterfactual_to_answer)
 from certgate.harness import hard_violation, exceedance_reference, SIZE_BINS
 from certgate.report import provenance
 
@@ -665,6 +665,13 @@ def run_E5(out, quick):
     R = 10 if quick else 200
     gaps, top_feats = [], []
     pooled_declined = pooled_targets = draws_certified = 0
+    # ---- functionally-grounded counterfactual evaluation (R3-09 protocol,
+    # ---- 2026-07-31): top-ranked single-feature delta vs an equal-|dz|
+    # ---- most-favorable move on a uniformly random feature, both judged by
+    # ---- the DEPLOYED rule score >= tau. Stream _rng(5, r, 1) so the
+    # ---- case-study (_rng(5)) and replication (_rng(5, r)) draws stay
+    # ---- byte-identical.
+    cf_cases = cf_top_flips = cf_rand_flips = cf_unflippable = 0
     for r in range(R):
         rng_r = _rng(5, r)
         train_r, aux_r, cal_r, head_r = _draw_split(cfg, ANCHOR_SITES, rng_r)
@@ -682,6 +689,36 @@ def run_E5(out, quick):
         if prof_r["n_declined"] > 0 and prof_r["n_answered"] > 0:
             gaps.append(prof_r["gap"])
             top_feats.append(int(prof_r["gap_ranking"][0]))
+        tau_r = rep_r["operative"]["tau"]
+        rng_cf = _rng(5, r, 1)
+        for i in np.flatnonzero(~rep_r["answered_mask"]):
+            cf = counterfactual_to_answer(head_r, tgt_r.x[i], tau_r)
+            if not cf["flip_verified"] or not len(cf["single_feature_ranking"]):
+                cf_unflippable += 1
+                continue
+            cf_cases += 1
+            jt = int(cf["single_feature_ranking"][0])
+            x_top = tgt_r.x[i].copy()
+            x_top[jt] += cf["single_feature_delta_x"][jt]
+            if float(head_r.score(x_top.reshape(1, -1))[0]) >= tau_r:
+                cf_top_flips += 1
+            budget = abs(float(cf["single_feature_delta_z"][jt]))
+            jr = int(rng_cf.integers(0, tgt_r.x.shape[1]))
+            s = cf["direction"]
+            dz = budget if s * head_r.coef[jr] >= 0 else -budget
+            x_rnd = tgt_r.x[i].copy()
+            x_rnd[jr] += dz * head_r.sd[jr]
+            if float(head_r.score(x_rnd.reshape(1, -1))[0]) >= tau_r:
+                cf_rand_flips += 1
+    counterfactual_eval = dict(
+        n_declined_evaluated=int(cf_cases),
+        n_unflippable=int(cf_unflippable),
+        top_feature_flip_rate=_rate(cf_top_flips, cf_cases),
+        random_feature_flip_rate=_rate(cf_rand_flips, cf_cases),
+        protocol=("top-ranked single-feature counterfactual delta vs an "
+                  "equal-|delta_z| most-favorable move on a uniformly random "
+                  "feature; both judged by the deployed rule score >= tau "
+                  "(R3-09 functionally-grounded)"))
     if gaps:
         gmat = np.vstack(gaps)
         gap_mean = gmat.mean(axis=0)
@@ -702,11 +739,13 @@ def run_E5(out, quick):
                                     for k, v in sorted(cnt.items())},
             top_gap_feature_mode=int(top_mode),
             top_gap_stability=round(top_n / len(gaps), 4),
-            stable_driver=bool(top_n / len(gaps) >= 0.5))
+            stable_driver=bool(top_n / len(gaps) >= 0.5),
+            counterfactual_eval=counterfactual_eval)
     else:
         replication = dict(R=R, draws_certified=draws_certified,
                            draws_with_declines=0, pooled_declined=0,
-                           stable_driver=False)
+                           stable_driver=False,
+                           counterfactual_eval=counterfactual_eval)
 
     def _clean(vals):
         """NaN -> None: NaN is an invalid JSON token and the harness forbids

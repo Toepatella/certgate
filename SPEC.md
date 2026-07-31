@@ -668,6 +668,16 @@ case-study stream `_rng(5)` is untouched, so its published numbers stay byte-ide
 per draw, the abstention profile is computed at that draw's deployed tau on its target
 pool; the summary reports the pooled declined count, per-feature answered-vs-declined gap
 means with normal 95% CIs over the gap-defined draws, and the top-gap-feature frequency.
+The replication arm also runs the FUNCTIONALLY-GROUNDED counterfactual evaluation
+(2026-07-31; the R3-09 protocol): for every declined case in a certified draw, the
+top-ranked single-feature delta from `counterfactual_to_answer` is applied and checked
+against the DEPLOYED rule `head.score(x_cf) >= tau` (expected ~1.0 — the exactness claim,
+now measured in-harness rather than only unit-tested), against a control that spends the
+SAME standardized budget |delta_z| in the most favorable direction on a uniformly random
+feature (stream `_rng(5, r, 1)`, so the case-study and replication streams are untouched).
+The gap between the two rates is the evidence that the attribution RANKING carries
+information; both rates and the evaluated-case count land in `replication.counterfactual_eval`
+inside `E5_explain.json` and the summary block.
 A NULL RESULT — no stable single driver — is the expected outcome for the symmetric
 generator (features 0-3 share one signal direction) and must be reported as such, never
 dressed up. · E6 per-site fairness table + composition (multi-site target passes

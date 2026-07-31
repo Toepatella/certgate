@@ -87,6 +87,11 @@ certgate/
   experiments/
     run_synthetic.py   ← E1–E6 grid (--quick for smoke)
     out/               ← figures + CSVs for the paper
+  examples/
+    real_data_example.py    ← runnable from_raw → run_certgate walkthrough
+    explain_dashboard.py    ← self-contained interactive explanation dashboard
+                              (plain-language + advanced modes; open the
+                              generated .html in any browser, no install)
 ```
 
 ## Quickstart

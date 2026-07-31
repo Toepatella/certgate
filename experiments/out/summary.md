@@ -91,7 +91,7 @@
 }
 ```
 
-## E2
+## E2 (preserved from an earlier run)
 ```json
 {
   "_run": {
@@ -257,7 +257,7 @@
 }
 ```
 
-## E3
+## E3 (preserved from an earlier run)
 ```json
 {
   "_run": {
@@ -376,12 +376,12 @@
 }
 ```
 
-## E5 (preserved from an earlier run)
+## E5
 ```json
 {
   "_run": {
     "mode": "FULL",
-    "utc": "2026-07-30T17:53:08+00:00"
+    "utc": "2026-07-31T05:23:38+00:00"
   },
   "tau_star": 0.55,
   "n_answered": 200,
@@ -421,7 +421,14 @@
     },
     "top_gap_feature_mode": 2,
     "top_gap_stability": 0.2742,
-    "stable_driver": false
+    "stable_driver": false,
+    "counterfactual_eval": {
+      "n_declined_evaluated": 2644,
+      "n_unflippable": 0,
+      "top_feature_flip_rate": 1.0,
+      "random_feature_flip_rate": 0.115,
+      "protocol": "top-ranked single-feature counterfactual delta vs an equal-|delta_z| most-favorable move on a uniformly random feature; both judged by the deployed rule score >= tau (R3-09 functionally-grounded)"
+    }
   }
 }
 ```

@@ -92,17 +92,32 @@ def _case_payload(head, x_row, idx, tau_star, feature_names):
 
 
 def build_dashboard(head, x, tau_star, out_path, feature_names=None,
-                    oracle_y=None, cohort_label="synthetic demonstration cohort"):
+                    oracle_y=None, cohort_label="synthetic demonstration cohort",
+                    certificate=None):
     """Write a self-contained interactive explanation dashboard for ``x``.
 
     Every declined case is browsable; answered cases are truncated to the
     first ``_MAX_ANSWERED_SHOWN``. The cohort histogram and the abstention
-    profile cover ALL cases. Returns ``out_path``.
+    profile cover ALL cases.
+
+    ``certificate`` closes the R3-12/R3-36 loop: pass the deployment's
+    certificate summary (e.g. ``dict(alpha=0.10, delta=0.05, mode="baseline",
+    n_cal_sites=63, certified=True)``) and the page renders it in a banner;
+    pass ``None`` (the default, and the only honest value for this demo) and
+    the page displays an explicit UNCERTIFIED DEMONSTRATION banner instead —
+    explanations shown without their certificate must say so.
+
+    Binary features (all cohort values in {0, 1} — e.g. missingness
+    indicators on real data) render as toggles rather than sliders; cohorts
+    with more than 20 features get a feature search box and a
+    top-contributors collapse. Returns ``out_path``.
     """
     x = np.asarray(x, dtype=np.float64)
     d = x.shape[1]
     if feature_names is None:
         feature_names = [f"feature {j}" for j in range(d)]
+    binary = [bool(np.all(np.isin(np.unique(x[:, j]), (0.0, 1.0))))
+              for j in range(d)]
     scores = head.score(x)
     answered = scores >= tau_star
     declined_idx = np.flatnonzero(~answered)
@@ -121,6 +136,8 @@ def build_dashboard(head, x, tau_star, out_path, feature_names=None,
     payload = {
         "tau_star": float(tau_star),
         "cohort_label": cohort_label,
+        "certificate": certificate,
+        "binary": binary,
         "n_total": int(x.shape[0]),
         "n_answered": n_ans,
         "n_declined": int((~answered).sum()),
@@ -270,6 +287,14 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
   .fence { border:1.5px dashed var(--neg); border-radius:10px;
            padding:12px 16px; margin:12px 0; background:var(--fence); }
   .fence b.t { color:var(--neg); }
+  .certb { border-radius:10px; padding:10px 16px; margin:12px 0 0;
+           font-size:13px; border:1.5px solid; }
+  .certb.uncert { border-color:var(--dec); color:var(--dec);
+                  background:var(--fence); font-weight:600; }
+  .certb.cert { border-color:var(--ans); background:var(--fence); }
+  .certb.cert b { color:var(--ans); }
+  .certb .cl2 { font-weight:400; color:var(--mut); font-size:12px;
+                display:block; margin-top:2px; }
   footer { color:var(--mut); font-size:12px; max-width:1180px;
            margin:0 auto; padding:0 22px 26px; }
   kbd { background:var(--chip); border-radius:4px; padding:0 5px;
@@ -342,6 +367,7 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
   </div>
 </header>
 <main>
+  <div id="certbanner"></div>
   <div class="card caveat">
     <span class="simponly">
       <b>Read this first.</b> This page describes the <b>computer program</b>,
@@ -512,6 +538,33 @@ document.getElementById("printT").onclick = () => window.print();
 const dual = (s, a) => "<span class='simponly'>" + s +
                        "</span><span class='advonly'>" + a + "</span>";
 
+// ---- certification banner (R3-12/R3-36: explanations shown without their
+// ---- certificate must say so, loudly) ----
+(function(){
+  const el = document.getElementById("certbanner");
+  const C = DATA.certificate;
+  if (!C) {
+    el.innerHTML = "<div class='certb uncert' role='status'>" +
+      dual("&#9888; DEMONSTRATION ONLY \\u2014 this deployment carries NO safety " +
+           "certificate. The threshold shown here exists to demonstrate the " +
+           "explanation displays; none of its answers carry any guarantee.",
+           "&#9888; UNCERTIFIED DEMONSTRATION \\u2014 no certificate attaches to " +
+           "this operating threshold (\\u03c4* was fixed by hand for display " +
+           "purposes). Explanations are shown WITHOUT the guarantee that is " +
+           "the system's point; do not quote numbers from this page as " +
+           "certified.") + "</div>";
+  } else {
+    let f = [];
+    Object.keys(C).sort().forEach(k => f.push(k + " = " + C[k]));
+    el.innerHTML = "<div class='certb cert'><b>&#10003; Certified " +
+      "deployment</b> \\u2014 " + f.join(" \\u00b7 ") +
+      "<span class='cl2'>The certificate bounds a site-population-average " +
+      "error rate among answered cases at calibration; it is not a " +
+      "per-record or per-site property, and it does not certify any single " +
+      "answer on this page.</span></div>";
+  }
+})();
+
 // ---- static chrome ----
 document.getElementById("subtitleAdv").textContent =
   "Operating threshold τ* = " + TAU + " (L* = " + L_STAR.toFixed(6) + ") · " +
@@ -608,6 +661,32 @@ let filter = "declined", query = "", sortBy = "margin_asc";
 let order = [], cur = 0;
 let xCur = null;
 let selFeat = 0;                // response-curve feature
+let featShowAll = false, featQuery = "";   // large-cohort input controls
+let visIdx = [];                // inputs currently rendered as sliders/bars
+
+// ---- what-if audit log (session-wide, newest first, capped) ----
+const wlog = [];
+function logEvt(msg) {
+  wlog.unshift("case " + DATA.cases[order[cur]].idx + " \\u00b7 " + msg);
+  if (wlog.length > 60) wlog.length = 60;
+  const lb = document.getElementById("logbox");
+  if (lb) lb.innerHTML = wlog.map(e => "<div>" + e + "</div>").join("") ||
+    "<div>nothing yet</div>";
+}
+function computeVisIdx() {
+  const all = NAMES.map((_, j) => j);
+  if (featQuery) {
+    const q = featQuery.toLowerCase();
+    return all.filter(j => NAMES[j].toLowerCase().includes(q));
+  }
+  if (D <= 20 || featShowAll) return all;
+  const c = DATA.cases[order[cur]];
+  const phi = phiOf(xCur);
+  const byPhi = all.slice().sort((a,b) => Math.abs(phi[b]) - Math.abs(phi[a]));
+  const keep = new Set(byPhi.slice(0, 12));
+  all.forEach(j => { if (xCur[j] !== c.x[j]) keep.add(j); });
+  return all.filter(j => keep.has(j));
+}
 const caseList = document.getElementById("caselist");
 function rebuildList(keepCase) {
   const kept = keepCase === undefined ? null : DATA.cases[keepCase].idx;
@@ -659,9 +738,14 @@ function selectCase() {
 // ---- advanced visualizations (all recomputed from xCur, exact) ----
 function waterfallSVG() {
   const phi = phiOf(xCur);
-  const ord = phi.map((v,j) => j).sort((a,b) => Math.abs(phi[b]) - Math.abs(phi[a]));
+  let ord = phi.map((v,j) => j).sort((a,b) => Math.abs(phi[b]) - Math.abs(phi[a]));
+  let rest = [];
+  if (ord.length > 14) { rest = ord.slice(14); ord = ord.slice(0, 14); }
   const steps = [["base", H.intercept]];
   ord.forEach(j => steps.push([NAMES[j], phi[j]]));
+  if (rest.length)
+    steps.push(["other (" + rest.length + ")",
+                rest.reduce((s,j) => s + phi[j], 0)]);
   let cum = 0;
   const pts = steps.map(([lab, v]) => { const from = cum; cum += v; return [lab, from, cum]; });
   const lo = Math.min(-L_STAR, ...pts.map(p => Math.min(p[1], p[2]))) - 0.3;
@@ -819,10 +903,11 @@ function selectTab(t) {
 }
 
 // ---- detail panel: built ONCE per case, then patched in place ----
-function bars(phi, lead) {
-  const t = phi.map(v => v*lead);
-  const mx = Math.max(...t.map(Math.abs), 1e-9);
-  return t.map((v,j) => {
+function bars(phi, lead, idxs) {
+  const use = idxs || phi.map((_, j) => j);
+  const mx = Math.max(...use.map(j => Math.abs(phi[j]*lead)), 1e-9);
+  return use.map(j => {
+    const v = phi[j]*lead;
     const w = Math.abs(v)/mx*50;
     const bar = v >= 0
       ? "<div class='bar pos' style='width:" + w + "%'></div>"
@@ -833,8 +918,11 @@ function bars(phi, lead) {
   }).join("");
 }
 function setSliders() {
-  document.querySelectorAll("#detail input[type=range]").forEach(sl => {
-    sl.value = xCur[+sl.dataset.j];
+  document.querySelectorAll("#detail input[data-j]").forEach(sl => {
+    const j = +sl.dataset.j;
+    if (sl.type === "checkbox") sl.checked = xCur[j] >= 0.5;
+    else if (sl.type === "range") sl.value = xCur[j];
+    sl.dataset.last = xCur[j];
   });
 }
 function updateLive() {
@@ -865,12 +953,14 @@ function updateLive() {
   document.getElementById("gscore").innerHTML =
     dual("how sure: " + (score*100).toFixed(1) + "%",
          "score " + score.toFixed(4));
-  document.getElementById("phibars").innerHTML = bars(phiOf(xCur), lg >= 0 ? 1 : -1);
+  document.getElementById("phibars").innerHTML =
+    bars(phiOf(xCur), lg >= 0 ? 1 : -1, visIdx);
   document.getElementById("btnReset").classList.toggle("attn", modified);
   xCur.forEach((v,j) => {
-    document.getElementById("sv"+j).textContent = (+v).toFixed(3);
-    document.getElementById("rs"+j).className =
-      "rst" + (v !== c.x[j] ? " on" : "");
+    const sv = document.getElementById("sv"+j);      // only visible rows exist
+    if (sv) sv.textContent = (+v).toFixed(3);
+    const rs = document.getElementById("rs"+j);
+    if (rs) rs.className = "rst" + (v !== c.x[j] ? " on" : "");
   });
   if (document.body.classList.contains("adv")) redrawAdvanced();
 }
@@ -883,6 +973,7 @@ function updateLiveThrottled() {
 }
 function renderDetail() {
   const c = DATA.cases[order[cur]];
+  visIdx = computeVisIdx();
   let h = "<p><span class='verdict' id='verdictPill'></span>" +
     "<span class='badge' id='modBadge' style='display:none'>" +
     dual("you changed the inputs \\u2014 this is a what-if, not the real case",
@@ -932,17 +1023,46 @@ function renderDetail() {
             "feature name to plot its response curve. " +
             "<span style='color:var(--dec)'>&#8634;</span> restores one " +
             "input; the reset button restores all.") + "</p>";
-  xCur.forEach((v,j) => {
-    const lo = H.mu[j]-4*H.sd[j], hi = H.mu[j]+4*H.sd[j];
-    h += "<div class='srow'><label data-j='" + j + "' title='" + NAMES[j] +
-      " \\u2014 click to plot response curve'>" + NAMES[j] +
-      "</label><input type='range' data-j='" + j + "' min='" + lo +
-      "' max='" + hi + "' step='" + ((hi-lo)/400) + "' value='" + v +
-      "'><span class='v num' id='sv" + j + "'></span>" +
-      "<span class='rst' id='rs" + j + "' data-j='" + j +
-      "' title='recorded value: " + (+c.x[j]).toFixed(3) +
-      " \\u2014 click to restore'>&#8634;</span></div>";
+  if (D > 20) {
+    h += "<div style='display:flex;gap:8px;margin:4px 0'>" +
+      "<input type='text' id='featQ' placeholder='search inputs\\u2026' " +
+      "value='" + featQuery.replace(/'/g,"") + "' style='max-width:220px' " +
+      "aria-label='search inputs by name'>" +
+      "<button id='featAll'>" + (featShowAll
+        ? "show top contributors only" : "show all " + D + " inputs") +
+      "</button></div>" +
+      (featShowAll || featQuery ? "" :
+       "<p class='note'>Showing the top 12 contributors (plus anything you " +
+       "have changed); search or expand for the rest.</p>");
+  }
+  visIdx.forEach(j => {
+    const v = xCur[j];
+    if (DATA.binary[j]) {
+      h += "<div class='srow'><label data-j='" + j + "' title='" + NAMES[j] +
+        " \\u2014 click to plot response curve'>" + NAMES[j] +
+        "</label><span><input type='checkbox' data-j='" + j + "'" +
+        (v >= 0.5 ? " checked" : "") + " aria-label='what-if toggle for " +
+        NAMES[j] + "'> <span class='note'>yes / no</span></span>" +
+        "<span class='v num' id='sv" + j + "'></span>" +
+        "<span class='rst' id='rs" + j + "' data-j='" + j +
+        "' title='recorded value: " + (+c.x[j]).toFixed(3) +
+        " \\u2014 click to restore'>&#8634;</span></div>";
+    } else {
+      const lo = H.mu[j]-4*H.sd[j], hi = H.mu[j]+4*H.sd[j];
+      h += "<div class='srow'><label data-j='" + j + "' title='" + NAMES[j] +
+        " \\u2014 click to plot response curve'>" + NAMES[j] +
+        "</label><input type='range' data-j='" + j + "' min='" + lo +
+        "' max='" + hi + "' step='" + ((hi-lo)/400) + "' value='" + v +
+        "' aria-label='what-if value for " + NAMES[j] +
+        "'><span class='v num' id='sv" + j + "'></span>" +
+        "<span class='rst' id='rs" + j + "' data-j='" + j +
+        "' title='recorded value: " + (+c.x[j]).toFixed(3) +
+        " \\u2014 click to restore'>&#8634;</span></div>";
+    }
   });
+  h += "<details style='margin-top:8px'><summary>" +
+    dual("What you tried (log)", "What-if log") +
+    "</summary><div id='logbox' class='note'></div></details>";
   h += "<h2 style='margin-top:12px'>" +
     dual("What pushed its confidence up or down",
          "What drives the confidence") + "</h2>" +
@@ -997,12 +1117,37 @@ function renderDetail() {
   h += "<div class='statusbar advonly' id='statusbar'></div>";
   const box = document.getElementById("detail");
   box.innerHTML = h;
-  box.querySelectorAll("input[type=range]").forEach(sl => {
+  box.querySelectorAll("input[type=range][data-j]").forEach(sl => {
+    sl.dataset.last = xCur[+sl.dataset.j];
     sl.addEventListener("input", () => {
       xCur[+sl.dataset.j] = +sl.value;
       updateLiveThrottled();
     });
+    sl.addEventListener("change", () => {         // one log entry per drag
+      const j = +sl.dataset.j;
+      logEvt(NAMES[j] + ": " + (+sl.dataset.last).toFixed(3) +
+             " \\u2192 " + (+sl.value).toFixed(3));
+      sl.dataset.last = sl.value;
+    });
   });
+  box.querySelectorAll("input[type=checkbox][data-j]").forEach(cb => {
+    cb.addEventListener("change", () => {
+      const j = +cb.dataset.j;
+      xCur[j] = cb.checked ? 1.0 : 0.0;
+      logEvt(NAMES[j] + ": toggled " + (cb.checked ? "no \\u2192 yes"
+                                                   : "yes \\u2192 no"));
+      updateLive();
+    });
+  });
+  const fq = document.getElementById("featQ");
+  if (fq) fq.addEventListener("input", () => {
+    featQuery = fq.value.trim();
+    renderDetail();
+    const nf = document.getElementById("featQ");
+    nf.focus(); nf.setSelectionRange(nf.value.length, nf.value.length);
+  });
+  const fa = document.getElementById("featAll");
+  if (fa) fa.onclick = () => { featShowAll = !featShowAll; renderDetail(); };
   box.querySelectorAll(".srow label").forEach(lb => {
     lb.addEventListener("click", () => {
       selFeat = +lb.dataset.j;
@@ -1015,6 +1160,7 @@ function renderDetail() {
     rs.addEventListener("click", () => {
       const j = +rs.dataset.j;
       xCur[j] = c.x[j];
+      logEvt(NAMES[j] + ": restored to recorded " + (+c.x[j]).toFixed(3));
       setSliders();
       updateLive();
     });
@@ -1022,6 +1168,7 @@ function renderDetail() {
   const bF = document.getElementById("btnFlip");
   if (bF) bF.onclick = () => {
     xCur = c.x.map((v,j) => v + c.delta_x_min[j]);
+    logEvt("applied smallest whole-profile flip");
     setSliders();
     updateLive();
   };
@@ -1030,14 +1177,20 @@ function renderDetail() {
     const cf = c.counterfactuals[0];
     xCur = c.x.slice();
     xCur[cf.j] += cf.delta_x;
+    logEvt("applied single-input flip (" + cf.feature + ")");
     setSliders();
     updateLive();
   };
   document.getElementById("btnReset").onclick = () => {
     xCur = c.x.slice();
+    logEvt("reset all inputs to recorded values");
     setSliders();
     updateLive();
   };
+  logEvt.init = true;
+  const lb0 = document.getElementById("logbox");
+  if (lb0) lb0.innerHTML = wlog.map(e => "<div>" + e + "</div>").join("") ||
+    "<div>nothing yet</div>";
   ["decision","waterfall","response","numbers"].forEach(k => {
     const btn = document.getElementById("tb-" + k);
     if (btn) btn.onclick = () => selectTab(k);
