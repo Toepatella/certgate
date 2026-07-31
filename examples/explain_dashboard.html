@@ -63,12 +63,16 @@
                    transition:left .15s; }
   .gaxis { display:flex; justify-content:space-between; font-size:11px;
            color:var(--mut); }
-  .srow { display:grid; grid-template-columns:104px 1fr 74px; gap:8px;
+  .srow { display:grid; grid-template-columns:104px 1fr 66px 18px; gap:8px;
           align-items:center; margin:2px 0; }
   .srow label { font-size:12px; color:var(--mut); text-align:right;
                 white-space:nowrap; overflow:hidden; }
   .srow input[type=range] { width:100%; accent-color:var(--pos); }
   .srow .v { font-size:12px; font-variant-numeric:tabular-nums; }
+  .rst { color:var(--dec); cursor:pointer; font-size:14px; line-height:1;
+         user-select:none; visibility:hidden; }
+  .rst.on { visibility:visible; }
+  button.attn { border-color:var(--dec); color:var(--dec); font-weight:600; }
   table { border-collapse:collapse; width:100%; font-size:13px; }
   th,td { text-align:left; padding:4px 8px; border-bottom:1px solid var(--line); }
   th { color:var(--mut); font-weight:600; }
@@ -272,15 +276,8 @@ function selectCase() {
   renderDetail();
 }
 
-// ---- detail panel (live) ----
-function gauge(score) {
-  const left = ((Math.min(Math.max(score,0.5),1.0)-0.5)/0.5*100);
-  return "<div class='gauge'>" +
-    "<div class='tau' data-l='bar' style='left:" + ((TAU-0.5)/0.5*100).toFixed(2) + "%'></div>" +
-    "<div class='needle' style='left:calc(" + left.toFixed(2) + "% - 4px)'></div>" +
-    "</div><div class='gaxis'><span>0.50</span><span>score " +
-    score.toFixed(4) + "</span><span>1.00</span></div>";
-}
+// ---- detail panel: built ONCE per case, then patched in place so a slider
+// ---- drag is never interrupted by a DOM rebuild ----
 function bars(phi, lead) {
   const t = phi.map(v => v*lead);
   const mx = Math.max(...t.map(Math.abs), 1e-9);
@@ -294,42 +291,90 @@ function bars(phi, lead) {
       "<div class='barval num'>" + v.toFixed(3) + "</div></div>";
   }).join("");
 }
-function renderDetail() {
+function setSliders(c) {          // push xCur into the slider DOM (reset/flip paths)
+  document.querySelectorAll("#detail input[type=range]").forEach(sl => {
+    const j = +sl.dataset.j;
+    sl.value = xCur[j];
+  });
+}
+function updateLive() {
   const c = DATA.cases[order[cur]];
   const lg = logitOf(xCur), p = sigmoid(lg), score = Math.max(p, 1-p);
   const answered = score >= TAU;                    // THE deployed rule
   const modified = xCur.some((v,j) => v !== c.x[j]);
-  const lead = lg >= 0 ? 1 : -1;
-  let h = "<p><span class='verdict " + (answered ? "answered" : "declined") +
-    "'>" + (answered ? "ANSWERED" : "DECLINED") + "</span>" +
-    (modified ? "<span class='badge'>inputs modified — live what-if</span>" : "") +
-    " · model leans <b>" + (lg >= 0 ? "positive" : "negative") + "</b>" +
-    " · risk score " + p.toFixed(4) +
-    (answered ? "" : " · needs " +
-      (Math.log(TAU/(1-TAU)) - Math.abs(lg)).toFixed(4) +
-      " more logit-confidence") + "</p>";
-  h += gauge(score);
+  const pill = document.getElementById("verdictPill");
+  pill.textContent = answered ? "ANSWERED" : "DECLINED";
+  pill.className = "verdict " + (answered ? "answered" : "declined");
+  document.getElementById("modBadge").style.display =
+    modified ? "inline-block" : "none";
+  document.getElementById("leanTxt").textContent =
+    lg >= 0 ? "positive" : "negative";
+  document.getElementById("riskTxt").textContent = p.toFixed(4);
+  document.getElementById("needTxt").textContent = answered ? "" :
+    " · needs " + (Math.log(TAU/(1-TAU)) - Math.abs(lg)).toFixed(4) +
+    " more logit-confidence";
+  const left = ((Math.min(Math.max(score,0.5),1.0)-0.5)/0.5*100);
+  document.getElementById("needle").style.left =
+    "calc(" + left.toFixed(2) + "% - 4px)";
+  document.getElementById("gscore").textContent = "score " + score.toFixed(4);
+  document.getElementById("phibars").innerHTML = bars(phiOf(xCur), lg >= 0 ? 1 : -1);
+  const bR = document.getElementById("btnReset");
+  bR.classList.toggle("attn", modified);
+  xCur.forEach((v,j) => {
+    document.getElementById("sv"+j).textContent = (+v).toFixed(3);
+    document.getElementById("rs"+j).className =
+      "rst" + (v !== c.x[j] ? " on" : "");
+  });
+}
+let rafPending = null;
+function updateLiveThrottled() {
+  rafPending = rafPending || requestAnimationFrame(() => {
+    rafPending = null;
+    updateLive();
+  });
+}
+function renderDetail() {
+  const c = DATA.cases[order[cur]];
+  let h = "<p><span class='verdict' id='verdictPill'></span>" +
+    "<span class='badge' id='modBadge' style='display:none'>inputs modified " +
+    "— live what-if</span>" +
+    " · model leans <b id='leanTxt'></b>" +
+    " · risk score <span class='num' id='riskTxt'></span>" +
+    "<span id='needTxt'></span></p>";
+  h += "<div class='gauge'>" +
+    "<div class='tau' data-l='bar' style='left:" +
+    ((TAU-0.5)/0.5*100).toFixed(2) + "%'></div>" +
+    "<div class='needle' id='needle'></div></div>" +
+    "<div class='gaxis'><span>0.50</span><span id='gscore'></span>" +
+    "<span>1.00</span></div>";
   h += "<p style='margin:10px 0 4px'>";
   if (c.declined && c.delta_x_min) {
     h += "<button class='primary' id='btnFlip'>Apply smallest flip</button>";
     if (c.counterfactuals.length)
       h += "<button id='btnFlip1'>Apply top single-input flip</button>";
   }
-  h += "<button id='btnReset'>Reset case</button></p>";
+  h += "<button id='btnReset' title='discard every what-if change and return " +
+       "to the values this case was actually scored on'>Reset to recorded " +
+       "inputs</button></p>";
   h += "<h2 style='margin-top:10px'>What-if: move an input, the gate re-decides" +
-       "</h2><p class='note'>Moving a slider asks the gate a question; it does " +
-       "not model the patient.</p>";
+       "</h2><p class='note'>Every slider is live. Moving one asks the gate a " +
+       "question; it does not model the patient. A <span style='color:var(--dec)'>" +
+       "&#8634;</span> appears on any changed input — click it to restore that " +
+       "input's recorded value.</p>";
   xCur.forEach((v,j) => {
     const lo = H.mu[j]-4*H.sd[j], hi = H.mu[j]+4*H.sd[j];
     h += "<div class='srow'><label title='" + NAMES[j] + "'>" + NAMES[j] +
       "</label><input type='range' data-j='" + j + "' min='" + lo +
       "' max='" + hi + "' step='" + ((hi-lo)/400) + "' value='" + v +
-      "'><span class='v num' id='sv" + j + "'>" + (+v).toFixed(3) + "</span></div>";
+      "'><span class='v num' id='sv" + j + "'></span>" +
+      "<span class='rst' id='rs" + j + "' data-j='" + j +
+      "' title='recorded value: " + (+c.x[j]).toFixed(3) +
+      " — click to restore'>&#8634;</span></div>";
   });
   h += "<h2 style='margin-top:12px'>What drives the confidence</h2>" +
     "<p class='note'>Bars right of the line build confidence toward the leaned " +
     "class; bars left erode it — cancellation is what causes a decline.</p>" +
-    "<div id='phibars'>" + bars(phiOf(xCur), lead) + "</div>";
+    "<div id='phibars'></div>";
   if (c.declined && c.counterfactuals.length) {
     h += "<h2 style='margin-top:12px'>Smallest single-input changes that would " +
       "make the gate answer</h2><p class='note'>Ranked by standardized " +
@@ -351,39 +396,38 @@ function renderDetail() {
   box.innerHTML = h;
   box.querySelectorAll("input[type=range]").forEach(sl => {
     sl.addEventListener("input", () => {
-      const j = +sl.dataset.j;
-      xCur[j] = +sl.value;
-      document.getElementById("sv"+j).textContent = (+sl.value).toFixed(3);
-      liveUpdate(c);
+      xCur[+sl.dataset.j] = +sl.value;
+      updateLiveThrottled();
+    });
+  });
+  box.querySelectorAll(".rst").forEach(rs => {
+    rs.addEventListener("click", () => {
+      const j = +rs.dataset.j;
+      xCur[j] = c.x[j];
+      setSliders(c);
+      updateLive();
     });
   });
   const bF = document.getElementById("btnFlip");
   if (bF) bF.onclick = () => {
     xCur = c.x.map((v,j) => v + c.delta_x_min[j]);
-    renderDetail();
+    setSliders(c);
+    updateLive();
   };
   const b1 = document.getElementById("btnFlip1");
   if (b1) b1.onclick = () => {
     const cf = c.counterfactuals[0];
     xCur = c.x.slice();
     xCur[cf.j] += cf.delta_x;
-    renderDetail();
+    setSliders(c);
+    updateLive();
   };
   document.getElementById("btnReset").onclick = () => {
     xCur = c.x.slice();
-    renderDetail();
+    setSliders(c);
+    updateLive();
   };
-}
-function liveUpdate(c) {
-  // re-render only verdict/gauge/bars for slider smoothness
-  renderDetail.pending = renderDetail.pending || requestAnimationFrame(() => {
-    renderDetail.pending = null;
-    const keep = [];
-    document.querySelectorAll("#detail input[type=range]").forEach(sl =>
-      keep.push(+sl.value));
-    renderDetail();
-    // restore focus-less slider positions (values already in xCur)
-  });
+  updateLive();
 }
 
 // ---- filters, search, sort, keyboard ----
