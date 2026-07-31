@@ -102,48 +102,87 @@
            margin:0 auto; padding:0 22px 26px; }
   kbd { background:var(--chip); border-radius:4px; padding:0 5px;
         font-size:11px; }
+  /* two-audience text: .simponly shows in plain-language mode, .advonly in
+     advanced mode; the toggle flips one body class, nothing re-renders */
+  body.simple .advonly { display:none !important; }
+  body.adv .simponly { display:none !important; }
+  .modebar { float:right; margin-top:2px; }
 </style>
 </head>
-<body>
+<body class="simple">
 <header>
+  <div class="modebar">
+    <span class="chip on" id="modeSimple" title="everyday language, no jargon">Plain language</span>
+    <span class="chip" id="modeAdv" title="full technical detail: margins, logits, standardized units">Advanced</span>
+  </div>
   <h1>CertGate — why this case was answered or declined</h1>
-  <div class="sub" id="subtitle"></div>
+  <div class="sub">
+    <span class="simponly">A safety gate sits in front of this computer model:
+      it only answers when it is confident enough, and hands everything else to
+      a person. Pick a case below to see why it decided the way it did — and
+      try changing the inputs yourself.</span>
+    <span class="advonly" id="subtitleAdv"></span>
+  </div>
 </header>
 <main>
   <div class="card caveat">
-    <b>Read this first.</b> Everything interactive on this page — sliders,
-    flip buttons, the threshold explorer — asks a <b>score-space</b> question of
-    the gate: <i>what would the model's inputs need to be</i> for the case to
-    clear the answering bar. These are <b>not</b> causal claims, not treatment
-    suggestions, and not clinically achievable actions (features are not
-    independently changeable). A case flipped by the minimal change is answered
-    at the <b>weakest possible confidence</b>, a hair above the bar itself. The
-    error-rate certificate is a <b>site-population-average</b> guarantee over
-    answered cases: no individual record carries a certified property of its
-    own. This page shows a <span id="cohortlabel"></span>.
+    <span class="simponly">
+      <b>Read this first.</b> This page describes the <b>computer program</b>,
+      never the patient. When it shows "what would need to change for the
+      computer to answer", that is a fact about how the program decides —
+      <b>not</b> medical advice, <b>not</b> a treatment suggestion, and not
+      something anyone could actually do to a patient (you can't change one
+      measurement and keep everything else the same). Any case flipped by the
+      smallest change is answered with the <b>lowest confidence the program is
+      allowed to have</b> — barely over the line. And the program's safety
+      promise is about its <b>average</b> mistakes across many hospitals, not a
+      promise about any one case on this page. The data here is a
+      <span id="cohortlabelS"></span>.
+    </span>
+    <span class="advonly">
+      <b>Read this first.</b> Everything interactive on this page — sliders,
+      flip buttons, the threshold explorer — asks a <b>score-space</b> question
+      of the gate: <i>what would the model's inputs need to be</i> for the case
+      to clear the answering bar. These are <b>not</b> causal claims, not
+      treatment suggestions, and not clinically achievable actions (features
+      are not independently changeable). A case flipped by the minimal change
+      is answered at the <b>weakest possible confidence</b>, a hair above the
+      bar itself. The error-rate certificate is a
+      <b>site-population-average</b> guarantee over answered cases: no
+      individual record carries a certified property of its own. This page
+      shows a <span id="cohortlabel"></span>.
+    </span>
   </div>
 
   <div class="card">
     <div class="strip" id="cohortstrip"></div>
     <div class="hist" id="hist"></div>
-    <div class="gaxis"><span>score 0.50 (maximally contested)</span>
-      <span>1.00 (maximally confident)</span></div>
-    <div class="note">Cohort confidence-score distribution. Red bars sit below
-      the answering bar (declined); the dark line is the deployed bar
-      τ* = <span id="taulab"></span>.</div>
+    <div class="gaxis">
+      <span><span class="simponly">totally unsure (50/50)</span><span
+        class="advonly">score 0.50 (maximally contested)</span></span>
+      <span><span class="simponly">completely certain</span><span
+        class="advonly">1.00 (maximally confident)</span></span></div>
+    <div class="note">
+      <span class="simponly">Every case the program looked at, grouped by how
+        sure it was. Red bars: not sure enough — handed to a person. The dark
+        line is the confidence bar it must clear to answer.</span>
+      <span class="advonly">Cohort confidence-score distribution. Red bars sit
+        below the answering bar (declined); the dark line is the deployed bar
+        τ* = <span id="taulab"></span>.</span></div>
   </div>
 
   <div class="cols">
     <div class="side card">
       <h2>Cases <span class="note">(<kbd>←</kbd>/<kbd>→</kbd> to step)</span></h2>
       <span class="chip" data-f="all">all</span>
-      <span class="chip on" data-f="declined">declined</span>
+      <span class="chip on" data-f="declined"><span class="simponly">handed
+        to a person</span><span class="advonly">declined</span></span>
       <span class="chip" data-f="answered">answered</span>
       <div style="margin:8px 0 4px"><input type="text" id="search"
         placeholder="search case number…"></div>
       <select id="sortSel">
-        <option value="margin_asc">closest to answering first</option>
-        <option value="margin_desc">farthest from answering first</option>
+        <option value="margin_asc">most borderline first</option>
+        <option value="margin_desc">least borderline first</option>
         <option value="idx">by case number</option>
       </select>
       <div class="cl" id="caselist"></div>
@@ -153,25 +192,36 @@
   </div>
 
   <div class="fence" id="explorer">
-    <b class="t">Threshold explorer — for intuition only.</b>
-    <span class="note">Deployed thresholds are selected by the certificate,
-    never by hand; moving this slider confers no guarantee and does not change
-    the verdicts above.</span><br>
+    <b class="t"><span class="simponly">What if the bar were set differently? —
+      just for understanding.</span><span class="advonly">Threshold explorer —
+      for intuition only.</span></b>
+    <span class="note"><span class="simponly">In real use the bar is set by the
+      safety certificate, never by hand. Sliding it here changes nothing above
+      and promises nothing — it only shows how many cases the program would
+      answer at a stricter or looser bar.</span><span class="advonly">Deployed
+      thresholds are selected by the certificate, never by hand; moving this
+      slider confers no guarantee and does not change the verdicts
+      above.</span></span><br>
     <div class="srow" style="grid-template-columns:104px 1fr 200px">
-      <label>explore bar</label>
+      <label><span class="simponly">try a bar</span><span
+        class="advonly">explore bar</span></label>
       <input type="range" id="tauX" min="0.55" max="0.99" step="0.01">
       <span class="v" id="tauXv"></span>
     </div>
   </div>
 </main>
 <footer>
-  Generated by <code>examples/explain_dashboard.py</code>. The page recomputes
-  the head's own arithmetic (float64) locally: sliders and flip buttons re-run
-  the deployed answering rule, so what you see is the gate itself, not a
-  visualization of it. Attributions are exact interventional Shapley values of
-  the linear head; counterfactual deltas come from
-  <code>certgate.explain.counterfactual_to_answer</code> (SPEC "explain.py").
-  Self-contained file, no network access.
+  <span class="simponly">This page works entirely on your computer — nothing is
+    sent anywhere. It re-runs the program's own arithmetic, so what you see is
+    the real decision rule, not a picture of it. Switch to
+    <b>Advanced</b> (top right) for the full technical detail.</span>
+  <span class="advonly">Generated by <code>examples/explain_dashboard.py</code>.
+    The page recomputes the head's own arithmetic (float64) locally: sliders
+    and flip buttons re-run the deployed answering rule, so what you see is the
+    gate itself, not a visualization of it. Attributions are exact
+    interventional Shapley values of the linear head; counterfactual deltas
+    come from <code>certgate.explain.counterfactual_to_answer</code>
+    (SPEC "explain.py"). Self-contained file, no network access.</span>
 </footer>
 <script>
 "use strict";
@@ -189,26 +239,43 @@ const logitOf = x => {
 const scoreOf = x => { const p = sigmoid(logitOf(x)); return Math.max(p, 1-p); };
 const phiOf = x => H.coef.map((c,j) => c*(x[j]-H.mu[j])/H.sd[j]);
 
+// ---- mode toggle: one body-class flip, nothing re-renders ----
+function setMode(m) {
+  document.body.className = m;
+  document.getElementById("modeSimple").classList.toggle("on", m === "simple");
+  document.getElementById("modeAdv").classList.toggle("on", m === "adv");
+}
+document.getElementById("modeSimple").onclick = () => setMode("simple");
+document.getElementById("modeAdv").onclick = () => setMode("adv");
+const dual = (s, a) => "<span class='simponly'>" + s +
+                       "</span><span class='advonly'>" + a + "</span>";
+
 // ---- static chrome ----
-document.getElementById("subtitle").textContent =
+document.getElementById("subtitleAdv").textContent =
   "Operating threshold τ* = " + TAU + " · " + DATA.cohort_label +
   " · interactive: every number on this page is recomputed live by the head's own formula";
 document.getElementById("cohortlabel").textContent = DATA.cohort_label;
+document.getElementById("cohortlabelS").textContent = DATA.cohort_label;
 document.getElementById("taulab").textContent = TAU;
 const strip = document.getElementById("cohortstrip");
-const stat = (label, val) => {
+const stat = (labelS, labelA, val, pct) => {
   const el = document.createElement("div");
-  el.innerHTML = "<b class='num'>" + fmt(val, (typeof val === "number" && val % 1) ? 4 : 0) + "</b>" + label;
+  const shown = (typeof val === "number" && val % 1)
+    ? dual(pct ? (val*100).toFixed(1) + "%" : fmt(val), fmt(val))
+    : fmt(val, 0);
+  el.innerHTML = "<b class='num'>" + shown + "</b>" + dual(labelS, labelA);
   strip.appendChild(el);
 };
-stat("cases scored", DATA.n_total);
-stat("answered", DATA.n_answered);
-stat("declined", DATA.n_declined);
-stat("coverage", DATA.coverage);
-stat("answered predicted-positive fraction", DATA.predicted_positive_fraction);
+stat("cases reviewed", "cases scored", DATA.n_total);
+stat("answered", "answered", DATA.n_answered);
+stat("handed to a person", "declined", DATA.n_declined);
+stat("share answered", "coverage", DATA.coverage, true);
+stat("of answered: flagged higher-risk", "answered predicted-positive fraction",
+     DATA.predicted_positive_fraction, true);
 if (DATA.oracle_positive_fraction !== null)
-  stat("answered true-positive fraction (oracle, harness only)",
-       DATA.oracle_positive_fraction);
+  stat("of answered: truly higher-risk (known only in this test setting)",
+       "answered true-positive fraction (oracle, harness only)",
+       DATA.oracle_positive_fraction, true);
 
 // ---- cohort histogram ----
 const NB = 50, bins = new Array(NB).fill(0);
@@ -258,8 +325,12 @@ function rebuildList(keepCase) {
     const c = DATA.cases[i];
     const row = document.createElement("div");
     row.innerHTML = "case " + c.idx + " <span class='m'>" +
-      (c.declined ? "declined · margin " + c.margin_to_answer
-                  : "answered") + "</span>";
+      (c.declined
+        ? dual(Math.abs(c.margin_to_answer) < 0.1
+                 ? "handed over · a whisker from answering"
+                 : "handed to a person",
+               "declined · margin " + c.margin_to_answer)
+        : "answered") + "</span>";
     if (k === cur) row.className = "sel";
     row.onclick = () => { cur = k; selectCase(); };
     caseList.appendChild(row);
@@ -303,10 +374,16 @@ function updateLive() {
   const answered = score >= TAU;                    // THE deployed rule
   const modified = xCur.some((v,j) => v !== c.x[j]);
   const pill = document.getElementById("verdictPill");
-  pill.textContent = answered ? "ANSWERED" : "DECLINED";
+  pill.innerHTML = answered ? "ANSWERED"
+    : dual("HANDED TO A PERSON", "DECLINED");
   pill.className = "verdict " + (answered ? "answered" : "declined");
   document.getElementById("modBadge").style.display =
     modified ? "inline-block" : "none";
+  document.getElementById("leanS").textContent =
+    lg >= 0 ? "higher risk" : "lower risk";
+  document.getElementById("riskS").textContent = (p*100).toFixed(1) + "%";
+  document.getElementById("needS").textContent = answered ? "" :
+    " — but it is not sure enough to answer";
   document.getElementById("leanTxt").textContent =
     lg >= 0 ? "positive" : "negative";
   document.getElementById("riskTxt").textContent = p.toFixed(4);
@@ -316,7 +393,9 @@ function updateLive() {
   const left = ((Math.min(Math.max(score,0.5),1.0)-0.5)/0.5*100);
   document.getElementById("needle").style.left =
     "calc(" + left.toFixed(2) + "% - 4px)";
-  document.getElementById("gscore").textContent = "score " + score.toFixed(4);
+  document.getElementById("gscore").innerHTML =
+    dual("how sure: " + (score*100).toFixed(1) + "%",
+         "score " + score.toFixed(4));
   document.getElementById("phibars").innerHTML = bars(phiOf(xCur), lg >= 0 ? 1 : -1);
   const bR = document.getElementById("btnReset");
   bR.classList.toggle("attn", modified);
@@ -336,11 +415,15 @@ function updateLiveThrottled() {
 function renderDetail() {
   const c = DATA.cases[order[cur]];
   let h = "<p><span class='verdict' id='verdictPill'></span>" +
-    "<span class='badge' id='modBadge' style='display:none'>inputs modified " +
-    "— live what-if</span>" +
-    " · model leans <b id='leanTxt'></b>" +
+    "<span class='badge' id='modBadge' style='display:none'>" +
+    dual("you changed the inputs — this is a what-if, not the real case",
+         "inputs modified — live what-if") + "</span>" +
+    "<span class='simponly'> · the program leans <b id='leanS'></b> — it " +
+    "estimates a <span class='num' id='riskS'></span> chance of the " +
+    "outcome<span id='needS'></span></span>" +
+    "<span class='advonly'> · model leans <b id='leanTxt'></b>" +
     " · risk score <span class='num' id='riskTxt'></span>" +
-    "<span id='needTxt'></span></p>";
+    "<span id='needTxt'></span></span></p>";
   h += "<div class='gauge'>" +
     "<div class='tau' data-l='bar' style='left:" +
     ((TAU-0.5)/0.5*100).toFixed(2) + "%'></div>" +
@@ -349,18 +432,30 @@ function renderDetail() {
     "<span>1.00</span></div>";
   h += "<p style='margin:10px 0 4px'>";
   if (c.declined && c.delta_x_min) {
-    h += "<button class='primary' id='btnFlip'>Apply smallest flip</button>";
+    h += "<button class='primary' id='btnFlip'>" +
+      dual("Show the smallest change that makes it answer",
+           "Apply smallest flip") + "</button>";
     if (c.counterfactuals.length)
-      h += "<button id='btnFlip1'>Apply top single-input flip</button>";
+      h += "<button id='btnFlip1'>" +
+        dual("Change just one measurement", "Apply top single-input flip") +
+        "</button>";
   }
   h += "<button id='btnReset' title='discard every what-if change and return " +
-       "to the values this case was actually scored on'>Reset to recorded " +
-       "inputs</button></p>";
-  h += "<h2 style='margin-top:10px'>What-if: move an input, the gate re-decides" +
-       "</h2><p class='note'>Every slider is live. Moving one asks the gate a " +
-       "question; it does not model the patient. A <span style='color:var(--dec)'>" +
-       "&#8634;</span> appears on any changed input — click it to restore that " +
-       "input's recorded value.</p>";
+       "to the values this case was actually scored on'>" +
+       dual("Back to the real values", "Reset to recorded inputs") +
+       "</button></p>";
+  h += "<h2 style='margin-top:10px'>" +
+       dual("Try it yourself: move a value, the program re-decides",
+            "What-if: move an input, the gate re-decides") +
+       "</h2><p class='note'>" +
+       dual("Every slider is live. Moving one only asks the program a " +
+            "question — it says nothing about a real patient. A " +
+            "<span style='color:var(--dec)'>&#8634;</span> appears next to " +
+            "anything you have changed; click it to put that value back.",
+            "Every slider is live. Moving one asks the gate a question; it " +
+            "does not model the patient. A <span style='color:var(--dec)'>" +
+            "&#8634;</span> appears on any changed input — click it to " +
+            "restore that input's recorded value.") + "</p>";
   xCur.forEach((v,j) => {
     const lo = H.mu[j]-4*H.sd[j], hi = H.mu[j]+4*H.sd[j];
     h += "<div class='srow'><label title='" + NAMES[j] + "'>" + NAMES[j] +
@@ -371,26 +466,47 @@ function renderDetail() {
       "' title='recorded value: " + (+c.x[j]).toFixed(3) +
       " — click to restore'>&#8634;</span></div>";
   });
-  h += "<h2 style='margin-top:12px'>What drives the confidence</h2>" +
-    "<p class='note'>Bars right of the line build confidence toward the leaned " +
-    "class; bars left erode it — cancellation is what causes a decline.</p>" +
-    "<div id='phibars'></div>";
+  h += "<h2 style='margin-top:12px'>" +
+    dual("What pushed its confidence up or down",
+         "What drives the confidence") + "</h2>" +
+    "<p class='note'>" +
+    dual("Bars pointing right push toward the program's leaning; bars " +
+         "pointing left pull against it. When the pushes and pulls cancel " +
+         "out, it is not sure enough — and hands the case to a person.",
+         "Bars right of the line build confidence toward the leaned class; " +
+         "bars left erode it — cancellation is what causes a decline.") +
+    "</p><div id='phibars'></div>";
   if (c.declined && c.counterfactuals.length) {
-    h += "<h2 style='margin-top:12px'>Smallest single-input changes that would " +
-      "make the gate answer</h2><p class='note'>Ranked by standardized " +
-      "magnitude; each clears the bar by a hair, so the answer would carry the " +
-      "weakest allowed confidence, " + fmt(c.confidence_at_flip) +
-      ".</p><table><tr><th>input</th><th>change needed (raw units)</th>" +
-      "<th>(standardized)</th><th>gate would then answer</th></tr>";
+    h += "<h2 style='margin-top:12px'>" +
+      dual("What would have to be different for it to answer",
+           "Smallest single-input changes that would make the gate answer") +
+      "</h2><p class='note'>" +
+      dual("Each row is the smallest change to ONE value that would let the " +
+           "program answer — and even then it would only just clear the bar " +
+           "(the least-confident answer it is allowed to give).",
+           "Ranked by standardized magnitude; each clears the bar by a hair, " +
+           "so the answer would carry the weakest allowed confidence, " +
+           fmt(c.confidence_at_flip) + ".") +
+      "</p><table><tr><th>" + dual("measurement", "input") + "</th>" +
+      "<th>" + dual("change needed", "change needed (raw units)") + "</th>" +
+      "<th class='advonly'>(standardized)</th>" +
+      "<th>" + dual("it would then say", "gate would then answer") +
+      "</th></tr>";
     c.counterfactuals.forEach(cf => {
       h += "<tr><td>" + cf.feature + "</td><td class='num'>" +
         (cf.delta_x >= 0 ? "+" : "") + cf.delta_x.toFixed(3) +
-        "</td><td class='num'>" + (cf.delta_z >= 0 ? "+" : "") +
-        cf.delta_z.toFixed(3) + "</td><td>" + cf.answers_as + "</td></tr>";
+        "</td><td class='num advonly'>" + (cf.delta_z >= 0 ? "+" : "") +
+        cf.delta_z.toFixed(3) + "</td><td>" +
+        dual(cf.answers_as === "predicted-positive"
+               ? "higher risk" : "lower risk", cf.answers_as) +
+        "</td></tr>";
     });
-    h += "</table><p class='note'>Smallest whole-profile change (standardized " +
-      "L2): " + fmt(c.l2_distance_z) +
-      ". These describe the gate, not the patient.</p>";
+    h += "</table><p class='note'>" +
+      dual("Remember: these rows describe the computer program, never the " +
+           "patient.",
+           "Smallest whole-profile change (standardized L2): " +
+           fmt(c.l2_distance_z) +
+           ". These describe the gate, not the patient.") + "</p>";
   }
   const box = document.getElementById("detail");
   box.innerHTML = h;
@@ -431,8 +547,10 @@ function renderDetail() {
 }
 
 // ---- filters, search, sort, keyboard ----
-document.querySelectorAll(".chip").forEach(ch => ch.onclick = () => {
-  document.querySelectorAll(".chip").forEach(c => c.classList.remove("on"));
+// scope to the sidebar: the header's mode chips are .chip too and must keep
+// their own handlers (an unscoped selector silently overwrote them)
+document.querySelectorAll(".side .chip").forEach(ch => ch.onclick = () => {
+  document.querySelectorAll(".side .chip").forEach(c => c.classList.remove("on"));
   ch.classList.add("on");
   filter = ch.dataset.f;
   rebuildList();
@@ -458,8 +576,11 @@ function exploreUpdate() {
   const t = +tX.value;
   const n = DATA.all_scores.length;
   const ans = DATA.all_scores.filter(s => s >= t).length;
-  tXv.innerHTML = "bar " + t.toFixed(2) + " → coverage " +
-    (ans/n*100).toFixed(1) + "% (" + (n-ans) + " declined)";
+  tXv.innerHTML = dual(
+    "bar " + t.toFixed(2) + " → answers " + (ans/n*100).toFixed(1) +
+      "% (" + (n-ans) + " handed over)",
+    "bar " + t.toFixed(2) + " → coverage " + (ans/n*100).toFixed(1) +
+      "% (" + (n-ans) + " declined)");
 }
 tX.addEventListener("input", exploreUpdate);
 exploreUpdate();
