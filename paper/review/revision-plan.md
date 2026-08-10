@@ -24,6 +24,26 @@ Referee key: **DS** desk screen · **R1** statistics · **R2** clinical · **R3*
 > half done — see inline update), **S1-7** (git/paths done — see inline update). Items not
 > named here have NOT been re-audited; do not read absence as closure.
 
+> **Closure status, second pass (2026-08-10, submission-package session).** Landed since the
+> banner above: **S1-3** — the "exact Shapley values, with no approximation" claim is now
+> conditioned in §3.8 and §4.6 (interventional, independent-baseline game named; additive
+> exactness kept separate from the Shapley identification). **S2-12** — "provably" is now
+> "demonstrably", and A.3 exhibits the actual counterexample construction (140×20 clean /
+> 10×2,000 at 20% error, MPEB-UCB on truncated contributions certifies α=5% at 3.5× true risk).
+> **S2-17** — the promised "coverage-versus-α curve" is retired; §3.5 now points at the per-rung
+> reporting (Section 4.5 / Table 4). **S2-39** — the power-grid sentence and `thermal2026audit`
+> are deleted from §2.4 and the bib. **S1-6** (remaining half) — the three defective PNGs
+> (E1/E2/E3) are repaired at the plotting layer with numeric category axes, in-axes markers and
+> value-labeled bars, plus the Fig 4 operating-point guide and Fig 6 coverage panel; embedding
+> is performed mechanically by `paper/make_submission.py`, which relocates every figure and
+> table to its first callout in the sn-jnl LaTeX build. **S1-7** (remaining half) — `LICENSE`
+> (MIT), `CITATION.cff`, a `# Code availability` section (Zenodo DOI as a `[[TBC]]` token), and
+> CI (`.github/workflows/tests.yml`) now exist; the Zenodo mint and the repo-public toggle
+> remain author actions. Related-work additions (S2-scope, TODO §7): `alexandari2020labelshift`,
+> `farinhas2024nonexchangeable`, `shahbazi2026hierarchical`, `scireports2026deferral` (now
+> verified) cited; `artelt2022reject` superseded by `artelt2023rejectjournal`. The abstract is
+> restructured (Background/Methods/Results/Conclusions, 249 words incl. labels).
+
 ---
 
 # S1 — must change or the paper does not run

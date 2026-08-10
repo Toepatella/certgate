@@ -122,5 +122,28 @@ python -m experiments.run_synthetic            # full paper grid
 
 **This path has been exercised on the real thing** (eICU-CRD v2.0, 2026-07-31 — see the results section above and `EICU-PROTOCOL.md`). `experiments/eicu_etl.py` + `run_eicu.py` are the worked real-extract implementation; the extract itself is gitignored, never committed, and never redistributable.
 
+## Paper
+
+The manuscript master is `paper/draft.md` (pandoc markdown; citations are `[@key]` groups against `paper/references.bib`) — the canonical, self-contained home of every result number alongside the generated artifacts in `experiments/out*/`. The submission package for Discover Computing (Springer Nature `sn-jnl` LaTeX → pdflatex PDF) is built by `python paper/make_submission.py`; `paper/cover-letter.md` is the submission cover letter. Author-only blanks are marked `[[TBC:...]]` throughout — grep for that token to enumerate what remains before submission.
+
+Figure → artifact map (Figures 1–8, as called out in the draft; all under `experiments/out/`):
+
+| Figure | Artifact |
+|---|---|
+| 1 | `E1_validity.png` |
+| 2 | `E2_label_shift.png` |
+| 3 | `E3_concept_shift.png` |
+| 4 | `E4_site_sweep.png` |
+| 5 | `E5_explain.png` |
+| 6 | `E6_fairness.png` |
+| 7 | `E7_comparator.png` |
+| 8 | `EICU_pooled.png` |
+
+Three artifact PNGs deliberately carry no figure number (supplementary-only): `E6_reliability.png`, `EICU_per_site.png`, `EICU_reliability_panel.png`. And `experiments/out-sens/` is the frozen 2026-07-31 sensitivity-arm record: it predates the reliability panel, so it legitimately lacks the three `EICU_reliability*` files a current-code rerun would add.
+
+Cloning without SSH keys: `git clone https://github.com/Toepatella/certgate.git`
+
+## Adapting to a different dataset
+
 For a *different* dataset, `certgate/validate.py` is the loader contract to build against: `from_raw(x, y_raw, positive_label, site_ids_raw)` coerces string or int outcome labels to strict bool, densifies raw site ids, and runs the loud input checks before anything is fitted. `examples/real_data_example.py` is a runnable, heavily-commented walkthrough of the whole glue — it writes a realistic 208-site CSV (~35 MB, temp-dir, cleaned up), reads it back with the stdlib `csv` module (no pandas), splits sites into train/aux/cal **by site** (never by record — site-disjointness is asserted at pipeline entry), builds cohorts with `from_raw`, and runs `run_certgate` *without* oracle labels — passing `target_site_id` for a 12-site deployment pool, so the per-site target disjointness gate and BBSE's cluster-bootstrap q interval are both exercised — through to a certificate, an abstention explanation, and an honest decline. A legitimately all-negative deployment batch flows through via `from_raw(..., require_both_classes=False)`.
 

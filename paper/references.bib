@@ -1,6 +1,9 @@
-% CertGate manuscript references — every entry verified against its primary source on 2026-07-24
-% (arXiv abstract page, DOI/Crossref record, or publisher/proceedings page; see paper/TODO.md for
-% the one unverified candidate, scireports2026deferral, which is deliberately NOT in this file).
+% CertGate manuscript references — every entry verified against its primary source (arXiv abstract
+% page, DOI/Crossref record, or publisher/proceedings page). Base set verified 2026-07-24; spot-check
+% 2026-08-10; the 2026-08-10 additions (alexandari2020labelshift, farinhas2024nonexchangeable,
+% shahbazi2026hierarchical, artelt2023rejectjournal — superseding artelt2022reject — and
+% scireports2026deferral, previously excluded as unverifiable, now confirmed via Crossref +
+% publisher page) were each verified the same way before inclusion.
 
 @article{waudbysmith2024betting,
   title={Estimating means of bounded random variables by betting},
@@ -100,6 +103,19 @@
   primaryClass={cs.LG}
 }
 
+@inproceedings{alexandari2020labelshift,
+  title        = {Maximum Likelihood with Bias-Corrected Calibration is Hard-To-Beat at Label Shift Adaptation},
+  author       = {Alexandari, Amr and Kundaje, Anshul and Shrikumar, Avanti},
+  booktitle    = {Proceedings of the 37th International Conference on Machine Learning (ICML)},
+  series       = {Proceedings of Machine Learning Research},
+  volume       = {119},
+  pages        = {222--232},
+  year         = {2020},
+  eprint       = {1901.06852},
+  archivePrefix = {arXiv},
+  primaryClass = {cs.LG}
+}
+
 @inproceedings{garg2020unified,
   title={A unified view of label shift estimation},
   author={Garg, Saurabh and Wu, Yifan and Balakrishnan, Sivaraman and Lipton, Zachary C.},
@@ -190,6 +206,16 @@
   primaryClass = {stat.ME}
 }
 
+@inproceedings{farinhas2024nonexchangeable,
+  title        = {Non-Exchangeable Conformal Risk Control},
+  author       = {Farinhas, Ant{\'o}nio and Zerva, Chrysoula and Ulmer, Dennis and Martins, Andr{\'e} F. T.},
+  booktitle    = {The Twelfth International Conference on Learning Representations (ICLR)},
+  year         = {2024},
+  eprint       = {2310.01262},
+  archivePrefix = {arXiv},
+  primaryClass = {cs.LG}
+}
+
 @article{dunn2023hierarchical,
   title        = {Distribution-Free Prediction Sets for Two-Layer Hierarchical Models},
   author       = {Dunn, Robin and Wasserman, Larry and Ramdas, Aaditya},
@@ -216,6 +242,16 @@
   primaryClass = {math.ST}
 }
 
+@article{shahbazi2026hierarchical,
+  title   = {A hierarchical conformal framework for uncertainty-aware length of stay prediction in multi-hospital settings},
+  author  = {Shahbazi, Marzieh Amiri and Baheri, Ali and Azadeh-Fard, Nasibeh},
+  journal = {Scientific Reports},
+  volume  = {16},
+  pages   = {6564},
+  year    = {2026},
+  doi     = {10.1038/s41598-026-37450-w}
+}
+
 @article{tripodcluster2023,
   title   = {Transparent Reporting of Multivariable Prediction Models Developed or Validated Using Clustered Data: {TRIPOD-Cluster} Checklist},
   author  = {Debray, Thomas P. A. and Collins, Gary S. and Riley, Richard D. and Snell, Kym I. E. and Van Calster, Ben and Reitsma, Johannes B. and Moons, Karel G. M.},
@@ -236,14 +272,14 @@
   doi     = {10.1016/j.jclinepi.2021.03.025}
 }
 
-@inproceedings{artelt2022reject,
-  title        = {Model Agnostic Local Explanations of Reject},
-  author       = {Artelt, Andr{\'e} and Visser, Roel and Hammer, Barbara},
-  booktitle    = {Proceedings of the 30th European Symposium on Artificial Neural Networks, Computational Intelligence and Machine Learning (ESANN)},
-  year         = {2022},
-  eprint       = {2205.07623},
-  archivePrefix = {arXiv},
-  primaryClass = {cs.LG}
+@article{artelt2023rejectjournal,
+  title   = {{``I do not know! but why?'' --- Local model-agnostic example-based explanations of reject}},
+  author  = {Artelt, Andr{\'e} and Visser, Roel and Hammer, Barbara},
+  journal = {Neurocomputing},
+  volume  = {558},
+  pages   = {126722},
+  year    = {2023},
+  doi     = {10.1016/j.neucom.2023.126722}
 }
 
 @inproceedings{ifac2025abstainexplain,
@@ -335,14 +371,14 @@
   note         = {arXiv:2512.12844}
 }
 
-@misc{thermal2026audit,
-  title        = {Audited Selective Verification for Risk-Controlled N-1 Thermal Contingency Screening under Deployment Shift},
-  author       = {Manoharan, Jayakumar},
-  year         = {2026},
-  eprint       = {2607.13221},
-  archivePrefix= {arXiv},
-  doi          = {10.48550/arXiv.2607.13221},
-  note         = {arXiv:2607.13221; submitted to IEEE Transactions on Power Systems}
+@article{scireports2026deferral,
+  title   = {Conformal selective prediction with cost aware deferral for safe clinical triage under distribution shift},
+  author  = {Kwon, Hyun and Kim, Dae-Jin},
+  journal = {Scientific Reports},
+  volume  = {16},
+  pages   = {10016},
+  year    = {2026},
+  doi     = {10.1038/s41598-026-40637-w}
 }
 
 @article{pollard2018eicu,
@@ -377,6 +413,11 @@
   doi          = {10.1097/01.CCM.0000215112.84523.F0}
 }
 
+% pollard2019eicudb: verified 2026-08-10 against the PhysioNet project page.
+% 10.13026/C2WM1R is the version-2.0-specific DOI (concept DOI: 10.13026/0pzc-dm64).
+% Do NOT re-import from DataCite: its record carries a wrong year (2017) and a
+% truncated author list. (This provenance lives here, NOT in the note field —
+% the bst renders note into the published reference list.)
 @misc{pollard2019eicudb,
   title        = {{eICU} {C}ollaborative {R}esearch {D}atabase},
   author       = {Pollard, Tom and Johnson, Alistair and Raffa, Jesse and Celi, Leo Anthony and Badawi, Omar and Mark, Roger},
@@ -385,7 +426,7 @@
   publisher    = {PhysioNet},
   doi          = {10.13026/C2WM1R},
   url          = {https://doi.org/10.13026/C2WM1R},
-  note         = {Version 2.0. RRID:SCR\_007345. Verified 2026-08-10 against the PhysioNet project page; 10.13026/C2WM1R is the version-2.0-specific DOI (the concept DOI is 10.13026/0pzc-dm64). Do not import from DataCite: its record carries a wrong year (2017) and a truncated author list.}
+  note         = {Version 2.0. RRID:SCR\_007345}
 }
 
 @article{pollard2026physionet,

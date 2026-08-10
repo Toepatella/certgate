@@ -174,6 +174,17 @@ Verdict from a 3-agent check (topic map + live journal-profile research + exempl
 Sources: link.springer.com/journal/10791/aims-and-scope; /updates/26580658 (IR-Journal lineage);
 /collections/gjbedjebba (collection call); exemplar 10.1007/s10791-026-10203-z.
 
+## 0c. Full-pipeline rerun verification (2026-08-10)
+
+The complete real-extract pipeline was rerun end to end — preflight with the reference check ON,
+then `--replicates 20` — into a scratch `out-verify/` (deleted after the check) on the same extract
+(`data_sha 3744bf91…`). Result: **byte-identical to the committed `experiments/out/` up to
+timestamp lines.** 11 of 14 artifacts byte-equal, including both PNGs, `EICU_diagnostics.json` and
+`EICU_preflight.json`; the only diffs were `timestamp_utc` / `_run.utc` lines in `EICU-SUMMARY.md`,
+`EICU_certificate.json` and `EICU_provenance.json`. The full test matrix ran the same day:
+266 passed / 3 skipped on the default suite, and 267 passed / 2 skipped under each of
+`CERTGATE_FIXTURE=1`, `CERTGATE_EICU=1`, `CERTGATE_EICU_LARGE=1`.
+
 ## 1. Author metadata (blocking — front matter placeholders)
 
 - `[AUTHOR NAME(S)]`, `[ORCID]`, `[AFFILIATION — department, institution, city, country]`,
@@ -203,8 +214,21 @@ submission system prefers the umbrella.
 
 ## 3. Journal formatting — decisions you must confirm on the live guidelines
 
-The per-journal Discover Computing submission page (Springer journal 10791) is behind an auth
-wall, so two items could not be pulled directly and need your confirmation:
+**[RESOLVED 2026-08-10 — the live guidelines were fetched and both open items are settled.]**
+Confirmed against https://link.springer.com/journal/10791/submission-guidelines and three
+published Discover Computing articles: article type **Research**; submission via **Snapp**
+(https://submission.nature.com/new-submission/10791/3) with a **cover letter required**
+(`paper/cover-letter.md`); abstract **< 250 words** (structured accepted — the published
+clinical exemplar 10.1007/s10791-026-10014-2 uses Background/Methods/Results/Conclusion, and
+the draft's abstract is now structured at 249 words including labels); keywords are Snapp
+metadata only (no published article renders them); **numbered square-bracket citations** with
+an NLM/Vancouver list carrying **full DOI links** (LaTeX route: `sn-jnl.cls` +
+`sn-vancouver-num.bst`, class option `sn-vancouver-num` — implemented in
+`paper/make_submission.py`); figures/tables placed in the body at first reference (the build
+script does this mechanically); Funding / Data availability / Ethics declarations mandatory —
+a missing Funding statement gets the manuscript returned. Display math survives the pandoc →
+sn-jnl pipeline (verified in the compiled PDF). The original notes are kept below for
+provenance:
 
 - **Reference / citation style (CSL) — RESOLVED (verify once).** The published collection
   exemplar (Discov Computing 29:344, 2026) uses **numbered, Vancouver/Springer-basic references
@@ -251,7 +275,17 @@ Alternatives:
 written before the R=200 rerun and carried stale values; the corrected values are in-line.
 There are EIGHT figures now (E7 and eICU added), not six.]*
 
-The eight figures are mapped to captions in `draft.md`; regenerating the PNGs is a repo (code)
+**[APPLIED 2026-08-10 — the S1-6 repair pass landed in `run_synthetic.py` and the grid was
+re-run at R=200 with every CSV/JSON artifact byte-identical (plotting-only change).** E1/E2/E3
+now use numeric category axes (a nan bar no longer eats its tick), in-axes "no certificates"
+markers, and value-labeled bars so a true 0.0 reads as a labeled zero rather than an absence;
+E2 carries an on-figure BBSE annotation computed from the run's own summary (never hardcoded)
+plus a null-shift guide on the sweep panel; E3's title is shortened and renders in full; Fig 4
+has the 208-site operating-point guide; Fig 6 gained the per-site-coverage panel. Fig 5's
+single-draw annotation stays retired as decided below; Table 4 kept.]
+
+The eight figures are mapped to captions in `draft.md` (and the figure → artifact table now
+lives in `README.md` § Paper); regenerating the PNGs is a repo (code)
 task and out of scope for the paper directory. Wishes flagged while writing the captions:
 
 - **Fig 3 (E3):** the PNG title is truncated (`…certificate shou…`); regenerate with a shorter
@@ -308,12 +342,12 @@ clause, experiment, discussion, limitation), so they were kept, but §5.1's rest
 
 ## 6. Unverified / excluded citations (do NOT cite until verified)
 
-- **`scireports2026deferral`** — "Conformal selective prediction with cost aware deferral for safe
-  clinical triage under distribution shift", *Scientific Reports* 2026 (s41598-026-40637-w).
-  Auth-walled this session; the primary page could not be fetched, and the author list
-  (tentatively Kwon & Kim, from a search snippet) is unconfirmed. **Deliberately excluded from
-  `references.bib` and cited nowhere.** It is a record-level clinical cousin; if you can access
-  the article and confirm metadata, it is a reasonable add to the Related-work clinical stream.
+- **`scireports2026deferral`** — RESOLVED 2026-08-10: confirmed on BOTH Crossref
+  (api.crossref.org/works/10.1038/s41598-026-40637-w) and the nature.com article page.
+  Authors **Kwon, Hyun and Kim, Dae-Jin**; Sci. Rep. 16:10016, published 2026-02-20; the
+  published title spells "cost aware" unhyphenated. Now in `references.bib` and cited in §2.4
+  (neutrally — we verified metadata, not its methods, so the sentence makes no claim about its
+  unit of exchangeability).
 - **`pollard2019eicudb`** — VERIFIED 2026-08-10 against https://physionet.org/content/eicu-crd/2.0/.
   DOI 10.13026/C2WM1R is confirmed as the **version-2.0-specific** DOI (concept DOI:
   10.13026/0pzc-dm64, related via HasVersion per DataCite; v2.0, published 2019-04-15, is still
@@ -335,33 +369,41 @@ clause, experiment, discussion, limitation), so they were kept, but §5.1's rest
 
 ## 6a. SUBMISSION BLOCKERS (facts only the authors can supply — added 2026-08-10)
 
-The draft is placeholder-complete everywhere except these; a desk screen returns on the
-mandatory declarations:
+**[Status 2026-08-10, submission-package session: every author blank is now a grep-able
+`[[TBC:...]]` token (in `draft.md`, `LICENSE`, `CITATION.cff`, `paper/cover-letter.md`), each
+carrying its ready-made "if none" wording inline. The build script
+(`paper/make_submission.py`) prints the full token list as a warning banner on every build, so
+nothing can ship silently incomplete. A `# Code availability` section now exists (SN code
+policy wants a permanent DOI, not a bare GitHub link), which adds the Zenodo item below.]**
 
-- [ ] Author name(s) + ORCID (draft.md line 3)
-- [ ] Affiliation — department, institution, city, country (line 5)
-- [ ] Corresponding author name + email (line 7)
-- [ ] **Funding** statement (mandatory even if "none")
-- [ ] **Author contributions** (mandatory at Discover Computing)
-- [ ] **Competing interests** (mandatory even if "none")
-- [ ] Acknowledgements (optional)
+- [ ] Author name(s) + ORCID (`[[TBC:author-names]]`, `[[TBC:orcid]]`)
+- [ ] Affiliation — department, institution, city, country (`[[TBC:affiliation]]`)
+- [ ] Corresponding author name + email (`[[TBC:corresponding-*]]`)
+- [ ] **Funding** statement (mandatory even if "none" — default wording is inline in the token)
+- [ ] **Author contributions** (mandatory at Discover Computing — CRediT example inline)
+- [ ] **Competing interests** (mandatory even if "none" — default wording inline)
+- [ ] Acknowledgements (optional — delete the section if unused)
+- [ ] Author name into `LICENSE` (MIT) and `CITATION.cff`
+- [ ] **Mint the Zenodo DOI**: link GitHub → Zenodo, create a `v1.0.0` release at the
+      submission-candidate tag, paste the DOI into `# Code availability` and `CITATION.cff`
 - [ ] Confirm https://github.com/Toepatella/certgate is PUBLIC before submission — the Data
       availability section now names it, and DUA clause 9 requires contributing the code to an
-      open repository when results are disseminated.
+      open repository when results are disseminated. (Do this AFTER the LICENSE name is filled.)
 
-## 7. Optional related-work additions (verified in passing; not currently cited)
+## 7. Optional related-work additions — APPLIED 2026-08-10
 
-Surfaced during citation verification; each is a legitimate add if you want deeper coverage:
+All four were re-verified against primary sources (PMLR page, arXiv/ICLR, Crossref + publisher
+pages) and are now cited:
 
-- **Alexandari, Kundaje & Shrikumar (ICML 2020)**, MLLS / bias-corrected calibration — companion
-  to `garg2020unified` in the label-shift stream.
-- **Farinhas et al., "Non-Exchangeable Conformal Risk Control" (arXiv 2310.01262)** — closest
-  precedent for departing from record exchangeability; a natural comparison in the conformal stream.
-- **"A hierarchical conformal framework … multi-hospital settings" (Sci. Rep. 2026,
-  s41598-026-37450-w)** — multi-hospital conformal *coverage* (non-alarm class); a coverage-side
-  contrast that sharpens the selective-risk delta.
-- **Artelt et al., Neurocomputing 2023** ("I do not know! but why?", DOI 10.1016/j.neucom.2023.126722)
-  — journal extension of `artelt2022reject`; swap in if you prefer the fuller version.
+- **`alexandari2020labelshift`** (ICML 2020, PMLR v119 pp. 222–232) — cited in §2.3 as the
+  maximum-likelihood variant in the label-shift stream.
+- **`farinhas2024nonexchangeable`** (published ICLR 2024, not just the arXiv) — cited in §2.2
+  as the closest precedent for departing from record exchangeability (in-expectation risk).
+- **`shahbazi2026hierarchical`** (Sci. Rep. 16:6564, DOI 10.1038/s41598-026-37450-w) — cited in
+  §2.2 as multi-hospital hierarchical conformal *coverage*.
+- **`artelt2023rejectjournal`** (Neurocomputing 558:126722) — swapped in for `artelt2022reject`
+  everywhere (the journal version supersedes the ESANN paper; old entry removed, all-cited /
+  no-dangling preserved).
 
 ## 8. Content point left for your call
 
