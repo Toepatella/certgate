@@ -273,7 +273,8 @@ wall, so two items could not be pulled directly and need your confirmation:
   automatically. (Do not hand-format the bibliography; let CSL do it. Confirm against the live
   guidelines when you have login access, but the exemplar is strong evidence.)
 - **Abstract length / structure.** Confirm the 250-word cap and that an unstructured abstract is
-  accepted (current abstract is 248 words, unstructured).
+  accepted (current abstract is 249 words by whitespace count, re-measured 2026-08-10 after the
+  replicate-0 scope label was added; unstructured).
 
 Confirmed and already applied from Springer's standardized author instructions:
 - "Statements and Declarations" section + subheading set and order (see §2).
