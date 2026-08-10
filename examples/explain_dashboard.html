@@ -5,256 +5,377 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CertGate Explain</title>
 <style>
-  :root { --ink:#1a2233; --mut:#5b6572; --line:#d8dee7; --bg:#f4f6fa;
-          --card:#ffffff; --pos:#2563eb; --neg:#b45309; --dec:#b91c1c;
-          --ans:#15803d; --chip:#e8edf5; --hl:#eef4ff; --histbar:#c7d4e8;
-          --histdec:#f3b8b8; --fence:#fffbf5; --amber:#fef3c7; --ambert:#92400e;
-          --shadow:0 1px 3px rgba(16,24,40,.07); }
-  body.dark { --ink:#e6ebf3; --mut:#98a2b3; --line:#2a3446; --bg:#0f1520;
-          --card:#171e2b; --pos:#5b8def; --neg:#d98f3d; --dec:#e05d5d;
-          --ans:#3fae6a; --chip:#232c3d; --hl:#1d2a44; --histbar:#33415c;
-          --histdec:#5c3434; --fence:#1c1a14; --amber:#3a300f; --ambert:#f4d47c;
-          --shadow:0 1px 3px rgba(0,0,0,.4); }
+  /* ================= tokens — the bench-instrument world ================= */
+  :root {
+    --bg:#e8ebec;            /* bench ground */
+    --panel:#f2f4f4;         /* second neutral: rails, table heads, readouts */
+    --card:#fcfcfb;          /* instrument plate */
+    --ink:#1c2325;
+    --mut:#556063;
+    --line:#d3d8d8;          /* hairline */
+    --rule:#9aa3a3;          /* graduation rule */
+    --pos:#2757a8;           /* cobalt: interactive accent + positive deflection */
+    --neg:#9a5410;           /* burnt orange: negative deflection */
+    --ans:#15673c;           /* in-spec green: answered */
+    --dec:#b3261e;           /* out-of-spec red: declined */
+    --redline:#c62f21;       /* the red-line at tau*; text on plate 5.34:1 (AA >=4.5) */
+    --band:#e0efe6;          /* green answering band on scales */
+    --chip:#eceff0;
+    --hl:#e7eef9;            /* selection tint (cobalt) */
+    --histbar:#66808e;       /* answered mass: plate 4.06:1, band 3.50:1 (>=3:1) */
+    --histdec:#c66b5b;       /* declined mass: plate 3.62:1, band 3.12:1 (>=3:1) */
+    --fence:#f8f5ea;         /* bench-mat: the no-guarantee test area */
+    --fenceline:#c9b98a;
+    --amber:#f6ecce; --ambert:#6f4d05; --amberline:#e0d1a2;
+    --certbg:#f3faf6; --certline:#b9d6c5; --certink:#124f30;
+    --uncbg:#fbebe8; --uncline:#d8918a; --uncink:#a1201a;
+    --died-bg:#f7dcd9; --died-fg:#8f1d16;
+    --surv-bg:#ddefe4; --surv-fg:#125234;
+  }
+  body.dark {
+    --bg:#14181a; --panel:#181e20; --card:#1c2225;
+    --ink:#e6eae8; --mut:#9fa9a6; --line:#313a3d; --rule:#5b6668;
+    --pos:#7ba4e8; --neg:#d99a56; --ans:#54b47c; --dec:#e2685c;
+    --redline:#e66055; --band:#1d3527; /* red-line text on plate 4.73:1 (AA >=4.5) */
+    --chip:#242b2e; --hl:#223550;
+    --histbar:#6a8290; --histdec:#b76552; /* plate 3.99/3.83, band 3.27/3.14 (>=3:1) */
+    --fence:#242015; --fenceline:#5a4c22;
+    --amber:#3a2f12; --ambert:#ecc86a; --amberline:#57451c;
+    --certbg:#17251c; --certline:#2c4636; --certink:#7fc79c;
+    --uncbg:#2e1a17; --uncline:#6b2f28; --uncink:#f1948a;
+    --died-bg:#4a1d1d; --died-fg:#f3a9a2; --surv-bg:#14351f; --surv-fg:#8fd8ac;
+  }
+
+  /* ================= base ================= */
   * { box-sizing:border-box; }
-  body { margin:0; font:15px/1.55 system-ui,Segoe UI,Roboto,sans-serif;
-         color:var(--ink); background:var(--bg); }
-  body.adv { font-size:13.5px; }
-  header { padding:16px 22px 4px; max-width:1240px; margin:0 auto; }
-  h1 { font-size:19px; margin:0 0 2px; }
-  body.adv h1 { font-size:17px; }
-  h2 { font-size:14px; margin:0 0 8px; }
-  .sub { color:var(--mut); font-size:13px; }
-  main { max-width:1240px; margin:0 auto; padding:10px 22px 30px; }
-  .card { background:var(--card); border:1px solid var(--line);
-          border-radius:12px; padding:15px 17px; margin:12px 0;
-          box-shadow:var(--shadow); }
-  body.adv .card { border-radius:8px; padding:12px 14px; }
-  .caveat { border-left:4px solid var(--dec); font-size:13px; }
-  .caveat b { color:var(--dec); }
-  .strip { display:flex; gap:18px; flex-wrap:wrap; font-size:13px; }
-  .strip div b { display:block; font-size:17px; }
-  .cols { display:flex; gap:12px; align-items:flex-start; flex-wrap:wrap; }
-  .side { flex:0 0 286px; max-width:100%; }
-  .detail { flex:1 1 520px; min-width:320px; }
-  .chip { display:inline-block; padding:3px 10px; border-radius:999px;
-          background:var(--chip); cursor:pointer; font-size:12.5px;
-          border:1px solid transparent; user-select:none; }
-  .chip.on { background:var(--hl); border-color:var(--pos); color:var(--pos);
-             font-weight:600; }
-  .tag { display:inline-block; padding:1px 7px; border-radius:999px;
-         font-size:11px; background:var(--chip); color:var(--mut); }
-  .tag.rec { background:var(--amber); color:var(--ambert); }
-  .tag.cat { background:var(--hl); color:var(--pos); }
-  input[type=text], select { font:inherit; padding:5px 8px; color:var(--ink);
-          background:var(--card); border:1px solid var(--line);
-          border-radius:8px; width:100%; }
-  .cl { margin-top:8px; max-height:420px; overflow-y:auto;
-        border:1px solid var(--line); border-radius:8px; }
-  .cl div { padding:5px 9px; cursor:pointer; font-size:12.5px;
-            border-bottom:1px solid var(--line); }
-  .cl div:last-child { border-bottom:none; }
-  .cl div:hover { background:var(--hl); }
-  .cl div.sel { background:var(--hl); font-weight:600; }
-  .cl .m { color:var(--mut); }
-  .verdict { display:inline-block; padding:2px 10px; border-radius:999px;
-             color:#fff; font-weight:600; font-size:13px; }
+  body { margin:0; color:var(--ink); background:var(--bg);
+         font:16px/1.55 system-ui,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif; }
+  body.adv { font-size:14px; }
+  body.simple { font-size:16.5px; }
+  h1 { font-size:21px; font-weight:650; letter-spacing:-0.01em; margin:0;
+       display:flex; align-items:center; gap:10px; }
+  h1 .mark { color:var(--ink); flex:0 0 auto; }
+  body.adv h1 { font-size:19px; }
+  /* section labels: engraved caps with a trailing graduation rule */
+  h2 { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin:0 0 10px;
+       font-size:12.5px; font-weight:650; text-transform:uppercase;
+       letter-spacing:.07em; color:var(--ink); }
+  h2::after { content:""; flex:1 1 40px; border-top:1px solid var(--line);
+              align-self:center; min-width:24px; }
+  h2 .note { text-transform:none; letter-spacing:0; font-weight:400; }
+  .sub { color:var(--mut); font-size:13.5px; max-width:74ch; }
+  .note { color:var(--mut); font-size:12.5px; }
+  details > summary::before { content:""; width:0; height:0; flex:0 0 auto;
+        border-left:6px solid var(--mut); border-top:4.5px solid transparent;
+        border-bottom:4.5px solid transparent; transition:transform 160ms; }
+  details[open] > summary::before { transform:rotate(90deg); }
+  details > summary { list-style:none; }
+  details > summary::-webkit-details-marker { display:none; }
+  .num { font-variant-numeric:tabular-nums; }
+  main { max-width:1240px; margin:0 auto; padding:8px 24px 36px; }
+  body.simple main { max-width:960px; }
+
+  /* ================= masthead: the nameplate ================= */
+  header { max-width:1240px; margin:0 auto; padding:20px 24px 0; }
+  body.simple header { max-width:960px; }
+  .mast { display:flex; gap:18px; align-items:flex-start; justify-content:space-between;
+          flex-wrap:wrap; border-bottom:2px solid var(--ink); padding-bottom:14px; }
+  .mastid { flex:1 1 380px; display:flex; flex-direction:column; gap:4px; }
+  .modebar { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+
+  /* ================= plates ================= */
+  .card { background:var(--card); border:1px solid var(--line); border-radius:6px;
+          padding:18px 22px; margin:14px 0; }
+  body.simple .card { padding:20px 24px; margin:16px 0; }
+
+  /* ================= controls ================= */
+  .seg { display:inline-flex; border:1px solid var(--line); border-radius:6px;
+         overflow:hidden; background:var(--card); }
+  .seg .chip { border:0; border-radius:0; margin:0; }
+  .seg .chip + .chip { border-left:1px solid var(--line); }
+  .chip { display:inline-flex; align-items:center; gap:7px; min-height:44px;
+          padding:0 14px; border-radius:6px; background:var(--card);
+          border:1px solid var(--line); color:var(--ink); cursor:pointer;
+          font-size:12.5px; user-select:none; }
+  .chip svg { flex:0 0 auto; }
+  .chip:hover { background:var(--hl); }
+  .chip.on { background:var(--hl); color:var(--pos); font-weight:650;
+             border-color:var(--pos); }
+  .seg .chip.on { border-color:transparent; box-shadow:inset 0 0 0 1.5px var(--pos); }
+  .side .chip { margin:0 6px 8px 0; }
+  .side label.note { display:block; margin:10px 0 4px; }
+  .side select, .side input[type=text] { margin-bottom:8px; }
+  button { font:inherit; font-size:12.5px; min-height:44px; padding:8px 14px;
+           margin:0 8px 8px 0; border:1px solid var(--line); border-radius:6px;
+           background:var(--card); color:var(--ink); cursor:pointer; }
+  button:hover { background:var(--hl); }
+  button.primary { border-color:var(--pos); color:var(--pos); font-weight:650; }
+  button.attn { border-color:var(--dec); color:var(--dec); font-weight:650; }
+  input[type=text], select { font:inherit; font-size:13.5px; min-height:44px;
+          padding:6px 10px; color:var(--ink); background:var(--card);
+          border:1px solid var(--line); border-radius:6px; width:100%; }
+  input[type=range] { width:100%; height:44px; accent-color:var(--pos); margin:0; }
+  /* every slider runs on the world's graduated rail, with a notch at the
+     recorded value (the fence's notch marks the deployed bar instead) */
+  .sldw { position:relative; display:block; width:100%; }
+  .sldw input[type=range] { position:relative; z-index:1; display:block; }
+  .sldw .srail { position:absolute; left:0; right:0; bottom:5px; height:7px;
+        pointer-events:none; background:repeating-linear-gradient(90deg,
+        var(--rule), var(--rule) 1px, transparent 1px, transparent 12.5%); }
+  .sldw .smark { position:absolute; bottom:3px; width:2px; height:11px;
+        pointer-events:none; background:var(--ink); opacity:.5; }
+  .sldw .smark.bar { background:var(--redline); opacity:1; }
+  input[type=checkbox] { width:22px; height:22px; accent-color:var(--pos); }
+  summary { min-height:44px; display:flex; align-items:center; gap:8px;
+            cursor:pointer; flex-wrap:wrap; }
+  :where(a,button,select,input,summary,[role="button"]):focus-visible {
+    outline:2.5px solid var(--pos); outline-offset:2px; border-radius:6px; }
+  .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+             overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
+
+  /* ================= pills, tags ================= */
+  .verdict { display:inline-block; padding:3px 12px; border-radius:999px;
+             color:#fff; font-weight:650; font-size:13px; letter-spacing:.02em; }
   .verdict.declined { background:var(--dec); }
   .verdict.answered { background:var(--ans); }
-  .badge { display:inline-block; padding:1px 8px; border-radius:999px;
-           background:var(--amber); color:var(--ambert); font-size:11.5px;
+  .badge { display:inline-block; padding:2px 9px; border-radius:999px;
+           background:var(--amber); color:var(--ambert); font-size:12px;
            font-weight:600; margin-left:8px; }
-  button { font:inherit; font-size:12.5px; padding:6px 10px; margin:2px 4px 2px 0;
-           border:1px solid var(--line); border-radius:8px; background:var(--card);
-           color:var(--ink); cursor:pointer; }
-  button:hover { background:var(--hl); }
-  button.primary { border-color:var(--pos); color:var(--pos); font-weight:600; }
-  button.attn { border-color:var(--dec); color:var(--dec); font-weight:600; }
-  .gauge { position:relative; height:26px; background:linear-gradient(90deg,
-           #fee2e2,#fef9c3 55%,#dcfce7); border-radius:6px;
-           border:1px solid var(--line); margin:8px 0 2px; }
-  body.dark .gauge { background:linear-gradient(90deg,#3d1d1d,#3a300f 55%,#15321f); }
-  .gauge .tau { position:absolute; top:-4px; bottom:-4px; width:2px; background:var(--ink); }
-  .gauge .tau::after { content:attr(data-l); position:absolute; top:-16px;
-                left:-14px; font-size:11px; color:var(--ink); }
-  .gauge .needle { position:absolute; top:2px; bottom:2px; width:8px;
-                   border-radius:4px; background:var(--pos); transition:left .15s; }
-  .gaxis { display:flex; justify-content:space-between; font-size:11px; color:var(--mut); }
-  .srow { display:grid; grid-template-columns:150px 1fr 82px 18px; gap:8px;
-          align-items:center; margin:2px 0; }
-  .srow label { font-size:12px; color:var(--mut); text-align:right;
-                white-space:nowrap; overflow:hidden; cursor:pointer; }
-  .srow label:hover { color:var(--pos); }
-  .srow label.notrec { opacity:.55; font-style:italic; }
-  .srow input[type=range] { width:100%; accent-color:var(--pos); }
-  .srow .v { font-size:12px; font-variant-numeric:tabular-nums; }
-  .srow .v.imp { color:var(--ambert); }
-  .rst { color:var(--dec); cursor:pointer; font-size:14px; line-height:1;
-         user-select:none; visibility:hidden; }
-  .rst.on { visibility:visible; }
-  table { border-collapse:collapse; width:100%; font-size:13px; }
-  th,td { text-align:left; padding:4px 8px; border-bottom:1px solid var(--line); }
-  th { color:var(--mut); font-weight:600; }
-  .barrow { display:flex; align-items:center; gap:8px; margin:2px 0; }
-  .barlab { width:150px; font-size:12px; color:var(--mut); text-align:right;
-            overflow:hidden; white-space:nowrap; }
-  .barbox { flex:1; display:flex; height:13px; position:relative; }
-  .barbox .mid { position:absolute; left:50%; top:-2px; bottom:-2px; width:1px;
-                 background:var(--line); }
-  .bar { height:13px; border-radius:3px; transition:width .15s; }
-  .bar.pos { background:var(--pos); margin-left:50%; }
-  .bar.neg { background:var(--neg); }
-  .barval { width:66px; font-size:11.5px; color:var(--mut);
-            font-variant-numeric:tabular-nums; }
-  .hist { display:flex; align-items:flex-end; height:90px; gap:1px;
-          position:relative; margin-top:6px; }
-  .hist .hb { flex:1; background:var(--histbar); border-radius:2px 2px 0 0; min-height:1px; }
+  .tag { display:inline-block; padding:1px 8px; border-radius:999px;
+         font-size:12px; background:var(--chip); color:var(--mut); }
+  .tag.rec { background:var(--amber); color:var(--ambert); }
+  .tag.cat { background:var(--hl); color:var(--pos); }
+  .outc { display:inline-block; padding:1px 8px; border-radius:999px;
+          font-size:12px; font-weight:600; }
+  .outc.d { background:var(--died-bg); color:var(--died-fg); }
+  .outc.s { background:var(--surv-bg); color:var(--surv-fg); }
+
+  /* ================= notice plates ================= */
+  /* standing caveat: a formal NOTE plate, quiet but unskippable */
+  .caveat { font-size:13.5px; }
+  body.simple .caveat { font-size:15px; }
+  .caveat b:first-child { display:inline-block; text-transform:uppercase;
+        letter-spacing:.06em; font-size:12.5px; margin-right:4px; }
+  /* calibration plate (certified) and the out-of-cal tag (uncertified) */
+  .certb { display:flex; gap:12px; align-items:flex-start; border-radius:6px;
+           padding:12px 16px; margin:14px 0 0; font-size:13.5px; border:1px solid; }
+  .certb .seal { flex:0 0 auto; margin-top:2px; }
+  .certb.cert { border-color:var(--certline); background:var(--certbg); }
+  .certb.cert b { color:var(--certink); }
+  .certb.cert .seal { color:var(--certink); }
+  .certb.uncert { border:1.5px solid var(--uncline); background:var(--uncbg);
+                  color:var(--uncink); font-weight:650; font-size:14px; }
+  .certb.uncert .seal { color:var(--uncink); }
+  .certb .cl2 { font-weight:400; color:var(--mut); font-size:12.5px; display:block;
+                margin-top:3px; }
+  .certb .num { font-variant-numeric:tabular-nums; }
+  /* threshold explorer: the bench mat — dashed = outside the certified path */
+  .fence { border:1.5px dashed var(--fenceline); border-radius:6px;
+           padding:14px 18px; margin:14px 0; background:var(--fence); }
+  .fence b.t { color:var(--ambert); }
+
+  /* ================= test summary (cohort strip) ================= */
+  .strip { display:flex; flex-wrap:wrap; }
+  .strip > div { padding:2px 18px 2px 0; margin:4px 18px 4px 0;
+                 border-right:1px solid var(--line); }
+  .strip > div:last-child { border-right:0; }
+  .strip .sl { display:block; font-size:12px; text-transform:uppercase;
+               letter-spacing:.05em; color:var(--mut); margin-bottom:1px; }
+  .strip b { font-size:17px; font-weight:650; }
+
+  /* ================= the meter (confidence gauge) ================= */
+  .meter { position:relative; height:34px; margin:34px 0 24px;
+           border-bottom:1.5px solid var(--rule); }
+  .meter .mband { position:absolute; top:0; bottom:0; right:0; background:var(--band); }
+  .meter i { position:absolute; bottom:0; width:1px; height:8px;
+             background:var(--rule); transform:translateX(-.5px); }
+  .meter i.tM { height:15px; width:1.5px; }
+  .meter b { position:absolute; top:calc(100% + 5px); transform:translateX(-50%);
+             font-size:12px; font-weight:500; color:var(--mut);
+             font-variant-numeric:tabular-nums; }
+  .meter .mline { position:absolute; top:-7px; bottom:-3px; width:2px;
+                  background:var(--redline); }
+  .meter .mline span { position:absolute; top:-17px; left:50%;
+        transform:translateX(-50%); font-size:12px; font-weight:650;
+        color:var(--redline); white-space:nowrap; }
+  .meter .needle { position:absolute; top:-2px; bottom:5px; width:2px;
+                   background:var(--ink); transition:left 240ms cubic-bezier(.22,.68,.36,1.04); }
+  .meter .needle::after { content:""; position:absolute; top:-6px; left:-3.5px;
+        border:4.5px solid transparent; border-top-color:var(--ink); }
+  .gaxis { display:flex; justify-content:space-between; font-size:12.5px;
+           color:var(--mut); gap:8px; flex-wrap:wrap; }
+  .gaxis:only-child, .meter + .gaxis { justify-content:center; }
+
+  /* ================= histogram: the distribution instrument ================= */
+  .hist { display:flex; align-items:flex-end; height:96px; gap:1px;
+          position:relative; margin-top:34px; border-bottom:1.5px solid var(--rule);
+          padding-bottom:1px; }
+  .hist .hband { position:absolute; top:0; bottom:0; right:0; background:var(--band); }
+  .hist .hb { flex:1; position:relative; background:var(--histbar);
+              border-radius:1px 1px 0 0; min-height:1px; }
   .hist .hb.dec { background:var(--histdec); }
   body.adv .hist .hb { cursor:pointer; }
   body.adv .hist .hb:hover { outline:1.5px solid var(--pos); }
   .hist .hb.hsel { outline:2px solid var(--pos); }
-  .hist .tau { position:absolute; top:-4px; bottom:-14px; width:2px; background:var(--ink); }
-  .num { font-variant-numeric:tabular-nums; }
-  .note { color:var(--mut); font-size:12px; }
-  .fence { border:1.5px dashed var(--neg); border-radius:10px; padding:12px 16px;
-           margin:12px 0; background:var(--fence); }
-  .fence b.t { color:var(--neg); }
-  .certb { border-radius:10px; padding:10px 16px; margin:12px 0 0; font-size:13px;
-           border:1.5px solid; }
-  .certb.uncert { border-color:var(--dec); color:var(--dec); background:var(--fence);
-                  font-weight:600; }
-  .certb.cert { border-color:var(--ans); background:var(--fence); }
-  .certb.cert b { color:var(--ans); }
-  .certb .cl2 { font-weight:400; color:var(--mut); font-size:12px; display:block;
-                margin-top:2px; }
-  .tabs { display:flex; gap:4px; border-bottom:1px solid var(--line);
-          margin:10px 0; flex-wrap:wrap; }
-  .tabbtn { padding:5px 12px; font-size:12.5px; cursor:pointer;
+  .hist .tau { position:absolute; top:-6px; bottom:-2px; width:2px;
+               background:var(--redline); }
+  .hist .tau span { position:absolute; top:-16px; left:50%; transform:translateX(-50%);
+        font-size:12px; font-weight:650; color:var(--redline); white-space:nowrap; }
+  .haxis { display:flex; justify-content:space-between; font-size:12px;
+           color:var(--mut); font-variant-numeric:tabular-nums; margin-top:4px; }
+
+  /* ================= attribution bars, profile, legend ================= */
+  .barrow { display:flex; align-items:center; gap:8px; margin:2px 0; }
+  .barlab { width:150px; font-size:12.5px; color:var(--mut); text-align:right;
+            overflow:hidden; white-space:nowrap; }
+  .barbox { flex:1; display:flex; height:13px; position:relative; }
+  .barbox .mid { position:absolute; left:50%; top:-2px; bottom:-2px; width:1px;
+                 background:var(--rule); }
+  .bar { height:13px; border-radius:2px; }
+  .bar.pos { background:var(--pos); margin-left:50%; }
+  .bar.neg { background:var(--neg); }
+  .barval { width:66px; font-size:12px; color:var(--mut);
+            font-variant-numeric:tabular-nums; }
+  .profrow { display:flex; align-items:center; gap:8px; margin:2px 0; }
+  .profrow .plab { width:150px; font-size:12.5px; color:var(--mut); text-align:right;
+                   overflow:hidden; white-space:nowrap; }
+  .profrow .pbox { flex:1; height:12px; display:flex; gap:2px; }
+  .profrow .pa { background:var(--ans); height:12px; border-radius:2px; }
+  .profrow .pd { background:var(--dec); height:12px; border-radius:2px; }
+  .profrow .pval { width:150px; font-size:12px; color:var(--mut);
+                   font-variant-numeric:tabular-nums; }
+  .legend { display:flex; gap:14px; flex-wrap:wrap; margin-top:8px;
+            font-size:12.5px; color:var(--mut); align-items:center; }
+  .legend i { width:12px; height:12px; border-radius:2px; display:inline-block;
+              margin-right:5px; vertical-align:-1px; }
+  .legend i.swl { width:3px; height:13px; background:var(--redline); border-radius:0; }
+  .grphead { margin:12px 0 2px; font-size:12px; font-weight:650;
+             text-transform:uppercase; letter-spacing:.06em; color:var(--mut); }
+
+  /* ================= layout: rail + bench ================= */
+  .cols { display:flex; gap:14px; align-items:flex-start; flex-wrap:wrap; }
+  .side { flex:0 0 292px; max-width:100%; }
+  .detail { flex:1 1 520px; min-width:320px; }
+  .cl { margin-top:10px; max-height:430px; overflow-y:auto;
+        border:1px solid var(--line); border-radius:6px; background:var(--card); }
+  .cl div { min-height:44px; display:flex; align-items:center; gap:8px;
+            padding:5px 10px; cursor:pointer; font-size:12.5px;
+            border-bottom:1px solid var(--line); }
+  .cl div:last-child { border-bottom:none; }
+  .cl div:hover { background:var(--hl); }
+  .cl div.sel { background:var(--hl); font-weight:650; }
+  .cl .m { color:var(--mut); font-weight:400; }
+  .cl .dt { flex:0 0 auto; width:7px; height:7px; border-radius:50%; }
+  .cl .dt.a { background:var(--ans); }
+  .cl .dt.d { background:var(--dec); }
+
+  /* ================= what-if rows ================= */
+  .srow { display:grid; grid-template-columns:150px 1fr 82px 44px; gap:8px;
+          align-items:center; margin:2px 0; }
+  .srow label { font-size:12.5px; color:var(--mut); text-align:right;
+                white-space:nowrap; overflow:hidden; cursor:pointer; }
+  .srow label:hover { color:var(--pos); }
+  .srow label.notrec { opacity:.62; font-style:italic; }
+  .srow .v { font-size:12.5px; font-variant-numeric:tabular-nums; }
+  .srow .v.imp { color:var(--ambert); }
+  .xrow { grid-template-columns:150px 1fr 280px; }
+  .rst { color:var(--dec); cursor:pointer; min-width:44px; min-height:44px;
+         display:inline-flex; align-items:center; justify-content:center;
+         user-select:none; visibility:hidden; border-radius:6px; }
+  .rst:hover { background:var(--hl); }
+  .rst.on { visibility:visible; }
+
+  /* ================= tables ================= */
+  table { border-collapse:collapse; width:100%; font-size:13.5px; }
+  th,td { text-align:left; padding:5px 9px; border-bottom:1px solid var(--line); }
+  th { color:var(--mut); font-weight:650; font-size:12px; text-transform:uppercase;
+       letter-spacing:.05em; border-bottom:1.5px solid var(--rule); }
+  td { font-variant-numeric:tabular-nums; }
+  tbody tr:hover, table tr:hover td { background:var(--panel); }
+  .tblwrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+
+  /* ================= tabs, statusbar, svg ================= */
+  .tabs { display:flex; gap:2px; border-bottom:1.5px solid var(--rule);
+          margin:14px 0 12px; flex-wrap:wrap; }
+  .tabbtn { min-height:44px; display:inline-flex; align-items:center;
+            padding:5px 13px; font-size:12.5px; cursor:pointer;
             border:1px solid transparent; border-bottom:none;
-            border-radius:8px 8px 0 0; color:var(--mut); user-select:none; }
-  .tabbtn.on { background:var(--hl); border-color:var(--line); color:var(--pos);
-               font-weight:600; }
+            border-radius:6px 6px 0 0; color:var(--mut); user-select:none; }
+  .tabbtn:hover { color:var(--pos); }
+  .tabbtn.on { background:var(--card); border-color:var(--rule); color:var(--pos);
+               font-weight:650; position:relative; top:1.5px;
+               border-bottom:1.5px solid var(--card); }
   .tabpane { display:none; }
   .tabpane.on { display:block; }
   body.simple #tab-decision { display:block !important; }
+  .statusbar { display:flex; gap:16px; flex-wrap:wrap; margin-top:14px;
+               padding:8px 12px; border:1px solid var(--line); border-radius:6px;
+               background:var(--panel); font-size:12px; color:var(--mut);
+               font-variant-numeric:tabular-nums; }
+  .statusbar b { color:var(--ink); font-weight:650; }
+  svg text { fill:var(--mut); font:12px system-ui,"Segoe UI",Roboto,sans-serif;
+             font-variant-numeric:tabular-nums; }
+  svg .axis { stroke:var(--rule); stroke-width:1; }
+  svg .curve { stroke:var(--pos); stroke-width:2; fill:none; }
+  svg .tauline { stroke:var(--redline); stroke-width:1.2; stroke-dasharray:5 3; }
+  svg .cross { fill:var(--redline); }
+  svg .nowpt { fill:var(--pos); }
+
+  /* ================= overlay ================= */
+  .helpov { position:fixed; inset:0; background:rgba(10,14,16,.55); display:none; z-index:50; }
+  .helpov.on { display:flex; align-items:center; justify-content:center; }
+  .helpov .card { max-width:480px; }
+  kbd { font:12px system-ui,"Segoe UI",Roboto,sans-serif; padding:1px 6px;
+        border:1px solid var(--rule); border-bottom-width:2px; border-radius:4px;
+        background:var(--panel); }
+
+  /* ================= footer ================= */
+  footer { max-width:1240px; margin:0 auto; padding:16px 24px 44px;
+           color:var(--mut); font-size:12.5px; }
+  body.simple footer { max-width:960px; }
+  footer code { font-size:12px; }
+
   /* TWO AUDIENCES, ONE FILE: each register is written twice and the body class
      picks one. Losing these two rules renders BOTH at once and the modes look
      identical -- exactly the regression this comment exists to prevent. */
   body.simple .advonly { display:none !important; }
   body.adv .simponly { display:none !important; }
   /* the modes should not merely read differently, they should FEEL different */
-  body.simple { font-size:15.5px; }
-  body.simple main { max-width:980px; }
-  body.simple .card { padding:18px 20px; margin:14px 0; }
-  body.simple .srow { grid-template-columns:190px 1fr 92px 18px; }
-  body.simple .barlab, body.simple .srow label { font-size:13px; }
-  body.simple h2 { font-size:15px; }
-  body.adv main { max-width:1240px; }
-  body.adv .strip { gap:14px; }
-  .statusbar { display:flex; gap:16px; flex-wrap:wrap; margin-top:12px;
-               padding:7px 10px; border:1px solid var(--line); border-radius:8px;
-               background:var(--bg); font-size:11.5px; color:var(--mut);
-               font-variant-numeric:tabular-nums; }
-  .statusbar b { color:var(--ink); font-weight:600; }
-  svg text { fill:var(--mut); font:10.5px system-ui; }
-  svg .axis { stroke:var(--line); stroke-width:1; }
-  svg .curve { stroke:var(--pos); stroke-width:2; fill:none; }
-  svg .tauline { stroke:var(--ink); stroke-width:1; stroke-dasharray:4 3; }
-  svg .cross { fill:var(--dec); }
-  svg .nowpt { fill:var(--pos); }
-  .helpov { position:fixed; inset:0; background:rgba(10,14,20,.55); display:none; z-index:50; }
-  .helpov.on { display:flex; align-items:center; justify-content:center; }
-  .helpov .card { max-width:460px; }
-  .profrow { display:flex; align-items:center; gap:8px; margin:2px 0; }
-  .profrow .plab { width:150px; font-size:12px; color:var(--mut); text-align:right;
-                   overflow:hidden; white-space:nowrap; }
-  .profrow .pbox { flex:1; height:12px; display:flex; gap:2px; }
-  .profrow .pa { background:var(--ans); height:12px; border-radius:2px; }
-  .profrow .pd { background:var(--dec); height:12px; border-radius:2px; }
-  .profrow .pval { width:150px; font-size:11px; color:var(--mut);
-                   font-variant-numeric:tabular-nums; }
-  .grphead { margin:10px 0 2px; font-size:12px; font-weight:600; color:var(--pos);
-             cursor:pointer; user-select:none; }
-  .outc { display:inline-block; padding:1px 7px; border-radius:999px; font-size:11px;
-          font-weight:600; }
-  .outc.d { background:#fee2e2; color:#991b1b; }
-  .outc.s { background:#dcfce7; color:#166534; }
-  body.dark .outc.d { background:#4a1d1d; color:#fca5a5; }
-  body.dark .outc.s { background:#14351f; color:#86efac; }
-  @media print {
-    .side,.fence,.modebar,.hist,.gaxis,footer,.tabs,.statusbar,#cohortstrip,
-    .helpov,button,.sub,#profpanel,#legendcard { display:none !important; }
-    .card { box-shadow:none; border-color:#bbb; page-break-inside:avoid; }
-    body { background:#fff; }
-  }
+  body.simple .srow { grid-template-columns:190px 1fr 92px 44px; }
+  body.simple .barlab, body.simple .srow label { font-size:13.5px; }
+  body.simple .note, body.simple .cl div, body.simple button,
+  body.simple .chip { font-size:13.5px; }
+  body.adv .strip b { font-size:16px; }
 
-  /* ===================================================================
-     UI/UX pass — priorities 1,2,5,6,7,10. Each rule below fixes a
-     specific violation found by auditing this page against them.
-     =================================================================== */
-
-  /* P6 typography: 16px base, nothing below 12px, 1.5 line-height. */
-  body { font-size:16px; line-height:1.55; }
-  body.adv { font-size:14px; }
-  body.simple { font-size:16.5px; }
-  .note, .tag, .barval, .cl div, .chip, button, th, td, .statusbar,
-  .profrow .plab, .profrow .pval, .srow label, .srow .v, .barlab,
-  .gaxis, .sub, footer { font-size:12.5px; }
-  body.simple .note, body.simple .cl div, body.simple .srow label,
-  body.simple .barlab, body.simple button, body.simple .chip { font-size:13.5px; }
-  svg text { font-size:12px; }
-  .badge, .outc { font-size:12px; }
-
-  /* P1 accessibility: every clickable is reachable and shows focus.
-     .chip and the case rows are spans/divs, so they carry role=button and
-     tabindex in the markup; these give them a real focus ring. */
-  :where(a,button,select,input,[role="button"],summary):focus-visible {
-    outline:3px solid var(--pos); outline-offset:2px; border-radius:6px; }
-  .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px;
-             overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
-
-  /* P2 touch targets: 44x44 minimum with >=8px separation. */
-  .chip { min-height:44px; display:inline-flex; align-items:center;
-          padding:0 14px; margin:0 4px 6px 0; }
-  button { min-height:44px; padding:8px 14px; margin:0 8px 8px 0; }
-  .rst { min-width:44px; min-height:44px; display:inline-flex;
-         align-items:center; justify-content:center; font-size:16px; }
-  .cl div { min-height:44px; display:flex; align-items:center; gap:6px; }
-  .tabbtn { min-height:44px; display:inline-flex; align-items:center; }
-  input[type=text], select { min-height:44px; }
-  input[type=range] { height:44px; }        /* P2: a slider is a touch target too */
-  input[type=checkbox] { width:22px; height:22px; }
-  summary { min-height:44px; display:flex; align-items:center; gap:6px; }
-
-  /* P10 charts: never colour alone — legends carry a shape/word too. */
-  .legend { display:flex; gap:14px; flex-wrap:wrap; margin-top:6px;
-            font-size:12.5px; color:var(--mut); align-items:center; }
-  .legend i { width:12px; height:12px; border-radius:3px; display:inline-block;
-              margin-right:5px; vertical-align:-1px; }
-
-  /* P6 tokens: the outcome pills were raw hex. */
-  :root { --died-bg:#fee2e2; --died-fg:#991b1b; --surv-bg:#dcfce7; --surv-fg:#166534; }
-  body.dark { --died-bg:#4a1d1d; --died-fg:#fca5a5; --surv-bg:#14351f; --surv-fg:#86efac; }
-  .outc.d { background:var(--died-bg); color:var(--died-fg); }
-  .outc.s { background:var(--surv-bg); color:var(--surv-fg); }
-
-  /* P5 responsive: no fixed-px grid on small screens, no horizontal scroll.
-     Wide tables scroll inside their own box, never the page body. */
-  .tblwrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  /* ================= responsive: structural, not fluid ================= */
   @media (max-width: 720px) {
     header, main, footer { padding-left:14px; padding-right:14px; }
+    .mast { border-bottom-width:1.5px; }
     .side { flex:1 1 100%; }
-    .srow, body.simple .srow { grid-template-columns:1fr auto; gap:6px 10px; }
+    .srow, body.simple .srow, .xrow { grid-template-columns:1fr auto; gap:6px 10px; }
+    .xrow .v { grid-column:1 / -1; }
+    .srow .sldw { grid-column:1 / 2; }
     .srow label { text-align:left; grid-column:1 / -1; white-space:normal; }
     .srow input[type=range] { grid-column:1 / 2; }
     .srow .v { grid-column:2 / 3; }
     .srow .rst { grid-column:2 / 3; justify-self:end; }
     .barlab, .profrow .plab { width:104px; }
     .profrow .pval { width:auto; }
-    .modebar { float:none; margin-bottom:8px; }
+    .strip > div { border-right:0; padding-right:0; margin-right:16px; }
+    .card { padding:14px 16px; }
   }
 
-  /* P7 motion: 150-300ms, and honour the OS setting. */
-  .bar, .needle { transition-duration:200ms; }
+  /* ================= print: the attachable report ================= */
+  @media print {
+    .side,.fence,.modebar,.hist,.haxis,.gaxis,footer,.tabs,.statusbar,
+    #cohortstrip,.helpov,button,.sub,#profpanel,#legendcard,.rst
+      { display:none !important; }
+    .card { border-color:#bbb; page-break-inside:avoid; }
+    .mast { border-color:#000; }
+    body { background:#fff; }
+  }
+
+  /* ================= motion: honour the OS ================= */
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { transition:none !important; animation:none !important;
                              scroll-behavior:auto !important; }
@@ -262,26 +383,66 @@
 </style>
 </head>
 <body class="simple">
+<!--
+THESIS: a certified selective classifier explained as the measuring instrument
+it is — every number shown on a graduated scale with its red-line, its band,
+and its caveat; refuses the analytics-dashboard arrangement of KPI tiles,
+card grids and decorative charts.
+OWN-WORLD: bench-instrument grammar. Cool bench-gray ground, ivory-white
+plates ruled by hairlines, engraved-caps section labels, tabular numerals;
+graduated tick scales with a green answering band and a red-line at tau*;
+cobalt for interaction and positive deflection, burnt orange for negative,
+green/red strictly for answered/declined, amber for imputation caveats.
+Recognizable with all content removed: ticks, red-line, plates.
+STORY: a reader sees the instrument's calibration plate, its operating point
+on a scale, picks a case, watches the needle, and learns exactly what the
+certificate does and does not promise.
+FIRST VIEWPORT: nameplate masthead with register switches; calibration plate;
+formal NOTE plate; the cohort test-summary row over the ticked score
+distribution with the red-line — one glance: what this is, its operating
+point, what is at stake.
+FORM: bench instrument + calibration paperwork; candidate 7 of 7 on the
+grounded list; seed key ef24fd77 (assigned index 7, mode operate).
+FINISH: unreviewed and undocumented is unfinished; this build ends with the
+finish review, the verdict, and DESIGN.md.
+-->
 <header>
-  <div class="modebar" style="float:right;display:flex;gap:6px;flex-wrap:wrap">
-    <span class="chip on" id="modeSimple" role="button" tabindex="0"
-      aria-pressed="true" title="everyday language, no jargon">Plain language</span>
-    <span class="chip" id="modeAdv" role="button" tabindex="0"
-      aria-pressed="false" title="analyst workbench">Advanced</span>
-    <span class="chip" id="outcT" role="button" tabindex="0" aria-pressed="false"
-      title="reveal what actually happened (retrospective)">Outcomes</span>
-    <span class="chip" id="darkT" role="button" tabindex="0" aria-pressed="false"
-      aria-label="Toggle dark mode" title="dark mode">&#9789;</span>
-    <span class="chip" id="printT" role="button" tabindex="0"
-      title="print the selected case">Print</span>
-  </div>
-  <h1>CertGate Explain</h1>
-  <div class="sub">
-    <span class="simponly">A safety gate sits in front of this computer model:
-      it answers only when confident enough, and hands everything else to a
-      person. Pick a case to see why it decided the way it did &mdash; and try
-      changing the inputs yourself.</span>
-    <span class="advonly" id="subtitleAdv"></span>
+  <div class="mast">
+    <div class="mastid">
+      <h1><svg class="mark" viewBox="0 0 24 24" width="22" height="22" fill="none"
+        stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+        <path d="M3.5 19a9.5 9.5 0 0 1 17 0"/><path d="M12 19 16.5 9.5"/>
+        <circle cx="12" cy="19" r="1.4" fill="currentColor" stroke="none"/></svg>
+        CertGate Explain</h1>
+      <div class="sub">
+        <span class="simponly">A safety gate sits in front of this computer model:
+          it answers only when confident enough, and hands everything else to a
+          person. Pick a case to see why it decided the way it did &mdash; and try
+          changing the inputs yourself.</span>
+        <span class="advonly" id="subtitleAdv"></span>
+      </div>
+    </div>
+    <div class="modebar">
+      <span class="seg" role="group" aria-label="reading register">
+        <span class="chip on" id="modeSimple" role="button" tabindex="0"
+          aria-pressed="true" title="everyday language, no jargon">Plain language</span>
+        <span class="chip" id="modeAdv" role="button" tabindex="0"
+          aria-pressed="false" title="analyst workbench">Advanced</span>
+      </span>
+      <span class="chip" id="outcT" role="button" tabindex="0" aria-pressed="false"
+        title="reveal what actually happened (retrospective)">Outcomes</span>
+      <span class="chip" id="darkT" role="button" tabindex="0" aria-pressed="false"
+        aria-label="Toggle dark mode" title="dark mode"><svg viewBox="0 0 16 16"
+        width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5"
+        stroke-linejoin="round" aria-hidden="true">
+        <path d="M13.2 9.8A5.6 5.6 0 1 1 6.2 2.8a4.6 4.6 0 0 0 7 7z"/></svg></span>
+      <span class="chip" id="printT" role="button" tabindex="0"
+        title="print the selected case"><svg viewBox="0 0 16 16" width="15"
+        height="15" fill="none" stroke="currentColor" stroke-width="1.5"
+        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M4 6V2.5h8V6"/><rect x="2.5" y="6" width="11" height="5.5" rx="1"/>
+        <path d="M4.5 9.5h7V14h-7z"/></svg>Print</span>
+    </div>
   </div>
 </header>
 <main>
@@ -310,7 +471,28 @@
     </span>
   </div>
 
-  <details class="card" id="legendcard" style="margin-top:0">
+  <div class="card">
+    <h2><span class="simponly">All cases at a glance</span><span class="advonly">Operating point</span></h2>
+    <div class="strip" id="cohortstrip"></div>
+    <div id="provbox"></div>
+    <div class="hist" id="hist"></div>
+    <div class="haxis"><span>0.50</span><span>0.60</span><span>0.70</span><span>0.80</span><span>0.90</span><span>1.00</span></div>
+    <div class="note" style="margin-top:6px">
+      <span class="simponly">Every case, grouped by how sure the program was.
+        The scale runs from totally unsure (50/50) on the left to completely
+        certain on the right. Red bars: not sure enough, handed to a person.</span>
+      <span class="advonly">Confidence-score distribution over all
+        <span id="ntot"></span> cases; red bins sit below &#964;* =
+        <span id="taulab"></span>. Click a bin to filter the case list.</span></div>
+    <div class="legend"><span><i style="background:var(--histbar)"></i>answered
+      (at or above the bar)</span><span><i style="background:var(--histdec)"></i>handed
+      to a person (below the bar)</span><span><i class="swl"></i><span
+      class="simponly">red line = the bar it must clear</span><span
+      class="advonly">red line = &#964;*</span></span></div>
+    <div class="advonly" id="profpanel" style="margin-top:14px"></div>
+  </div>
+
+  <details class="card" id="legendcard" style="margin-top:14px">
     <summary><b>What do these measurements mean?</b> <span class="note">plain-language
       legend for every input the model uses</span></summary>
     <div style="margin-top:8px">
@@ -320,12 +502,12 @@
     <div id="glossbox" style="margin-top:8px"></div>
   </details>
 
-  <details class="simponly card" style="margin-top:0">
+  <details class="simponly card" style="margin-top:14px">
     <summary>How to read this page (30 seconds)</summary>
     <ol class="note">
       <li><b>Pick a case</b> on the left. Green = the program answered; red =
         it wasn't sure enough and handed the case to a person.</li>
-      <li><b>The meter</b> shows how sure it was. It must clear the dark line.</li>
+      <li><b>The meter</b> shows how sure it was. It must clear the red line.</li>
       <li><b>The bars</b> show what pushed confidence up or down. When pushes
         and pulls cancel out, it hands the case over.</li>
       <li><b>Try the controls</b> &mdash; change a value and watch it re-decide.
@@ -334,25 +516,6 @@
         patient; the number beside them is a stand-in the model fills in.</li>
     </ol>
   </details>
-
-  <div class="card">
-    <div class="strip" id="cohortstrip"></div>
-    <div id="provbox"></div>
-    <div class="hist" id="hist"></div>
-    <div class="gaxis">
-      <span><span class="simponly">totally unsure (50/50)</span><span class="advonly">score 0.50</span></span>
-      <span><span class="simponly">completely certain</span><span class="advonly">1.00</span></span></div>
-    <div class="note">
-      <span class="simponly">Every case, grouped by how sure the program was.
-        Red bars: not sure enough, handed to a person.</span>
-      <span class="advonly">Confidence-score distribution over all
-        <span id="ntot"></span> cases; red bins sit below &#964;* =
-        <span id="taulab"></span>. Click a bin to filter the case list.</span></div>
-    <div class="legend"><span><i style="background:var(--histbar)"></i>answered
-      (at or above the bar)</span><span><i style="background:var(--histdec)"></i>handed
-      to a person (below the bar)</span><span>&#9474; dark line = the bar</span></div>
-    <div class="advonly" id="profpanel" style="margin-top:12px"></div>
-  </div>
 
   <div class="cols">
     <div class="side card">
@@ -369,12 +532,12 @@
         <option value="margin_desc">least borderline first</option>
         <option value="idx">by case number</option>
       </select>
-      <div style="margin-top:6px">
+      <div style="margin-top:8px">
         <button id="jmpContested">most contested</button>
         <button id="jmpRandom">random</button>
       </div>
       <div class="cl" id="caselist"></div>
-      <div class="note" id="capnote" style="margin-top:6px"></div>
+      <div class="note" id="capnote" style="margin-top:8px"></div>
     </div>
     <div class="detail card" id="detail"></div>
   </div>
@@ -386,9 +549,11 @@
       promises nothing.</span><span class="advonly">Deployed thresholds are
       selected by the certificate; moving this confers no guarantee and does
       not change the verdicts above.</span></span><br>
-    <div class="srow" style="grid-template-columns:150px 1fr 260px">
+    <div class="srow xrow">
       <label><span class="simponly">try a bar</span><span class="advonly">explore &#964;</span></label>
-      <input type="range" id="tauX" min="0.55" max="0.99" step="0.01" aria-label="explore threshold">
+      <span class="sldw"><input type="range" id="tauX" min="0.55" max="0.99"
+        step="0.01" aria-label="explore threshold"><i class="srail"></i><i
+        class="smark bar" id="tauXmark"></i></span>
       <span class="v" id="tauXv"></span>
     </div>
   </div>
@@ -433,6 +598,12 @@ const ONEHOT = DATA.onehot || {};
 const MEMBER_GROUP = {};                     // feature index -> onehot key
 Object.keys(ONEHOT).forEach(k => ONEHOT[k].forEach(([j]) => MEMBER_GROUP[j] = k));
 
+// one icon grammar: 1.5px stroke, currentColor, drawn inline
+const IC_RESET = "<svg viewBox='0 0 16 16' width='14' height='14' fill='none' " +
+  "stroke='currentColor' stroke-width='1.6' stroke-linecap='round' " +
+  "stroke-linejoin='round' aria-hidden='true'><path d='M3.2 8a5 5 0 1 0 1.4-3.5'/>" +
+  "<path d='M3.2 2.6v2.6h2.6'/></svg>";
+
 const sigfmt = (v, n) => {
   n = n || 3;
   if (v === 0) return "0";
@@ -460,6 +631,11 @@ function tip(j) {                       // hover text for any feature label
   return NAMES[j] + " — " + g[0] + (adv && g[1] ? "  [" + g[1] + "]" : "");
 }
 function renderLegend() {
+  // A build with no glossary at all (e.g. the synthetic demo's unnamed
+  // features) has no legend to search: hide the card rather than render
+  // an empty search that reports 'Nothing matches ""'.
+  const lc = document.getElementById("legendcard");
+  if (lc && !Object.keys(GLOSS).length) { lc.style.display = "none"; return; }
   const q = (document.getElementById("glossQ") || {}).value || "";
   const ql = q.trim().toLowerCase();
   const seen = new Set(), rows = [];
@@ -510,7 +686,7 @@ function setMode(m) {
   renderLegend();
   if (m === "adv") redrawAdvanced();
 }
-// Enter/Space activate any role=button span, so nothing is mouse-only (P1).
+// Enter/Space activate any role=button span, so nothing is mouse-only.
 document.addEventListener("keydown", e => {
   const t = e.target;
   if ((e.key === "Enter" || e.key === " ") && t && t.getAttribute &&
@@ -533,20 +709,29 @@ outcChip.onclick = () => {
   outcChip.classList.toggle("on", showOutcomes); press(outcChip, showOutcomes);
   rebuildList(order[cur]); };
 
-// ---- certification banner ----
+// ---- certification banner: the calibration plate / the out-of-cal tag ----
 (function(){
   const el = document.getElementById("certbanner"), C = DATA.certificate;
+  const warn = "<svg class='seal' viewBox='0 0 20 20' width='18' height='18' " +
+    "fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' " +
+    "stroke-linejoin='round' aria-hidden='true'><path d='M10 3 2.5 16h15z'/>" +
+    "<path d='M10 8v3.4'/><circle cx='10' cy='13.6' r='.5' fill='currentColor'/></svg>";
+  const seal = "<svg class='seal' viewBox='0 0 20 20' width='18' height='18' " +
+    "fill='none' stroke='currentColor' stroke-width='1.5' aria-hidden='true'>" +
+    "<circle cx='10' cy='10' r='8'/><circle cx='10' cy='10' r='5.2'/>" +
+    "<path d='m7.6 10.2 1.7 1.7 3.1-3.6' stroke-linecap='round' " +
+    "stroke-linejoin='round'/></svg>";
   if (!C) {
-    el.innerHTML = "<div class='certb uncert' role='status'>" + dual(
-      "&#9888; DEMONSTRATION ONLY — this deployment carries NO safety certificate. The threshold here exists to show the displays; none of its answers carry any guarantee.",
-      "&#9888; UNCERTIFIED DEMONSTRATION — no certificate attaches to this operating threshold. Explanations are shown WITHOUT the guarantee that is the system's point; do not quote numbers from this page as certified.") + "</div>";
+    el.innerHTML = "<div class='certb uncert' role='status'>" + warn + "<div>" + dual(
+      "DEMONSTRATION ONLY — this deployment carries NO safety certificate. The threshold here exists to show the displays; none of its answers carry any guarantee.",
+      "UNCERTIFIED DEMONSTRATION — no certificate attaches to this operating threshold. Explanations are shown WITHOUT the guarantee that is the system's point; do not quote numbers from this page as certified.") + "</div></div>";
   } else {
     const f = Object.keys(C).sort().map(k => k + " = " + C[k]);
-    el.innerHTML = "<div class='certb cert'><b>&#10003; Certified deployment</b> — " +
-      f.join(" · ") + "<span class='cl2'>The certificate bounds a " +
+    el.innerHTML = "<div class='certb cert'>" + seal + "<div><b>Certified deployment</b> — " +
+      "<span class='num'>" + f.join(" · ") + "</span><span class='cl2'>The certificate bounds a " +
       "site-population-average error rate among answered cases; it is not a " +
       "per-record or per-site property, and it certifies no single answer on " +
-      "this page.</span></div>";
+      "this page.</span></div></div>";
   }
 })();
 
@@ -564,7 +749,8 @@ const stat = (s,a,val,pct) => {
   const shown = (typeof val === "number" && val % 1)
     ? dual(pct ? (val*100).toFixed(1)+"%" : fmt(val), fmt(val))
     : (val === null ? "—" : (+val).toLocaleString());
-  el.innerHTML = "<b class='num'>"+shown+"</b>"+dual(s,a); strip.appendChild(el); };
+  el.innerHTML = "<span class='sl'>"+dual(s,a)+"</span><b class='num'>"+shown+"</b>";
+  strip.appendChild(el); };
 stat("cases reviewed","cases scored",DATA.n_total);
 stat("answered","answered",DATA.n_answered);
 stat("handed to a person","declined",DATA.n_declined);
@@ -617,11 +803,16 @@ bins.forEach((n,b) => {
     [...hist.children].forEach(c => c.classList && c.classList.remove("hsel"));
     binSel = same ? null : [lo,hi];
     if (!same) el.classList.add("hsel");
-    document.getElementById("binclear").style.display = binSel ? "inline-block" : "none";
+    document.getElementById("binclear").style.display = binSel ? "inline-flex" : "none";
     rebuildList(); };
   hist.appendChild(el); });
+const hb0 = document.createElement("div"); hb0.className = "hband";
+hb0.style.left = ((TAU-0.5)/0.5*100).toFixed(2)+"%";
+hist.insertBefore(hb0, hist.firstChild);
 const tl = document.createElement("div"); tl.className = "tau";
-tl.style.left = ((TAU-0.5)/0.5*100).toFixed(2)+"%"; hist.appendChild(tl);
+tl.style.left = ((TAU-0.5)/0.5*100).toFixed(2)+"%";
+tl.innerHTML = "<span>"+dual("the bar","&#964;*")+"</span>";
+hist.appendChild(tl);
 document.getElementById("binclear").onclick = () => {
   binSel = null; [...hist.children].forEach(c => c.classList && c.classList.remove("hsel"));
   document.getElementById("binclear").style.display = "none"; rebuildList(); };
@@ -708,7 +899,8 @@ function rebuildList(keepCase) {
     if (showOutcomes && c.outcome !== undefined)
       extra += " <span class='outc "+(c.outcome?"d":"s")+"'>"+
         (c.outcome ? "died" : "survived")+"</span>";
-    row.innerHTML = "case "+c.idx+" <span class='m'>"+
+    row.innerHTML = "<i class='dt "+(c.declined?"d":"a")+"'></i>case "+c.idx+
+      " <span class='m'>"+
       (c.declined ? dual(Math.abs(c.margin_to_answer) < 0.1
           ? "handed over · a whisker away" : "handed to a person",
           "declined · margin "+sigfmt(c.margin_to_answer))
@@ -786,7 +978,7 @@ function responseHTML(j) {
       const t = xCur.slice();
       ONEHOT[g].forEach(([kk]) => t[kk] = 0.0); t[jj] = 1.0;
       const sc = scoreOf(t), on = xCur[jj] >= 0.5;
-      h += "<tr"+(on?" style='font-weight:600'":"")+"><td>"+level+(on?" ← current":"")+
+      h += "<tr"+(on?" style='font-weight:650'":"")+"><td>"+level+(on?" ← current":"")+
         "</td><td class='num'>"+(riskOf(t)*100).toFixed(1)+"%</td><td class='num'>"+
         sc.toFixed(4)+"</td><td>"+(sc>=TAU?"answers":"declines")+"</td></tr>"; });
     return h+"</table></div>"; }
@@ -794,7 +986,7 @@ function responseHTML(j) {
     let h = "<p class='note'>Exact effect of each state of <b>"+NAMES[j]+"</b>.</p>"+
       "<div class='tblwrap'><table><tr><th>state</th><th>risk</th><th>confidence</th><th>gate</th></tr>";
     [0,1].forEach(v => { const t = xCur.slice(); t[j] = v; const sc = scoreOf(t);
-      h += "<tr"+(xCur[j]===v?" style='font-weight:600'":"")+"><td>"+(v?"yes":"no")+
+      h += "<tr"+(xCur[j]===v?" style='font-weight:650'":"")+"><td>"+(v?"yes":"no")+
         (xCur[j]===v?" ← current":"")+"</td><td class='num'>"+(riskOf(t)*100).toFixed(1)+
         "%</td><td class='num'>"+sc.toFixed(4)+"</td><td>"+(sc>=TAU?"answers":"declines")+
         "</td></tr>"; });
@@ -838,7 +1030,7 @@ function numbersHTML() {
     sigfmt(H.intercept,5)+" · logit "+sigfmt(logitOf(xCur),6)+" · L* "+
     L_STAR.toFixed(6)+"</p><button id='copyJson'>Copy case as JSON</button>"+
     "<button id='copyCsv'>Copy attributions as CSV</button>"+
-    "<span class='note' id='copied' style='display:none'> copied ✓</span>";
+    "<span class='note' id='copied' style='display:none'> copied</span>";
   return h; }
 
 function hospitalsHTML() {
@@ -967,7 +1159,7 @@ function updateLive() {
   document.getElementById("needTxt").textContent = answered ? "" :
     " · needs "+sigfmt(L_STAR-Math.abs(lg))+" more logit-confidence";
   document.getElementById("needle").style.left =
-    "calc("+((Math.min(Math.max(score,0.5),1)-0.5)/0.5*100).toFixed(2)+"% - 4px)";
+    "calc("+((Math.min(Math.max(score,0.5),1)-0.5)/0.5*100).toFixed(2)+"% - 1px)";
   document.getElementById("gscore").innerHTML =
     dual("how sure: "+(score*100).toFixed(1)+"%","score "+score.toFixed(4));
   document.getElementById("phibars").innerHTML = bars(phiOf(xCur), lg>=0?1:-1, visIdx);
@@ -988,6 +1180,17 @@ let raf = null;
 function updateLiveThrottled() {
   raf = raf || requestAnimationFrame(() => { raf = null; updateLive(); }); }
 
+// the confidence meter: a graduated scale with the answering band, the
+// red-line at tau*, and a damped needle.
+function meterTicks() {
+  let t = "";
+  for (let k = 0; k <= 10; k++) {
+    const p = k*10, v = 0.5 + k*0.05, M = k % 2 === 0;
+    t += "<i class='"+(M?"tM":"tm")+"' style='left:"+p+"%'></i>";
+    if (M) t += "<b style='left:"+p+"%'>"+v.toFixed(2)+"</b>";
+  }
+  return t; }
+
 function renderDetail() {
   const c = DATA.cases[order[cur]];
   visIdx = computeVisIdx();
@@ -1005,9 +1208,11 @@ function renderDetail() {
     "<span id='needS'></span></span>"+
     "<span class='advonly'> · leans <b id='leanTxt'></b> · risk "+
     "<span class='num' id='riskTxt'></span><span id='needTxt'></span></span></p>";
-  h += "<div class='gauge'><div class='tau' data-l='bar' style='left:"+
-    ((TAU-0.5)/0.5*100).toFixed(2)+"%'></div><div class='needle' id='needle'></div></div>"+
-    "<div class='gaxis'><span>0.50</span><span id='gscore'></span><span>1.00</span></div>";
+  const tp = ((TAU-0.5)/0.5*100).toFixed(2);
+  h += "<div class='meter'><div class='mband' style='left:"+tp+"%'></div>"+meterTicks()+
+    "<div class='mline' style='left:"+tp+"%'><span>"+dual("the bar","&#964;*")+"</span></div>"+
+    "<div class='needle' id='needle'></div></div>"+
+    "<div class='gaxis'><span id='gscore'></span></div>";
   h += "<p style='margin:10px 0 4px'>";
   if (c.declined && c.delta_x_min) {
     h += "<button class='primary' id='btnFlip'>"+
@@ -1024,7 +1229,7 @@ function renderDetail() {
     "<span class='tabbtn' id='tb-hospitals'>Hospitals</span>"+
     "<span class='tabbtn' id='tb-calibration'>Calibration</span></div>";
   h += "<div class='tabpane on' id='tab-decision'>";
-  h += "<h2 style='margin-top:6px'>"+dual("Try it yourself: change a value, the program re-decides",
+  h += "<h2 style='margin-top:8px'>"+dual("Try it yourself: change a value, the program re-decides",
        "What-if: change an input, the gate re-decides")+"</h2><p class='note'>"+
        dual("These controls only ask the program a question — they say nothing "+
             "about a real patient. Values marked <i>not recorded</i> were never "+
@@ -1045,7 +1250,7 @@ function renderDetail() {
         (on && on[0]===jj ? " selected" : "")+">"+lv+"</option>").join("")+
       "</select><span class='v note'>"+(orig?"":"none")+"</span>"+
       "<span class='rst"+((on&&orig&&on[0]!==orig[0])?" on":"")+"' data-g='"+g+
-      "' id='rsg_"+id+"' title='restore recorded level'>&#8634;</span></div>"; });
+      "' id='rsg_"+id+"' title='restore recorded level'>"+IC_RESET+"</span></div>"; });
   // grouped numeric / binary controls
   const byGroup = {};
   visIdx.forEach(j => (byGroup[DATA.groups[j]] = byGroup[DATA.groups[j]] || []).push(j));
@@ -1065,30 +1270,32 @@ function renderDetail() {
           (xCur[j]>=0.5?" checked":"")+" aria-label='toggle "+NAMES[j]+
           "'> <span class='note'>yes / no</span></span>"+
           "<span class='v num' id='sv"+j+"'></span><span class='rst' id='rs"+j+
-          "' data-j='"+j+"' title='recorded: "+sigfmt(c.x[j],4)+"'>&#8634;</span></div>";
+          "' data-j='"+j+"' title='recorded: "+sigfmt(c.x[j],4)+"'>"+IC_RESET+"</span></div>";
       } else {
         const lo = H.mu[j]-4*H.sd[j], hi = H.mu[j]+4*H.sd[j];
-        h += "<div class='srow'>"+lab+"<input type='range' data-j='"+j+"' min='"+lo+
-          "' max='"+hi+"' step='"+((hi-lo)/400)+"' value='"+xCur[j]+
-          "' aria-label='what-if value for "+NAMES[j]+"'><span class='v num' id='sv"+j+
+        const rec = Math.min(100, Math.max(0, (c.x[j]-lo)/(hi-lo)*100)).toFixed(2);
+        h += "<div class='srow'>"+lab+"<span class='sldw'><input type='range' data-j='"+j+
+          "' min='"+lo+"' max='"+hi+"' step='"+((hi-lo)/400)+"' value='"+xCur[j]+
+          "' aria-label='what-if value for "+NAMES[j]+"'><i class='srail'></i>"+
+          "<i class='smark' style='left:"+rec+"%'></i></span><span class='v num' id='sv"+j+
           "'></span><span class='rst' id='rs"+j+"' data-j='"+j+"' title='recorded: "+
-          sigfmt(c.x[j],4)+"'>&#8634;</span></div>"; } }); });
+          sigfmt(c.x[j],4)+"'>"+IC_RESET+"</span></div>"; } }); });
   h += "<details style='margin-top:8px'><summary>"+dual("What you tried (log)","What-if log")+
     "</summary><div id='logbox' class='note'></div></details>";
-  h += "<h2 style='margin-top:12px'>"+dual("What pushed its confidence up or down",
+  h += "<h2 style='margin-top:16px'>"+dual("What pushed its confidence up or down",
        "What drives the confidence")+"</h2><p class='note'>"+
     dual("Bars right push toward the program's leaning; bars left pull against it. "+
          "When they cancel out, it hands the case over.",
          "Right of the line builds confidence toward the leaned class; left erodes it "+
          "— cancellation causes the decline.")+"</p><div id='phibars'></div>";
   if (c.declined && c.counterfactuals.length) {
-    h += "<h2 style='margin-top:12px'>"+dual("What would have to be different for it to answer",
+    h += "<h2 style='margin-top:16px'>"+dual("What would have to be different for it to answer",
       "Smallest single-input changes that would make the gate answer")+"</h2><p class='note'>"+
       dual("Each row is the smallest change to ONE value that would let the program "+
            "answer — and even then it would only just clear the bar.",
            "Ranked by standardized magnitude; each clears the bar by the documented "+
            "headroom, so the answer carries the weakest allowed confidence, "+
-           fmt(c.confidence_at_flip)+".")+"</p><table><tr><th>"+
+           fmt(c.confidence_at_flip)+".")+"</p><div class='tblwrap'><table><tr><th>"+
       dual("what","input")+"</th><th>"+dual("change needed","raw &#916;")+"</th>"+
       "<th class='advonly'>std &#916;z</th><th>"+dual("kind","kind")+"</th><th>"+
       dual("it would then say","answers as")+"</th></tr>";
@@ -1099,7 +1306,7 @@ function renderDetail() {
         (kindTag(cf.j) || "<span class='tag'>"+dual("measurement","clinical")+"</span>")+
         "</td><td>"+dual(cf.answers_as==="predicted-positive"?"higher risk":"lower risk",
           cf.answers_as)+"</td></tr>"; });
-    h += "</table><p class='note'>"+dual(
+    h += "</table></div><p class='note'>"+dual(
       "Rows tagged <i>about record-keeping</i> are not clinical changes at all — "+
       "they are about whether a measurement was written down. All of these describe "+
       "the computer program, never the patient.",
@@ -1211,6 +1418,8 @@ document.addEventListener("keydown", e => {
 
 const tX = document.getElementById("tauX"), tXv = document.getElementById("tauXv");
 tX.value = TAU;
+const tXm = document.getElementById("tauXmark");
+if (tXm) tXm.style.left = ((TAU-0.55)/(0.99-0.55)*100).toFixed(2)+"%";
 function exploreUpdate() {
   const t = +tX.value, n = DATA.all_scores.length;
   const ans = DATA.all_scores.filter(s => s >= t).length;
