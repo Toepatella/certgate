@@ -5,7 +5,7 @@ Black-box shift estimation with a cluster-robust confidence box on
 ``[rho_lo, rho_hi]``; certification tests the worst case over that interval at
 ``BBSE_DELTA_BET`` while the box spends ``BBSE_DELTA_CONF``, restoring
 ``1 - delta`` by union bound. Ported from the audited v1 ``fit_a2/certify_a2``
-(``../testbed/modes.py``) with the SPEC hardening: bootstrap top-up-or-decline
+(``../xAI-projtect-v1/testbed/modes.py``) with the SPEC hardening: bootstrap top-up-or-decline
 (audit F40/B-8), q_t range decline (audit F41/B-9), deterministic per-endpoint
 permutation streams (supersedes v1's shared-stream pattern), and -- audit V2 --
 a confidence share for ``q_t`` itself: the target predicted-positive rate is a

@@ -1,6 +1,6 @@
 """SPEC section "data.py": simplified synthetic multi-site generator + site splits.
 
-Ports the exact-shift semantics of ``../testbed/generator.py`` (METHODS section 7)
+Ports the exact-shift semantics of ``../xAI-projtect-v1/testbed/generator.py`` (METHODS section 7)
 but drops the covariate-delta, missingness/availability, and oracle latent/site
 machinery -- a Cohort holds only ``x, y, site_id, site_labels``.
 
@@ -79,7 +79,7 @@ def draw_cohort(cfg: SimConfig, n_sites: int, rng, *, label_base_rate=None,
 
     Class-conditional exact path when there is no concept tilt (pure label shift
     when ``label_base_rate`` is set); marginal-then-posterior path for concept
-    tilt (``../testbed/generator.py`` lines 130-159 semantics). Composing a
+    tilt (``../xAI-projtect-v1/testbed/generator.py`` lines 130-159 semantics). Composing a
     ``label_base_rate`` with a concept tilt raises ``ValueError`` -- the
     unidentifiable regime. Site labels ``f"{prefix}-{i:04d}"`` guarantee
     disjointness across distinct prefixes.

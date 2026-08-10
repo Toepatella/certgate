@@ -1,7 +1,7 @@
 """Certified-gate statistical core (SPEC section "certify.py", METHODS 3-4).
 
 The math is ported verbatim from the audited v1 reference
-(``../testbed/certify.py``, which survived adversarial review); the SPEC's
+(``../xAI-projtect-v1/testbed/certify.py``, which survived adversarial review); the SPEC's
 constants and the loud-rejection hardening (isfinite guards on scores and
 weights, sha256-only seed rule) override v1 where they differ.
 
