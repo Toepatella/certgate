@@ -242,7 +242,7 @@
 {
   "_run": {
     "mode": "FULL",
-    "utc": "2026-07-31T07:27:13+00:00",
+    "utc": "2026-08-10T15:05:50+00:00",
     "replicates": 20,
     "arm": "primary",
     "data_sha": "3744bf912e9196b44123a8d13c52faeb1a55e45a705250511c536ce7739ac26d"
@@ -358,7 +358,9 @@
     "n_sites_apache_complete_arm": 190,
     "note": "apache-result-linked vs primary-cohort is the site-selection statistic (threat T-4). The primary arm MEASURES it and never applies it: restricting the cohort would move the site population the estimand refers to."
   },
-  "warnings": []
+  "warnings": [
+    "[MEASURE] POST-HOC (2026-08-01): the selective reliability panel is a DESCRIPTIVE diagnostic added AFTER the eICU-CRD v2.0 extract was read. It is NOT part of the pre-extract protocol freeze (commit 9f25b491b2554d0a4bd7aaaf44081c185d01715f), it alters no certified quantity, and it settles none of the frozen predictions P1-P7 or failure criteria F-A-F-E. Its bins, seed and bootstrap counts were fixed before it was run on this extract but AFTER the extract had been seen, so they carry NO pre-registration claim. Every figure and number derived from this panel must carry this label."
+  ]
 }
 ```
 
@@ -367,7 +369,7 @@
 {
   "_run": {
     "mode": "FULL",
-    "utc": "2026-07-31T07:27:13+00:00",
+    "utc": "2026-08-10T15:05:50+00:00",
     "replicates": 20,
     "arm": "primary",
     "data_sha": "3744bf912e9196b44123a8d13c52faeb1a55e45a705250511c536ce7739ac26d"
@@ -423,7 +425,7 @@
 {
   "_run": {
     "mode": "FULL",
-    "utc": "2026-07-31T07:27:13+00:00",
+    "utc": "2026-08-10T15:05:50+00:00",
     "replicates": 20,
     "arm": "primary",
     "data_sha": "3744bf912e9196b44123a8d13c52faeb1a55e45a705250511c536ce7739ac26d"
@@ -448,6 +450,237 @@
       "apache_available_share": 0.8219,
       "note": "the APACHE-IVa columns are scored on the answered records that CARRY a comparator value; that coverage is site-correlated, so the subset-matched CertGate error is reported beside them rather than compared across different denominators."
     }
+  }
+}
+```
+
+## EICU-RELIABILITY
+```json
+{
+  "_run": {
+    "mode": "FULL",
+    "utc": "2026-08-10T15:05:50+00:00",
+    "replicates": 20,
+    "arm": "primary",
+    "data_sha": "3744bf912e9196b44123a8d13c52faeb1a55e45a705250511c536ce7739ac26d"
+  },
+  "post_hoc": "[MEASURE] POST-HOC (2026-08-01): the selective reliability panel is a DESCRIPTIVE diagnostic added AFTER the eICU-CRD v2.0 extract was read. It is NOT part of the pre-extract protocol freeze (commit 9f25b491b2554d0a4bd7aaaf44081c185d01715f), it alters no certified quantity, and it settles none of the frozen predictions P1-P7 or failure criteria F-A-F-E. Its bins, seed and bootstrap counts were fixed before it was run on this extract but AFTER the extract had been seen, so they carry NO pre-registration claim. Every figure and number derived from this panel must carry this label.",
+  "arm": "primary",
+  "replicates": 20,
+  "n_panels": 20,
+  "scope": "pooled target arm only (K = 24 hospitals >= MIN_SITES_FOR_CI = 10); the per-hospital arm is K = 1, where every interval would be floor-suppressed at 24x the cost",
+  "settings": {
+    "schema_version": "srp/1",
+    "seed": 20260731,
+    "n_boot": 2000,
+    "ci_level": 0.95,
+    "bin_edges": [
+      0.0,
+      0.02,
+      0.05,
+      0.1,
+      0.2,
+      0.35,
+      0.55,
+      1.01
+    ],
+    "decision_threshold": 0.5,
+    "bootstrap_unit": "site"
+  },
+  "brier_difference_note": "brier.reference.brier_difference is a SINGLE paired statistic from ONE resample stream (reference minus primary on the IDENTICAL availability mask). It must never be reconstructed by differencing brier.primary_answered, whose denominator is the wider answered set (panel notes[4]).",
+  "skill_margin_note": "skill_margin = constant-majority baseline error rate MINUS model error rate. At single-digit prevalence a low answered error rate is also what a constant always-negative rule achieves, so the margin -- not the error rate -- is what says whether the gate earned its answered set or merely selected an easy one.",
+  "notes": [
+    "Estimand: every reported quantity is a record-weighted ratio of sums over the fixed site population; a large site contributes proportionally more than a small one.",
+    "Every interval is a MARGINAL two-sided percentile interval from an independent one-stage site resample. There is no joint-coverage claim: do not difference two interval endpoints -- differences that matter are computed as their own statistic inside a shared resample (skill.contrast, brier.reference.brier_difference).",
+    "The expected calibration error is a plug-in estimate on fixed a-priori bins. It is positively biased and the bias grows as per-bin counts shrink; a percentile interval does not correct bias, so the interval covers the biased plug-in estimand, not true calibration error.",
+    "The answered and declined subsets are selected by the caller's gate, so each is an average over a site population whose composition differs from the full record set. Compare skill.answered against skill.all before reading a low answered error rate as scorer accuracy.",
+    "The reference-scorer Brier is computed on the answered records that carry a finite reference probability. Compare it ONLY against brier_primary_matched, which uses the identical denominator, never against brier.primary_answered.",
+    "A null statistic means undefined or suppressed, never zero. A null interval carries its reason in the adjacent ci_status field."
+  ],
+  "replicate_spread_note": "sd / p10 / p50 / p90 below are taken ACROSS REPLICATES, which are re-splits of ONE hospital population on ONE extract and are therefore NOT independent draws. That spread is split-to-split variation, not sampling uncertainty. The cluster-bootstrap `ci` fields are the only intervals here with a coverage claim.",
+  "n_sites": {
+    "n": 20,
+    "mean": 24.0,
+    "sd": 0.0,
+    "p10": 24.0,
+    "p50": 24.0,
+    "p90": 24.0,
+    "min": 24.0,
+    "max": 24.0
+  },
+  "coverage": {
+    "n": 20,
+    "mean": 0.89039,
+    "sd": 0.030471,
+    "p10": 0.855777,
+    "p50": 0.901521,
+    "p90": 0.920053,
+    "min": 0.807981,
+    "max": 0.925705
+  },
+  "ece_answered": {
+    "n": 20,
+    "mean": 0.00652,
+    "sd": 0.002153,
+    "p10": 0.003861,
+    "p50": 0.006322,
+    "p90": 0.010002,
+    "min": 0.003216,
+    "max": 0.010979
+  },
+  "ece_declined": {
+    "n": 20,
+    "mean": 0.030481,
+    "sd": 0.012324,
+    "p10": 0.014531,
+    "p50": 0.031357,
+    "p90": 0.046113,
+    "min": 0.010239,
+    "max": 0.052507
+  },
+  "calibration_slope_answered": {
+    "n": 20,
+    "mean": 0.979464,
+    "sd": 0.062779,
+    "p10": 0.902942,
+    "p50": 0.96504,
+    "p90": 1.071322,
+    "min": 0.866421,
+    "max": 1.09779
+  },
+  "calibration_status_answered_counts": {
+    "ok": 20
+  },
+  "fit_statuses": [
+    "ok",
+    "too-few-records",
+    "single-class",
+    "degenerate-design",
+    "separable",
+    "coef-out-of-range",
+    "not-converged",
+    "singular"
+  ],
+  "brier_answered": {
+    "n": 20,
+    "mean": 0.042816,
+    "sd": 0.005188,
+    "p10": 0.034131,
+    "p50": 0.044706,
+    "p90": 0.048759,
+    "min": 0.032759,
+    "max": 0.050302
+  },
+  "brier_reference": {
+    "n": 20,
+    "mean": 0.043715,
+    "sd": 0.005324,
+    "p10": 0.036383,
+    "p50": 0.044802,
+    "p90": 0.04952,
+    "min": 0.031744,
+    "max": 0.050457
+  },
+  "brier_primary_matched": {
+    "n": 20,
+    "mean": 0.042196,
+    "sd": 0.005271,
+    "p10": 0.034055,
+    "p50": 0.043587,
+    "p90": 0.047885,
+    "min": 0.031152,
+    "max": 0.049588
+  },
+  "brier_difference": {
+    "n": 20,
+    "mean": 0.001519,
+    "sd": 0.000913,
+    "p10": 0.00057,
+    "p50": 0.001507,
+    "p90": 0.002468,
+    "min": -0.000795,
+    "max": 0.003387
+  },
+  "brier_available_share": {
+    "n": 20,
+    "mean": 0.821403,
+    "sd": 0.043078,
+    "p10": 0.77412,
+    "p50": 0.828756,
+    "p90": 0.871021,
+    "min": 0.725911,
+    "max": 0.881007
+  },
+  "brier_reference_ci_replicate0": {
+    "brier_reference": {
+      "lo": 0.031912,
+      "hi": 0.04327
+    },
+    "brier_primary_matched": {
+      "lo": 0.030803,
+      "hi": 0.042137
+    },
+    "brier_difference": {
+      "lo": 0.000136,
+      "hi": 0.001684
+    }
+  },
+  "skill_margin_answered": {
+    "n": 20,
+    "mean": 0.004557,
+    "sd": 0.001345,
+    "p10": 0.003545,
+    "p50": 0.00422,
+    "p90": 0.005848,
+    "min": 0.00262,
+    "max": 0.008366
+  },
+  "skill_margin_all": {
+    "n": 20,
+    "mean": 0.008428,
+    "sd": 0.002536,
+    "p10": 0.005875,
+    "p50": 0.007889,
+    "p90": 0.010601,
+    "min": 0.004971,
+    "max": 0.015655
+  },
+  "skill_contrast_answered_minus_all": {
+    "n": 20,
+    "mean": -0.003871,
+    "sd": 0.001838,
+    "p10": -0.006134,
+    "p50": -0.003844,
+    "p90": -0.001805,
+    "min": -0.008189,
+    "max": -0.001363
+  },
+  "skill_contrast_answered_minus_declined": {
+    "n": 20,
+    "mean": -0.037185,
+    "sd": 0.017762,
+    "p10": -0.054934,
+    "p50": -0.040049,
+    "p90": -0.013536,
+    "min": -0.07775,
+    "max": -0.012241
+  },
+  "ci_status_counts": {
+    "ok": 440,
+    "empty-bin": 100
+  },
+  "ci_statuses": [
+    "ok",
+    "empty-bin",
+    "too-few-sites",
+    "degenerate-resamples",
+    "undefined-point",
+    "truncated-resamples"
+  ],
+  "consistency": {
+    "max_abs_gap_panel_vs_pooled_answered_err": 4.9e-05,
+    "n_compared": 20,
+    "note": "panel skill.answered.model_error_rate vs the pooled row's answered_err_rate at the OPERATIVE rung. The panel's DECISION_THRESHOLD = 0.5 is Head.predict's own rule, so the two are the SAME quantity and the gap is pure rounding: the pooled row goes through _rate (4 dp) and the panel through the emit pass (6 dp), so anything up to 5e-05 is expected and is NOT a finding. A gap materially above that means the two are no longer measuring the same thing. REPORTED, never raised -- on real data this is a lead to chase, not a crash mid-run."
   }
 }
 ```
