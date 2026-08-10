@@ -1,0 +1,559 @@
+{
+  "post_hoc": "[MEASURE] POST-HOC (2026-08-01): the selective reliability panel is a DESCRIPTIVE diagnostic added AFTER the eICU-CRD v2.0 extract was read. It is NOT part of the pre-extract protocol freeze (commit 9f25b491b2554d0a4bd7aaaf44081c185d01715f), it alters no certified quantity, and it settles none of the frozen predictions P1-P7 or failure criteria F-A-F-E. Its bins, seed and bootstrap counts were fixed before it was run on this extract but AFTER the extract had been seen, so they carry NO pre-registration claim. Every figure and number derived from this panel must carry this label.",
+  "arm": "primary",
+  "replicates": 1,
+  "scope": "pooled target arm only (K = 24 hospitals); the per-hospital arm is K = 1 and every interval would be floor-suppressed",
+  "panels": [
+    {
+      "replicate": 0,
+      "arm": "primary",
+      "operative_alpha": 0.1,
+      "schema_version": "srp/1",
+      "generated_utc": null,
+      "input_digest": "d9677df69e6cc27b1a9a1ec80493968828f79a91692c4f4adfa36b3f7b19fe8a",
+      "settings": {
+        "seed": 20260731,
+        "decision_threshold": 0.5,
+        "bin_edges": [
+          0.0,
+          0.02,
+          0.05,
+          0.1,
+          0.2,
+          0.35,
+          0.55,
+          1.01
+        ],
+        "n_bins": 7,
+        "n_boot": 2000,
+        "boot_max_attempts": 4000,
+        "ci_level": 0.95,
+        "ci_convention": "two-sided percentile: np.quantile(draws, [0.025, 0.975], method='linear')",
+        "bootstrap_unit": "site",
+        "min_sites_for_ci": 10,
+        "weighting": "record-weighted ratio-of-sums over resampled sites (no influence cap)",
+        "logit_eps": 1e-06,
+        "irls": {
+          "max_iter": 100,
+          "tol": 1e-08,
+          "max_abs_coef": 30.0,
+          "min_weight": 1e-10,
+          "min_records": 20
+        },
+        "round_dp": 6
+      },
+      "counts": {
+        "n_records": 15169,
+        "n_sites": 24,
+        "n_answered": 12964,
+        "n_declined": 2205,
+        "coverage": 0.854638,
+        "n_sites_answered": 24,
+        "n_sites_declined": 24,
+        "n_positive_all": 1362,
+        "reference_supplied": true
+      },
+      "reliability": {
+        "answered": [
+          {
+            "index": 0,
+            "lo": 0.0,
+            "hi": 0.02,
+            "n": 5196,
+            "n_sites_carrying": 24,
+            "mean_predicted": 0.010301,
+            "observed": 0.009623,
+            "ci": {
+              "lo": 0.005474,
+              "hi": 0.013258
+            },
+            "ci_status": "ok",
+            "n_boot_valid": 2000,
+            "n_attempts": 2000
+          },
+          {
+            "index": 1,
+            "lo": 0.02,
+            "hi": 0.05,
+            "n": 4094,
+            "n_sites_carrying": 24,
+            "mean_predicted": 0.03299,
+            "observed": 0.031021,
+            "ci": {
+              "lo": 0.022147,
+              "hi": 0.03805
+            },
+            "ci_status": "ok",
+            "n_boot_valid": 2000,
+            "n_attempts": 2000
+          },
+          {
+            "index": 2,
+            "lo": 0.05,
+            "hi": 0.1,
+            "n": 2512,
+            "n_sites_carrying": 24,
+            "mean_predicted": 0.070478,
+            "observed": 0.081608,
+            "ci": {
+              "lo": 0.063027,
+              "hi": 0.096491
+            },
+            "ci_status": "ok",
+            "n_boot_valid": 2000,
+            "n_attempts": 2000
+          },
+          {
+            "index": 3,
+            "lo": 0.1,
+            "hi": 0.2,
+            "n": 1099,
+            "n_sites_carrying": 24,
+            "mean_predicted": 0.121837,
+            "observed": 0.141037,
+            "ci": {
+              "lo": 0.119785,
+              "hi": 0.162049
+            },
+            "ci_status": "ok",
+            "n_boot_valid": 2000,
+            "n_attempts": 2000
+          },
+          {
+            "index": 4,
+            "lo": 0.2,
+            "hi": 0.35,
+            "n": 0,
+            "n_sites_carrying": 0,
+            "mean_predicted": null,
+            "observed": null,
+            "ci": null,
+            "ci_status": "empty-bin",
+            "n_boot_valid": 0,
+            "n_attempts": 0
+          },
+          {
+            "index": 5,
+            "lo": 0.35,
+            "hi": 0.55,
+            "n": 0,
+            "n_sites_carrying": 0,
+            "mean_predicted": null,
+            "observed": null,
+            "ci": null,
+            "ci_status": "empty-bin",
+            "n_boot_valid": 0,
+            "n_attempts": 0
+          },
+          {
+            "index": 6,
+            "lo": 0.55,
+            "hi": 1.0,
+            "n": 63,
+            "n_sites_carrying": 15,
+            "mean_predicted": 0.921097,
+            "observed": 0.904762,
+            "ci": {
+              "lo": 0.822179,
+              "hi": 0.961538
+            },
+            "ci_status": "ok",
+            "n_boot_valid": 2000,
+            "n_attempts": 2000
+          }
+        ],
+        "declined": [
+          {
+            "index": 0,
+            "lo": 0.0,
+            "hi": 0.02,
+            "n": 0,
+            "n_sites_carrying": 0,
+            "mean_predicted": null,
+            "observed": null,
+            "ci": null,
+            "ci_status": "empty-bin",
+            "n_boot_valid": 0,
+            "n_attempts": 0
+          },
+          {
+            "index": 1,
+            "lo": 0.02,
+            "hi": 0.05,
+            "n": 0,
+            "n_sites_carrying": 0,
+            "mean_predicted": null,
+            "observed": null,
+            "ci": null,
+            "ci_status": "empty-bin",
+            "n_boot_valid": 0,
+            "n_attempts": 0
+          },
+          {
+            "index": 2,
+            "lo": 0.05,
+            "hi": 0.1,
+            "n": 0,
+            "n_sites_carrying": 0,
+            "mean_predicted": null,
+            "observed": null,
+            "ci": null,
+            "ci_status": "empty-bin",
+            "n_boot_valid": 0,
+            "n_attempts": 0
+          },
+          {
+            "index": 3,
+            "lo": 0.1,
+            "hi": 0.2,
+            "n": 598,
+            "n_sites_carrying": 24,
+            "mean_predicted": 0.17169,
+            "observed": 0.198997,
+            "ci": {
+              "lo": 0.149597,
+              "hi": 0.249609
+            },
+            "ci_status": "ok",
+            "n_boot_valid": 2000,
+            "n_attempts": 2000
+          },
+          {
+            "index": 4,
+            "lo": 0.2,
+            "hi": 0.35,
+            "n": 847,
+            "n_sites_carrying": 24,
+            "mean_predicted": 0.26091,
+            "observed": 0.288076,
+            "ci": {
+              "lo": 0.257159,
+              "hi": 0.322266
+            },
+            "ci_status": "ok",
+            "n_boot_valid": 2000,
+            "n_attempts": 2000
+          },
+          {
+            "index": 5,
+            "lo": 0.35,
+            "hi": 0.55,
+            "n": 460,
+            "n_sites_carrying": 24,
+            "mean_predicted": 0.437626,
+            "observed": 0.45,
+            "ci": {
+              "lo": 0.414823,
+              "hi": 0.493152
+            },
+            "ci_status": "ok",
+            "n_boot_valid": 2000,
+            "n_attempts": 2000
+          },
+          {
+            "index": 6,
+            "lo": 0.55,
+            "hi": 1.0,
+            "n": 300,
+            "n_sites_carrying": 22,
+            "mean_predicted": 0.674754,
+            "observed": 0.66,
+            "ci": {
+              "lo": 0.603991,
+              "hi": 0.725818
+            },
+            "ci_status": "ok",
+            "n_boot_valid": 2000,
+            "n_attempts": 2000
+          }
+        ]
+      },
+      "calibration": {
+        "answered": {
+          "slope": 1.082649,
+          "intercept": 0.305678,
+          "status": "ok",
+          "iterations": 8,
+          "n": 12964,
+          "n_positive": 594,
+          "n_sites_carrying": 24,
+          "ci": {
+            "slope": {
+              "lo": 0.991115,
+              "hi": 1.233626
+            },
+            "intercept": {
+              "lo": 0.069018,
+              "hi": 0.625151
+            }
+          },
+          "ci_status": "ok",
+          "n_boot_valid": 2000,
+          "n_attempts": 2000
+        },
+        "declined": {
+          "slope": 0.864757,
+          "intercept": 0.000772,
+          "status": "ok",
+          "iterations": 5,
+          "n": 2205,
+          "n_positive": 768,
+          "n_sites_carrying": 24,
+          "ci": {
+            "slope": {
+              "lo": 0.738139,
+              "hi": 1.015682
+            },
+            "intercept": {
+              "lo": -0.108683,
+              "hi": 0.129988
+            }
+          },
+          "ci_status": "ok",
+          "n_boot_valid": 2000,
+          "n_attempts": 2000
+        }
+      },
+      "ece": {
+        "answered": {
+          "ece": 0.004757,
+          "n": 12964,
+          "n_bins_nonempty": 5,
+          "n_sites_carrying": 24,
+          "ci": {
+            "lo": 0.002591,
+            "hi": 0.009664
+          },
+          "ci_status": "ok",
+          "n_boot_valid": 2000,
+          "n_attempts": 2000
+        },
+        "declined": {
+          "ece": 0.02243,
+          "n": 2205,
+          "n_bins_nonempty": 4,
+          "n_sites_carrying": 24,
+          "ci": {
+            "lo": 0.00929,
+            "hi": 0.049626
+          },
+          "ci_status": "ok",
+          "n_boot_valid": 2000,
+          "n_attempts": 2000
+        }
+      },
+      "brier": {
+        "primary_answered": {
+          "value": 0.038438,
+          "n": 12964,
+          "n_sites_carrying": 24,
+          "ci": {
+            "lo": 0.031158,
+            "hi": 0.044759
+          },
+          "ci_status": "ok",
+          "n_boot_valid": 2000,
+          "n_attempts": 2000
+        },
+        "reference": {
+          "n_available": 10404,
+          "available_share": 0.80253,
+          "n_sites_carrying": 22,
+          "brier_reference": 0.038079,
+          "brier_primary_matched": 0.037104,
+          "brier_difference": 0.000975,
+          "ci": {
+            "brier_reference": {
+              "lo": 0.031912,
+              "hi": 0.04327
+            },
+            "brier_primary_matched": {
+              "lo": 0.030803,
+              "hi": 0.042137
+            },
+            "brier_difference": {
+              "lo": 0.000136,
+              "hi": 0.001684
+            }
+          },
+          "ci_status": "ok",
+          "n_boot_valid": 2000,
+          "n_attempts": 2000
+        }
+      },
+      "skill": {
+        "answered": {
+          "n": 12964,
+          "n_sites_carrying": 24,
+          "n_positive": 594,
+          "positive_rate": 0.045819,
+          "model_error_rate": 0.041885,
+          "constant_predictor_class": false,
+          "constant_predictor_error_rate": 0.045819,
+          "skill_margin": 0.003934,
+          "ci": {
+            "model_error_rate": {
+              "lo": 0.033519,
+              "hi": 0.049291
+            },
+            "constant_predictor_error_rate": {
+              "lo": 0.035729,
+              "hi": 0.054717
+            },
+            "skill_margin": {
+              "lo": 0.001796,
+              "hi": 0.00585
+            }
+          },
+          "ci_status": "ok",
+          "n_boot_valid": 2000,
+          "n_attempts": 2000
+        },
+        "declined": {
+          "n": 2205,
+          "n_sites_carrying": 24,
+          "n_positive": 768,
+          "positive_rate": 0.348299,
+          "model_error_rate": 0.302948,
+          "constant_predictor_class": false,
+          "constant_predictor_error_rate": 0.348299,
+          "skill_margin": 0.045351,
+          "ci": {
+            "model_error_rate": {
+              "lo": 0.279009,
+              "hi": 0.325652
+            },
+            "constant_predictor_error_rate": {
+              "lo": 0.323371,
+              "hi": 0.370135
+            },
+            "skill_margin": {
+              "lo": 0.027276,
+              "hi": 0.065425
+            }
+          },
+          "ci_status": "ok",
+          "n_boot_valid": 2000,
+          "n_attempts": 2000
+        },
+        "all": {
+          "n": 15169,
+          "n_sites_carrying": 24,
+          "n_positive": 1362,
+          "positive_rate": 0.089788,
+          "model_error_rate": 0.079834,
+          "constant_predictor_class": false,
+          "constant_predictor_error_rate": 0.089788,
+          "skill_margin": 0.009955,
+          "ci": {
+            "model_error_rate": {
+              "lo": 0.066868,
+              "hi": 0.089846
+            },
+            "constant_predictor_error_rate": {
+              "lo": 0.074033,
+              "hi": 0.101261
+            },
+            "skill_margin": {
+              "lo": 0.006047,
+              "hi": 0.012988
+            }
+          },
+          "ci_status": "ok",
+          "n_boot_valid": 2000,
+          "n_attempts": 2000
+        },
+        "contrast": {
+          "answered_minus_all": -0.006021,
+          "answered_minus_declined": -0.041418,
+          "ci": {
+            "answered_minus_all": {
+              "lo": -0.009365,
+              "hi": -0.003328
+            },
+            "answered_minus_declined": {
+              "lo": -0.063308,
+              "hi": -0.023394
+            }
+          },
+          "ci_status": "ok",
+          "n_boot_valid": 2000,
+          "n_attempts": 2000
+        }
+      },
+      "composition": {
+        "answered": {
+          "n": 12964,
+          "n_sites_carrying": 24,
+          "n_predicted_positive": 63,
+          "predicted_positive_fraction": 0.00486,
+          "n_observed_positive": 594,
+          "observed_positive_fraction": 0.045819,
+          "ci": {
+            "predicted_positive_fraction": {
+              "lo": 0.002394,
+              "hi": 0.007078
+            },
+            "observed_positive_fraction": {
+              "lo": 0.035305,
+              "hi": 0.054178
+            }
+          },
+          "ci_status": "ok",
+          "n_boot_valid": 2000,
+          "n_attempts": 2000
+        },
+        "declined": {
+          "n": 2205,
+          "n_sites_carrying": 24,
+          "n_predicted_positive": 390,
+          "predicted_positive_fraction": 0.176871,
+          "n_observed_positive": 768,
+          "observed_positive_fraction": 0.348299,
+          "ci": {
+            "predicted_positive_fraction": {
+              "lo": 0.149207,
+              "hi": 0.198891
+            },
+            "observed_positive_fraction": {
+              "lo": 0.324679,
+              "hi": 0.370686
+            }
+          },
+          "ci_status": "ok",
+          "n_boot_valid": 2000,
+          "n_attempts": 2000
+        },
+        "all": {
+          "n": 15169,
+          "n_sites_carrying": 24,
+          "n_predicted_positive": 453,
+          "predicted_positive_fraction": 0.029864,
+          "n_observed_positive": 1362,
+          "observed_positive_fraction": 0.089788,
+          "ci": {
+            "predicted_positive_fraction": {
+              "lo": 0.022986,
+              "hi": 0.036201
+            },
+            "observed_positive_fraction": {
+              "lo": 0.075636,
+              "hi": 0.101406
+            }
+          },
+          "ci_status": "ok",
+          "n_boot_valid": 2000,
+          "n_attempts": 2000
+        }
+      },
+      "notes": [
+        "Estimand: every reported quantity is a record-weighted ratio of sums over the fixed site population; a large site contributes proportionally more than a small one.",
+        "Every interval is a MARGINAL two-sided percentile interval from an independent one-stage site resample. There is no joint-coverage claim: do not difference two interval endpoints -- differences that matter are computed as their own statistic inside a shared resample (skill.contrast, brier.reference.brier_difference).",
+        "The expected calibration error is a plug-in estimate on fixed a-priori bins. It is positively biased and the bias grows as per-bin counts shrink; a percentile interval does not correct bias, so the interval covers the biased plug-in estimand, not true calibration error.",
+        "The answered and declined subsets are selected by the caller's gate, so each is an average over a site population whose composition differs from the full record set. Compare skill.answered against skill.all before reading a low answered error rate as scorer accuracy.",
+        "The reference-scorer Brier is computed on the answered records that carry a finite reference probability. Compare it ONLY against brier_primary_matched, which uses the identical denominator, never against brier.primary_answered.",
+        "A null statistic means undefined or suppressed, never zero. A null interval carries its reason in the adjacent ci_status field."
+      ]
+    }
+  ]
+}

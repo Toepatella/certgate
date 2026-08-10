@@ -1,0 +1,718 @@
+{
+  "arm": "primary",
+  "replicates": 1,
+  "n_records": 164322,
+  "n_sites": 207,
+  "reference_check": {
+    "n_raw_stays": 200859,
+    "n_raw_sites": 208,
+    "expected_stays": 200859,
+    "expected_sites": 208,
+    "matches_reference": true,
+    "note": "a mismatch means this is NOT eICU-CRD v2.0 as released (wrong download, a re-zip, or the mock corpus); preflight --no-reference-check is the mock path, and expect_reference=True is where the mismatch RAISES"
+  },
+  "site_missingness_dispersion": {
+    "n": 207,
+    "mean": 0.232414,
+    "sd": 0.108956,
+    "p10": 0.155466,
+    "p50": 0.200889,
+    "p90": 0.320211,
+    "min": 0.124355,
+    "max": 0.891304,
+    "what": "per-hospital mean share of NaN across the imputable feature columns, measured on the RAW matrix before imputation erases it. Site-informative missingness is a covariate-shift channel CertGate v2 scope-cut (threat T-3): it is MEASURED here, never imputed away."
+  },
+  "apache_coverage_by_site": {
+    "aps": {
+      "bands": [
+        {
+          "band": "[0,0.2]",
+          "n_sites": 2
+        },
+        {
+          "band": "(0.2,0.5]",
+          "n_sites": 2
+        },
+        {
+          "band": "(0.5,0.8]",
+          "n_sites": 13
+        },
+        {
+          "band": "(0.8,1.0]",
+          "n_sites": 190
+        }
+      ],
+      "n_sites": 207,
+      "n_sites_zero": 0,
+      "n_sites_below_20pct": 2,
+      "summary": {
+        "n": 207,
+        "mean": 0.948335,
+        "sd": 0.131949,
+        "p10": 0.893702,
+        "p50": 0.991453,
+        "p90": 1.0,
+        "min": 0.074627,
+        "max": 1.0
+      }
+    },
+    "apv": {
+      "bands": [
+        {
+          "band": "[0,0.2]",
+          "n_sites": 2
+        },
+        {
+          "band": "(0.2,0.5]",
+          "n_sites": 2
+        },
+        {
+          "band": "(0.5,0.8]",
+          "n_sites": 13
+        },
+        {
+          "band": "(0.8,1.0]",
+          "n_sites": 190
+        }
+      ],
+      "n_sites": 207,
+      "n_sites_zero": 0,
+      "n_sites_below_20pct": 2,
+      "summary": {
+        "n": 207,
+        "mean": 0.948335,
+        "sd": 0.131949,
+        "p10": 0.893702,
+        "p50": 0.991453,
+        "p90": 1.0,
+        "min": 0.074627,
+        "max": 1.0
+      }
+    }
+  },
+  "categorical_drift": {
+    "other_shares": {
+      "gender": 0.0,
+      "ethnicity": 0.0,
+      "hospitaladmitsource": 0.0,
+      "unitadmitsource": 0.0,
+      "unittype": 0.0,
+      "unitstaytype": 0.0
+    },
+    "cap": 0.05,
+    "note": "build_raw ran with strict_levels=True, so a share over the cap would have RAISED categorical-level-drift before any certificate existed."
+  },
+  "outcome_missingness": {
+    "aps_present": {
+      "feature": "aps_present",
+      "n_present": 157403,
+      "n_absent": 6919,
+      "prevalence_present": 0.090754,
+      "prevalence_absent": 0.04596,
+      "prevalence_ratio": 0.5064,
+      "cap": 2.0,
+      "min_stratum": 100,
+      "gate_applies": true
+    },
+    "apv_present": {
+      "feature": "apv_present",
+      "n_present": 157403,
+      "n_absent": 6919,
+      "prevalence_present": 0.090754,
+      "prevalence_absent": 0.04596,
+      "prevalence_ratio": 0.5064,
+      "cap": 2.0,
+      "min_stratum": 100,
+      "gate_applies": true
+    }
+  },
+  "leak_probe": [
+    {
+      "head_auc_oos": 0.859523,
+      "head_auc_ablated": 0.855886,
+      "ablation_drop": 0.003636,
+      "auc_ceiling": 0.9,
+      "ablation_max_drop": 0.05,
+      "auc_alarm": false,
+      "ablation_alarm": false,
+      "n_ablated_columns": 49,
+      "replicate": 0
+    }
+  ],
+  "outcome_screen": {
+    "base_prevalence": 0.088868,
+    "review_auc": 0.75,
+    "n_features": 161,
+    "flagged": [],
+    "n_flagged": 0,
+    "outcome_missingness": {
+      "aps_present": {
+        "feature": "aps_present",
+        "n_present": 157403,
+        "n_absent": 6919,
+        "prevalence_present": 0.090754,
+        "prevalence_absent": 0.04596,
+        "prevalence_ratio": 0.5064,
+        "cap": 2.0,
+        "min_stratum": 100,
+        "gate_applies": true
+      },
+      "apv_present": {
+        "feature": "apv_present",
+        "n_present": 157403,
+        "n_absent": 6919,
+        "prevalence_present": 0.090754,
+        "prevalence_absent": 0.04596,
+        "prevalence_ratio": 0.5064,
+        "cap": 2.0,
+        "min_stratum": 100,
+        "gate_applies": true
+      }
+    },
+    "timing_unverified": [
+      "activetx",
+      "thrombolytics",
+      "graftcount",
+      "electivesurgery",
+      "ventday1",
+      "oobventday1",
+      "oobintubday1",
+      "ima",
+      "midur"
+    ],
+    "timing_unverified_auc": {
+      "activetx": 0.651119,
+      "thrombolytics": 0.500257,
+      "graftcount": 0.500269,
+      "electivesurgery": 0.413385,
+      "ventday1": 0.659588,
+      "oobventday1": 0.685311,
+      "oobintubday1": 0.672009,
+      "ima": 0.487071,
+      "midur": 0.499717
+    }
+  },
+  "attrition_prevalence": [
+    {
+      "step": "raw-unit-stays",
+      "n_stays": 200859,
+      "n_positive": 18004,
+      "prevalence": 0.08963501759941053
+    },
+    {
+      "step": "site-parseable",
+      "n_stays": 200859,
+      "n_positive": 18004,
+      "prevalence": 0.08963501759941053
+    },
+    {
+      "step": "outcome-known",
+      "n_stays": 199108,
+      "n_positive": 18004,
+      "prevalence": 0.09042328786387287
+    },
+    {
+      "step": "adult",
+      "n_stays": 198490,
+      "n_positive": 17982,
+      "prevalence": 0.09059398458360622
+    },
+    {
+      "step": "first-stay",
+      "n_stays": 164322,
+      "n_positive": 14603,
+      "prevalence": 0.08886819780674529
+    },
+    {
+      "step": "primary-cohort",
+      "n_stays": 164322,
+      "n_positive": 14603,
+      "prevalence": 0.08886819780674529
+    },
+    {
+      "step": "apache-aps-linked",
+      "n_stays": 157403,
+      "n_positive": 14285,
+      "prevalence": 0.09075430582644549
+    },
+    {
+      "step": "apache-result-linked",
+      "n_stays": 138496,
+      "n_positive": 12270,
+      "prevalence": 0.08859461645101664
+    },
+    {
+      "step": "apache-complete-arm",
+      "n_stays": 135127,
+      "n_positive": 11959,
+      "prevalence": 0.08850192781605452
+    }
+  ],
+  "sentinel_counts": {
+    "admissionheight": {
+      "empty": 3465,
+      "minus_one": 0,
+      "other_negative": 0,
+      "unparseable": 0
+    },
+    "admissionweight": {
+      "empty": 5428,
+      "minus_one": 0,
+      "other_negative": 0,
+      "unparseable": 0
+    },
+    "age": {
+      "empty": 0,
+      "minus_one": 0,
+      "other_negative": 0,
+      "unparseable": 0
+    },
+    "aps_albumin": {
+      "empty": 0,
+      "minus_one": 95473,
+      "other_negative": 0,
+      "unparseable": 0
+    },
+    "aps_bilirubin": {
+      "empty": 0,
+      "minus_one": 101018,
+      "other_negative": 0,
+      "unparseable": 0
+    },
+    "aps_bun": {
+      "empty": 0,
+      "minus_one": 33995,
+      "other_negative": 0,
+      "unparseable": 0
+    },
+    "aps_creatinine": {
+      "empty": 0,
+      "minus_one": 33435,
+      "other_negative": 0,
+      "unparseable": 0
+    },
+    "aps_dialysis": {
+      "empty": 0,
+      "minus_one": 0,
+      "other_negative": 0,
+      "unparseable": 0
+    },
+    "aps_eyes": {
+      "empty": 0,
+      "minus_one": 4397,
+      "other_negative": 0,
+      "unparseable": 0
+    },
+    "aps_fio2": {
+      "empty": 0,
+      "minus_one": 121963,
+      "other_negative": 0,
+      "unparseable": 0
+    },
+    "aps_glucose": {
+      "empty": 0,
+      "minus_one": 20722,
+      "other_negative": 0,
+      "unparseable": 0
+    },
+    "aps_heartrate": {
+      "empty": 0,
+      "minus_one": 1980,
+      "other_negative": 0,
+      "unparseable": 0
+    },
+    "aps_hematocrit": {
+      "empty": 0,
+      "minus_one": 36372,
+      "other_negative": 0,
+      "unparseable": 0
+    },
+    "aps_intubated": {
+      "empty": 0,
+      "minus_one": 0,
+      "other_negative": 0,
+      "unparseable": 0
+    },
+    "aps_meanbp": {
+      "empty": 0,
+      "minus_one": 2341,
+      "other_negative": 0,
+      "unparseable": 0
+    },
+    "aps_meds": {
+      "empty": 0,
+      "minus_one": 2770,
+      "other_negative": 0,
+      "unparseable": 0
+    },
+    "aps_motor": {
+      "empty": 0,
+      "minus_one": 4397,
+      "other_negative": 0,
+      "unparseable": 0
+    },
+    "aps_pao2": {
+      "empty": 0,
+      "minus_one": 121963,
+      "other_negative": 0,
+      "unparseable": 0
+    },
+    "aps_pco2": {
+      "empty": 0,
+      "minus_one": 121963,
+      "other_negative": 0,
+      "unparseable": 0
+    },
+    "aps_ph": {
+      "empty": 0,
+      "minus_one": 121963,
+      "other_negative": 0,
+      "unparseable": 0
+    },
+    "aps_respiratoryrate": {
+      "empty": 0,
+      "minus_one": 2689,
+      "other_negative": 0,
+      "unparseable": 0
+    },
+    "aps_sodium": {
+      "empty": 0,
+      "minus_one": 32922,
+      "other_negative": 0,
+      "unparseable": 0
+    },
+    "aps_temperature": {
+      "empty": 0,
+      "minus_one": 10823,
+      "other_negative": 0,
+      "unparseable": 0
+    },
+    "aps_urine": {
+      "empty": 0,
+      "minus_one": 79093,
+      "other_negative": 1,
+      "unparseable": 0
+    },
+    "aps_vent": {
+      "empty": 0,
+      "minus_one": 0,
+      "other_negative": 0,
+      "unparseable": 0
+    },
+    "aps_verbal": {
+      "empty": 0,
+      "minus_one": 4397,
+      "other_negative": 0,
+      "unparseable": 0
+    },
+    "aps_wbc": {
+      "empty": 0,
+      "minus_one": 39567,
+      "other_negative": 0,
+      "unparseable": 0
+    },
+    "apv_activetx": {
+      "empty": 0,
+      "minus_one": 0,
+      "other_negative": 0,
+      "unparseable": 0
+    },
+    "apv_aids": {
+      "empty": 0,
+      "minus_one": 0,
+      "other_negative": 0,
+      "unparseable": 0
+    },
+    "apv_cirrhosis": {
+      "empty": 0,
+      "minus_one": 0,
+      "other_negative": 0,
+      "unparseable": 0
+    },
+    "apv_diabetes": {
+      "empty": 0,
+      "minus_one": 0,
+      "other_negative": 0,
+      "unparseable": 0
+    },
+    "apv_ejectfx": {
+      "empty": 0,
+      "minus_one": 154612,
+      "other_negative": 0,
+      "unparseable": 0
+    },
+    "apv_electivesurgery": {
+      "empty": 126819,
+      "minus_one": 0,
+      "other_negative": 0,
+      "unparseable": 0
+    },
+    "apv_graftcount": {
+      "empty": 0,
+      "minus_one": 0,
+      "other_negative": 0,
+      "unparseable": 0
+    },
+    "apv_hepaticfailure": {
+      "empty": 0,
+      "minus_one": 0,
+      "other_negative": 0,
+      "unparseable": 0
+    },
+    "apv_ima": {
+      "empty": 0,
+      "minus_one": 0,
+      "other_negative": 0,
+      "unparseable": 0
+    },
+    "apv_immunosuppression": {
+      "empty": 0,
+      "minus_one": 0,
+      "other_negative": 0,
+      "unparseable": 0
+    },
+    "apv_leukemia": {
+      "empty": 0,
+      "minus_one": 0,
+      "other_negative": 0,
+      "unparseable": 0
+    },
+    "apv_lymphoma": {
+      "empty": 0,
+      "minus_one": 0,
+      "other_negative": 0,
+      "unparseable": 0
+    },
+    "apv_metastaticcancer": {
+      "empty": 0,
+      "minus_one": 0,
+      "other_negative": 0,
+      "unparseable": 0
+    },
+    "apv_midur": {
+      "empty": 0,
+      "minus_one": 0,
+      "other_negative": 0,
+      "unparseable": 0
+    },
+    "apv_oobintubday1": {
+      "empty": 0,
+      "minus_one": 0,
+      "other_negative": 0,
+      "unparseable": 0
+    },
+    "apv_oobventday1": {
+      "empty": 0,
+      "minus_one": 0,
+      "other_negative": 0,
+      "unparseable": 0
+    },
+    "apv_readmit": {
+      "empty": 0,
+      "minus_one": 0,
+      "other_negative": 0,
+      "unparseable": 0
+    },
+    "apv_thrombolytics": {
+      "empty": 0,
+      "minus_one": 0,
+      "other_negative": 0,
+      "unparseable": 0
+    },
+    "apv_ventday1": {
+      "empty": 0,
+      "minus_one": 0,
+      "other_negative": 0,
+      "unparseable": 0
+    },
+    "pre_icu_hours": {
+      "empty": 0,
+      "minus_one": 0,
+      "other_negative": 0,
+      "unparseable": 0
+    }
+  },
+  "unit_conversions": {
+    "aps_fio2:percent-to-fraction": 35440,
+    "aps_fio2:room-air-percent": 1585
+  },
+  "unparseable_tokens": {},
+  "window_clipped_counts": {
+    "admissionheight": 511,
+    "admissionweight": 103,
+    "aps_temperature": 59,
+    "pre_icu_hours": 1400
+  },
+  "dedup_counts": {},
+  "drop_counts": {
+    "age-unparseable": 95,
+    "not-first-stay": 34168,
+    "outcome-missing": 1751,
+    "under-age": 523
+  },
+  "cross_site_patients": {
+    "n_uniquepid": 137773,
+    "n_uniquepid_multi_hospital": 3996,
+    "share": 0.029004231598353813,
+    "cap": 0.01
+  },
+  "impute_fill_replicate0": {
+    "admissionheight": 169.5643454113613,
+    "admissionweight": 83.84366264668125,
+    "pre_icu_hours": 19.046571908318064,
+    "aps_intubated": 0.15176446715490047,
+    "aps_vent": 0.23652898965116492,
+    "aps_dialysis": 0.034883506428821785,
+    "aps_eyes": 3.4935676304103374,
+    "aps_motor": 5.485486668318436,
+    "aps_verbal": 4.0394709256894545,
+    "aps_meds": 0.013703522688822889,
+    "aps_urine": 1858.4694989051468,
+    "aps_wbc": 12.17988325340309,
+    "aps_temperature": 36.43407100450253,
+    "aps_respiratoryrate": 23.690700859190336,
+    "aps_sodium": 137.58990750068688,
+    "aps_heartrate": 100.1594048287479,
+    "aps_meanbp": 85.64300199031132,
+    "aps_ph": 7.354234251651362,
+    "aps_hematocrit": 32.73003372440982,
+    "aps_creatinine": 1.5315112766397685,
+    "aps_albumin": 2.8804015748031495,
+    "aps_pao2": 131.1642903173836,
+    "aps_pco2": 42.28976558724021,
+    "aps_bun": 26.121239168510325,
+    "aps_glucose": 163.0815052893723,
+    "aps_bilirubin": 1.1956409854071866,
+    "aps_fio2": 0.5794292734009988,
+    "apv_graftcount": 2.9969562249810915,
+    "apv_thrombolytics": 0.016897563135272742,
+    "apv_aids": 0.001051485915622867,
+    "apv_hepaticfailure": 0.014628567212086553,
+    "apv_lymphoma": 0.0038554483572838458,
+    "apv_metastaticcancer": 0.020753011492556588,
+    "apv_leukemia": 0.007563319743953956,
+    "apv_immunosuppression": 0.02542013318821598,
+    "apv_cirrhosis": 0.016491726466084967,
+    "apv_electivesurgery": 0.884537225198596,
+    "apv_activetx": 0.5752365843310151,
+    "apv_readmit": 0.0,
+    "apv_ima": 0.030105702005202087,
+    "apv_midur": 0.008135180505082181,
+    "apv_ventday1": 0.23652898965116492,
+    "apv_oobventday1": 0.3235809551919423,
+    "apv_oobintubday1": 0.25816746296740395,
+    "apv_diabetes": 0.22186352819642494,
+    "apv_ejectfx": 51.20115416323166
+  },
+  "abstention_gap_ranking": {
+    "replicate0_alpha0.1": {
+      "n_answered": 12964,
+      "n_declined": 2205,
+      "ranking": [
+        {
+          "feature": "aps_motor",
+          "gap": -0.245857,
+          "mean_abs_phi_answered": 0.156757,
+          "mean_abs_phi_declined": 0.402615
+        },
+        {
+          "feature": "aps_fio2",
+          "gap": -0.152379,
+          "mean_abs_phi_answered": 0.04939,
+          "mean_abs_phi_declined": 0.201768
+        },
+        {
+          "feature": "aps_ph",
+          "gap": -0.116441,
+          "mean_abs_phi_answered": 0.032723,
+          "mean_abs_phi_declined": 0.149165
+        },
+        {
+          "feature": "aps_intubated",
+          "gap": -0.109131,
+          "mean_abs_phi_answered": 0.116928,
+          "mean_abs_phi_declined": 0.226059
+        },
+        {
+          "feature": "aps_pco2",
+          "gap": -0.077861,
+          "mean_abs_phi_answered": 0.030456,
+          "mean_abs_phi_declined": 0.108316
+        },
+        {
+          "feature": "aps_eyes",
+          "gap": -0.07382,
+          "mean_abs_phi_answered": 0.072282,
+          "mean_abs_phi_declined": 0.146102
+        },
+        {
+          "feature": "apv_oobintubday1",
+          "gap": -0.070734,
+          "mean_abs_phi_answered": 0.105962,
+          "mean_abs_phi_declined": 0.176696
+        },
+        {
+          "feature": "aps_temperature",
+          "gap": -0.063872,
+          "mean_abs_phi_answered": 0.078379,
+          "mean_abs_phi_declined": 0.142251
+        },
+        {
+          "feature": "apv_oobventday1",
+          "gap": -0.060021,
+          "mean_abs_phi_answered": 0.12343,
+          "mean_abs_phi_declined": 0.183451
+        },
+        {
+          "feature": "aps_pao2",
+          "gap": -0.058155,
+          "mean_abs_phi_answered": 0.017178,
+          "mean_abs_phi_declined": 0.075333
+        }
+      ]
+    }
+  },
+  "composition_three_way": [
+    {
+      "replicate": 0,
+      "alpha": 0.1,
+      "tau": 0.85,
+      "predicted_positive_fraction": 0.004859611231101512,
+      "bbse_implied_positive_fraction": 0.03068306720228001,
+      "oracle_positive_fraction": 0.045819191607528544
+    }
+  ],
+  "bbse": [
+    {
+      "fitted": true,
+      "reason": null,
+      "n_target_sites": 24,
+      "q_target": 0.029863537477750675,
+      "q_ci": [
+        0.02016007375203614,
+        0.03806016343218655
+      ],
+      "gap_lo": 0.18676218965988725,
+      "rho_lo": 0.06844151643913016,
+      "rho_hi": 1.985652758944828,
+      "rho_point": 0.6683906350656348,
+      "n_boot": 2000,
+      "replicate": 0,
+      "mode_outcomes": {
+        "0.05": {
+          "baseline": "failsafe",
+          "bbse": "failsafe"
+        },
+        "0.1": {
+          "baseline": "covering",
+          "bbse": "failsafe"
+        }
+      }
+    }
+  ],
+  "n_target_sites_without_hospital_strata": 0,
+  "n_hospital_strata_rows": 208,
+  "warnings": [
+    "[MEASURE] POST-HOC (2026-08-01): the selective reliability panel is a DESCRIPTIVE diagnostic added AFTER the eICU-CRD v2.0 extract was read. It is NOT part of the pre-extract protocol freeze (commit 9f25b491b2554d0a4bd7aaaf44081c185d01715f), it alters no certified quantity, and it settles none of the frozen predictions P1-P7 or failure criteria F-A-F-E. Its bins, seed and bootstrap counts were fixed before it was run on this extract but AFTER the extract had been seen, so they carry NO pre-registration claim. Every figure and number derived from this panel must carry this label."
+  ]
+}

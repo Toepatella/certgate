@@ -1,0 +1,3 @@
+replicate,alpha,n_answered,certgate_answered_err,apache_iva_brier_answered,apache_iva_auc_answered,n_apache_available
+0,0.05,0,,,,0
+0,0.1,12964,0.0419,0.038079,0.820073,10404
