@@ -12,7 +12,7 @@ A selective-prediction gate that certifies, with finite-sample confidence 1−δ
 
 **Target venue:** Discover Computing (Springer) — collection *"Intelligent Medicine: ML and Explainable AI for Next-Generation Healthcare"*, **submission deadline 2026-10-05**. See `PAPER-OUTLINE.md` (pre-draft planning record, banner-marked where superseded).
 
-**Provenance:** this is a deliberately simplified v2 restart of an audited v1 testbed (`../xAI-projtect-v1/`). Every scope cut (covariate-shift mode, kNN screen, temporal machinery, preregistration apparatus) and every hardening (loud input validation, sha256-only seeds, record-carrying cluster gate, bootstrap top-up-or-decline, provenance blocks, pinned deps, literal-pinned constants test) traces to a specific v1 audit finding. The audit lessons are native to this design — **do not regress them.**
+**Design discipline:** every scope cut (covariate-shift mode, kNN screen, temporal machinery, heavyweight preregistration apparatus) and every hardening (loud input validation, sha256-only seeds, record-carrying cluster gate, bootstrap top-up-or-decline, provenance blocks, pinned deps, literal-pinned constants test) is a deliberate, audited design decision traced in SPEC's "Audit-lesson conformance" checklist. These are native to the design — **do not regress them.**
 
 ## Real data: certified (2026-07-31)
 
