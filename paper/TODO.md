@@ -27,74 +27,25 @@ verified against a primary source.
 
 ## 0-pre. Panel S2 writing pass, 2026-07-30 — what closed and what is still open
 
-Three work-items from `review/revision-plan.md` were written this pass. Every number below
-regenerates from the repo; none was estimated.
+*(Compressed 2026-08-10 under the single-source policy: the numbers this section used to
+restate live in draft.md §3.1/§3.3/§4.9, Tables 5–7, and `experiments/out/`; the full closure
+narrative is in the git history of this file.)*
 
-**S2-2 · deployment-rule reconciliation — CLOSED.** The two rules never conflicted; the paper
-just never said they act at different levels. §3.5 now states all three explicitly (within a
-mode → lowest certified τ = maximum coverage; across modes → largest of those, i.e. most
-conservative; across rungs → strictest certified α) and §3.6's Combination paragraph states the
-non-conflict directly. `R1-59`'s open question — *on which pool is the deciding coverage
-measured?* — is answered outright: **none, and none is needed**, because {x : s(x) ≥ τ} is
-nested and decreasing in τ, so the lowest certified τ maximizes coverage on every pool at once.
-Reported coverage is a separate quantity, measured on the target pool after τ* is fixed.
-Verified against `certify.fixed_sequence_walk` (`deployed = min(certified, key=tau)`) and
-`report._combine_alpha` (`deploy = max(cert, key=tau)`). Mirrored into `METHODS.md` §2/§4 and
-`SPEC.md`'s `certify.py` block.
-*Carried along, because the sentence being rewritten contained it:* §3.6's "each at full δ" was
-FALSE (`pipeline._baseline_walk` spends `DELTA`, `shift.certify_bbse` spends `BBSE_DELTA_BET`)
-and is corrected in both `draft.md` and `METHODS.md`. That closes half of **S2-1**; the other
-half — a stated error probability for the *deployed* decision across modes and rungs — is still
-open.
+**CLOSED this pass:** **S2-2** (the three deployment rules act at different levels and never
+conflicted — §3.5/§3.6 now say so; answers `R1-59`); **S2-13** + **S2-25** (Table 5 constants
+justification; §4.9/Table 6 M-sweep shows the frozen cap is not tuned — every larger M
+certifies no more; also fixed `R5-26`, `R1-14`); **S2-28** (§3.1 clinical-target block, §4.1
+outcome-and-time disclosure, Table 7 operating characteristics — the FN asymmetry and the
+near-trivial-rule honesty are stated in the draft, not here). *PLAUSIBLE findings settled:*
+`DS-45` (silent sites don't move R_M's value; §3.3 says what they do change), `R1-13` (minimum
+certified coverage rules out the abstain-to-pass limb; §4.2 states it), `R2-27`
+(record-carrying-but-silent case occurs zero times; §3.3/§4.7 say so). Half of **S2-1** closed
+along the way (§3.6's "each at full δ" was false and is fixed).
 
-**S2-13 · constants justification + sensitivity — CLOSED.** New **Table 5** gives every frozen
-constant with its role and the basis for the value (which also completes §3.2's enumeration and
-so closes **S2-25**: `MIN_ANSWERABLE = 10`, `PI_CLIP = 1e-4`, `SD_REL_TOL = 1e-9`,
-`HEAD_MAX_ITER = 2000`, `n_boot = 500` all now appear with values). New **§4.9 + Table 6** sweep
-the one constant that moves the certificate: E1's `s_u=0.5` arm, baseline mode, R=200, at
-M ∈ {25, 50, 100, 200, 500, 1000, 5000}, walk order and calibration walk re-derived at each M
-and each certificate rescored against R_M *at that same M*. Result: a plateau over M ≤ 200
-(certify 1.0, τ* ≈ 0.552–0.566, coverage 0.980–0.984) and a collapse above it (M=1000 → 0.03;
-M=5000, where g_c = n_c for every site, → 0.0). Every larger M certifies *less*, so M=100 is
-demonstrably not tuned to make certification easy. α=0.05 unreachable at every M.
-Also fixed/added: §3.3's "full adverse **weight**" → "full adverse **error rate**" (`R5-26`);
-the cap arithmetic stated in §3.3 (89.5% of sites capped, 86% of records above their own cap,
-min g_c/n_c = 1/50, a 5,000-record and a 100-record site carry identical influence — `R1-14`);
-record-level answered error reported beside R_M in §4.2 (0.0566 vs 0.0567) and §4.7 (0.0555 vs
-0.0619 — E6 is where they separate); a new §6.1 limitation stating that only M is swept.
-*PLAUSIBLE findings settled:* **`DS-45`** — dropping empty/silent sites does NOT change R_M's
-numeric value (with a_c = 0 both terms vanish); what it changes is the reference population and
-the bet schedule (a neutral atom contributes wealth factor 1 but still occupies a sequence
-position and still counts in the n setting λ_t), and §3.3 now says exactly that.
-**`R1-13`** — minimum certified coverage across E1's 200 draws is **0.871**, so no
-low-coverage certificate exists and the "trivially satisfiable by abstaining" limb is dropped;
-§4.2 states the minimum. **`R2-27`** — the record-carrying-but-answers-nothing case occurs
-**zero** times across E1's 200 draws and E6's deployment; §3.3 and §4.7 say so rather than
-leaving it unmeasured.
-
-**S2-28 · clinical target, loss, operating point — CLOSED.** §3.1 gains a specification block
-(outcome pinned by index event / prediction time / ascertainment window; ŷ = 1[p̂ ≥ 1/2];
-err_i = 1[ŷ ≠ y]; s(x) symmetric about p̂ = 1/2 so the gate adds no clinical threshold of its
-own; symmetric 0–1 loss stated as a modelling choice). §4.1 gains an **Outcome and time**
-paragraph disclosing what the synthetic harness does *not* instantiate — no time axis, no
-censoring, no competing risks — so §3.1 reads as a requirement on a real deployment, not as a
-description of `data.py`. New **Table 7** gives answered/declined confusion-derived operating
-characteristics for E1 (pooled, R=200) and E6. The two disclosures that matter:
-- **answered-set sensitivity 0.550 (E1) / 0.541 (E6)**, and **77% / 76% of answered errors are
-  false negatives** — the asymmetry the symmetric loss does not price;
-- **an always-negative rule errs at 0.1039 on E1's pools and 0.0968 on E6's**, so α = 0.10 is
-  only marginally stricter than the trivial rule. §3.1 and §4.2 now say this plainly and point
-  at sensitivity and composition as the columns that carry the evidence instead.
-Declined-set positive fraction is **0.492 (E1) / 0.462 (E6)** against ~0.10 in the pool — a
-~4.7× enrichment, routing 8.6% of all positives to a clinician. §5.4 gains the paragraph
-mapping §1's community-hospital scenario onto the three assumption cases (`R2-10`), and §6.1 a
-limitation on the symmetric loss and the inherited p̂ = 1/2 boundary.
-
-**Still open inside these items.** S2-28 asked for a *clinical* framing of the FP/FN weighing;
-what is written states the asymmetry and its size but proposes no cost ratio — deliberate, since
-none is defensible without a named decision. No calibration diagnostic is reported (that is
-**S2-26**, untouched here). S2-13's "ideally the two decline thresholds" sweep is not run — only
-M is swept, and §6.1 says so.
+**STILL OPEN:** the other half of **S2-1** (a stated error probability for the *deployed*
+decision across modes and rungs); **S2-26** (no calibration diagnostic in the certified path —
+the post-hoc panel is descriptive and §4.7 labels it so); S2-13's decline-thresholds sweep
+(only M is swept; §6.1 says so).
 
 **Reproducibility gap you should close.** Tables 6 and 7 come from a new read-only module,
 `experiments/panel_s2_tables.py` (`python -m experiments.panel_s2_tables [R]`, ~2 min at
@@ -106,34 +57,19 @@ summary writers, so `python -m experiments.run_synthetic` alone does not regener
 tables — §3.10 and A.3 have been narrowed to say so honestly. Folding it into the driver (and
 into `summary.md`) is the follow-up, and belongs with panel item **S2-24**.
 
-## 0. Real clinical dataset (highest-value item — needs data access only you have)
+## 0. Real clinical dataset — RESOLVED (the eICU section is written, 2026-08-01)
 
-Reviewer-priority feedback: "Add at least one real clinical dataset, even if only the baseline
-mode can be demonstrated." This cannot be done from the repo — no real data exists in it — but
-the pipeline is ready today: `certgate/validate.py:from_raw` is the loader contract,
-`examples/real_data_example.py` is the worked CSV→certificate walkthrough, and the real-data
-readiness audit (2026-07-23) verified the full path end-to-end (suite green incl. from_raw
-round-trips; a hostile-fixture integration test now also covers it — see
-experiments/synth_fixture.py). If a documented multi-site cohort lands before the 2026-10-05 deadline, the
-addition is one experiment section + one table; PAPER-OUTLINE.md's timeline already budgets
-for this. Until then the paper stands on the synthetic study, defended in §4.1/§5.
+*(The original reviewer-priority item — "add at least one real clinical dataset" — is closed:
+the extract ran 2026-07-31 and the manuscript carries it. Compressed 2026-08-10; the landing's
+full enumeration is in this file's git history and in `draft.md` itself.)*
 
-**RESOLVED 2026-08-01 (later the same day): the eICU section is written.** `draft.md` now carries
-**§4.10 "eICU-CRD v2.0 — the certificate on real multi-site data"**, and the parked real-data
-panel paragraph below went in VERBATIM — landing in **Appendix A.4** after the length pass
-(see the residual judgement call below) moved the panel material out of the Results body;
-§4.10's "What the gate is trading away" paragraph keeps the composition disclosure, paraphrases
-two of the panel's numbers, and points to A.4 for the rest. Also landed
-in the same pass: **Table 8** (attrition ledger), **Table 9** (certification over the 20
-re-splits), **Figure 8** (certify/coverage, held-out-pool R_M, per-site dispersion), a rewritten
-Abstract carrying the real-data result inside the 250-word cap (249), a rewritten **§5.5 "The two
-evidence bases, and what each can settle"** replacing the indefensible "real data cannot supply
-that ground truth" sentence four referees flagged (`decision-letter.md` item 13), a revised
-Conclusion paragraph, two new **§6.1** limitations (the single cohort with non-independent
-replicates; the label-shift mode fitting but never certifying on real data), and three new
-bibliography entries (`pollard2018eicu`, `goldberger2000physionet`, `zimmerman2006apache`).
-The synthetic half of the same item was already done: §4.7 carries the E6 panel paragraph,
-Table 5 the eighteen-constant post-hoc sub-block, §6.1 the ECE-bias sentence.
+`draft.md` carries **§4.10**, Tables 8–9, Figure 8, the rewritten Abstract and §5.5 (retiring
+the "real data cannot supply that ground truth" sentence four referees flagged —
+`decision-letter.md` item 13), the new §6.1 limitations, and the eICU bibliography block
+(verified — see the blockquote below). The parked real-data panel paragraph went in **VERBATIM**,
+landing in **Appendix A.4** after the length pass; §4.10 paraphrases two of its numbers and
+points to A.4 for the rest. The synthetic half was already done (§4.7 panel paragraph, Table 5
+post-hoc sub-block, §6.1 ECE-bias sentence).
 
 **A three-agent adversarial verification pass was run on the new material and found six BLOCKING
 defects, all now fixed.** Recording them, because four were mine and the pattern is instructive:
@@ -255,7 +191,8 @@ applicable). Still `[TO BE COMPLETED]`:
 - **Funding** — statement (or "The authors received no funding for this work.").
 - **Competing interests** — declaration.
 - **Author contributions** — CRediT-style statement.
-- **Code repository URL** — appears once, inside Data availability (`[CODE REPOSITORY URL — to be added]`).
+- ~~Code repository URL~~ — FILLED 2026-08-10 (https://github.com/Toepatella/certgate in Data
+  availability); what remains is confirming the repo is PUBLIC before submission (§6a).
 - **Acknowledgements** — optional; delete the placeholder if unused.
 
 Note: the exemplar renders declarations as individual sections (Springer's XML pipeline splits
