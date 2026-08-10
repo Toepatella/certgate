@@ -114,6 +114,90 @@ experiments/synth_fixture.py). If a documented multi-site cohort lands before th
 addition is one experiment section + one table; PAPER-OUTLINE.md's timeline already budgets
 for this. Until then the paper stands on the synthetic study, defended in §4.1/§5.
 
+**RESOLVED 2026-08-01 (later the same day): the eICU section is written.** `draft.md` now carries
+**§4.10 "eICU-CRD v2.0 — the certificate on real multi-site data"**, and the parked real-data
+panel paragraph below went in VERBATIM — landing in **Appendix A.4** after the length pass
+(see the residual judgement call below) moved the panel material out of the Results body;
+§4.10's "What the gate is trading away" paragraph keeps the composition disclosure, paraphrases
+two of the panel's numbers, and points to A.4 for the rest. Also landed
+in the same pass: **Table 8** (attrition ledger), **Table 9** (certification over the 20
+re-splits), **Figure 8** (certify/coverage, held-out-pool R_M, per-site dispersion), a rewritten
+Abstract carrying the real-data result inside the 250-word cap (249), a rewritten **§5.5 "The two
+evidence bases, and what each can settle"** replacing the indefensible "real data cannot supply
+that ground truth" sentence four referees flagged (`decision-letter.md` item 13), a revised
+Conclusion paragraph, two new **§6.1** limitations (the single cohort with non-independent
+replicates; the label-shift mode fitting but never certifying on real data), and three new
+bibliography entries (`pollard2018eicu`, `goldberger2000physionet`, `zimmerman2006apache`).
+The synthetic half of the same item was already done: §4.7 carries the E6 panel paragraph,
+Table 5 the eighteen-constant post-hoc sub-block, §6.1 the ECE-bias sentence.
+
+**A three-agent adversarial verification pass was run on the new material and found six BLOCKING
+defects, all now fixed.** Recording them, because four were mine and the pattern is instructive:
+
+1. **A fabricated ethics provenance.** The first Ethics rewrite asserted MIT IRB approval with a
+   consent waiver for eICU-CRD. That is MIMIC's provenance, not eICU's — eICU rests on Safe
+   Harbor de-identification certified by an independent privacy expert. A fabricated
+   named-institution approval inside a submission declaration is exactly what a Springer
+   integrity check verifies. Now states Safe Harbor certification and no IRB claim.
+2. **A single-replicate count attached to a 20-replicate mean.** "coverage 0.890 over a pooled
+   target pool of 15,169 records" — 15,169 is replicate 0's pool. Pool sizes range 13,667–27,021.
+3. **A calibration-pool estimate reported as the target pool's.** The 0.0387 (95% 0.0356–0.0422)
+   is the estimated tier's bootstrap over the 74 *calibration* hospitals. Replicate 0's *target*
+   pool answered error is 0.0419. Both are now named for what they are.
+4. **P2's comparison used a statistic the paper names differently elsewhere.** The eICU 0.027 was
+   compared against the 0.02 the paper quotes in Figure 1 and §5.1 — but that 0.02 is E1's
+   per-site *hard-violation* rate, a different statistic. Against the same statistic
+   (`mean_per_site_exceed_frac` = 0.055) the comparison holds and is now stated that way.
+5. **A pre-extract projection stated as measured fact.** The "500-stay threshold leaves roughly 46
+   hospitals" is the protocol's pre-extract projection; the released extract leaves 99 of 207.
+   Both are now given, and the conclusion (still under the 50-cluster floor) survives.
+6. **P4 reported as a flat falsification when it is partial.** `aps_heartrate__missing` ranks
+   third on re-splits 2 and 5 of 20. Since a *confirmed* P4 is the leak's signature, compressing a
+   partial hit into a clean miss deletes exactly the observations a leak-hunting reader needs.
+
+The same pass also caught that §4.10 **under-reported its own strongest result**: `aps_motor` is
+the top abstention driver on **20 of 20** re-splits (fio2 top-3 on 13, `apv_oobintubday1` on 10).
+That is the replication standard §4.6 set and met with a null; on real data it returns a stable,
+clinically legible answer, and it now has its own paragraph ("What the abstentions point at")
+connecting it to the explainability contribution — the collection's deciding axis.
+
+> **STILL TO VERIFY BEFORE SUBMISSION (§6 policy).** Four bib entries were written without
+> fetching a primary source. A verifier independently checked three against PubMed and reported
+> them correct: `pollard2018eicu` (Sci Data 5:180178), `goldberger2000physionet` (Circulation
+> 101(23):e215–e220), `zimmerman2006apache` (Crit Care Med 34(5):1297–1310). The fourth,
+> `pollard2019eicudb` (PhysioNet DOI 10.13026/C2WM1R), is the version-specific database citation
+> the DUA requires and is **unverified** — confirm the DOI and version string on the PhysioNet
+> project page. Also confirm the Ethics statement's de-identification wording against that same
+> page rather than trusting the paraphrase now in the draft.
+
+> **RESIDUAL JUDGEMENT CALL.** §4.10 is 1,768 words against 757 for the largest existing Results
+> subsection. The verifier flagged the disproportion fairly — the section that can settle least
+> occupies the most space. Material that structurally belonged elsewhere has been moved (the
+> post-hoc panel to Appendix A.4, the compliance exposures to §6.1, the cohort-filter argument
+> into Table 8's caption); what remains is content no other subsection carries. Cutting further
+> means dropping disclosures. Left as is, flagged for the author.
+
+The paragraph as parked is retained below for provenance — it is the text that was dropped in.
+
+> On the pooled 24-hospital target arm (replicate 0, $\alpha = 0.10$, $\tau^* = 0.850$, coverage
+> 0.854638; 15,169 records, 12,964 answered), the same panel returns an answered-set expected
+> calibration error of 0.004757 (95% CI 0.002591–0.009664) against 0.022430 (0.009290–0.049626)
+> on the declined set, a weak-calibration slope of 1.082649 (0.991115–1.233626) with intercept
+> 0.305678, and an answered Brier score of 0.038438 (0.031158–0.044759). Against APACHE-IVa on
+> the denominator-matched subset — the 10,404 answered records (share 0.80253, over 22 hospitals)
+> that carry a reference probability — the reference scores 0.038079 (0.031912–0.043270) and the
+> head 0.037104 (0.030803–0.042137), a paired difference of 0.000975 (0.000136–0.001684) in the
+> head's favour, computed inside one shared resample rather than by differencing the two
+> intervals. The skill margin on the answered set is 0.003934 (0.001796–0.005850) against a
+> constant always-negative error rate of 0.045819, and the answered-minus-all contrast is
+> $-0.006021$ ($-0.009365$ to $-0.003328$). This panel is post-hoc — added after the extract was
+> read, outside the pre-extract freeze — and settles none of the pre-registered predictions. It
+> is reported because the composition disclosure already established that the gate earns its low
+> answered error partly by abstaining where deaths concentrate (answered oracle positive fraction
+> 0.045819 against the pool's 0.089788); the skill margin is the number that says how much of
+> what remains is accuracy rather than selection, and at 0.003934 on the answered set against
+> 0.045351 on the declined set it is thin.
+
 ## 0b. Venue-fit assessment (Discover Computing / "Intelligent Medicine" collection)
 
 Verdict from a 3-agent check (topic map + live journal-profile research + exemplar comparison),
@@ -263,7 +347,7 @@ in §3.6, §3.7 clause (4), §4.4, §5.1 and §6.1 — each in a distinct role (
 clause, experiment, discussion, limitation), so they were kept, but §5.1's restatement could reference
 §4.4 instead. Say the word and I'll do a targeted pass on any of these.
 
-## 6. Unverified / excluded citation (do NOT cite until verified)
+## 6. Unverified / excluded citations (do NOT cite until verified)
 
 - **`scireports2026deferral`** — "Conformal selective prediction with cost aware deferral for safe
   clinical triage under distribution shift", *Scientific Reports* 2026 (s41598-026-40637-w).
@@ -271,6 +355,12 @@ clause, experiment, discussion, limitation), so they were kept, but §5.1's rest
   (tentatively Kwon & Kim, from a search snippet) is unconfirmed. **Deliberately excluded from
   `references.bib` and cited nowhere.** It is a record-level clinical cousin; if you can access
   the article and confirm metadata, it is a reasonable add to the Related-work clinical stream.
+- **`pollard2019eicudb`** — the version-specific PhysioNet database citation the DUA requires
+  (DOI 10.13026/C2WM1R). Unlike the entry above it **is already cited** — the DUA leaves no
+  choice — but it was written without fetching the PhysioNet project page and remains
+  **unverified**: confirm the DOI and version string there before submission. Its three siblings
+  (`pollard2018eicu`, `goldberger2000physionet`, `zimmerman2006apache`) were independently
+  PubMed-checked and reported correct — see the §0 blockquote (2026-08-01).
 
 ## 7. Optional related-work additions (verified in passing; not currently cited)
 
