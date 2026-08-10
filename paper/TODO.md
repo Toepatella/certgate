@@ -161,14 +161,16 @@ That is the replication standard §4.6 set and met with a null; on real data it 
 clinically legible answer, and it now has its own paragraph ("What the abstentions point at")
 connecting it to the explainability contribution — the collection's deciding axis.
 
-> **STILL TO VERIFY BEFORE SUBMISSION (§6 policy).** Four bib entries were written without
-> fetching a primary source. A verifier independently checked three against PubMed and reported
-> them correct: `pollard2018eicu` (Sci Data 5:180178), `goldberger2000physionet` (Circulation
-> 101(23):e215–e220), `zimmerman2006apache` (Crit Care Med 34(5):1297–1310). The fourth,
-> `pollard2019eicudb` (PhysioNet DOI 10.13026/C2WM1R), is the version-specific database citation
-> the DUA requires and is **unverified** — confirm the DOI and version string on the PhysioNet
-> project page. Also confirm the Ethics statement's de-identification wording against that same
-> page rather than trusting the paraphrase now in the draft.
+> **VERIFIED 2026-08-10 (§6 policy) — the spot-check ran; see §6 for the full record.** All four
+> entries checked against primary sources (PubMed/Crossref + the PhysioNet project page):
+> `pollard2018eicu`, `goldberger2000physionet`, `zimmerman2006apache` field-perfect;
+> `pollard2019eicudb`'s DOI 10.13026/C2WM1R **confirmed as the version-2.0-specific DOI** (the
+> concept DOI is 10.13026/0pzc-dm64; v2.0 of 2019-04-15 is still the latest). The Ethics
+> de-identification wording was re-checked against the project page and now names Privacert and
+> HIPAA Certification no. 1031219-2. Two corrections came out of the check: PhysioNet's requested
+> platform citation (`pollard2026physionet`, Nature Health 2026) was missing and is now cited, and
+> the citation obligation was mis-attributed to the DUA — the agreement's ten clauses contain no
+> citation term; it is a request on the project page. Draft and this file are reworded accordingly.
 
 > **RESIDUAL JUDGEMENT CALL.** §4.10 is 1,768 words against 757 for the largest existing Results
 > subsection. The verifier flagged the disproportion fairly — the section that can settle least
@@ -355,12 +357,40 @@ clause, experiment, discussion, limitation), so they were kept, but §5.1's rest
   (tentatively Kwon & Kim, from a search snippet) is unconfirmed. **Deliberately excluded from
   `references.bib` and cited nowhere.** It is a record-level clinical cousin; if you can access
   the article and confirm metadata, it is a reasonable add to the Related-work clinical stream.
-- **`pollard2019eicudb`** — the version-specific PhysioNet database citation the DUA requires
-  (DOI 10.13026/C2WM1R). Unlike the entry above it **is already cited** — the DUA leaves no
-  choice — but it was written without fetching the PhysioNet project page and remains
-  **unverified**: confirm the DOI and version string there before submission. Its three siblings
-  (`pollard2018eicu`, `goldberger2000physionet`, `zimmerman2006apache`) were independently
-  PubMed-checked and reported correct — see the §0 blockquote (2026-08-01).
+- **`pollard2019eicudb`** — VERIFIED 2026-08-10 against https://physionet.org/content/eicu-crd/2.0/.
+  DOI 10.13026/C2WM1R is confirmed as the **version-2.0-specific** DOI (concept DOI:
+  10.13026/0pzc-dm64, related via HasVersion per DataCite; v2.0, published 2019-04-15, is still
+  the only and latest version). Entry updated to the page's requested form: "Celi, Leo Anthony",
+  `month = apr`, RRID:SCR_007345, url. **Caveat kept on file: DataCite's record for C2WM1R is
+  wrong** (year 2017, four creators) — never re-import this entry from DataCite; the project
+  page's citation block is authoritative. Correction of record: the citation obligation is a
+  request on the project page ("When using this resource, please cite"), **not** a DUA term —
+  the agreement's ten clauses contain no citation/attribution language (checked at
+  physionet.org/content/eicu-crd/view-dua/2.0/, unauthenticated). The page also requests the
+  PhysioNet platform citation, so `pollard2026physionet` (Nature Health 1(8):792–795, 2026, DOI
+  10.1038/s44360-026-00096-z, Crossref-verified) is now in the bib and cited at both eICU
+  citation sites. The three siblings (`pollard2018eicu`, `goldberger2000physionet`,
+  `zimmerman2006apache`) were re-verified field-by-field 2026-08-10 (PubMed + Crossref): all
+  correct as written. Legacy flags resolved the same day: `l2lore2025` year corrected 2024→2025
+  (CEUR Vol-3928 was published 2025 for the 2024 event); `angelopoulos2021ltt` (AOAS 19(2), 2025)
+  and `ifac2025abstainexplain` (ECML PKDD 2024, pages 416–433 added) confirmed correct — the
+  key/year vintage differences are labels, not errors.
+
+## 6a. SUBMISSION BLOCKERS (facts only the authors can supply — added 2026-08-10)
+
+The draft is placeholder-complete everywhere except these; a desk screen returns on the
+mandatory declarations:
+
+- [ ] Author name(s) + ORCID (draft.md line 3)
+- [ ] Affiliation — department, institution, city, country (line 5)
+- [ ] Corresponding author name + email (line 7)
+- [ ] **Funding** statement (mandatory even if "none")
+- [ ] **Author contributions** (mandatory at Discover Computing)
+- [ ] **Competing interests** (mandatory even if "none")
+- [ ] Acknowledgements (optional)
+- [ ] Confirm https://github.com/Toepatella/certgate is PUBLIC before submission — the Data
+      availability section now names it, and DUA clause 9 requires contributing the code to an
+      open repository when results are disseminated.
 
 ## 7. Optional related-work additions (verified in passing; not currently cited)
 
