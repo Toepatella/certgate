@@ -293,13 +293,21 @@ def run_E1(out, quick):
     fig, ax = plt.subplots(1, 3, figsize=(16, 4))
     alphas = list(ALPHA_LADDER)
     rm_bars = [summary[a]["rm_exceed_rate"] for a in alphas]
-    ax[0].bar([str(a) for a in alphas],
-              [np.nan if v is None else v for v in rm_bars],
+    xpos = np.arange(len(alphas))   # numeric x: a nan bar must not eat its tick
+    ax[0].bar(xpos, [np.nan if v is None else v for v in rm_bars],
               color="#4477aa")
+    ax[0].set_xticks(xpos); ax[0].set_xticklabels([str(a) for a in alphas])
+    ax[0].set_xlim(-0.6, len(alphas) - 0.4)   # autoscale ignores the nan bars
+    real = [v for v in rm_bars if v is not None]
+    ax[0].set_ylim(0.0, max(real + [DELTA]) * 1.3)
     for i, v in enumerate(rm_bars):
         if v is None:                     # rung never certified: no bar, say so
-            ax[0].text(i, DELTA * 0.05, "no certificates", ha="center",
-                       va="bottom", rotation=90, fontsize=8, color="dimgray")
+            ax[0].text(i, 0.03, "no certificates", ha="center",
+                       va="bottom", rotation=90, fontsize=8, color="dimgray",
+                       transform=ax[0].get_xaxis_transform())
+        else:                             # a true 0.0 bar has zero height --
+            ax[0].text(i, v, f"{v:.3f}",  # label it or it reads as absence
+                       ha="center", va="bottom", fontsize=7)
     ax[0].axhline(DELTA, color="crimson", ls="--", label=f"DELTA={DELTA}")
     ax[0].set_title("E1 certified-aggregate R_M exceed rate")
     ax[0].set_xlabel("alpha"); ax[0].set_ylabel("rate"); ax[0].legend()
@@ -443,14 +451,29 @@ def run_E2(out, quick):
                   width, label=mode, color=color)
         for i, v in enumerate(vals):
             if v is None:                 # rung never certified: no bar, say so
-                ax[0].text(xpos[i] + dx, DELTA * 0.05, "no certificates",
+                ax[0].text(xpos[i] + dx, 0.03, "no certificates",
                            ha="center", va="bottom", rotation=90, fontsize=7,
-                           color="dimgray")
+                           color="dimgray",
+                           transform=ax[0].get_xaxis_transform())
+            else:                         # a true 0.0 bar has zero height --
+                ax[0].text(xpos[i] + dx, v, f"{v:.3f}",   # label it or it reads
+                           ha="center", va="bottom", fontsize=6)  # as absence
     ax[0].axhline(DELTA, color="black", ls="--", label=f"DELTA={DELTA}")
     ax[0].set_xticks(xpos); ax[0].set_xticklabels([str(a) for a in alphas])
+    ax[0].set_xlim(-0.6, len(alphas) - 0.4)   # autoscale ignores the nan bars
+    real = [summary[m][a]["hard_violation_rate"]
+            for m in ("baseline", "bbse") for a in alphas
+            if summary[m][a]["hard_violation_rate"] is not None]
+    ax[0].set_ylim(0.0, max(real + [DELTA]) * 1.3)
     ax[0].set_title(f"E2 hard-violation rate at shift -> {SHIFT_BASE}")
     ax[0].set_xlabel("alpha"); ax[0].set_ylabel("hard-violation rate")
     ax[0].legend()
+    bb = summary["bbse"][0.10]            # computed, not copied: stays correct
+    ax[0].text(0.02, 0.98,                # under --quick's smaller R
+               f"BBSE at this shift: declined {R - bb['n_certified']}/{R}, "
+               f"certify-and-violate {bb['joint_certify_and_hard_rate']:.3f}",
+               transform=ax[0].transAxes, ha="left", va="top", fontsize=7,
+               color="#4477aa")
     bases = [e["target_base"] for e in sweep]
     _p = lambda v: np.nan if v is None else v
     ax[1].plot(bases, [_p(e["baseline"]["hard_violation_rate"])
@@ -464,6 +487,8 @@ def run_E2(out, quick):
                        for e in sweep], "s-", color="#4477aa",
                label="bbse certify-and-violate")
     ax[1].axhline(DELTA, color="black", ls=":", label=f"DELTA={DELTA}")
+    ax[1].axvline(E2_SHIFT_SWEEP[0], color="grey", ls=":", lw=1,
+                  label="null shift (source rate)")
     ax[1].set_title("E2 magnitude sweep (alpha=0.10)")
     ax[1].set_xlabel("target base rate (source 0.095)")
     ax[1].set_ylabel("rate"); ax[1].legend(fontsize=7)
@@ -541,14 +566,21 @@ def run_E3(out, quick):
     fig, ax = plt.subplots(figsize=(7, 4))
     alphas = list(ALPHA_LADDER)
     hv_bars = [summary[a]["hard_violation_rate"] for a in alphas]
-    ax.bar([str(a) for a in alphas],
-           [np.nan if v is None else v for v in hv_bars], color="#ee8866")
+    xpos = np.arange(len(alphas))   # numeric x: a nan bar must not eat its tick
+    ax.bar(xpos, [np.nan if v is None else v for v in hv_bars], color="#ee8866")
+    ax.set_xticks(xpos); ax.set_xticklabels([str(a) for a in alphas])
+    ax.set_xlim(-0.6, len(alphas) - 0.4)      # autoscale ignores the nan bars
+    real = [v for v in hv_bars if v is not None]
+    ax.set_ylim(0.0, max(real + [DELTA]) * 1.15)
     for i, v in enumerate(hv_bars):
         if v is None:                     # rung never certified: no bar, say so
-            ax.text(i, DELTA * 0.05, "no certificates", ha="center",
-                    va="bottom", rotation=90, fontsize=8, color="dimgray")
+            ax.text(i, 0.03, "no certificates", ha="center",
+                    va="bottom", rotation=90, fontsize=8, color="dimgray",
+                    transform=ax.get_xaxis_transform())
+        else:
+            ax.text(i, v, f"{v:.3f}", ha="center", va="bottom", fontsize=8)
     ax.axhline(DELTA, color="black", ls="--", label=f"DELTA={DELTA}")
-    ax.set_title("E3 concept-shift negative control (certificate should FAIL)")
+    ax.set_title("E3 concept-shift negative control (should FAIL)")
     ax.set_xlabel("alpha"); ax.set_ylabel("hard-violation rate"); ax.legend()
     fig.tight_layout(); fig.savefig(os.path.join(out, "E3_concept_shift.png"),
                                     dpi=110); plt.close(fig)
@@ -614,6 +646,9 @@ def run_E4(out, quick):
     ax[0].axvspan(min(sweep), min(gate_min_sites, max(sweep)), alpha=0.12,
                   color="grey",
                   label=f"< {MIN_CAL_CLUSTERS}-cluster gate")
+    ax[0].axvline(ANCHOR_SITES, color="grey", ls=":", lw=1,
+                  label=f"operating point ({ANCHOR_SITES} sites)")
+    ax[1].axvline(ANCHOR_SITES, color="grey", ls=":", lw=1)
     ax[0].set_title("E4 certify rate vs cluster count")
     ax[0].set_xlabel("n_sites"); ax[0].set_ylabel("certify rate"); ax[0].legend()
     ax[1].set_title("E4 mean coverage vs cluster count")
@@ -875,14 +910,24 @@ def run_E6(out, quick):
     with open(os.path.join(out, "E6_composition.json"), "w") as fh:
         json.dump(dict(size_bins=bin_rows, composition=comp_json), fh, indent=2)
 
-    fig, ax = plt.subplots(figsize=(7, 4))
+    fig, ax = plt.subplots(1, 2, figsize=(11, 4))
     labels = [b["size_bin"] for b in bin_rows]
+    xpos = np.arange(len(labels))   # numeric x: a nan bar must not eat its tick
     heights = [b["mean_answered_err"] if b["mean_answered_err"] is not None
                else np.nan for b in bin_rows]           # empty bins -> no bar
-    ax.bar(labels, heights, color="#66ccee")
-    ax.axhline(tau_and_alpha(op), color="crimson", ls="--", label="alpha")
-    ax.set_title("E6 mean answered error by site-size bin")
-    ax.set_xlabel("site-size bin"); ax.set_ylabel("answered error"); ax.legend()
+    ax[0].bar(xpos, heights, color="#66ccee")
+    ax[0].set_xticks(xpos); ax[0].set_xticklabels(labels)
+    ax[0].axhline(tau_and_alpha(op), color="crimson", ls="--", label="alpha")
+    ax[0].set_title("E6 mean answered error by site-size bin")
+    ax[0].set_xlabel("site-size bin"); ax[0].set_ylabel("answered error")
+    ax[0].legend()
+    covs = [b["mean_coverage"] if b["mean_coverage"] is not None else np.nan
+            for b in bin_rows]                          # empty bins -> no bar
+    ax[1].bar(xpos, covs, color="#66ccee")
+    ax[1].set_xticks(xpos); ax[1].set_xticklabels(labels)
+    ax[1].set_ylim(0.0, 1.0)
+    ax[1].set_title("E6 mean per-site coverage by site-size bin")
+    ax[1].set_xlabel("site-size bin"); ax[1].set_ylabel("coverage")
     fig.tight_layout(); fig.savefig(os.path.join(out, "E6_fairness.png"),
                                     dpi=110); plt.close(fig)
     return dict(tau_star=round(float(tau_star), 4),

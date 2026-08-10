@@ -4,12 +4,12 @@
 - seed: 20260721
 - alpha ladder: (0.05, 0.1), delta: 0.05
 
-## E1 (preserved from an earlier run)
+## E1
 ```json
 {
   "_run": {
     "mode": "FULL",
-    "utc": "2026-07-30T17:53:08+00:00"
+    "utc": "2026-08-10T18:39:49+00:00"
   },
   "R": 200,
   "eval_sites": 200,
@@ -91,12 +91,12 @@
 }
 ```
 
-## E2 (preserved from an earlier run)
+## E2
 ```json
 {
   "_run": {
     "mode": "FULL",
-    "utc": "2026-07-30T18:00:01+00:00"
+    "utc": "2026-08-10T18:39:49+00:00"
   },
   "R": 200,
   "target_base_rate": 0.22,
@@ -257,12 +257,12 @@
 }
 ```
 
-## E3 (preserved from an earlier run)
+## E3
 ```json
 {
   "_run": {
     "mode": "FULL",
-    "utc": "2026-07-30T18:00:01+00:00"
+    "utc": "2026-08-10T18:39:49+00:00"
   },
   "R": 200,
   "concept_intercept": 2.0,
@@ -286,12 +286,12 @@
 }
 ```
 
-## E4 (preserved from an earlier run)
+## E4
 ```json
 {
   "_run": {
     "mode": "FULL",
-    "utc": "2026-07-30T17:53:08+00:00"
+    "utc": "2026-08-10T18:39:49+00:00"
   },
   "R": 200,
   "sweep": [
@@ -376,12 +376,12 @@
 }
 ```
 
-## E5 (preserved from an earlier run)
+## E5
 ```json
 {
   "_run": {
     "mode": "FULL",
-    "utc": "2026-07-31T05:23:38+00:00"
+    "utc": "2026-08-10T18:39:49+00:00"
   },
   "tau_star": 0.55,
   "n_answered": 200,
@@ -438,7 +438,7 @@
 {
   "_run": {
     "mode": "FULL",
-    "utc": "2026-08-02T01:25:30+00:00"
+    "utc": "2026-08-10T18:39:49+00:00"
   },
   "tau_star": 0.55,
   "size_bins": [
@@ -475,12 +475,12 @@
 }
 ```
 
-## E7 (preserved from an earlier run)
+## E7
 ```json
 {
   "_run": {
     "mode": "FULL",
-    "utc": "2026-07-30T17:53:08+00:00"
+    "utc": "2026-08-10T18:39:49+00:00"
   },
   "R": 200,
   "record_sample": 2000,
