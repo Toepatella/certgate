@@ -2002,6 +2002,9 @@ def test_rm_helpers_are_the_synthetic_ones():
     assert run_eicu._per_site_exceed_frac is run_synthetic._per_site_exceed_frac
     assert run_eicu._rate is run_synthetic._rate
     assert run_eicu._write_csv is run_synthetic._write_csv
+    # the rank AUC joined the discipline 2026-08-10 -- it was a byte-equivalent
+    # clone of the ETL's, the one house helper that had escaped this net
+    assert run_eicu._auc is etl._rank_auc
 
 
 def test_etl_imports_no_undeclared_dependency():

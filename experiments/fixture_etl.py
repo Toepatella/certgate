@@ -212,20 +212,6 @@ def build_matrix(data_dir, verbose=True):
     return x, list(FEATURE_NAMES), meta
 
 
-# --------------------------------------------------------------- labels ----
-
-def labels_common(meta):
-    """~25% prevalence: 'case' iff session_kind == 'kind_readmit'."""
-    return ["case" if k == "kind_readmit" else "control"
-            for k in meta["session_kind"]]
-
-
-def labels_rare(meta):
-    """~5% prevalence: 'case' iff attr_class == 'cls_5' AND close_state == 'state_a'."""
-    return ["case" if (c == "cls_5" and s == "state_a") else "control"
-            for c, s in zip(meta["attr_class"], meta["close_state"])]
-
-
 # ---------------------------------------------------------------- split ----
 
 def site_split(site_raw):

@@ -73,10 +73,11 @@ from experiments import eicu_etl as etl
 from experiments.run_synthetic import (_rm_on_pool, _per_site_exceed_frac,
                                        _write_csv, _rate)
 
-# ``_write_csv`` is bound here because the SPEC's import surface names it; the
+# ``_write_csv`` is imported because the SPEC's import surface names it; the
 # eICU tables deliberately do NOT use it (see ``_write_table``: locale-default
 # encoding would write a mojibake cell where a crash is the correct outcome).
-_HOUSE_CSV_WRITER = _write_csv
+# Do NOT let an F401 autofix strip it -- tests/test_eicu_path.py pins the
+# identity ``run_eicu._write_csv is run_synthetic._write_csv``.
 
 EICU_OUT_PREFIX = "EICU"
 EICU_MAX_OUTPUT_LEN = 512        # > 208 sites, < any record-level array
@@ -382,28 +383,11 @@ def _eval_rung(head, report, alpha, pool_x, pool_y):
     return out
 
 
-def _auc(scores, y):
-    """Rank (Mann-Whitney) AUC with tie-averaged ranks; ``None`` when either
-    class is absent. Deterministic (``mergesort``) and dependency-free -- the
-    eICU path may not reach for a sklearn metric it does not otherwise need."""
-    s = np.asarray(scores, dtype=np.float64)
-    y = np.asarray(y, dtype=bool)
-    n = int(s.shape[0])
-    n1 = int(y.sum())
-    n0 = n - n1
-    if n1 == 0 or n0 == 0:
-        return None
-    order = np.argsort(s, kind="mergesort")
-    s_sorted = s[order]
-    ranks = np.empty(n, dtype=np.float64)
-    i = 0
-    while i < n:
-        j = i
-        while j + 1 < n and s_sorted[j + 1] == s_sorted[i]:
-            j += 1
-        ranks[order[i:j + 1]] = 0.5 * (i + j) + 1.0
-        i = j + 1
-    return float((ranks[y].sum() - n1 * (n1 + 1) / 2.0) / (n1 * n0))
+# Identity binding, not a re-implementation: this was a byte-equivalent clone
+# of the ETL's tie-averaged Mann-Whitney AUC -- the one house helper that had
+# escaped the pin-by-identity discipline (SPEC module DAG note, 2026-08-10).
+# tests/test_eicu_path.py asserts the identity so the two cannot drift.
+_auc = etl._rank_auc
 
 
 def _missingness_columns(feature_names):

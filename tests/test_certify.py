@@ -8,7 +8,7 @@ influence-weighting path must refuse forever (audit Hole-1).
 import numpy as np
 import pytest
 
-from certgate.certify import (influence_atoms, wsr_reject, margin_floor,
+from certgate.certify import (influence_atoms, wsr_reject,
                               walk_order, fixed_sequence_walk,
                               certification_rng)
 from certgate.constants import TAU_GRID

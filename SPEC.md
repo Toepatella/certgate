@@ -1169,6 +1169,12 @@ run_eicu.py   -> eicu_etl, run_synthetic (_rm_on_pool/_per_site_exceed_frac/_wri
                  pipeline, validate, model, harness, report, explain, reliability
 ```
 
+The imported helpers above are bound by IDENTITY, never re-implemented — `tests/test_eicu_path.py`
+asserts `run_eicu._write_csv is run_synthetic._write_csv` so a clone cannot drift silently. The
+same rule covers the rank AUC (amended 2026-08-10): `run_eicu._auc = eicu_etl._rank_auc` is an
+identity binding, pinned by the same test — it was previously a byte-equivalent 22-line clone,
+the one helper that had escaped this discipline.
+
 `reliability` is imported by BOTH experiment drivers (`run_eicu.py` and `run_synthetic.py`, the
 latter for `run_E6`) and by neither core module: it is a DAG leaf with no `from certgate ...`
 import of any kind, so the dependency runs one way only. The top-of-SPEC Module DAG states the

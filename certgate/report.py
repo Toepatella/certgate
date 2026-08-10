@@ -22,7 +22,6 @@ import numpy as np
 
 from certgate.constants import (SEED, ALPHA_LADDER, BBSE_DELTA_CONF, DELTA,
                                 M_INFLUENCE, TAU_GRID)
-from certgate.certify import margin_floor
 from certgate.explain import composition, cohort_abstention_profile
 
 _PACKAGES = ("numpy", "scipy", "scikit-learn")
