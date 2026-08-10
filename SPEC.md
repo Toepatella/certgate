@@ -1,6 +1,6 @@
 # SPEC — engineering contract (builders: follow exactly; deviations require editing this file first)
 
-Reference implementation for the audited statistical core lives in `../testbed/` (certify.py, modes.py) — port the *math* from there (it survived adversarial review), but this SPEC's interfaces, hardening, and constants override v1 everywhere they differ. Python 3.13 / numpy 2.5 / scikit-learn 1.9. All sklearn/scipy imports at module top level (never inside functions — audit F16).
+Reference implementation for the audited statistical core lives in `../xAI-projtect-v1/testbed/` (certify.py, modes.py) — port the *math* from there (it survived adversarial review), but this SPEC's interfaces, hardening, and constants override v1 everywhere they differ. Python 3.13 / numpy 2.5 / scikit-learn 1.9. All sklearn/scipy imports at module top level (never inside functions — audit F16).
 
 **2026-07-25 audit revision (CODE-AUDIT.md V1–V27).** This revision corrects two defects this SPEC itself mandated: (V1) the guarantee text claimed a per-target-site bound where the certified estimand is the influence-weighted answered risk *averaged over the site population* — the statement now names the population-average estimand and carries a mandatory between-site-dispersion clause; (V2) BBSE treated the target predicted-positive rate `q_t` as exact — it now receives a confidence share (`BBSE_BONFERRONI = 4`, 16-corner box). Also: the WSR permutation seed no longer depends on the target label (V3 — restores the true shared-event property in baseline mode), site identity is canonicalized and near-duplicate ids are rejected loudly (V4/V5/V10), and the provenance block binds labels, site partitions, shape, and dtype (V11).
 
@@ -964,7 +964,7 @@ per file below; regressions to any of them are regressions to V6.
   passes on disjoint; site_sizes always equals bincount.
 - `test_certify.py` — atom range [0,1] with empty-site neutral atoms == alpha; the v1 Hole-1
   regression (140 clean + 10 heavy/20%-error sites: truncated-contribution reading certifies,
-  influence weighting refuses — port from ../tests/test_certify.py); the M-cap boundedness
+  influence weighting refuses — ported from ../xAI-projtect-v1/tests/test_certify.py); the M-cap boundedness
   killer (audit V6 #1): with site sizes spanning ~20..3000 against M=100, atoms stay in
   [0,1] — removing np.minimum(sizes, M) drives atoms negative and breaks the [0,1]
   boundedness Ville's inequality requires, and this test fails; WSR boundary type-I at

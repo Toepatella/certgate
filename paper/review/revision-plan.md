@@ -12,6 +12,18 @@ The 15 PLAUSIBLE findings are marked `(PLAUSIBLE — settle by: …)` carrying t
 
 Referee key: **DS** desk screen · **R1** statistics · **R2** clinical · **R3** XAI · **R4** reproducibility (repo access) · **R5** forensic.
 
+> **Closure status (added 2026-08-10 — this document previously tracked nothing as done).**
+> Verified against the tree, the following work-items have LANDED since this plan was written:
+> **S1-2** (the missing i.i.d. condition) — Assumption 1 stated in draft §3.4, A.1(iii) rewritten
+> to derive the supermartingale from it (2026-08-10); **S1-4** — E5's R = 200 replication arm
+> returned the honest null and §4.6 reports it (2026-07-30); **S1-5** — sep = 2.2 recorded in
+> the E2/E3 summary blocks and stated in §4.3 (2026-07-30); **S1-9** — `zhou2026falsesense`
+> attributed as a preprint at both citation sites (2026-08-10); **S1-13** — the E7
+> record-as-unit comparator is run, reported (§4.8, Figure 7, Table 9's synthetic sibling) and
+> cited as the demonstration of the design premise (2026-07-30). Partial: **S1-6** (callout
+> half done — see inline update), **S1-7** (git/paths done — see inline update). Items not
+> named here have NOT been re-audited; do not read absence as closure.
+
 ---
 
 # S1 — must change or the paper does not run
@@ -74,7 +86,10 @@ Referee key: **DS** desk screen · **R1** statistics · **R2** clinical · **R3*
 ### S1-6 · Supply the figures — embedded, called out, and repaired
 **Closes:** `DS-05` (DS) · `R1-42` (R1) · `R3-24` (R3) · `R5-15` (R5) · `R4-18` (R4)
 
-**What.** The manuscript contains six figure captions (lines 298–310) and no images: zero `![`, `.png`, `.pdf`, `.svg` or `includegraphics` matches, and the string "Figure N" occurs nowhere outside the Figures section, so no figure is called out in §1–§6 or the appendices. Separately, R4 opened the PNGs in the repository and found three defective: `E3_concept_shift.png` title truncated mid-word ("…negative control (certificate shou") with axes on half the canvas and the "no certificates" annotation in the blank margin; `E1_validity.png` with a single x-tick and the α = 0.05 annotation rendered outside the axes, so the caption's claim that α = 0.05 issues no certificates is not visually shown; `E2_label_shift.png` with a zero-height BBSE bar visually identical to absence, which is that same figure's encoding for "no certificates". Cause: `ax.text(...)` in data coordinates at categories whose bar is `np.nan` (`:170-173`, `:246-250`, `:316-319`).
+**What.** *[UPDATE 2026-08-10: the manuscript now has EIGHT captions (Figures 1–8) and every
+figure is called out in-text at its discussion point, so the callout half of this item is done;
+the embedding half — actual image files in the submission package — and the three PNG rendering
+repairs below remain open.]* The manuscript contains six figure captions (lines 298–310) and no images: zero `![`, `.png`, `.pdf`, `.svg` or `includegraphics` matches, and the string "Figure N" occurs nowhere outside the Figures section, so no figure is called out in §1–§6 or the appendices. Separately, R4 opened the PNGs in the repository and found three defective: `E3_concept_shift.png` title truncated mid-word ("…negative control (certificate shou") with axes on half the canvas and the "no certificates" annotation in the blank margin; `E1_validity.png` with a single x-tick and the α = 0.05 annotation rendered outside the axes, so the caption's claim that α = 0.05 issues no certificates is not visually shown; `E2_label_shift.png` with a zero-height BBSE bar visually identical to absence, which is that same figure's encoding for "no certificates". Cause: `ax.text(...)` in data coordinates at categories whose bar is `np.nan` (`:170-173`, `:246-250`, `:316-319`).
 
 **Where.** `paper/draft.md` §4.2–§4.7 (in-text callouts) and the `# Figures` section; `experiments/run_synthetic.py` plotting blocks.
 
@@ -85,7 +100,11 @@ Referee key: **DS** desk screen · **R1** statistics · **R2** clinical · **R3*
 ### S1-7 · Deposit code and data; add a Code availability section
 **Closes:** `DS-07` (DS, narrowed) · `DS-27` (DS) · `R1-36` (R1) · `R2-40` (R2) · `R4-17` (R4) · `R4-40` (R4) · `R5-40` (R5)
 
-**What.** Data availability reads "publicly available at [CODE REPOSITORY URL — to be added]", and there is no Code availability section at all (back matter runs Acknowledgements → Data availability → Funding → Author contributions → Ethics → Consent → Competing interests). Eleven checkable claims terminate at that placeholder: §3.10's determinism, A.3's pinned environment and one-command grid, §4.1's `data.py` and byte-identical certificates, §5.5's `from_raw` loader and worked example, §4.4's two code identifiers. R4 verified the repository root has **no LICENSE, no COPYING, no pyproject.toml, no setup.py, no setup.cfg, no `.git`**, and six dangling paths (`README.md:3` → `../audit/readiness-report.md`; README → `../testbed/`, `../PROTOCOL.md`; `certify.py:4`, `shift.py:8`, `data.py:3`, `report.py:87`). The office ruled the placeholder is *not* a criterion-4 identity field; and the substance survives even if the URL is treated as one.
+**What.** *[UPDATE 2026-08-10: the repository has been under git since `9f25b49` (2026-07-30)
+and is pushed to git@github.com:Toepatella/certgate.git; the Data availability URL is filled
+(https://github.com/Toepatella/certgate) and the dangling `../testbed` / `../audit` paths were
+repaired to `../xAI-projtect-v1/...`. Still open: LICENSE, packaging metadata, a DOI-minted
+deposit, and the separate Code availability section.]* Data availability reads "publicly available at [CODE REPOSITORY URL — to be added]", and there is no Code availability section at all (back matter runs Acknowledgements → Data availability → Funding → Author contributions → Ethics → Consent → Competing interests). Eleven checkable claims terminate at that placeholder: §3.10's determinism, A.3's pinned environment and one-command grid, §4.1's `data.py` and byte-identical certificates, §5.5's `from_raw` loader and worked example, §4.4's two code identifiers. R4 verified the repository root has **no LICENSE, no COPYING, no pyproject.toml, no setup.py, no setup.cfg, no `.git`**, and six dangling paths (`README.md:3` → `../audit/readiness-report.md`; README → `../testbed/`, `../PROTOCOL.md`; `certify.py:4`, `shift.py:8`, `data.py:3`, `report.py:87`). The office ruled the placeholder is *not* a criterion-4 identity field; and the substance survives even if the URL is treated as one.
 
 **Where.** `paper/draft.md` back matter; repository root.
 

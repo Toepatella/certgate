@@ -23,7 +23,7 @@ Recognizable with all content removed: ivory plates on a cool bench-gray
 ground, hairline rules, engraved-caps section labels, tick scales, the
 red-line, the needle.
 
-## Color roles (all in `:root` / `body.dark` of template.html)
+## Color roles (all in `:root` / `body.dark` of `_HTML_TEMPLATE` in explain_dashboard.py; the sandbox edits the same tokens in `../certgate-dashboard-design/template.html`)
 
 | token | light | dark | role |
 |---|---|---|---|

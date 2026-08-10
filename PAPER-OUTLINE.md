@@ -1,5 +1,19 @@
 # Paper outline — Discover Computing, "Intelligent Medicine: ML and Explainable AI" collection
 
+> **STATUS 2026-08-10 — this outline is the PRE-DRAFT planning record and parts are
+> superseded by events.** The draft (`paper/draft.md`) is written and carries things this
+> outline planned as contingencies: the real eICU-CRD v2.0 extract arrived 2026-07-31 and
+> §4.10 + Tables 8/9 + Figure 8 report the certified run (so "real data if access lands"
+> below is settled — it landed); the experiment grid is E1–**E7** (E7 record-as-unit
+> comparator added 2026-07-30); the released E2 result is baseline hard-violates 39.5%
+> (aggregate-estimand 97.5%) with BBSE declining 200/200 — not the "~100% / certifies-or-
+> declines" sketch below; §6.1 now carries eleven limitations, several beyond METHODS §9;
+> and the internal red-team ran early (2026-07-22). The reviewer-risk table's
+> "ground truth — which real data cannot provide" line was retired by draft §5.5 (a
+> retrospective cohort CAN measure a violation; what it cannot supply is a KNOWN
+> data-generating process). Read this file for the venue-fit reasoning and the risk
+> table's pre-emption strategy; read `paper/draft.md` + `paper/TODO.md` for current truth.
+
 **Deadline 2026-10-05** · open access · median 22 days to first decision · article type: Research.
 Working title: *CertGate: finite-sample certified selective prediction for multi-site clinical risk models, with label-shift robustness and explainable abstention.*
 
@@ -27,7 +41,7 @@ Working title: *CertGate: finite-sample certified selective prediction for multi
 
 | Likely objection | Pre-emption |
 |---|---|
-| "Only synthetic data" | Generator parameters mirror a documented real multi-site cohort (208 sites, lognormal sizes 20–5000, 9.5% prevalence, site random effects); every mechanism is exact by construction so ground truth is available for validation — which real data cannot provide; real-data application named as ongoing work. |
+| "Only synthetic data" | SETTLED 2026-07-31: the eICU-CRD v2.0 extract ran end to end and draft §4.10 reports it. The synthetic arm's continuing role is oracle access — a *known* data-generating process, which a real cohort cannot supply (a real cohort CAN measure a violation; see draft §5.5 — the old "which real data cannot provide" phrasing was retired by the editorial panel, decision-letter item 13). |
 | "Why not conformal prediction?" | Related-work paragraph: record-level exchangeability is false under site clustering; cluster-level conformal gives per-record guarantees too weak for an answered-set risk budget; our estimand is the answered-set risk, not per-record coverage. |
 | "Isn't α=0.10 a weak guarantee?" | The information floor makes this a property of ~80-cluster data, not of the method — E4 shows exactly what stricter budgets cost in sites; a guarantee calibrated to what the data supports is the honest offer. |
 | "Logistic regression is too simple" | The gate is model-agnostic (score only ranks); logistic is chosen *for* the XAI requirement; E-appendix can swap a GBM head and show the coverage/interpretability trade. |

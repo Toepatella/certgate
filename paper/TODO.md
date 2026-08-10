@@ -8,7 +8,11 @@ exact" premise (V2) and the "single asymptotic link" claim (V13); added the oper
 1−2δ clause (V27) and the four-parameter/16-corner BBSE box; replaced every experiment number
 with the sep=2.2 rerun values. Sections touched: Abstract; §1 (¶4, ¶5, contributions 1/2/4);
 §3.1, §3.2, §3.3, §3.4, §3.5, §3.6, §3.7, §3.9, §3.10; §4.1–§4.7; §5.1; §6 and §6.1; A.1, A.2,
-A.3; Figures 1–6; Tables 1–4. Two notes for the human author: (a) TODO §0 below still cites
+A.3; Figures 1–6; Tables 1–4. Two notes for the human author — *[OBSOLETE 2026-08-10: both
+resolved long since. The suite is 266 passed / 3 skipped as of 2026-08-10 (it was 136/1 when
+this note was written); A.3 no longer states any absolute count (it says what the suite pins,
+closing DS-28/R1-35/R2-41); CLAUDE.md's status line is current. Kept only as the historical
+note it was.]* — (a) TODO §0 below still cites
 "69/69 tests" from the 2026-07-23 readiness audit; (b) the suite measured on 2026-07-30 is
 136 passed + 1 skipped (137 collected), not the 135/135 recorded in CLAUDE.md — A.3 now states
 the measured figure, and CLAUDE.md's status line needs the same correction.
@@ -306,33 +310,48 @@ Alternatives:
 
 ## 5. Figures — polish wishes (source PNGs in `experiments/out/`)
 
-The six figures are mapped to captions in `draft.md`; regenerating the PNGs is a repo (code)
+*[Numbers refreshed 2026-08-10 against the released artifacts — several wishes below were
+written before the R=200 rerun and carried stale values; the corrected values are in-line.
+There are EIGHT figures now (E7 and eICU added), not six.]*
+
+The eight figures are mapped to captions in `draft.md`; regenerating the PNGs is a repo (code)
 task and out of scope for the paper directory. Wishes flagged while writing the captions:
 
 - **Fig 3 (E3):** the PNG title is truncated (`…certificate shou…`); regenerate with a shorter
   title or tighter layout so the full text shows.
 - **Fig 2 (E2):** the BBSE bar sits at 0.0 and is nearly invisible; add an on-figure annotation
-  ("BBSE: 0/9 violations, certified 9/200, declined 95.5%") so the decline story reads without
-  the caption.
+  (correct values: "BBSE at the anchor shift: declined 200/200, certify-and-violate 0/200; the
+  9% certify rate belongs to the NULL-shift sweep point") so the decline story reads without
+  the caption. *(The old suggested text "0/9 violations, certified 9/200, declined 95.5%"
+  conflated the anchor run with the null-shift sweep point — do not use it.)*
 - **Figs 1/2/3:** the α=0.05 "no certificates" marker is a faint rotated label in a large empty
   margin; make it a clear labeled bar.
-- **Fig 5 (E5):** annotate feature 0 as the top abstention driver (gap −0.854) on the gap panel.
-- **Fig 6 (E6):** only mean answered error is plotted; per-site coverage (0.897–0.919) lives only
-  in Table 2 — consider a second panel/twin axis so "no coverage collapse" is visible in the figure.
+- **Fig 5 (E5):** the single-draw feature-0 annotation idea is RETIRED — the R=200 replication
+  returned the null (modal top-gap share 0.274 ≈ chance), and §4.6 reports the null as a null;
+  annotating feature 0 as "the driver" would contradict the paper's own finding.
+- **Fig 6 (E6):** only mean answered error is plotted; per-site coverage (0.980–0.990, Table 2)
+  lives only in the table — consider a second panel/twin axis so "no coverage collapse" is
+  visible in the figure.
 - **Fig 4 (E4):** mark the 208-site operating point (e.g. a vertical guide) so the operative rung
   reads directly.
 - Table 4 (E4 grid) is optional: every value is stated in-text, so drop it if length is tight.
-- **In-text figure callouts:** Figures 1–6 are currently referenced only via their captions; add "(Figure N)" callouts at the relevant points in Results (E1→Fig 1, etc.) during typesetting so each figure is cited in the body, per journal convention.
+- **In-text figure callouts:** DONE 2026-08-10 — every figure (1–8) is now called out at its
+  discussion point in the body. What remains for typesetting is EMBEDDING the images in the
+  submission package (revision-plan S1-6's other half).
 
 ## 5a. Confidence intervals — what was added, and the one gap needing a re-run
 
-Added this session (computed exactly from the recorded counts with Clopper–Pearson, scipy-verified,
-NOT estimated): E1 hard-violation 2/200 → 95% CI [0.001, 0.036]; E2 baseline 97/200 → [0.414, 0.557];
-E2 BBSE joint 0/200 → [0, 0.018] (consistent with the rule-of-three 0.015); E3 166/200 → [0.771, 0.879].
-A sentence in §4.1 states that all primary rates carry exact CIs.
+*[Counts refreshed 2026-08-10 — the figures below originally recorded the PRE-rerun counts
+(2/200, 97/200, 166/200), which no longer match the released artifacts; an author trusting the
+old paragraph would have re-inserted three wrong intervals. Current values:]*
+Computed exactly from the recorded counts with Clopper–Pearson (scipy-verified, NOT estimated):
+E1 per-site hard-violation 4/200 → the draft reports the rate 0.02 with the dispersion framing;
+E2 baseline 79/200 → 95% CI [0.327, 0.466]; E2 BBSE joint 0/200 → [0, 0.018] (consistent with
+the rule-of-three 0.015); E3 140/200 → [0.631, 0.763]. The draft already carries these exact
+values (§4.2/§4.3/§4.4). A sentence in §4.1 states that all primary rates carry exact CIs.
 
 **GAP (needs an experiment re-run — I cannot produce these from the recorded artifacts):** the
-*mean-coverage* figures (E1 0.9722; E4's 0.9304/0.9715/0.9601/0.9621 and 0.7376/0.8455; E6 per-site
+*mean-coverage* figures (E1 0.9828; E4's 0.9372/0.9818/0.9754/0.9641 and 0.7296/0.8516; E6 per-site
 coverage) are means over draws, and the per-draw standard deviations are not in `experiments/out/`.
 To report SEs/CIs on coverage, re-run the grid emitting per-draw coverage SDs (or bootstrap them),
 then add "± SE" or a CI to those figures. Cheap to do, and it closes the reviewer request fully —
@@ -443,7 +462,9 @@ budget ($\delta$ vs $\delta_{bet}$); E1 tightness rhetoric softened to "consiste
 abstract rebuilt at a consistent altitude (238 words, jargon glossed); "documented cohort"
 softened to an indefinite distributional-profile claim; E6 retitled "coverage uniformity" with
 an explicit scope sentence and the 4-site-bin caveat; the E1-vs-E4 0.9722/0.9715 coverage pair
-explained (separate runs, independent seeds); ~350 further words of exact-duplicate prose cut.
+explained (separate runs, independent seeds) *[those were the pre-rerun values; the R=200 rerun
+moved the pair to 0.9828/0.9818, which the draft now states — same explanation, new numbers]*;
+~350 further words of exact-duplicate prose cut.
 
 **Left for you (judgment calls, not defects):**
 - **Skeptic's counter-suggestion on novelty:** state the verified absence result as a fact —

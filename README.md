@@ -1,6 +1,6 @@
 # CertGate — certified selective prediction with explainable abstention for multi-site clinical risk models
 
-**Status:** fresh restart (v2) of the selective-prediction project, 2026-07-21. Deliberately smaller than v1: every cut and every kept component below traces to the v1 readiness audit ([../audit/readiness-report.md](../audit/readiness-report.md), 57 verified findings).
+**Status:** fresh restart (v2) of the selective-prediction project, 2026-07-21. Deliberately smaller than v1: every cut and every kept component below traces to the v1 readiness audit ([../xAI-projtect-v1/audit/readiness-report.md](../xAI-projtect-v1/audit/readiness-report.md), 57 verified findings).
 
 ## Target venue
 
@@ -23,7 +23,7 @@ A clinical risk model should answer only when it can back the answer with a guar
 
 ### Results — synthetic grid, R=200 (all criteria met)
 
-Full grid at R=200; artifacts in `experiments/out/` (`summary.md` + `provenance.json` + per-experiment CSVs/PNGs/JSON). Suite 260 passed / 3 skipped green (~31s; three off-default arms gated behind `CERTGATE_FIXTURE=1` / `CERTGATE_EICU=1` / `CERTGATE_EICU_LARGE=1`).
+Full grid at R=200; artifacts in `experiments/out/` (`summary.md` + `provenance.json` + per-experiment CSVs/PNGs/JSON). Suite 266 passed / 3 skipped green (~1 min; three off-default arms gated behind `CERTGATE_FIXTURE=1` / `CERTGATE_EICU=1` / `CERTGATE_EICU_LARGE=1`).
 
 *(Rescored 2026-07-25 after the correctness-audit fixes — E1 against the certified estimand, E2/E3 at the documented sep=2.2, BBSE carrying the q_t confidence share; see `CODE-AUDIT.md`. E2/E3 aggregate-estimand columns, E5's replication arm and E7 landed 2026-07-30; per-block `_run` stamps in `summary.md` are authoritative.)*
 
@@ -43,7 +43,7 @@ Headline for the paper: the certificate is **valid on the estimand it actually c
 
 The credentialed extract was run end to end against a protocol frozen *before* any eICU byte was read (`EICU-PROTOCOL.md`; freeze commit `9f25b49`, 2026-07-30). Cohort 164,322 first ICU stays over 207 hospitals at 8.89% prevalence; 161 features from a deny-by-default allowlist. **α=0.10 certified on all 20 replicates and α=0.05 on none**, mean coverage 0.890 at mean τ 0.793, with the fresh-pool `rm_exceed` firing 0/20 and all five pre-declared failure criteria (F-A–F-E) clear. APACHE-IVa on the same answered set: AUC 0.820. Predictions P1/P3/P6/P7 confirmed, P2/P4/P5 falsified — and P4's falsification is the *desired* outcome, since under amendment A1 a confirmed P4 would have been the leak's signature. Artifacts are aggregate-only by construction (`EICU-SUMMARY.md`, `EICU_*.csv/json`); the extract itself is gitignored and was never committed.
 
-One caveat travels with every one of those numbers: among answered cases the oracle positive rate is 4.6% against 8.9% cohort-wide, so the gate earns part of its low error by abstaining where deaths concentrate. That is what the three-way composition instrument exists to surface.
+One caveat travels with every one of those numbers: among answered cases the oracle positive rate is 4.6% against 9.0% in the replicate-0 held-out pool, so the gate earns part of its low error by abstaining where deaths concentrate. That is what the three-way composition instrument exists to surface.
 
 ## Scope — what is IN
 
@@ -93,7 +93,10 @@ certgate/
   certgate/            ← package
     constants.py  validate.py  data.py  model.py
     certify.py    shift.py     explain.py  report.py  pipeline.py
+    harness.py    ← the violation instruments (wilson_lcb, hard_violation,
+                     exceedance_reference — every violation number in the paper)
     reliability.py ← POST-HOC selective reliability panel (descriptive; a numpy-only DAG leaf)
+  conftest.py          ← two-line sys.path shim (examples/ and the root have no __init__.py)
   tests/               ← incl. test_constants.py pinning every frozen scalar
   experiments/
     run_synthetic.py   ← E1–E7 grid (--quick for smoke)
@@ -103,12 +106,15 @@ certgate/
     eicu_etl.py        ← eICU extract → cohorts (stdlib + numpy only)
     run_eicu.py        ← eICU preflight + certification runner
     panel_s2_tables.py ← read-only analysis behind paper Tables 6 and 7
-    out/               ← figures + CSVs for the paper
+    out/               ← figures + CSVs for the paper (20-replicate eICU aggregates included)
+    out-sens/          ← eICU apache-complete sensitivity arm (aggregate-only sidecar)
+    out-panel/         ← eICU replicate-0 panel measurement (aggregate-only sidecar, POST-HOC)
   examples/
     real_data_example.py    ← runnable from_raw → run_certgate walkthrough
     explain_dashboard.py    ← self-contained interactive explanation dashboard
                               (plain-language + advanced modes; open the
                               generated .html in any browser, no install)
+    explain_dashboard.html  ← the committed synthetic demo page it renders
     explain_dashboard_eicu.py ← the same page over one replicate of the real
                               extract; cross-checks its rung against the
                               released certificate and carries the OUTCOME of
@@ -123,7 +129,7 @@ certgate/
 
 ```bash
 pip install -r requirements.txt
-python -m pytest tests -q                      # ~28 s
+python -m pytest tests -q                      # ~1 min
 python -m experiments.run_synthetic --quick    # smoke grid
 python -m experiments.run_synthetic            # full paper grid
 ```
@@ -136,4 +142,4 @@ For a *different* dataset, `certgate/validate.py` is the loader contract to buil
 
 ## Relation to v1
 
-v1 (`../testbed/`, `../PROTOCOL.md`) remains untouched as the archival record. CertGate is a from-scratch rewrite: smaller surface, audit lessons applied at design time rather than patched in, and a paper-shaped deliverable. The real 208-hospital dataset did arrive before the deadline and has run end to end (2026-07-31), so the study now rests on both arms: the synthetic grid, where oracle access makes the validity claim falsifiable, and eICU-CRD v2.0, where the certificate meets a cohort nobody constructed.
+v1 (`../xAI-projtect-v1/testbed/`, `../xAI-projtect-v1/PROTOCOL.md`) remains untouched as the archival record. CertGate is a from-scratch rewrite: smaller surface, audit lessons applied at design time rather than patched in, and a paper-shaped deliverable. The real 208-hospital dataset did arrive before the deadline and has run end to end (2026-07-31), so the study now rests on both arms: the synthetic grid, where oracle access makes the validity claim falsifiable, and eICU-CRD v2.0, where the certificate meets a cohort nobody constructed.
