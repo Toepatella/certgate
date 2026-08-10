@@ -39,6 +39,7 @@ from certgate.explain import (global_importance, local_attribution,
                               composition, counterfactual_to_answer)
 from certgate.harness import hard_violation, exceedance_reference, SIZE_BINS
 from certgate.report import provenance
+from certgate import reliability as rp
 
 # ONE generator (audit V7): every experiment runs the documented SimConfig()
 # defaults; the only experiment-local generator parameters are the shift/tilt
@@ -846,6 +847,31 @@ def run_E6(out, quick):
     comp = composition(head, tgt.x, answered, rho_point=rho, oracle_y=tgt.y)
     comp_json = {k: {kk: (float(vv) if isinstance(vv, (int, float)) else vv)
                      for kk, vv in v.items()} for k, v in comp.items()}
+
+    # POST-HOC reliability panel (added 2026-08-01, after E1-E7 were published).
+    # It is a DESCRIPTIVE diagnostic: it alters no certified quantity and
+    # consumes no _rng(6) draw -- the panel self-seeds from a sha256 of its own
+    # input bytes, so E6's generator sequence (and experiments/panel_s2_tables.py
+    # :e6_arm, which replays it) is untouched. `answered` is passed in so
+    # panel_from_head CROSS-CHECKS it against head.score >= tau_star; the panel
+    # computes p = head.predict_proba(x) itself, which is what makes the
+    # score/predict_proba conflation structurally unreachable here. E6 has NO
+    # reference scorer, so p_ref stays None and brier.reference is an explicit
+    # null.
+    panel = rp.panel_from_head(head, tgt.x, tgt.y, tgt.site_id, tau_star,
+                               answered_mask=answered,
+                               n_boot=(200 if quick else rp.N_BOOT))
+    hl = rp.panel_headline(panel)
+    _write_csv(os.path.join(out, "E6_reliability.csv"),
+               rp.panel_reliability_rows(panel),
+               list(rp.PANEL_RELIABILITY_FIELDS))
+    # allow_nan=False is the ENFORCEMENT of the no-NaN rule at the write
+    # boundary, not merely a belief about the emit pass.
+    with open(os.path.join(out, "E6_reliability.json"), "w") as fh:
+        json.dump({"post_hoc": rp.E6_POST_HOC_NOTE, **panel}, fh, indent=2,
+                  allow_nan=False)
+    _e6_reliability_figure(out, panel)
+
     with open(os.path.join(out, "E6_composition.json"), "w") as fh:
         json.dump(dict(size_bins=bin_rows, composition=comp_json), fh, indent=2)
 
@@ -862,7 +888,53 @@ def run_E6(out, quick):
     return dict(tau_star=round(float(tau_star), 4),
                 size_bins=bin_rows,
                 predicted_positive_fraction=round(
-                    comp["predicted_class"]["positive_fraction"], 4))
+                    comp["predicted_class"]["positive_fraction"], 4),
+                # The marker travels WITH the numbers. summary.md is the
+                # artifact the paper is written from, so three new keys inside a
+                # published-grid block must not appear there with no indication
+                # that they were added after E1-E7 were published and are
+                # descriptive only. The copy in E6_reliability.json never
+                # reaches that reader. This is the synthetic-side counterpart of
+                # POST_HOC_LABEL travelling into EICU-SUMMARY.md.
+                panel_post_hoc=rp.E6_POST_HOC_NOTE,
+                # POST-HOC panel headline. NOT re-rounded: the panel rounds ONCE
+                # at emit time (rp.ROUND_DP = 6) and a second pass here would
+                # make the last decimal irreproducible. These therefore carry
+                # 6 dp while E6's own keys carry 4 -- that asymmetry is the
+                # round-once invariant, not an inconsistency.
+                panel_ece_answered=hl["ece_answered"],
+                panel_calibration_slope_answered=hl[
+                    "calibration_slope_answered"],
+                panel_skill_margin_answered_minus_all=hl[
+                    "skill_margin_answered_minus_all"])
+
+
+def _e6_reliability_figure(out, panel):
+    """POST-HOC panel figure: reliability curve (left) and the constant-majority
+    skill margin by scope (right). Same Paul-Tol hex set and dpi=110 as every
+    other figure in this file. The empty-bin, ci_status and clamped-half-width
+    rules live ONCE, in rp.panel_reliability_series -- run_eicu's panel figure
+    reads the same contract, so the two can no longer drift."""
+    fig, (axL, axR) = plt.subplots(1, 2, figsize=(11, 4))
+    axL.plot([0, 1], [0, 1], color="black", ls="--", lw=1, label="identity")
+    for scope, colour in zip(rp.PANEL_CURVE_SCOPES, ("#4477aa", "#cc6677")):
+        xs, ys, lo, hi = rp.panel_reliability_series(panel, scope)
+        if xs:
+            axL.errorbar(xs, ys, yerr=[lo, hi], marker="o", color=colour,
+                         capsize=3, label=f"{scope} (n={len(xs)} bins)")
+    axL.set_title("E6 reliability curve (POST-HOC panel)")
+    axL.set_xlabel("mean predicted P(y=1)"); axL.set_ylabel("observed rate")
+    axL.legend(fontsize=8)
+
+    scopes = ("answered", "declined", "all")
+    margins = [panel["skill"][s]["skill_margin"] for s in scopes]
+    axR.bar(scopes, [np.nan if m is None else m for m in margins],
+            color="#66ccee")
+    axR.axhline(0.0, color="black", lw=1)
+    axR.set_title("E6 skill margin vs constant-majority baseline")
+    axR.set_ylabel("constant error - model error")
+    fig.tight_layout(); fig.savefig(os.path.join(out, "E6_reliability.png"),
+                                    dpi=rp.FIG_DPI); plt.close(fig)
 
 
 def tau_and_alpha(op):
@@ -1115,7 +1187,8 @@ def _headline(name, res):
                 f"declined={res['n_declined']} top_gap_feat={res['top_gap_feature']}")
     if name == "E6":
         return (f"tau*={res['tau_star']} "
-                f"pred_pos_frac={res['predicted_positive_fraction']}")
+                f"pred_pos_frac={res['predicted_positive_fraction']} "
+                f"skill_margin={res['panel_skill_margin_answered_minus_all']}")
     if name == "E7":
         a = res["arms"][E7_SU_ARM[0]]
         return (f"a=0.05 record certify={a[0.05]['record']['certify_rate']} "

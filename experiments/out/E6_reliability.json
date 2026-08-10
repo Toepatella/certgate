@@ -1,0 +1,522 @@
+{
+  "post_hoc": "[MEASURE] POST-HOC (2026-08-01): added after the E1-E7 grid was published. Descriptive only -- it alters no certified quantity and no number in E1-E7 moves because of it (the panel self-seeds from a digest of its own inputs and consumes no _rng(6) draw).",
+  "schema_version": "srp/1",
+  "generated_utc": null,
+  "input_digest": "b6b641c8cfde262ad7bbeec1af8dabcc7076c69c0f3e2f69f8099a37c100cd29",
+  "settings": {
+    "seed": 20260731,
+    "decision_threshold": 0.5,
+    "bin_edges": [
+      0.0,
+      0.02,
+      0.05,
+      0.1,
+      0.2,
+      0.35,
+      0.55,
+      1.01
+    ],
+    "n_bins": 7,
+    "n_boot": 2000,
+    "boot_max_attempts": 4000,
+    "ci_level": 0.95,
+    "ci_convention": "two-sided percentile: np.quantile(draws, [0.025, 0.975], method='linear')",
+    "bootstrap_unit": "site",
+    "min_sites_for_ci": 10,
+    "weighting": "record-weighted ratio-of-sums over resampled sites (no influence cap)",
+    "logit_eps": 1e-06,
+    "irls": {
+      "max_iter": 100,
+      "tol": 1e-08,
+      "max_abs_coef": 30.0,
+      "min_weight": 1e-10,
+      "min_records": 20
+    },
+    "round_dp": 6
+  },
+  "counts": {
+    "n_records": 25682,
+    "n_sites": 40,
+    "n_answered": 25314,
+    "n_declined": 368,
+    "coverage": 0.985671,
+    "n_sites_answered": 40,
+    "n_sites_declined": 38,
+    "n_positive_all": 2486,
+    "reference_supplied": false
+  },
+  "reliability": {
+    "answered": [
+      {
+        "index": 0,
+        "lo": 0.0,
+        "hi": 0.02,
+        "n": 14520,
+        "n_sites_carrying": 40,
+        "mean_predicted": 0.005369,
+        "observed": 0.004339,
+        "ci": {
+          "lo": 0.00337,
+          "hi": 0.005612
+        },
+        "ci_status": "ok",
+        "n_boot_valid": 2000,
+        "n_attempts": 2000
+      },
+      {
+        "index": 1,
+        "lo": 0.02,
+        "hi": 0.05,
+        "n": 3574,
+        "n_sites_carrying": 40,
+        "mean_predicted": 0.032007,
+        "observed": 0.032457,
+        "ci": {
+          "lo": 0.026972,
+          "hi": 0.039984
+        },
+        "ci_status": "ok",
+        "n_boot_valid": 2000,
+        "n_attempts": 2000
+      },
+      {
+        "index": 2,
+        "lo": 0.05,
+        "hi": 0.1,
+        "n": 2208,
+        "n_sites_carrying": 40,
+        "mean_predicted": 0.072044,
+        "observed": 0.075634,
+        "ci": {
+          "lo": 0.061987,
+          "hi": 0.095425
+        },
+        "ci_status": "ok",
+        "n_boot_valid": 2000,
+        "n_attempts": 2000
+      },
+      {
+        "index": 3,
+        "lo": 0.1,
+        "hi": 0.2,
+        "n": 1795,
+        "n_sites_carrying": 40,
+        "mean_predicted": 0.142199,
+        "observed": 0.129248,
+        "ci": {
+          "lo": 0.109787,
+          "hi": 0.150733
+        },
+        "ci_status": "ok",
+        "n_boot_valid": 2000,
+        "n_attempts": 2000
+      },
+      {
+        "index": 4,
+        "lo": 0.2,
+        "hi": 0.35,
+        "n": 1172,
+        "n_sites_carrying": 39,
+        "mean_predicted": 0.265459,
+        "observed": 0.263652,
+        "ci": {
+          "lo": 0.227317,
+          "hi": 0.304709
+        },
+        "ci_status": "ok",
+        "n_boot_valid": 2000,
+        "n_attempts": 2000
+      },
+      {
+        "index": 5,
+        "lo": 0.35,
+        "hi": 0.55,
+        "n": 449,
+        "n_sites_carrying": 38,
+        "mean_predicted": 0.399859,
+        "observed": 0.391982,
+        "ci": {
+          "lo": 0.330637,
+          "hi": 0.460675
+        },
+        "ci_status": "ok",
+        "n_boot_valid": 2000,
+        "n_attempts": 2000
+      },
+      {
+        "index": 6,
+        "lo": 0.55,
+        "hi": 1.0,
+        "n": 1596,
+        "n_sites_carrying": 40,
+        "mean_predicted": 0.79785,
+        "observed": 0.785088,
+        "ci": {
+          "lo": 0.748625,
+          "hi": 0.822145
+        },
+        "ci_status": "ok",
+        "n_boot_valid": 2000,
+        "n_attempts": 2000
+      }
+    ],
+    "declined": [
+      {
+        "index": 0,
+        "lo": 0.0,
+        "hi": 0.02,
+        "n": 0,
+        "n_sites_carrying": 0,
+        "mean_predicted": null,
+        "observed": null,
+        "ci": null,
+        "ci_status": "empty-bin",
+        "n_boot_valid": 0,
+        "n_attempts": 0
+      },
+      {
+        "index": 1,
+        "lo": 0.02,
+        "hi": 0.05,
+        "n": 0,
+        "n_sites_carrying": 0,
+        "mean_predicted": null,
+        "observed": null,
+        "ci": null,
+        "ci_status": "empty-bin",
+        "n_boot_valid": 0,
+        "n_attempts": 0
+      },
+      {
+        "index": 2,
+        "lo": 0.05,
+        "hi": 0.1,
+        "n": 0,
+        "n_sites_carrying": 0,
+        "mean_predicted": null,
+        "observed": null,
+        "ci": null,
+        "ci_status": "empty-bin",
+        "n_boot_valid": 0,
+        "n_attempts": 0
+      },
+      {
+        "index": 3,
+        "lo": 0.1,
+        "hi": 0.2,
+        "n": 0,
+        "n_sites_carrying": 0,
+        "mean_predicted": null,
+        "observed": null,
+        "ci": null,
+        "ci_status": "empty-bin",
+        "n_boot_valid": 0,
+        "n_attempts": 0
+      },
+      {
+        "index": 4,
+        "lo": 0.2,
+        "hi": 0.35,
+        "n": 0,
+        "n_sites_carrying": 0,
+        "mean_predicted": null,
+        "observed": null,
+        "ci": null,
+        "ci_status": "empty-bin",
+        "n_boot_valid": 0,
+        "n_attempts": 0
+      },
+      {
+        "index": 5,
+        "lo": 0.35,
+        "hi": 0.55,
+        "n": 368,
+        "n_sites_carrying": 38,
+        "mean_predicted": 0.495739,
+        "observed": 0.461957,
+        "ci": {
+          "lo": 0.403702,
+          "hi": 0.524121
+        },
+        "ci_status": "ok",
+        "n_boot_valid": 2000,
+        "n_attempts": 2000
+      },
+      {
+        "index": 6,
+        "lo": 0.55,
+        "hi": 1.0,
+        "n": 0,
+        "n_sites_carrying": 0,
+        "mean_predicted": null,
+        "observed": null,
+        "ci": null,
+        "ci_status": "empty-bin",
+        "n_boot_valid": 0,
+        "n_attempts": 0
+      }
+    ]
+  },
+  "calibration": {
+    "answered": {
+      "slope": 0.996989,
+      "intercept": -0.053626,
+      "status": "ok",
+      "iterations": 8,
+      "n": 25314,
+      "n_positive": 2316,
+      "n_sites_carrying": 40,
+      "ci": {
+        "slope": {
+          "lo": 0.955975,
+          "hi": 1.031266
+        },
+        "intercept": {
+          "lo": -0.225766,
+          "hi": 0.127449
+        }
+      },
+      "ci_status": "ok",
+      "n_boot_valid": 2000,
+      "n_attempts": 2000
+    },
+    "declined": {
+      "slope": 1.248636,
+      "intercept": -0.131929,
+      "status": "ok",
+      "iterations": 4,
+      "n": 368,
+      "n_positive": 170,
+      "n_sites_carrying": 38,
+      "ci": {
+        "slope": {
+          "lo": -0.299674,
+          "hi": 2.834305
+        },
+        "intercept": {
+          "lo": -0.372193,
+          "hi": 0.085449
+        }
+      },
+      "ci_status": "ok",
+      "n_boot_valid": 2000,
+      "n_attempts": 2000
+    }
+  },
+  "ece": {
+    "answered": {
+      "ece": 0.002914,
+      "n": 25314,
+      "n_bins_nonempty": 7,
+      "n_sites_carrying": 40,
+      "ci": {
+        "lo": 0.00206,
+        "hi": 0.008605
+      },
+      "ci_status": "ok",
+      "n_boot_valid": 2000,
+      "n_attempts": 2000
+    },
+    "declined": {
+      "ece": 0.033783,
+      "n": 368,
+      "n_bins_nonempty": 1,
+      "n_sites_carrying": 38,
+      "ci": {
+        "lo": 0.001876,
+        "hi": 0.092131
+      },
+      "ci_status": "ok",
+      "n_boot_valid": 2000,
+      "n_attempts": 2000
+    }
+  },
+  "brier": {
+    "primary_answered": {
+      "value": 0.043402,
+      "n": 25314,
+      "n_sites_carrying": 40,
+      "ci": {
+        "lo": 0.040259,
+        "hi": 0.047827
+      },
+      "ci_status": "ok",
+      "n_boot_valid": 2000,
+      "n_attempts": 2000
+    },
+    "reference": null
+  },
+  "skill": {
+    "answered": {
+      "n": 25314,
+      "n_sites_carrying": 40,
+      "n_positive": 2316,
+      "positive_rate": 0.091491,
+      "model_error_rate": 0.055542,
+      "constant_predictor_class": false,
+      "constant_predictor_error_rate": 0.091491,
+      "skill_margin": 0.035948,
+      "ci": {
+        "model_error_rate": {
+          "lo": 0.051135,
+          "hi": 0.061782
+        },
+        "constant_predictor_error_rate": {
+          "lo": 0.080911,
+          "hi": 0.10493
+        },
+        "skill_margin": {
+          "lo": 0.028967,
+          "hi": 0.044389
+        }
+      },
+      "ci_status": "ok",
+      "n_boot_valid": 2000,
+      "n_attempts": 2000
+    },
+    "declined": {
+      "n": 368,
+      "n_sites_carrying": 38,
+      "n_positive": 170,
+      "positive_rate": 0.461957,
+      "model_error_rate": 0.440217,
+      "constant_predictor_class": false,
+      "constant_predictor_error_rate": 0.461957,
+      "skill_margin": 0.021739,
+      "ci": {
+        "model_error_rate": {
+          "lo": 0.388536,
+          "hi": 0.49167
+        },
+        "constant_predictor_error_rate": {
+          "lo": 0.400468,
+          "hi": 0.498171
+        },
+        "skill_margin": {
+          "lo": -0.040632,
+          "hi": 0.072776
+        }
+      },
+      "ci_status": "ok",
+      "n_boot_valid": 2000,
+      "n_attempts": 2000
+    },
+    "all": {
+      "n": 25682,
+      "n_sites_carrying": 40,
+      "n_positive": 2486,
+      "positive_rate": 0.096799,
+      "model_error_rate": 0.061054,
+      "constant_predictor_class": false,
+      "constant_predictor_error_rate": 0.096799,
+      "skill_margin": 0.035745,
+      "ci": {
+        "model_error_rate": {
+          "lo": 0.056707,
+          "hi": 0.067555
+        },
+        "constant_predictor_error_rate": {
+          "lo": 0.08621,
+          "hi": 0.110897
+        },
+        "skill_margin": {
+          "lo": 0.028238,
+          "hi": 0.044718
+        }
+      },
+      "ci_status": "ok",
+      "n_boot_valid": 2000,
+      "n_attempts": 2000
+    },
+    "contrast": {
+      "answered_minus_all": 0.000204,
+      "answered_minus_declined": 0.014209,
+      "ci": {
+        "answered_minus_all": {
+          "lo": -0.000723,
+          "hi": 0.001144
+        },
+        "answered_minus_declined": {
+          "lo": -0.038565,
+          "hi": 0.078234
+        }
+      },
+      "ci_status": "ok",
+      "n_boot_valid": 2000,
+      "n_attempts": 2000
+    }
+  },
+  "composition": {
+    "answered": {
+      "n": 25314,
+      "n_sites_carrying": 40,
+      "n_predicted_positive": 1596,
+      "predicted_positive_fraction": 0.063048,
+      "n_observed_positive": 2316,
+      "observed_positive_fraction": 0.091491,
+      "ci": {
+        "predicted_positive_fraction": {
+          "lo": 0.057349,
+          "hi": 0.070709
+        },
+        "observed_positive_fraction": {
+          "lo": 0.080598,
+          "hi": 0.105113
+        }
+      },
+      "ci_status": "ok",
+      "n_boot_valid": 2000,
+      "n_attempts": 2000
+    },
+    "declined": {
+      "n": 368,
+      "n_sites_carrying": 38,
+      "n_predicted_positive": 156,
+      "predicted_positive_fraction": 0.423913,
+      "n_observed_positive": 170,
+      "observed_positive_fraction": 0.461957,
+      "ci": {
+        "predicted_positive_fraction": {
+          "lo": 0.376643,
+          "hi": 0.475243
+        },
+        "observed_positive_fraction": {
+          "lo": 0.398458,
+          "hi": 0.520801
+        }
+      },
+      "ci_status": "ok",
+      "n_boot_valid": 2000,
+      "n_attempts": 2000
+    },
+    "all": {
+      "n": 25682,
+      "n_sites_carrying": 40,
+      "n_predicted_positive": 1752,
+      "predicted_positive_fraction": 0.068219,
+      "n_observed_positive": 2486,
+      "observed_positive_fraction": 0.096799,
+      "ci": {
+        "predicted_positive_fraction": {
+          "lo": 0.061842,
+          "hi": 0.076211
+        },
+        "observed_positive_fraction": {
+          "lo": 0.085616,
+          "hi": 0.111173
+        }
+      },
+      "ci_status": "ok",
+      "n_boot_valid": 2000,
+      "n_attempts": 2000
+    }
+  },
+  "notes": [
+    "Estimand: every reported quantity is a record-weighted ratio of sums over the fixed site population; a large site contributes proportionally more than a small one.",
+    "Every interval is a MARGINAL two-sided percentile interval from an independent one-stage site resample. There is no joint-coverage claim: do not difference two interval endpoints -- differences that matter are computed as their own statistic inside a shared resample (skill.contrast, brier.reference.brier_difference).",
+    "The expected calibration error is a plug-in estimate on fixed a-priori bins. It is positively biased and the bias grows as per-bin counts shrink; a percentile interval does not correct bias, so the interval covers the biased plug-in estimand, not true calibration error.",
+    "The answered and declined subsets are selected by the caller's gate, so each is an average over a site population whose composition differs from the full record set. Compare skill.answered against skill.all before reading a low answered error rate as scorer accuracy.",
+    "The reference-scorer Brier is computed on the answered records that carry a finite reference probability. Compare it ONLY against brier_primary_matched, which uses the identical denominator, never against brier.primary_answered.",
+    "A null statistic means undefined or suppressed, never zero. A null interval carries its reason in the adjacent ci_status field."
+  ]
+}

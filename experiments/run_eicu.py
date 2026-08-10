@@ -68,6 +68,7 @@ from certgate.harness import hard_violation
 from certgate.pipeline import run_certgate
 from certgate.report import render_text, provenance
 from certgate.explain import cohort_abstention_profile
+from certgate import reliability as rp
 from experiments import eicu_etl as etl
 from experiments.run_synthetic import (_rm_on_pool, _per_site_exceed_frac,
                                        _write_csv, _rate)
@@ -82,8 +83,15 @@ EICU_MAX_OUTPUT_LEN = 512        # > 208 sites, < any record-level array
 EICU_FORBIDDEN_OUT_KEYS = ("stay_id", "patient_id", "admission_id", "site_raw",
                            "y_raw", "answered_mask", "x", "site_id",
                            "comparator_predicted_mortality", "split_idx")
+# "EICU-RELIABILITY" is APPENDED LAST, never inserted: the post-hoc panel
+# (2026-08-01) must not move any section written before it, so every
+# EICU-SUMMARY.md already on disk -- experiments/out/ and out-sens/ included --
+# still parses and preserves. `_write_summary` emits ONLY the names in this
+# tuple (`else: continue`), so a block added to `_certification_blocks` without
+# this edit is silently dropped with no error.
 EICU_SUMMARY_SECTIONS = ("EICU-PREFLIGHT", "EICU-PREDICTIONS",
-                         "EICU-POOLED", "EICU-PERSITE", "EICU-COMPARATOR")
+                         "EICU-POOLED", "EICU-PERSITE", "EICU-COMPARATOR",
+                         "EICU-RELIABILITY")
 
 # Executable forms of the pre-declared failure criteria (EICU-PROTOCOL section
 # 10). They are literals HERE rather than prose in a paper so that a run
@@ -199,10 +207,32 @@ def _json_ready(obj):
     return obj
 
 
-def _write_json(path, payload, where):
-    """Gate then write one JSON artifact (indent=2, deterministic key order)."""
+def _write_json(path, payload, where, *, per_item_keys=()):
+    """Gate then write one JSON artifact (indent=2, deterministic key order).
+
+    ``per_item_keys`` names top-level keys whose value is a LIST OF AGGREGATE
+    ITEMS -- one per replicate, say. Those lists are gated ITEM BY ITEM instead
+    of as one sequence, for exactly the reason ``assert_aggregate_only``'s own
+    docstring gives for CSV rows: the NUMBER of items is itself an aggregate
+    quantity, while any single item carrying 512+ values is record-level by
+    construction. The key is still present in the gated envelope (under a
+    placeholder), so it is still checked against ``EICU_FORBIDDEN_OUT_KEYS`` --
+    only the length cap is relaxed, and only for the named keys.
+    """
     ready = _json_ready(payload)
-    assert_aggregate_only(ready, where)
+    if per_item_keys and isinstance(ready, dict):
+        envelope = {
+            k: (f"<{len(v)} items gated individually>"
+                if k in per_item_keys and isinstance(v, list) else v)
+            for k, v in ready.items()}
+        assert_aggregate_only(envelope, where)
+        for key in per_item_keys:
+            items = ready.get(key)
+            if isinstance(items, list):
+                for i, item in enumerate(items):
+                    assert_aggregate_only(item, f"{where}.{key}[{i}]")
+    else:
+        assert_aggregate_only(ready, where)
     with open(path, "w", encoding="utf-8") as fh:
         json.dump(ready, fh, indent=2)
         fh.write("\n")
@@ -974,8 +1004,94 @@ def _failure_criteria(pooled_rows, site_counts, n_replicates):
     }
 
 
-def _figures(out, pooled_rows, per_site_rows, verbose):
-    """Two figures, matplotlib Agg, house palette, no seaborn (SPEC Experiments)."""
+def _reliability_figure(out, panel_payloads, verbose):
+    """The POST-HOC panel figure. The TITLE carries the label: a real-extract
+    figure must carry it on its FACE, not only in the JSON beside it.
+
+    The empty-bin / ci_status / clamped-half-width rules are NOT restated here:
+    they live once in ``rp.panel_reliability_series`` and
+    ``rp.panel_ci_halfwidths``, which run_synthetic's E6 figure reads too. That
+    matters beyond tidiness -- an unclamped half-width makes matplotlib RAISE,
+    and this function runs inside ``run_certification`` before the summary is
+    written, so a descriptive figure would take a 20-replicate certified run
+    down with it."""
+    if not panel_payloads:
+        return
+    fig, (axL, axR) = plt.subplots(1, 2, figsize=(12, 4))
+    # The joined curve is the LOWEST-numbered replicate present, named on the
+    # axis title -- under RP-8 replicate 0's panel can be skipped, and a
+    # hard-coded "replicate 0" label would then claim another replicate's
+    # curve.
+    base = min(panel_payloads, key=lambda p: p["replicate"])
+    axL.plot([0.0, 1.0], [0.0, 1.0], "k--", lw=1, label="identity")
+    for scope, colour in zip(rp.PANEL_CURVE_SCOPES,
+                             (EICU_PALETTE[0], EICU_PALETTE[1])):
+        labelled = False
+        for payload in panel_payloads:
+            xs, ys, _lo, _hi = rp.panel_reliability_series(payload, scope)
+            if not xs:
+                continue
+            # The legend entry goes to the FIRST payload that actually PLOTS
+            # this scope, not to `base`. Under RP-8 `base` is merely whichever
+            # replicate survived; if it answered nothing (every answered bin
+            # empty -- a shape the runner really produces when no rung
+            # certifies) a `base`-only label left the scope on the figure as
+            # unlabelled scattered dots with no key at all. label=None is
+            # matplotlib's own "omit from the legend".
+            label = None if labelled else scope
+            labelled = True
+            if payload is base:
+                axL.plot(xs, ys, "o-", color=colour, label=label)
+            else:
+                axL.plot(xs, ys, ".", color=colour, alpha=0.4, ms=5,
+                         label=label)
+    axL.set_title(f"reliability curve (replicate {base['replicate']} joined; "
+                  f"others scattered)")
+    axL.set_xlabel("mean predicted P(death)")
+    axL.set_ylabel("observed positive rate")
+    axL.legend(fontsize=8)
+
+    labels, values, los, his = [], [], [], []
+    for payload in panel_payloads:
+        ref = (payload["brier"] or {}).get("reference")
+        if ref is None or ref.get("brier_difference") is None:
+            continue
+        labels.append(str(payload["replicate"]))
+        values.append(float(ref["brier_difference"]))
+        # CLAMPED via the shared helper: brier_difference is a paired
+        # ratio-of-sums over 24 sites and its percentile interval is not
+        # required to straddle the full-sample point estimate. A raw
+        # subtraction goes negative there and matplotlib raises rather than
+        # warns, which would abort this run before EICU-SUMMARY.md is written.
+        d_lo, d_hi = rp.panel_ci_halfwidths(
+            values[-1], (ref.get("ci") or {}).get("brier_difference"),
+            ref.get("ci_status"))
+        los.append(d_lo)
+        his.append(d_hi)
+    if values:
+        axR.errorbar(labels, values, yerr=[los, his], fmt="o",
+                     color=EICU_PALETTE[5], capsize=3)
+        axR.axhline(0.0, color="black", lw=1)
+    else:
+        axR.text(0.5, 0.5, "no reference-matched Brier", ha="center",
+                 va="center", color="dimgray", transform=axR.transAxes)
+    axR.set_title("paired Brier difference, APACHE-IVa minus head\n"
+                  "(denominator-matched, answered set)", fontsize=10)
+    axR.set_xlabel("replicate")
+    axR.set_ylabel("brier_difference")
+    fig.suptitle("POST-HOC (2026-08-01) selective reliability panel -- "
+                 "descriptive; certifies nothing", fontsize=10)
+    fig.tight_layout()
+    fig.savefig(os.path.join(out,
+                             f"{EICU_OUT_PREFIX}_reliability_panel.png"),
+                dpi=rp.FIG_DPI)
+    plt.close(fig)
+    _say(verbose, f"wrote {EICU_OUT_PREFIX}_reliability_panel.png")
+
+
+def _figures(out, pooled_rows, per_site_rows, panel_payloads, verbose):
+    """Three figures, matplotlib Agg, house palette, no seaborn (SPEC
+    Experiments). The third is the POST-HOC panel figure."""
     alphas = list(ALPHA_LADDER)
     fig, ax = plt.subplots(1, 3, figsize=(16, 4))
     cert_rate, mean_cov = [], []
@@ -1057,6 +1173,7 @@ def _figures(out, pooled_rows, per_site_rows, verbose):
     plt.close(fig)
     _say(verbose, f"wrote {EICU_OUT_PREFIX}_pooled.png and "
                   f"{EICU_OUT_PREFIX}_per_site.png")
+    _reliability_figure(out, panel_payloads, verbose)
 
 
 def _pooled_summary(pooled_rows, *, arm, replicates, n_records, n_sites,
@@ -1192,13 +1309,213 @@ def _comparator_summary(comparator_rows, *, arm):
     return out
 
 
+def _panel_ci_statuses(node, sink):
+    """Collect every ``ci_status`` emitted anywhere in a panel payload.
+
+    A ``degenerate-resamples`` or ``truncated-resamples`` event is invisible in
+    a headline scalar -- the value is still there, only its interval is gone --
+    so the summary counts the whole vocabulary rather than reporting the point
+    estimates alone.
+    """
+    stack = [node]
+    while stack:
+        item = stack.pop()
+        if isinstance(item, dict):
+            status = item.get("ci_status")
+            if isinstance(status, str):
+                sink[status] = sink.get(status, 0) + 1
+            stack.extend(item.values())
+        elif isinstance(item, (list, tuple)):
+            stack.extend(item)
+
+
+def _reliability_summary(panel_payloads, *, arm, replicates, pooled_rows):
+    """The EICU-RELIABILITY payload: the POST-HOC panel, rolled up.
+
+    DESCRIPTIVE. Nothing here is certified, nothing here settles a frozen
+    prediction, and the block leads with ``rp.POST_HOC_LABEL`` because a
+    separate summary section inherits no label from the run warnings.
+
+    Distributions across replicates go through ``_summary_stats`` (median is
+    ``p50``); an undefined statistic is ``None``, NEVER ``0.0``.
+
+    ``consistency`` is REPORTED, not raised: the panel's
+    ``DECISION_THRESHOLD = 0.5`` coincides with ``Head.predict``'s rule, so
+    ``skill.answered.model_error_rate`` and the pooled row's
+    ``answered_err_rate`` at the operative rung are the SAME quantity. They are
+    not the same NUMBER, because they are rounded differently -- ``_rate`` gives
+    the pooled row 4 dp while the emit pass gives the panel 6 -- so a gap up to
+    5e-05 is arithmetic, not a finding. (Measured on the real extract,
+    2026-08-01: 1.5e-05, from 0.041885 against a pooled 0.0419.) A gap
+    materially above that is a lead to chase, still never a crash mid-run.
+    """
+    out = {
+        "post_hoc": rp.POST_HOC_LABEL,
+        "arm": arm,
+        "replicates": int(replicates),
+        "n_panels": len(panel_payloads),
+        "scope": ("pooled target arm only (K = "
+                  f"{etl.EICU_N_TARGET_SITES} hospitals >= "
+                  f"MIN_SITES_FOR_CI = {rp.MIN_SITES_FOR_CI}); the "
+                  "per-hospital arm is K = 1, where every interval would be "
+                  "floor-suppressed at 24x the cost"),
+        "settings": {"schema_version": rp.SCHEMA_VERSION,
+                     "seed": rp.PANEL_SEED,
+                     "n_boot": rp.N_BOOT,
+                     "ci_level": rp.CI_LEVEL,
+                     "bin_edges": list(rp.DEFAULT_BIN_EDGES),
+                     "decision_threshold": rp.DECISION_THRESHOLD,
+                     "bootstrap_unit": "site"},
+        "brier_difference_note": (
+            "brier.reference.brier_difference is a SINGLE paired statistic "
+            "from ONE resample stream (reference minus primary on the "
+            "IDENTICAL availability mask). It must never be reconstructed by "
+            "differencing brier.primary_answered, whose denominator is the "
+            "wider answered set (panel notes[4])."),
+        "skill_margin_note": (
+            "skill_margin = constant-majority baseline error rate MINUS model "
+            "error rate. At single-digit prevalence a low answered error rate "
+            "is also what a constant always-negative rule achieves, so the "
+            "margin -- not the error rate -- is what says whether the gate "
+            "earned its answered set or merely selected an easy one."),
+        # RP-9: the panel's own disclosures travel INSIDE each payload of
+        # EICU_reliability_panel.json, one copy per replicate. EICU-SUMMARY.md
+        # is the human-facing artifact and a reader of it would otherwise see
+        # the numbers without the estimand text that governs them -- notes[1]
+        # (marginal intervals, never difference two endpoints) most of all,
+        # since this block prints brier_reference, brier_primary_matched and
+        # brier_difference side by side.
+        "notes": list(rp.NOTES),
+        # The replicates are RE-SPLITS of one hospital population on one
+        # extract, so the _summary_stats spread below is split-to-split
+        # variation, NOT sampling uncertainty. _failure_criteria states the same
+        # non-independence for F-A; stating it in one place and not the other
+        # would let a p10-p90 band beside the panel's own bootstrap intervals
+        # read as a second uncertainty quantification.
+        "replicate_spread_note": (
+            "sd / p10 / p50 / p90 below are taken ACROSS REPLICATES, which are "
+            "re-splits of ONE hospital population on ONE extract and are "
+            "therefore NOT independent draws. That spread is split-to-split "
+            "variation, not sampling uncertainty. The cluster-bootstrap `ci` "
+            "fields are the only intervals here with a coverage claim."),
+    }
+    if not panel_payloads:
+        # TWO paths reach n_panels == 0 and the count alone does not separate
+        # them, so the note must name both. The old wording claimed "the pooled
+        # arm ran zero replicates" unconditionally -- FALSE whenever replicates
+        # ran and every panel was SKIPPED under RP-8, which is the case this
+        # branch will actually meet on a real extract (run_certification refuses
+        # replicates < 1 with reason=bad-replicates, so the zero-replicate half
+        # is reachable only by calling this helper directly).
+        out["note"] = (
+            f"no panel was produced (replicates = {int(replicates)}). With "
+            "replicates >= 1 this means EVERY replicate's panel was SKIPPED "
+            "under RP-8 -- a DESCRIPTIVE layer may never abort the certified "
+            "run, so a PanelError is swallowed, recorded and that replicate's "
+            "panel dropped; the reason for each is in the run warnings "
+            "(EICU_diagnostics.json and the EICU-POOLED block) tagged "
+            "'[MEASURE] RP-8', and on stderr. The other way to land here is an "
+            "arm that ran no replicates at all, reachable only by calling this "
+            "helper directly (run_certification refuses replicates < 1 with "
+            "reason=bad-replicates). No certified quantity is affected either "
+            "way.")
+        return out
+
+    heads = [rp.panel_headline(p) for p in panel_payloads]
+    refs = [(p["brier"] or {}).get("reference") for p in panel_payloads]
+
+    def _pick(seq, key):
+        return [None if d is None else d.get(key) for d in seq]
+
+    out["n_sites"] = _summary_stats([p["counts"]["n_sites"]
+                                     for p in panel_payloads])
+    out["coverage"] = _summary_stats(_pick(heads, "coverage"))
+    out["ece_answered"] = _summary_stats(_pick(heads, "ece_answered"))
+    out["ece_declined"] = _summary_stats(_pick(heads, "ece_declined"))
+    out["calibration_slope_answered"] = _summary_stats(
+        _pick(heads, "calibration_slope_answered"))
+    status_counts = {}
+    for h in heads:
+        s = h["calibration_status_answered"]
+        status_counts[s] = status_counts.get(s, 0) + 1
+    out["calibration_status_answered_counts"] = status_counts
+    out["fit_statuses"] = list(rp.FIT_STATUSES)
+    out["brier_answered"] = _summary_stats(_pick(heads, "brier_answered"))
+    out["brier_reference"] = _summary_stats(_pick(refs, "brier_reference"))
+    out["brier_primary_matched"] = _summary_stats(
+        _pick(refs, "brier_primary_matched"))
+    out["brier_difference"] = _summary_stats(_pick(refs, "brier_difference"))
+    out["brier_available_share"] = _summary_stats(
+        _pick(refs, "available_share"))
+    # NAMED FOR WHAT IT HOLDS: the WHOLE three-name interval dict from the
+    # shared reference stream (brier_reference, brier_primary_matched AND
+    # brier_difference). Calling it `brier_difference_ci_...` invited a reader
+    # to take the first nested interval it landed on for the paired-difference
+    # interval -- the exact confusion notes[4] and brier_difference_note exist
+    # to prevent. The paired interval is the `brier_difference` member inside.
+    # Keyed by the payload's OWN replicate field, never by position: under
+    # RP-8 a skipped replicate-0 panel drops out of panel_payloads, and
+    # refs[0] would then publish ANOTHER replicate's interval under this name.
+    ref0 = next((ref for p, ref in zip(panel_payloads, refs)
+                 if p["replicate"] == 0), None)
+    out["brier_reference_ci_replicate0"] = (
+        None if ref0 is None else ref0.get("ci"))
+    out["skill_margin_answered"] = _summary_stats(
+        _pick(heads, "skill_margin_answered"))
+    out["skill_margin_all"] = _summary_stats(
+        [p["skill"]["all"]["skill_margin"] for p in panel_payloads])
+    out["skill_contrast_answered_minus_all"] = _summary_stats(
+        _pick(heads, "skill_margin_answered_minus_all"))
+    out["skill_contrast_answered_minus_declined"] = _summary_stats(
+        [p["skill"]["contrast"]["answered_minus_declined"]
+         for p in panel_payloads])
+
+    ci_status_counts = {}
+    for p in panel_payloads:
+        for key in ("reliability", "calibration", "ece", "brier", "skill",
+                    "composition"):
+            _panel_ci_statuses(p.get(key), ci_status_counts)
+    out["ci_status_counts"] = ci_status_counts
+    out["ci_statuses"] = list(rp.CI_STATUSES)
+
+    gaps = []
+    for p in panel_payloads:
+        alpha = p.get("operative_alpha")
+        if alpha is None:
+            continue
+        panel_err = p["skill"]["answered"]["model_error_rate"]
+        for row in pooled_rows:
+            if (row["replicate"] == p["replicate"] and row["alpha"] == alpha
+                    and row["answered_err_rate"] is not None
+                    and panel_err is not None):
+                gaps.append(abs(float(panel_err)
+                                - float(row["answered_err_rate"])))
+    out["consistency"] = {
+        "max_abs_gap_panel_vs_pooled_answered_err": (
+            round(max(gaps), 6) if gaps else None),
+        "n_compared": len(gaps),
+        "note": ("panel skill.answered.model_error_rate vs the pooled row's "
+                 "answered_err_rate at the OPERATIVE rung. The panel's "
+                 "DECISION_THRESHOLD = 0.5 is Head.predict's own rule, so the "
+                 "two are the SAME quantity and the gap is pure rounding: the "
+                 "pooled row goes through _rate (4 dp) and the panel through "
+                 "the emit pass (6 dp), so anything up to 5e-05 is expected "
+                 "and is NOT a finding. A gap materially above that means the "
+                 "two are no longer measuring the same thing. REPORTED, never "
+                 "raised -- on real data this is a lead to chase, not a crash "
+                 "mid-run.")}
+    return out
+
+
 def _certification_blocks(payload):
-    """Derive the EICU-POOLED / EICU-PERSITE / EICU-COMPARATOR sections."""
+    """Derive the EICU-POOLED / EICU-PERSITE / EICU-COMPARATOR / the POST-HOC
+    EICU-RELIABILITY sections."""
     if not payload:
         return {}
     return {"EICU-POOLED": payload.get("pooled"),
             "EICU-PERSITE": payload.get("per_site"),
-            "EICU-COMPARATOR": payload.get("comparator")}
+            "EICU-COMPARATOR": payload.get("comparator"),
+            "EICU-RELIABILITY": payload.get("reliability")}
 
 
 def run_certification(data_dir, out, *, arm="primary", replicates=1,
@@ -1225,6 +1542,11 @@ def run_certification(data_dir, out, *, arm="primary", replicates=1,
       7. oracle scoring: ``_rm_on_pool`` + ``_per_site_exceed_frac`` +
          ``hard_violation`` at the deployed tau against the held-out pool
       8. APACHE-IVa comparator on the answered set (aggregate rates only)
+      9. POST-HOC selective reliability panel on the POOLED arm only
+         (``rp.panel_from_head``, so the caller never constructs ``p``).
+         DESCRIPTIVE: it alters no certified quantity, settles no frozen
+         prediction, and every artifact it writes carries
+         ``rp.POST_HOC_LABEL``.
 
     ``quick=True`` caps replicates at 2 and skips figures. Returns the summary
     payload; every artifact it writes has passed ``assert_aggregate_only``.
@@ -1318,6 +1640,14 @@ def run_certification(data_dir, out, *, arm="primary", replicates=1,
     pooled_rows, per_site_rows, comparator_rows = [], [], []
     composition_rows, bbse_rows, abstention = [], [], {}
     leak_rows = []
+    # POST-HOC selective reliability panel (2026-08-01), pooled arm only. The
+    # label is a hand-appended string and a separate JSON file inherits
+    # nothing, so it is carried in FIVE places: here (-> diagnostics["warnings"]
+    # and the EICU-POOLED block), the top of EICU_reliability_panel.json, the
+    # EICU-RELIABILITY summary block, the face of the figure, and a leading
+    # post_hoc column on every EICU_reliability.csv row.
+    panel_payloads, panel_curve_rows = [], []
+    warnings.append(rp.POST_HOC_LABEL)
     certificate = None
     impute_fill = {}
     sites_without_strata = set()          # DISTINCT sites, not site x replicate
@@ -1407,6 +1737,63 @@ def run_certification(data_dir, out, *, arm="primary", replicates=1,
                                                comparator[t_idx], r)
             crow["_certgate_err_on_apache_subset"] = subset_err
             comparator_rows.append(crow)
+
+        # ---- POST-HOC reliability panel, POOLED ARM ONLY -------------------
+        # K = 24 >= rp.MIN_SITES_FOR_CI = 10; the per-hospital arm is K = 1,
+        # where every interval would be floor-suppressed at 24x the cost. One
+        # panel per REPLICATE, not per rung, so it sits after the alpha loop.
+        # DESCRIPTIVE: it alters no certified quantity, touches no frozen
+        # prediction, and every number it produces carries rp.POST_HOC_LABEL.
+        #
+        # Three input decisions, each closing a named trap:
+        #   * `p` is NEVER constructed here. panel_from_head computes
+        #     head.predict_proba(x) itself (the BINNED quantity) and
+        #     head.score(x) >= tau (the GATE); feeding `score` as `p` would
+        #     pass validation silently and produce a meaningless panel.
+        #   * the mask is the one the operative rung actually DEPLOYED, and the
+        #     tau passed for the cross-check is the RAW op["tau"] -- NOT
+        #     _eval_rung's, which is rounded to 6 dp and would disagree with
+        #     the deployed mask at the boundary (deployed-mask-mismatch).
+        #     op_pooled is None when no rung certified: tau_star=None is the
+        #     legal case, the supplied all-False mask is used as given, and
+        #     every answered statistic emits None with 'undefined-point'.
+        #   * sites are target.site_id (dense int64 by the Cohort contract),
+        #     never the raw string labels: a silent remap would change WHICH
+        #     RECORDS MOVE TOGETHER under the cluster bootstrap.
+        #
+        # RP-8: the whole call is guarded. `validate_inputs` is deliberately
+        # intolerant and it runs AFTER every certification call for this
+        # replicate and BEFORE any artifact is written, so an unmodelled input
+        # condition -- a comparator cell the ETL's range map does not know
+        # about, a shape the Cohort contract does not forbid -- would otherwise
+        # take the certificate down with it. A descriptive layer must never do
+        # that. The swallow is NOT silent: the reason goes to `warnings` (hence
+        # EICU_diagnostics.json and the EICU-POOLED block) and to stderr, and
+        # `EICU-RELIABILITY.n_panels < replicates` records the shortfall
+        # arithmetically. run_E6 deliberately does NOT wrap: on synthetic data a
+        # PanelError is a wiring bug and must be loud.
+        op_pooled = rep_pooled.get("operative")
+        try:
+            panel = rp.panel_from_head(
+                head, target.x, target.y, target.site_id,
+                (float(op_pooled["tau"]) if op_pooled else None),
+                answered_mask=rep_pooled["answered_mask"],
+                p_ref=comparator[t_idx])      # APACHE-IVa; NaN = absent
+        except rp.PanelError as exc:
+            msg = (f"[MEASURE] RP-8: the POST-HOC reliability panel was SKIPPED "
+                   f"for replicate {r} -- {exc}. The panel is descriptive; the "
+                   f"certificate for this replicate is unaffected")
+            warnings.append(msg)
+            _say(True, msg, err=True)
+        else:
+            panel_payloads.append({
+                "replicate": r, "arm": arm,
+                "operative_alpha": (float(op_pooled["alpha"]) if op_pooled
+                                    else None),
+                **panel})
+            for row in rp.panel_reliability_rows(panel):
+                panel_curve_rows.append({"replicate": r, "arm": arm,
+                                         "post_hoc": rp.POST_HOC_LABEL, **row})
 
         bb = _bbse_block(rep_pooled)
         bb["replicate"] = r
@@ -1543,8 +1930,48 @@ def run_certification(data_dir, out, *, arm="primary", replicates=1,
         _write_json(os.path.join(out, f"{EICU_OUT_PREFIX}_certificate.json"),
                     certificate, "EICU_certificate.json")
 
+    # ---- POST-HOC panel artifacts, through the GATED writers --------------
+    # The panel is aggregate-only BY CONSTRUCTION -- the longest sequence
+    # anywhere is the 8-element bin_edges echo -- but construction does not
+    # exempt the writer, so both go through assert_aggregate_only.
+    #
+    # `panels` is gated PER PAYLOAD (per_item_keys), the same way _write_table
+    # gates CSV rows: it holds one aggregate payload per replicate, so its
+    # LENGTH is a replicate count and not a record-level array. Gated as one
+    # sequence it tripped EICU_MAX_OUTPUT_LEN at --replicates 600 and aborted
+    # the run on a purely descriptive artifact, after every certification arm
+    # was already paid for and before EICU-SUMMARY.md was written.
+    #
+    # This removes the POST-HOC panel from that failure mode; it does not make
+    # the whole runner safe at that scale. EICU_diagnostics.json above carries
+    # per-replicate lists of the same shape (`bbse`, `composition_three_way`)
+    # and is written FIRST, still gated whole, so it aborts there instead. That
+    # is pre-existing and about the CERTIFIED run's own diagnostics, not the
+    # descriptive layer this fix is scoped to -- named here rather than left to
+    # look covered.
+    _write_json(os.path.join(out,
+                             f"{EICU_OUT_PREFIX}_reliability_panel.json"),
+                {"post_hoc": rp.POST_HOC_LABEL,
+                 "arm": arm, "replicates": int(replicates),
+                 "scope": ("pooled target arm only (K = "
+                           f"{etl.EICU_N_TARGET_SITES} hospitals); the "
+                           "per-hospital arm is K = 1 and every interval "
+                           "would be floor-suppressed"),
+                 "panels": panel_payloads},
+                "EICU_reliability_panel.json", per_item_keys=("panels",))
+    # The LEADING `post_hoc` column is deliberate (RP-9). This CSV carries
+    # real-extract per-bin observed rates and is the panel artifact most easily
+    # detached from the directory that explains it; a per-row column is the only
+    # carrier that survives that detachment. The repetition is the cost of the
+    # A6 discipline, not an oversight.
+    _write_table(os.path.join(out, f"{EICU_OUT_PREFIX}_reliability.csv"),
+                 panel_curve_rows,
+                 ["post_hoc", "replicate", "arm"]
+                 + list(rp.PANEL_RELIABILITY_FIELDS),
+                 "EICU_reliability.csv")
+
     if not quick:
-        _figures(out, pooled_rows, per_site_rows, verbose)
+        _figures(out, pooled_rows, per_site_rows, panel_payloads, verbose)
 
     # ---- summary payload --------------------------------------------------
     payload = {
@@ -1553,7 +1980,10 @@ def run_certification(data_dir, out, *, arm="primary", replicates=1,
                                   n_sites=len(coverage_by_site),
                                   site_counts=site_counts, warnings=warnings),
         "per_site": _per_site_summary(per_site_rows, arm=arm),
-        "comparator": _comparator_summary(comparator_rows, arm=arm)}
+        "comparator": _comparator_summary(comparator_rows, arm=arm),
+        "reliability": _reliability_summary(panel_payloads, arm=arm,
+                                            replicates=replicates,
+                                            pooled_rows=pooled_rows)}
     _write_summary(out, _certification_blocks(payload), mode=(
         "QUICK" if quick else "FULL"), replicates=replicates, arm=arm,
         data_sha=_data_sha(data_dir))
@@ -1719,7 +2149,16 @@ def main(argv=None) -> dict:
                                preflight=bool(args.preflight),
                                data_sha=_data_sha(args.data),
                                protocol="EICU-PROTOCOL.md",
-                               n_features=int(etl.EICU_N_FEATURES)),
+                               n_features=int(etl.EICU_N_FEATURES),
+                               # POST-HOC panel provenance: its own schema, its
+                               # own root seed (rp.PANEL_SEED != SEED, by
+                               # design -- the sandbox's seed is what makes the
+                               # port byte-exact) and its frozen bins.
+                               panel_schema=rp.SCHEMA_VERSION,
+                               panel_seed=rp.PANEL_SEED,
+                               panel_n_boot=rp.N_BOOT,
+                               panel_bin_edges=list(rp.DEFAULT_BIN_EDGES),
+                               panel_post_hoc=True),
                     "EICU_provenance.json")
         _say(True, f"wrote {EICU_OUT_PREFIX}-SUMMARY.md and "
                    f"{EICU_OUT_PREFIX}_provenance.json to {args.out}")

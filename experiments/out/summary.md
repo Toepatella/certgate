@@ -376,7 +376,7 @@
 }
 ```
 
-## E5
+## E5 (preserved from an earlier run)
 ```json
 {
   "_run": {
@@ -433,12 +433,12 @@
 }
 ```
 
-## E6 (preserved from an earlier run)
+## E6
 ```json
 {
   "_run": {
     "mode": "FULL",
-    "utc": "2026-07-30T17:53:08+00:00"
+    "utc": "2026-08-02T01:25:30+00:00"
   },
   "tau_star": 0.55,
   "size_bins": [
@@ -467,7 +467,11 @@
       "mean_answered_err": 0.0595
     }
   ],
-  "predicted_positive_fraction": 0.063
+  "predicted_positive_fraction": 0.063,
+  "panel_post_hoc": "[MEASURE] POST-HOC (2026-08-01): added after the E1-E7 grid was published. Descriptive only -- it alters no certified quantity and no number in E1-E7 moves because of it (the panel self-seeds from a digest of its own inputs and consumes no _rng(6) draw).",
+  "panel_ece_answered": 0.002914,
+  "panel_calibration_slope_answered": 0.996989,
+  "panel_skill_margin_answered_minus_all": 0.000204
 }
 ```
 

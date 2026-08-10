@@ -3,15 +3,18 @@
 Any drift in ``constants.py`` fails here -- the lightweight, verifiable
 stand-in for pre-registration.
 """
+import ast
 import hashlib
 import json
 import math
+import pathlib
 from collections import Counter
 
 import numpy as np
 import pytest
 
 from certgate import constants as C
+from certgate import reliability as RP
 
 
 def test_seed():
@@ -332,9 +335,23 @@ def test_eicu_protocol_constants_pinned():
         "stay_id", "patient_id", "admission_id", "site_raw", "y_raw",
         "answered_mask", "x", "site_id", "comparator_predicted_mortality",
         "split_idx")
+    # PIN AMENDMENT 2026-08-01 -- the ONE pre-existing pinned literal the
+    # post-hoc reliability-panel work changes, recorded here so a later
+    # `git log -p tests/test_constants.py` reads it as a dated design decision
+    # rather than drift. It is written up in SPEC.md, "Real-data protocol",
+    # under the heading "PIN AMENDMENT (2026-08-01)"; that paragraph is the
+    # binding record, in the register the eICU protocol amendments A1-A6 use.
+    # Ordering was SPEC first, then run_eicu.py, then this line -- never the
+    # reverse, which would be editing a pin to match new code.
+    #
+    # Was a 5-tuple; "EICU-RELIABILITY" is APPENDED, never inserted or
+    # re-ordered, so every EICU-SUMMARY.md written before that date --
+    # experiments/out/ and out-sens/ included -- still parses and preserves.
+    # This is an ENGINEERING pin, not a protocol amendment: EICU-PROTOCOL.md
+    # SS2-13 are untouched and its A1-A6 log correctly does not mention it.
     assert run_eicu.EICU_SUMMARY_SECTIONS == (
         "EICU-PREFLIGHT", "EICU-PREDICTIONS", "EICU-POOLED", "EICU-PERSITE",
-        "EICU-COMPARATOR")
+        "EICU-COMPARATOR", "EICU-RELIABILITY")
     # the pre-declared failure criteria are literals in code, not prose
     assert run_eicu.EICU_FB_MIN_COVERAGE == 0.20
     assert run_eicu.EICU_FD_COVERAGE_ALARM == 0.90
@@ -488,3 +505,173 @@ def test_eicu_mock_constants_pinned():
     # so the advertised prevalence and the emitted prevalence cannot drift apart
     assert not hasattr(mock, "EICU_MOCK_SIGNAL_INTERCEPT_LITERAL")
     assert mock.EICU_MOCK_SIGNAL_INTERCEPT == pytest.approx(-2.649740738, rel=1e-9)
+
+
+# ---------------------------------------------------------------------------
+# POST-HOC selective reliability panel (SPEC "reliability.py", added 2026-08-01)
+#
+# Eighteen constants ported byte-exactly from the verified
+# ``selective-reliability-panel/srp`` sandbox. They are pinned here for the same
+# reason every other constant is -- a red pin is a design change, not a nuisance
+# -- but they carry NO pre-registration claim: they were frozen AFTER the
+# eICU-CRD v2.0 extract had been seen. That is exactly why they live in
+# ``certgate/reliability.py`` and not in ``certgate/constants.py``.
+# ---------------------------------------------------------------------------
+
+
+def test_panel_schema_and_seed():
+    # SCHEMA_VERSION is emitted verbatim AND hashed as the first bytes of
+    # input_digest, which seeds every stream: renaming it (say to
+    # "certgate/srp/1") moves EVERY confidence interval in the panel.
+    assert RP.SCHEMA_VERSION == "srp/1"
+    # srp's OWN root seed, RENAMED (never re-pointed) so it cannot be confused
+    # with constants.SEED at an import site. Re-pointing it at C.SEED would
+    # discard the byte-exact equivalence with the verified reference
+    # implementation, which is the whole reason to port rather than re-derive.
+    assert RP.PANEL_SEED == 20260731
+    assert RP.PANEL_SEED != C.SEED
+
+
+def test_panel_module_is_a_dag_leaf():
+    """SPEC "reliability.py": the panel never sees a Head, a Cohort, or
+    constants.SEED. NO ``from certgate ...`` import of any kind -- checked over
+    the AST, not the text, because the module docstring says the words."""
+    src = pathlib.Path(RP.__file__).read_text(encoding="utf-8")
+    tree = ast.parse(src)
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom):
+            assert not (node.module or "").startswith("certgate"), node.module
+        elif isinstance(node, ast.Import):
+            for a in node.names:
+                assert not a.name.startswith("certgate"), a.name
+
+
+def test_panel_bin_edges():
+    # 7 bins. 1.01 is a SENTINEL above 1.0, never a bound: it is what lets
+    # p == 1.0 land in the last bin under the strict `<` test (bin_bounds
+    # clamps the EMITTED hi to 1.0). Replacing it with 1.0 silently drops every
+    # p == 1.0 record and breaks "per-bin counts sum to n".
+    assert RP.DEFAULT_BIN_EDGES == (0.0, 0.02, 0.05, 0.10, 0.20, 0.35, 0.55,
+                                    1.01)
+    edges = RP.DEFAULT_BIN_EDGES
+    assert len(edges) == 8
+    assert all(b > a for a, b in zip(edges[:-1], edges[1:]))
+    assert edges[0] <= 0.0 and edges[-1] > 1.0
+    # examples/explain_dashboard.py IMPORTS this tuple rather than restating
+    # it; tests/test_reliability_panel.py::test_dashboard_bin_edges_match pins
+    # that the dashboard and the panel actually BIN alike, not just that they
+    # share a constant
+
+
+def test_panel_curve_scopes():
+    """The scopes the reliability CURVE is drawn for. `all` is deliberately
+    absent -- reliability/ece/calibration are answered+declined only.
+
+    Pinned because both consumers (`run_synthetic._e6_reliability_figure`,
+    `run_eicu._reliability_figure`) `zip()` it against a fixed 2-element colour
+    tuple: appending a third scope here would SILENTLY drop it from every
+    figure rather than fail, since zip stops at the shorter operand.
+    """
+    assert RP.PANEL_CURVE_SCOPES == ("answered", "declined")
+    # and it names real emitted blocks, in emitted order
+    assert list(RP.PANEL_CURVE_SCOPES) == [
+        s for s in ("answered", "declined") if s in RP.PANEL_CURVE_SCOPES]
+
+
+def test_panel_decision_threshold():
+    # yhat = (p >= this). It coincides with Head.predict's rule (p1 >= 0.5),
+    # which is what makes skill.<scope>.model_error_rate the certgate answered
+    # error rate on that scope -- a free cross-consistency check. It is
+    # UNRELATED to the caller's gate tau and must not be confused with it.
+    assert RP.DECISION_THRESHOLD == 0.5
+
+
+def test_panel_irls_constants():
+    # |logit(eps)| <= 13.815510557964274, so p == 0.0 and p == 1.0 remain
+    # usable regression inputs. LOGIT_EPS and IRLS_TOL are also why `settings`
+    # is EXEMPT from the emit-time round: both collapse to 0.0 at 6 dp.
+    assert RP.LOGIT_EPS == 1e-6
+    assert abs(math.log(1e-6 / (1 - 1e-6))) < 13.815510557964275
+    assert RP.IRLS_MAX_ITER == 100          # -> 'not-converged', never a number
+    assert RP.IRLS_TOL == 1e-8              # on the FULL Newton step
+    # the REPORTING RANGE. |beta| past it is 'coef-out-of-range' (the MLE
+    # exists but lies outside the range); 'separable' (the MLE does not exist)
+    # is a DIFFERENT status decided before iterating. Collapsing the two claims
+    # the wrong thing and implies the opposite operational action.
+    assert RP.IRLS_MAX_ABS_COEF == 30.0
+    assert RP.IRLS_MIN_WEIGHT == 1e-10      # invertible WITHOUT a ridge term
+    assert RP.IRLS_MIN_RECORDS == 20
+
+
+def test_panel_bootstrap_constants():
+    assert RP.N_BOOT == 2000                # required VALID draws per statistic
+    assert RP.CI_LEVEL == 0.95
+    # the attempt budget at the production N_BOOT. BOOT_MAX_ATTEMPTS is NEVER
+    # read at runtime: the enforced budget is the RELATION 2 * n_boot resolved
+    # inside site_bootstrap_ci, so a lowered n_boot gets a proportionally
+    # lowered budget and settings.boot_max_attempts echoes 2*n_boot.
+    assert RP.BOOT_MAX_ATTEMPTS == 4000
+    assert RP.BOOT_MAX_ATTEMPTS == 2 * RP.N_BOOT
+    # cluster floor, checked against n_sites_carrying BEFORE any resampling
+    # work (n_attempts == 0). Same measured lesson as BBSE_MIN_TARGET_SITES
+    # (rho-miss up to 46% at K=2 against a nominal 2.5%).
+    assert RP.MIN_SITES_FOR_CI == 10
+    assert RP.MIN_SITES_FOR_CI == C.BBSE_MIN_TARGET_SITES
+
+
+def test_panel_emit_constants():
+    assert RP.ROUND_DP == 6                 # applied ONCE, at emit time
+    assert RP.FIG_DPI == 110                # every existing experiment figure
+    # the two EXHAUSTIVE status vocabularies; membership across the whole
+    # adversarial fixture family is asserted in test_reliability_panel.py
+    assert RP.CI_STATUSES == ("ok", "empty-bin", "too-few-sites",
+                              "degenerate-resamples", "undefined-point",
+                              "truncated-resamples")
+    assert RP.FIT_STATUSES == ("ok", "too-few-records", "single-class",
+                               "degenerate-design", "separable",
+                               "coef-out-of-range", "not-converged",
+                               "singular")
+    # 'separable' and 'coef-out-of-range' are DISTINCT claims
+    assert len(set(RP.FIT_STATUSES)) == len(RP.FIT_STATUSES) == 8
+    assert len(set(RP.CI_STATUSES)) == len(RP.CI_STATUSES) == 6
+
+
+def test_panel_post_hoc_label():
+    """A6 register. The SUBSTANCE is pinned, the prose is not: wording may be
+    improved without a false red, but the three load-bearing claims may not
+    quietly leave."""
+    label = RP.POST_HOC_LABEL
+    assert isinstance(label, str)
+    assert "POST-HOC" in label
+    assert "9f25b491b2554d0a4bd7aaaf44081c185d01715f" in label
+    assert "alters no certified quantity" in label
+    assert label.startswith("[MEASURE]")     # the ETL's A6 register
+    # the synthetic sibling: added-after-publication, not data-seen
+    assert "POST-HOC" in RP.E6_POST_HOC_NOTE
+
+
+def test_no_panel_constant_leaked_into_the_core_package():
+    """SPEC "reliability.py": the ``constants.py`` block is the A-PRIORI
+    pre-extract surface of the certified protocol. These eighteen values were
+    frozen AFTER the extract was seen, so putting them there would place
+    post-hoc values under a pre-registration claim they do not carry.
+    ``harness.SIZE_BINS`` is the standing precedent for a module-local frozen
+    tuple inside the core package."""
+    assert not [n for n in dir(C)
+                if n.startswith("PANEL") or n in (
+                    "SCHEMA_VERSION", "DEFAULT_BIN_EDGES", "DECISION_THRESHOLD",
+                    "N_BOOT", "BOOT_MAX_ATTEMPTS", "CI_LEVEL",
+                    "MIN_SITES_FOR_CI", "ROUND_DP", "FIG_DPI", "CI_STATUSES",
+                    "FIT_STATUSES", "LOGIT_EPS", "IRLS_MAX_ITER", "IRLS_TOL",
+                    "IRLS_MAX_ABS_COEF", "IRLS_MIN_WEIGHT",
+                    "IRLS_MIN_RECORDS", "POST_HOC_LABEL")]
+
+
+def test_no_panel_regularisation_constant_exists():
+    """The IRLS weight floor keeps the normal matrix invertible WITHOUT a ridge.
+    NO ridge, NO shrinkage, NO penalty, NO prior, NO smoothing anywhere -- a
+    fallback slope would report a number where the honest answer is a status."""
+    banned = ("RIDGE", "SHRINK", "PENALT", "PRIOR", "SMOOTH", "LAMBDA_REG",
+              "ALPHA_REG")
+    assert not [n for n in dir(RP)
+                if any(t in n.upper() for t in banned)]

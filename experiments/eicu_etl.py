@@ -1661,6 +1661,36 @@ def build_raw(data_dir, *, arm="primary", strict_levels=True, verbose=True):
             comp_version[int(r)] = v
             comp_pred[int(r)] = res_pred[v][int(r)]
 
+    # RP-8 (2026-08-01): the comparator column is a VARCHAR(50) holding a
+    # probability. `float()` above accepts anything numeric and only the exact
+    # `-1` sentinel maps to missing, so a stray finite cell outside [0, 1]
+    # flowed to TWO consumers that disagreed about it: `_comparator_row`
+    # computed AUC and Brier on it silently, while the post-hoc panel's
+    # `validate_inputs` rejects it outright -- and that rejection lands AFTER a
+    # replicate's certification work and BEFORE any artifact is written, so a
+    # DESCRIPTIVE layer could have taken the certificate down. One definition of
+    # "comparator available" now, mapped here, BEFORE `complete` is formed.
+    #
+    # This is a guard, not a correction: the released extract has 0 such cells
+    # in 297,064 apachePatientResult rows, so no published number moves. It is
+    # the A6 failure mode (`apacheApsVar.urine` held exactly ONE
+    # negative-not-`-1` cell in ~4.1M) applied to the one column where it would
+    # have been fatal rather than cosmetic. Counted and warned, never aborting:
+    # an unusable comparator cell is a missing comparator, and the primary arm
+    # does not depend on the comparator at all.
+    comp_oor = np.isfinite(comp_pred) & ((comp_pred < 0.0) | (comp_pred > 1.0))
+    n_comp_oor = int(comp_oor.sum())
+    if n_comp_oor:
+        extreme = comp_pred[comp_oor]
+        comp_pred[comp_oor] = np.nan
+        warn.append(
+            f"[MEASURE] RP-8: {n_comp_oor} apachePatientResult."
+            f"predictedhospitalmortality cell(s) are finite but outside "
+            f"[0, 1] (min {float(extreme.min())!r}, max "
+            f"{float(extreme.max())!r}) -- mapped to MISSING, exactly as the "
+            f"-1 sentinel is. They are excluded from the comparator scoring, "
+            f"from the apache-complete arm and from the panel's p_ref alike")
+
     # ---- attrition: the APACHE steps are DIAGNOSTIC, never a filter --------
     site_arr = np.asarray(site_raw, dtype=object)
     complete = aps_present & apv_present & np.isfinite(comp_pred)
@@ -1769,6 +1799,7 @@ def build_raw(data_dir, *, arm="primary", strict_levels=True, verbose=True):
         "aps_present": aps_present, "apv_present": apv_present,
         "comparator_apache_version": comp_version,
         "comparator_predicted_mortality": comp_pred,
+        "comparator_out_of_range": n_comp_oor,      # RP-8, counted not silent
         "imputable_cols": imputable_cols,
         "missing_counts": missing_counts,
         "sentinel_counts": {k: dict(v) for k, v in sorted(sent.items())},

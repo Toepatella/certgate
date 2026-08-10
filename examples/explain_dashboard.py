@@ -67,6 +67,7 @@ import os
 
 import numpy as np
 
+from certgate import reliability as rp
 from certgate.explain import cohort_abstention_profile, counterfactual_to_answer
 from certgate.constants import SEED
 from certgate.data import SimConfig, draw_cohort, split_sites
@@ -405,7 +406,14 @@ def build_dashboard(head, x, tau_star, out_path, feature_names=None,
 
     reliability = None
     if oracle is not None:
-        edges = [0.0, 0.02, 0.05, 0.10, 0.20, 0.35, 0.55, 1.01]
+        # IMPORTED, not restated: this page and certgate/reliability.py's panel
+        # are two instruments reading the same probabilities, and they must bin
+        # them identically. A literal here made that a claim a test had to
+        # verify by PARSING this file's source; importing the tuple makes it
+        # true by construction. The 1.01 top edge is a SENTINEL, never a bound
+        # -- it is what lets p == 1.0 land in the last bin under the strict `<`
+        # test below, and `min(hi, 1.0)` clamps it back for display.
+        edges = rp.DEFAULT_BIN_EDGES
         reliability = []
         for lo, hi in zip(edges[:-1], edges[1:]):
             m = answered & (p1 >= lo) & (p1 < hi)

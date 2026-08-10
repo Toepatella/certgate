@@ -15,6 +15,7 @@ certify.py     -> constants                (atoms, WSR, walk, floor, seed rule)
 shift.py       -> constants, certify, validate, model   (BBSE mode)
 explain.py     -> model                    (attributions, abstention explanations, composition)
 harness.py     -> constants                (Wilson LCB, hard-violation scoring, binomial reference)
+reliability.py -> (numpy + stdlib ONLY; NO certgate dep -- never sees a Head or a Cohort)
 report.py      -> constants, certify, explain            (tiers, guarantee text, provenance)
 pipeline.py    -> everything               (run_certgate orchestration)
 ```
@@ -369,6 +370,385 @@ def exceedance_reference(n_answered, alpha) -> float   # binomial P(rate > alpha
 SIZE_BINS = ((0,30), (30,100), (100,300), (300, np.inf))
 ```
 
+## `reliability.py` — post-hoc selective reliability panel (descriptive; certifies nothing)
+
+ADDED 2026-08-01, **after** the eICU-CRD v2.0 extract was read. This module is a DESCRIPTIVE
+DIAGNOSTIC in the `harness.py` register: it measures, it never certifies. It is not part of the
+pre-extract protocol freeze (commit `9f25b491b2554d0a4bd7aaaf44081c185d01715f`), nothing in
+`pipeline.py` or `report.py` imports it, and it settles none of `EICU-PROTOCOL.md`'s frozen
+predictions P1–P7 or failure criteria F-A–F-E. `EICU-PROTOCOL.md` is NOT edited by this work —
+it was frozen pre-extract and that ordering is the whole of its pre-registration value, so no
+future pass may "tidy" the panel into it. Every number this module produces from the real
+extract carries `POST_HOC_LABEL` (A6 discipline).
+
+PORTED from the verified reference implementation in `selective-reliability-panel/srp` (581 tests
+green, deterministic). The port is **byte-exact**: identical input arrays must give an identical
+panel dict, including every bootstrap endpoint. Three consequences are binding.
+
+* The digest prefix stays the byte literal `b"srp/1"` and `SCHEMA_VERSION` stays the string
+  `"srp/1"`. Renaming either moves EVERY confidence interval in the panel, because the prefix is
+  the first thing hashed into `input_digest` and the digest seeds every stream.
+* The root seed stays `PANEL_SEED = 20260731` — srp's own, NOT `constants.SEED = 20260721`. This is
+  the one sanctioned second root seed in the repository. It is *renamed, not re-pointed*:
+  re-pointing it at `constants.SEED` would silently discard the external verification that is the
+  whole reason to port rather than re-derive. Determinism is unaffected (identical inputs still
+  give byte-identical output, no wall clock enters any artifact) and no certified quantity
+  descends from it — the panel is downstream of the certificate and feeds nothing back.
+* NO key in the emitted dict is renamed. `tests/test_reliability_panel.py` pins the sha256 of the
+  emitted dict on a frozen fixture against a literal produced by the sandbox implementation; a
+  rename breaks that pin, which is a design change, not a nuisance.
+
+Third-party imports: `numpy` ONLY, at module top level (audit F16). The module has NO certgate
+dependency — it never sees a `Head`, a `Cohort`, or the certified path — so it is a DAG leaf.
+`head` is reached only by duck typing inside `panel_from_head`.
+
+**THE conflation trap, stated once and closed structurally.** `Head.predict_proba(x)` returns
+`p1 = P(y=1|x)`; `Head.score(x) = max(p1, 1-p1) ∈ [0.5, 1]` is the SELECTIVE-GATING confidence.
+The panel bins and regresses `p1`; the answered mask is `score >= tau_star`. Feeding `score` as
+`p` passes `validate_inputs` silently — it is finite and in [0,1] — and produces a fully populated
+but meaningless panel: the four bins below 0.5 are empty and the calibration slope is inverted.
+There is no automatic guard inside the statistics, so the guard is structural at the boundary:
+`panel_from_head` is the ONLY entry point the drivers use, and it computes both quantities itself.
+A driver never constructs `p`.
+
+```python
+class PanelError(ValueError): ...        # the single exception type; every rejection typed + named
+
+# --- frozen panel constants (module-level, pinned literally by tests/test_constants.py) ------
+# NOT in constants.py: that block is the A-PRIORI pre-extract surface of the certified protocol
+# and these values were frozen AFTER the extract was seen. SIZE_BINS in harness.py is the
+# precedent for a module-local frozen tuple in the core package.
+SCHEMA_VERSION   = "srp/1"      # emitted verbatim AND hashed as the digest prefix -- see above
+PANEL_SEED       = 20260731     # srp's root seed; first entropy word of every SeedSequence
+DEFAULT_BIN_EDGES = (0.0, 0.02, 0.05, 0.10, 0.20, 0.35, 0.55, 1.01)
+                                # 7 bins. 1.01 is a SENTINEL, never a bound: it is what lets
+                                # p == 1.0 land in the last bin under the strict `<` test.
+                                # bin_bounds clamps the EMITTED hi with min(hi, 1.0) so the last
+                                # bin READS [0.55, 1.0]. Replacing 1.01 with 1.0 silently drops
+                                # every p == 1.0 record and breaks "per-bin counts sum to n".
+                                # IDENTICAL to the explain dashboard's edges because the dashboard
+                                # IMPORTS this tuple (examples/explain_dashboard.py) rather than
+                                # restating it -- the two instruments cannot drift by construction.
+                                # It was formerly a second literal there, held in step by a test
+                                # that parsed that file as SOURCE TEXT; the test now asserts the
+                                # literal has NOT been reintroduced.
+DECISION_THRESHOLD = 0.5        # yhat = (p >= this). Equals Head.predict's rule, so
+                                # skill.<scope>.model_error_rate IS the certgate answered error
+                                # rate on that scope. UNRELATED to the caller's gate tau.
+LOGIT_EPS        = 1e-6         # |logit| <= 13.815510557964274, so p == 0.0/1.0 stay usable
+IRLS_MAX_ITER    = 100          # cap; reaching it reports 'not-converged', never a number
+IRLS_TOL         = 1e-8         # converged when max(abs(FULL Newton step)) falls below
+IRLS_MAX_ABS_COEF = 30.0        # reporting range; 'separable' is decided BEFORE iterating
+IRLS_MIN_WEIGHT  = 1e-10        # floor on mu*(1-mu); invertible normal matrix WITHOUT a ridge
+IRLS_MIN_RECORDS = 20           # below this the two-parameter fit is not worth reporting
+N_BOOT           = 2000         # required VALID resample draws per statistic
+BOOT_MAX_ATTEMPTS = 4000        # == 2 * N_BOOT. NEVER read at runtime: the enforced budget is
+                                # the RELATION 2 * n_boot resolved in site_bootstrap_ci, so a
+                                # lowered n_boot gets a proportionally lowered budget and
+                                # settings.boot_max_attempts echoes 2*n_boot, not this constant.
+CI_LEVEL         = 0.95
+MIN_SITES_FOR_CI = 10           # cluster floor, checked against n_sites_carrying BEFORE any
+                                # resampling work (n_attempts == 0). Same lesson as
+                                # BBSE_MIN_TARGET_SITES: a percentile bootstrap over fewer
+                                # carrying sites cannot approach nominal coverage.
+ROUND_DP         = 6            # applied ONCE, at emit time. settings is EXEMPT and has to be:
+                                # LOGIT_EPS and IRLS_TOL both collapse to 0.0 at 6 dp.
+FIG_DPI          = 110          # matches every existing experiment figure
+CI_STATUSES  = ("ok", "empty-bin", "too-few-sites", "degenerate-resamples",
+                "undefined-point", "truncated-resamples")     # exhaustive
+FIT_STATUSES = ("ok", "too-few-records", "single-class", "degenerate-design", "separable",
+                "coef-out-of-range", "not-converged", "singular")   # exhaustive
+POST_HOC_LABEL = "[MEASURE] POST-HOC (2026-08-01): ..."       # verbatim text in the module
+
+# --- boundary (validate.py idiom: loud, typed, documented ORDER, never coerces) --------------
+@dataclass(frozen=True, eq=False)
+class PanelInputs: p; answered; site_id; y; p_ref; decision_threshold; bin_edges
+                                # properties: n, n_sites (= site_id.max()+1), n_bins
+def validate_inputs(p, answered, site_id, y, p_ref=None, *, decision_threshold, bin_edges)
+    # NINE checks, order is contract: (1) array-length alignment FIRST, so two simultaneous
+    # defects report the structural one; (2) p 1-D float64-convertible, all finite, in [0,1]
+    # with NO tolerance; (3) answered STRICTLY bool dtype; (4) y STRICTLY bool dtype;
+    # (5) site_id integer dtype, >= 0, DENSE (bincount gap check) -- rejected loudly, never
+    # remapped: a silent remap changes which records move together under the cluster
+    # bootstrap; (6) n >= 1; (7) decision_threshold finite, in the OPEN (0,1); (8) bin_edges
+    # len>=2, strictly increasing, edges[0] <= 0.0, edges[-1] > 1.0; (9) p_ref 1-D, no +/-Inf,
+    # finite entries in [0,1]. NaN is accepted in p_ref (means "absent") and NOWHERE else.
+    # site_id dtype is PRESERVED exactly as supplied -- the digest is over raw bytes.
+
+# --- determinism (the ONLY place a Generator is constructed) ---------------------------------
+def input_digest(inputs) -> str          # 64-char lowercase sha256 over CONTENT ONLY
+    # byte order: b"srp/1"; p; answered viewed as uint8; site_id; y; then p_ref or b"|noref";
+    # then repr(float(threshold)); then repr(tuple(float(e) for e in edges)). Each array is
+    # absorbed as dtype.str + repr(shape) + contiguous bytes. Free-text labels are DELIBERATELY
+    # excluded (same rule as certify.certification_rng, audit V3): a cosmetic rename must never
+    # move a reported number. An int32 and an int64 site index are DIFFERENT inputs.
+def derive_rng(digest, stat_key) -> np.random.Generator
+    # sha256(digest + b"|" + stat_key) -> SeedSequence([PANEL_SEED, 4 x uint32]). The WHOLE
+    # stat_key is hashed, never a prefix, so 'bin1' and 'bin11' cannot collide. A full panel
+    # opens AT MOST 2 * n_bins + 13 streams -- 27 at the default 7-bin edges -- over the keys
+    # '<scope>/reliability/bin<b>' (2 x n_bins), '<scope>/ece' (2), '<scope>/calibration' (2),
+    # 'answered/brier_primary', 'answered/brier_reference' (2), '<scope>/skill' (3 scopes),
+    # 'contrast/skill' (1) and '<scope>/composition' (3). It is a CEILING, not a count: an empty
+    # bin and an undefined-point block are decided before any rng is constructed and open none,
+    # so the realised number is data-dependent. Pinned by
+    # test_reliability_panel.py::test_stream_count_is_the_documented_ceiling.
+
+# --- binning + CSR grouping -------------------------------------------------------------------
+def assign_bins(p, bin_edges) -> np.ndarray      # int64; searchsorted(side="right") - 1;
+                                # p < edges[0] or p >= edges[-1] -> -1 (lower-closed/upper-open)
+def bin_bounds(bin_edges) -> list[tuple[float, float]]        # hi clamped with min(hi, 1.0)
+def group_by_site(site_id, n_sites) -> (order, starts)
+                                # order = argsort(kind="stable") -- platform independent, input
+                                # order preserved within a site; starts is (n_sites+1,) so a site
+                                # carrying no record is an EMPTY SPAN, never a missing one
+def gather_sites(order, starts, idx) -> np.ndarray            # vectorised block expansion
+
+# --- the one bootstrap driver ------------------------------------------------------------------
+def null_ci(status, n_sites_carrying=0) -> dict
+                                # EVERY block carries the same five keys whether or not an
+                                # interval exists: ci, ci_status, n_boot_valid, n_attempts,
+                                # n_sites_carrying
+def site_bootstrap_ci(statistic, names, n_sites, n_sites_carrying, *, rng,
+                      n_boot=N_BOOT, max_attempts=None, ci_level=CI_LEVEL,
+                      min_sites=MIN_SITES_FOR_CI) -> dict
+    # ONE STAGE, SITE UNIT: idx = rng.integers(0, n_sites, n_sites) -- n_sites indices drawn
+    # WITH replacement from the FULL site population. Whole record blocks move; a site drawn
+    # twice contributes twice to numerator AND denominator. Two-stage (sites then records) is
+    # FORBIDDEN. The site population is FIXED: sites carrying no record in the current scope or
+    # bin STAY in the draw and n_sites_carrying is a REPORTED count only -- passing carrying as
+    # n_sites would redefine the population per bin and the bins would stop being averages over
+    # the same thing.
+    # TOP-UP-OR-DECLINE (audit F40/B-8, V21): budget = 2*n_boot when max_attempts is None;
+    # while collected < n_boot and attempts < budget: draw, charge the budget, evaluate. A draw
+    # is UNUSABLE if the statistic returns None, returns the wrong arity, or returns ANY
+    # non-finite value -- discarded and redrawn, never quantiled. On shortfall: ci=None,
+    # ci_status='degenerate-resamples', with the HONEST n_boot_valid and n_attempts == budget.
+    # A reduced draw count is NEVER quantiled.
+    # carrying < min_sites -> null_ci('too-few-sites', carrying) BEFORE any work (n_attempts==0,
+    # the closure is never called). Otherwise ONE call:
+    # np.quantile(draws, [(1-lvl)/2, 1-(1-lvl)/2], axis=0, method="linear") over the whole
+    # (n_boot, n_names) matrix -- all names from the SAME valid draws, so exact relations
+    # between names survive. No BCa, no studentisation, no bias correction.
+    # statistic protocol: Callable[[np.ndarray], tuple[float, ...] | None]; None declares the
+    # draw INVALID. Each statistic's validity predicate is stated at its definition and differs
+    # by estimand -- choosing the wrong predicate biases the interval.
+
+# --- item 1/3: reliability curve + expected calibration error ---------------------------------
+def reliability_curve(p, y, site_id, n_sites, *, digest, scope, bin_edges, n_boot, ci_level,
+                      min_sites) -> list[dict]
+    # EXACTLY len(bin_edges)-1 records per scope, ascending. Per bin: per-site denom/numer via
+    # bincount; point observed = numer.sum()/denom.sum() -- a RECORD-WEIGHTED ratio of sums, NOT
+    # a per-site average. mean_predicted = p[mask].mean(). The resample closure INDEXES the
+    # precomputed per-site vectors and never re-bins: quantile edges per draw would make the
+    # bins a random object. Validity predicate: denom[idx].sum() > 0.
+    # Empty bin: n=0, mean_predicted/observed/ci = None, ci_status='empty-bin',
+    # n_sites_carrying = 0 (the record reports boot's count, not the local one), NO resampling.
+def expected_calibration_error(...) -> dict
+    # COUNT-WEIGHTED PLUG-IN over NON-EMPTY bins only, from (n_sites, n_bins) sufficient
+    # statistics built on the flattened index site_id*n_bins + bins:
+    #   ece = sum_{c>0} (c/total) * |sum_p/c - sum_y/c|,  total = c.sum() -> weights sum to 1.
+    # Empty bins are EXCLUDED, not folded in as a zero gap. Point = _ece_from_sums on the COLUMN
+    # sums, arithmetically identical to the per-record plug-in.
+# BOTH raise PanelError naming the FIRST offending index and value if assign_bins returned -1.
+# Not a filter and not a fold into a neighbour: dropping changes the denominator and folding
+# corrupts the flattened (site, bin) index arithmetic. Unreachable through the entry point.
+
+# --- item 2: weak calibration (IRLS logistic of y on the clipped logit of p) -------------------
+def clipped_logit(p, eps=LOGIT_EPS) -> np.ndarray
+def fit_calibration_line(p, y, *, eps, max_iter, tol, max_abs_coef, min_weight, min_records)
+        -> dict(slope, intercept, status, iterations, n, n_positive)
+    # FOUR pre-loop guards, IN ORDER, each returning iterations=0 and slope=intercept=None:
+    #   n < 20 -> 'too-few-records'; 0 or n positives -> 'single-class'; max(z)-min(z) == 0.0
+    #   exactly -> 'degenerate-design'; Albert-Anderson overlap -> 'separable'.
+    # 'separable' is decided BEFORE iterating and is the ONLY source of that status, because the
+    # weight floor keeps the normal matrix invertible so Newton would crawl and report
+    # 'not-converged' -- naming the wrong defect and implying the opposite operational action.
+    # Loop: mu = sigmoid(linear); w = clip(mu*(1-mu), IRLS_MIN_WEIGHT, None);
+    #   step = solve(X.T @ (w[:,None]*X), X.T @ (y-mu)); LinAlgError or non-finite -> 'singular';
+    #   step-halving up to 30 tries accepting the first finite candidate deviance
+    #   <= deviance + 1e-12, exhaustion -> 'singular'.
+    # TERMINATION ORDER IS LOAD-BEARING: the |beta| > 30 check runs BEFORE the convergence check
+    # in the same iteration ('coef-out-of-range', iterations > 0); convergence is judged on the
+    # FULL Newton step, never the halved one. Swapping the two lines lets |beta| just over 30
+    # report 'ok'. NO ridge, NO shrinkage, NO fallback slope anywhere.
+    # Overflow-free primitives are mandatory (the suite runs warnings-as-errors): _sigmoid
+    # branches on t >= 0 and _deviance uses np.logaddexp -- a naive 1/(1+exp(-t)) aborts a fit
+    # on well-separated scores instead of reporting 'separable'.
+def calibration_pair(...) -> dict
+    # The ONLY statistic whose resample MATERIALISES the drawn record blocks (gather_sites) and
+    # refits from scratch; every other statistic indexes precomputed per-site sums.
+    # Point status != 'ok' -> null_ci('undefined-point', carrying), no resampling at all.
+    # TRUNCATED-RESAMPLES (RP-4): a refit returning 'coef-out-of-range' is a VALUE-dependent
+    # rejection. The driver tops it up (the closure returned None) and a closure counter records
+    # it; the block is then OVERWRITTEN post hoc with ci=None, ci_status='truncated-resamples',
+    # carrying n_boot_valid / n_attempts / n_sites_carrying through UNCHANGED (the attempt counts
+    # remain honest). A quantile over the retained draws would DELETE the tail of the resampling
+    # distribution, not merely thin it.
+
+# --- item 4: Brier, answered subset only ------------------------------------------------------
+def brier_block(p, y, site_id, n_sites, p_ref, *, digest, n_boot, ci_level, min_sites) -> dict
+    # primary_answered: per-site sums of (p-y)^2 over ALL answered records; validity predicate
+    # counts[idx].sum() > 0. n == 0 -> value None, null_ci('undefined-point', carrying).
+    # reference: DENOMINATOR-MATCHED. available = isfinite(p_ref) on the answered subset; the
+    # denominator for BOTH brier_reference and brier_primary_matched is the per-site sum of that
+    # availability mask, so the pair shares one mask exactly. brier_difference is a SINGLE
+    # statistic returned as the third element of a 3-tuple from ONE stream -- never a subtraction
+    # of two independently bootstrapped endpoints, which is strictly wider and has no coverage
+    # claim. n_sites_carrying for this section is taken on the AVAILABILITY mask, so the
+    # reference can be floor-suppressed while the primary is not. available_share exposes the
+    # denominator gap. NEVER difference the reference against primary_answered.value (wider
+    # denominator); notes[4] states the prohibition verbatim.
+    # p_ref None -> reference: None (an explicit null VALUE, not a missing key).
+    # n_available == 0 -> the whole reference block is nulls, never an empty-slice mean.
+
+# --- item 5: the cherry-picking decomposition -------------------------------------------------
+def skill_decomposition(...) -> dict
+    # CONSTANT-MAJORITY BASELINE per scope: yhat = (p >= threshold);
+    # constant_predictor_error_rate = min(positive_rate, 1-positive_rate);
+    # skill_margin = constant_error_rate - model_error_rate (baseline MINUS model, so positive
+    # means the scorer beats the trivial rule). constant_predictor_class = (positive_rate > 0.5)
+    # -- STRICT, so an exact 0.5 tie predicts NEGATIVE. The baseline is recomputed inside every
+    # resample and its class may FLIP between draws; that variation belongs to the statistic and
+    # freezing the class from the point estimate removes real variation from the interval.
+def skill_contrast(p, y, answered, site_id, n_sites, ...) -> dict
+    # Takes FULL arrays, not scope-restricted. answered_minus_all and answered_minus_declined as
+    # TWO names in ONE shared stream. Point = _margins(np.arange(n_sites)) -- each site once.
+    # Validity: total_a > 0 and (if any declined) total_d > 0. Floor uses
+    # min(carrying_a, carrying_d), or carrying_a alone when nothing is declined -- in which case
+    # only ('answered_minus_all',) is resampled and answered_minus_declined is a null POINT, not
+    # zero. THE ONLY block that does not emit n_sites_carrying.
+    # THIS IS THE HEADLINE STATISTIC: at single-digit prevalence a low answered error rate is
+    # also what a constant always-negative rule achieves (METHODS "Loss"), so meeting alpha is
+    # not by itself evidence the gate is doing anything. skill_margin is what distinguishes a
+    # scorer that earned its answered set from one that merely selected an easy one.
+def composition_block(...) -> dict
+    # predicted_positive_fraction = mean(p >= threshold) and observed_positive_fraction = mean(y)
+    # as TWO names in ONE stream, plus the raw integer counts. Emitted for answered/declined/all.
+    # This is the CI-bearing, three-SCOPE sibling of explain.composition's answered-only point
+    # estimate; explain.composition is unchanged (report.py depends on it) and the two must
+    # agree on the answered predicted-positive fraction -- pinned by test.
+
+# --- the orchestrator -------------------------------------------------------------------------
+def selective_reliability_panel(p, answered, site_id, y, p_ref=None, *, decision_threshold,
+                                bin_edges, n_boot, ci_level, min_sites, round_dp,
+                                timestamp=None) -> dict
+    # Validates once, digests once, calls every statistics module, then ONE recursive emit pass.
+    # TWELVE top-level keys, ALWAYS all present: schema_version, generated_utc, input_digest,
+    # settings, counts, reliability, calibration, ece, brier, skill, composition, notes.
+    # Optional content degrades to an explicit null VALUE, never by key omission -- a reader must
+    # never have to tell "absent" from "undefined" by probing for a KeyError.
+    # SCOPES DIFFER BY ITEM and that is deliberate: reliability/calibration/ece are
+    # answered+declined only; skill/composition carry all three plus skill.contrast; brier is
+    # answered-only.
+    # generated_utc is None unless a timestamp is passed, so default output is byte-identical and
+    # NO WALL CLOCK enters any emitted artifact.
+    # EMIT PASS branch order is load-bearing: None|str passthrough, then bool BEFORE int (Python
+    # bool is an int subclass -- reversing it turns constant_predictor_class and
+    # reference_supplied into 0/1), dict, list|tuple, int, float -> round(v, round_dp) if finite
+    # ELSE None. So NaN/Inf can never reach the emitted dict and json.dumps(allow_nan=False)
+    # succeeds on every legal input, including all-answered, none-answered, single-class and
+    # two-site pools. Rounding happens EXACTLY ONCE: a second pass at the summary level makes the
+    # last decimal irreproducible.
+    # settings (14 keys) is assembled AFTER the emit pass and is EXEMPT from rounding.
+    # notes is the SIX mandatory disclosures, emitted verbatim; dropping one is a contract change.
+
+# --- certgate adapters (added by the port; not in srp) ----------------------------------------
+def panel_from_head(head, x, y, site_id, tau_star, *, answered_mask=None, p_ref=None,
+                    **panel_kwargs) -> dict
+    # THE ONLY entry point the drivers use, and the structural close of the conflation trap:
+    #   p        = np.asarray(head.predict_proba(x), dtype=np.float64)      <- the BINNED quantity
+    #   answered = head.score(x) >= float(tau_star)                          <- the GATE
+    # The caller never constructs p. When answered_mask IS supplied (the deployed mask, e.g.
+    # report["answered_mask"]) AND tau_star is not None, the two are cross-checked with
+    # np.array_equal and a mismatch raises PanelError(reason=deployed-mask-mismatch) -- which is
+    # what catches a mask re-derived from a tau ROUNDED to 6 dp (it disagrees with the deployed
+    # one at the boundary). tau_star=None is the legal no-rung-certified case: the supplied
+    # all-False mask is used as given and the answered scope is empty.
+def panel_reliability_rows(panel) -> list[dict]
+    # flattens reliability.{answered,declined} to CSV rows; ci -> ci_lo/ci_hi, None -> blank cell
+def panel_headline(panel) -> dict
+    # the ~8 scalars a summary block carries. Values are ALREADY rounded to ROUND_DP by the emit
+    # pass -- callers must NOT round again (round-once).
+
+PANEL_CURVE_SCOPES = ("answered", "declined")   # the scopes the curve is drawn for; `all` is
+                                                # deliberately absent (reliability/ece/calibration
+                                                # are answered+declined only)
+def panel_ci_halfwidths(point, ci, ci_status="ok") -> tuple[float, float]
+    # (lo, hi) error-bar half-widths around `point`, CLAMPED at 0.0, and (0.0, 0.0) -- an
+    # interval-free marker, never a fabricated zero-width interval -- whenever ci is absent,
+    # point is None, or ci_status is not 'ok'.
+    # THE CLAMP IS LOAD-BEARING, not cosmetic. A percentile interval is NOT required to straddle
+    # its own point estimate: site_bootstrap_ci quantiles the resampling distribution and promises
+    # no such thing, and for a paired ratio-of-sums over a few dozen sites
+    # (brier.reference.brier_difference above all) the point can land outside. matplotlib RAISES
+    # ValueError on a negative yerr rather than warning, and run_eicu._reliability_figure runs
+    # inside run_certification BEFORE the summary payload is assembled -- so an unclamped
+    # half-width let a DESCRIPTIVE figure abort a certified 20-replicate run after every
+    # certification arm had been paid for. That is the RP-8 rule one layer further out than the
+    # `except rp.PanelError` guard around the panel computation.
+def panel_reliability_series(panel, scope) -> tuple[list, list, list, list]
+    # the plottable (xs, ys, lo, hi) for one scope: ONE definition of the drawing contract, shared
+    # by run_synthetic._e6_reliability_figure and run_eicu._reliability_figure so the two cannot
+    # drift (they already had). Empty bins are ABSENT, never plotted as a zero; an interval is
+    # drawn only when its ci_status is 'ok'; half-widths go through panel_ci_halfwidths. All four
+    # lists are empty when the scope reaches no bin (the legal all-answered / all-declined shapes).
+```
+
+**Drivers and aggregate-only conformance.** Two drivers consume the panel, both through
+`panel_from_head`: `experiments/run_synthetic.py::run_E6` (synthetic; three files
+`E6_reliability.{csv,json,png}`, FOUR added keys in E6's summary block — the three panel scalars
+plus `panel_post_hoc = E6_POST_HOC_NOTE`, because `summary.md` is the artifact the paper is
+written from and three new numbers inside a published-grid block must not appear there without
+the marker saying they were added after E1–E7 were published; the note in `E6_reliability.json`
+alone does not reach that reader — and NO new `_rng`
+stream — the panel self-seeds from a digest of its own input bytes, so every published E1–E7
+number is byte-identical) and `experiments/run_eicu.py`'s POOLED target arm only (K = 24 >=
+`MIN_SITES_FOR_CI`; the per-hospital arm is K = 1, where every interval would be floor-suppressed
+at 24x the cost). The panel is **aggregate-only by construction** — the longest sequence anywhere
+is the 8-element `bin_edges` echo and the 7-element per-scope reliability list, and nothing
+per-record is ever emitted — but construction does not exempt the writer: both eICU writes go
+through the gated writers and therefore through `run_eicu.assert_aggregate_only`
+(`EICU_FORBIDDEN_OUT_KEYS`, arrays capped at 512). The `panels` list in
+`EICU_reliability_panel.json` is gated **per payload** (`_write_json(..., per_item_keys=("panels",))`),
+the same way `_write_table` gates CSV rows and for the same reason `assert_aggregate_only`'s own
+docstring gives: it holds one aggregate payload per replicate, so its LENGTH is a replicate count,
+while any single payload carrying 512+ values would still be record-level by construction and
+still aborts. The key itself stays in the gated envelope under a placeholder, so
+`EICU_FORBIDDEN_OUT_KEYS` is still checked against it — only the length cap is relaxed, and only
+for the named key. Gated as one sequence it tripped the cap at `--replicates 600` and took a
+certified run down on a purely descriptive artifact. That removes the POST-HOC panel from the
+failure mode without claiming the runner is safe at that scale: `EICU_diagnostics.json` carries
+per-replicate lists of the same shape (`bbse`, `composition_three_way`), is written first and is
+still gated whole, so it aborts there instead — pre-existing, and a property of the certified
+run's own diagnostics rather than of this descriptive layer. No record-level derivative is written anywhere;
+the probability vector, the mask and `p_ref` live only in the process, which is why the panel is
+recomputed rather than cached.
+
+**A DESCRIPTIVE layer may never abort the certified run (RP-8, 2026-08-01).** `validate_inputs` is
+deliberately intolerant — `p_ref` must be NaN or a probability in [0, 1], with no tolerance — and
+that intolerance sits DOWNSTREAM of every certification call in `run_eicu`, after all the work for
+a replicate and before any artifact is written. A single defective comparator cell would therefore
+have taken the certificate down with it. Two independent repairs, both required:
+
+* `eicu_etl.build_raw` maps a finite `apachePatientResult.predictedhospitalmortality` outside
+  [0, 1] to NaN, counted in `meta["comparator_out_of_range"]` and announced as a `[MEASURE]`
+  warning, in the same register as the `-1` sentinel map. The map is applied BEFORE the
+  `complete` mask is formed, so `_comparator_row`'s AUC/Brier, the `apache-complete` arm and the
+  panel all share ONE definition of "comparator available" — previously the comparator AUC was
+  computed on a cell the panel would reject. Verified on the released extract: 0 of 297,064 rows
+  are out of range (the only non-`-1` special value is none), so the map moves no published
+  number; it is a guard against the A6 failure mode (`apacheApsVar.urine` held exactly one
+  negative-not-`-1` cell in ~4.1M), not a correction of this extract.
+* `run_eicu` still wraps the `panel_from_head` call in `except rp.PanelError`, appends the message
+  to `warnings`, and continues WITHOUT that replicate's panel. Belt and braces is correct here:
+  the ETL map fixes the one channel we can name, and the wrapper bounds the blast radius of every
+  channel we cannot. The panel is descriptive; a defect in it is a missing diagnostic, never a
+  lost certificate. It is the ONLY place a `PanelError` is swallowed — `run_E6` does NOT wrap,
+  because a `deployed-mask-mismatch` on synthetic data is a wiring bug and must be loud. The
+  swallow is never silent: the message goes to `warnings` (hence `EICU_diagnostics.json` and the
+  EICU-POOLED block) AND to stderr, and `EICU-RELIABILITY.n_panels < replicates` is the arithmetic
+  record that a replicate produced none.
+
 ## `report.py`
 
 ```python
@@ -513,10 +893,52 @@ per file below; regressions to any of them are regressions to V6.
   ABSENCE of any experiment-local `sep` override
   (no SHIFT_SEP attribute — every experiment runs the documented SimConfig generator), and
   the SimConfig generator defaults (d=8, sep=2.2, base_rate=0.095, s_u=0.5).
+  ALSO pins the eighteen ported panel constants in `certgate/reliability.py` (literal), the
+  relation `BOOT_MAX_ATTEMPTS == 2 * N_BOOT`, and the NEGATIVE pin that no panel constant
+  entered `certgate/constants.py` — the frozen-constants block stays the a-priori pre-extract
+  surface.
 - `test_harness.py` — (audit V6 #6/#7: harness.py computes every violation number in the
   paper and had zero tests) `wilson_lcb` against the closed form and monotonicity in k;
   `hard_violation` boundary cases including the empty answered set; `exceedance_reference`
   against brute-force binomial enumeration including integer-boundary alpha*n.
+- `test_reliability_panel.py` — the post-hoc panel, at `FAST_N_BOOT = 48` and a fixed timestamp
+  so the whole file adds < ~8 s. The 14-record / 5-site ANALYTIC fixture computes every number by
+  hand in the file (ECE 0.136, Brier 0.29204, the answered skill triple with an exact 0.5
+  positive-rate tie predicting NEGATIVE under the STRICT `>`, both contrasts, the
+  denominator-matched reference pair) and, being below `MIN_SITES_FOR_CI`, suppresses all 18
+  intervals at zero bootstrap cost. THE mutation-killer for the conflation trap: a panel built on
+  `head.predict_proba(x)` has non-zero occupancy in a bin whose upper bound is <= 0.5 while one
+  built on `head.score(x)` has zero occupancy in EVERY such bin, and `panel_from_head` reproduces
+  the former's `input_digest` exactly. Also: the 1.01 sentinel (p == 1.0 lands in the last bin;
+  `bin_bounds` READS [0.55, 1.0]; an out-of-span p raises naming the FIRST offending index);
+  `panel_from_head`'s deployed-mask cross-check, including the `deployed-mask-mismatch` raise on a
+  mask re-derived from a ROUNDED tau and the legal `tau_star=None` all-False case; a line-by-line
+  bootstrap REPLAY against an independently constructed `derive_rng`; the site interval > 3x a
+  record interval under clustering (RP-2); exact top-up attempt arithmetic including the runtime
+  `2*n_boot` relation at a non-default `n_boot`; the floor suppressing BEFORE the closure is ever
+  called (`n_attempts == 0`); all 8 `FIT_STATUSES` reachable by construction with `separable` and
+  `coef-out-of-range` DISTINCT; the IRLS termination ORDER (range check before convergence, on the
+  FULL Newton step); `truncated-resamples` suppressing both calibration intervals with the attempt
+  counts carried through unchanged (RP-4); the SELECTED-vs-ACCURATE headline regression (two
+  constructions with indistinguishable answered error rates and OPPOSITE skill margins);
+  no-NaN / round-once / bool-stays-bool over the adversarial fixture family with `settings` EXEMPT;
+  determinism and digest sensitivity (moves on one `np.nextafter` bit, a flipped label or gate
+  bit, int32-vs-int64 site ids; invariant to copies and strided views); a pinned sha256 of the
+  emitted dict on a frozen fixture, produced by the SANDBOX implementation, which is how the
+  byte-exact numerical equivalence survives without importing `srp`; an AST check that the module
+  imports numpy only, at top level, with NO `from certgate ...` import of any kind; the E6 wiring
+  (mask, binned quantity, `panel_reliability_rows`' 14 rows, agreement with
+  `explain.composition`'s answered predicted-positive fraction to 1e-9, summary round-trip); the
+  eICU compliance gate over a wrapped payload; the documented stream-count CEILING
+  (`2 * n_bins + 13`, 27 at the default edges) measured by instrumenting `derive_rng`, with the
+  realised count strictly below it when a bin is empty; and a BEHAVIOURAL pin that
+  `examples/explain_dashboard.py` and the panel bin the same probabilities the same way — it
+  renders a real dashboard and asserts its emitted `reliability` block agrees with
+  `panel_from_head`'s answered scope on boundaries, per-bin membership counts and
+  `mean_predicted`, plus a cheap AST guard that the removed `edges = [...]` literal has not been
+  reintroduced. (The dashboard now IMPORTS `DEFAULT_BIN_EDGES`; a shared constant alone would
+  not stop the two from binning a different quantity or a different scope, which is what the
+  membership assertions catch.)
 - `test_validate.py` — each loud rejection: NaN x; float y; {1,2} labels rejected by make_cohort
   but mapped by coerce_labels(pos=2); NaN in raw labels raises; gappy site ids rejected +
   densify_sites round-trip; length mismatch; disjointness assert catches an overlap and
@@ -698,8 +1120,15 @@ experiments, run mode, UTC stamp) beside summary.md.
 summary.md (audit V26): every experiment block records its own run mode, R, and a UTC
 timestamp; sections preserved from an earlier run are visibly marked "(preserved)" in the
 section header; the summary is written in a finally block so an aborted run cannot leave
-fresh CSVs beside a silently stale summary. Everything seeded from constants.SEED; runs
-deterministically; full grid target < ~45 min (E1's eval pools and s_u arm added ~50%).
+fresh CSVs beside a silently stale summary. `out/provenance.json` describes the MOST RECENT run
+ONLY — including a partial `--only` rerun, where `meta.selected` names just the recomputed
+experiments — so the authoritative per-experiment provenance is the `_run` stamp inside each
+summary.md block, not this file. Everything seeded from constants.SEED, with the SINGLE documented
+exception of the post-hoc reliability panel: it self-seeds from `sha256` of its own input bytes
+rooted at `reliability.PANEL_SEED = 20260731` (see the `reliability.py` section — renamed from the
+sandbox's own seed, never re-pointed), consumes no `_rng` draw, and no certified quantity descends
+from it. Runs deterministically either way; full grid target < ~45 min (E1's eval pools and s_u arm
+added ~50%).
 
 ## Real-data protocol (eICU-CRD v2.0) — `experiments/eicu_*.py`
 
@@ -711,8 +1140,13 @@ that ordering). This section is the binding engineering contract.
 eicu_mock.py  -> (stdlib only)             schema-faithful mock corpus, byte-deterministic
 eicu_etl.py   -> constants (SEED, SPLIT_FRACTIONS, MIN_CAL_CLUSTERS) + numpy
 run_eicu.py   -> eicu_etl, run_synthetic (_rm_on_pool/_per_site_exceed_frac/_write_csv/_rate),
-                 pipeline, validate, model, harness, report, explain
+                 pipeline, validate, model, harness, report, explain, reliability
 ```
+
+`reliability` is imported by BOTH experiment drivers (`run_eicu.py` and `run_synthetic.py`, the
+latter for `run_E6`) and by neither core module: it is a DAG leaf with no `from certgate ...`
+import of any kind, so the dependency runs one way only. The top-of-SPEC Module DAG states the
+same edge; the two listings must agree.
 
 **Dependency rule (audit F16).** `eicu_etl.py` is **stdlib + numpy ONLY**; `eicu_mock.py`
 is **stdlib only**. `pandas` and `pyarrow` are installed in the dev environment and are
@@ -935,6 +1369,24 @@ gates at three sensitivities replace it, and all three are pre-registered:
    least `EICU_MIN_OUTCOME_STRATUM = 100` stays, raise
    `reason=outcome-informative-missingness`. The message names both remedies rather than
    inviting a threshold edit: run the declared `apache-linked` arm, or drop the flags.
+   **The abort is deliberately NARROWER than gate 1's measurement, and the difference must
+   stay stated rather than discovered.** `_outcome_missingness(y_raw, aps_present,
+   apv_present)` returns exactly TWO entries, so the abort ranges over the two presence
+   flags; `preflight` measures the same contrast for 45 indicators (those two plus all 43
+   `<col>__missing` siblings). The two halves of the channel are gated by different
+   instruments on purpose: whole-row absence moves the presence flags and is caught here,
+   at build time, before a matrix exists; CELL-level outcome-correlated missingness leaves
+   the flags untouched by construction and is caught by gate 3's ablation leg, which is why
+   that leg exists and why `tests/test_eicu_path.py` plants a cell-level corpus
+   (`mock_leak_subcap`) that this abort provably cannot see. A `[MEASURE]` warning naming a
+   `__missing` sibling over the cap beside an EMPTY `reference_check.invalid_conditions` is
+   therefore conformant output, not a gate that failed to fire — and the released extract
+   produced exactly that (`apv_ejectfx__missing` 4.333, `apv_electivesurgery__missing`
+   2.655, both presence flags 0.506, gate-3 ablation drop 0.0036 against its 0.05 cap).
+   Widening the abort to all 45 indicators is a SPEC change and would need its own
+   false-positive analysis: a `__missing` ratio is a per-column statistic over a stratum
+   the cohort does not control, and 43 of them at a 2.0 cap is a different multiple-testing
+   problem from 2.
 3. **Runtime leak alarm** (`run_eicu`, criterion F-D, rewritten). F-D no longer depends on
    `alpha` or `coverage`. It fires on the head's own out-of-sample discrimination against
    `EICU_LEAK_AUC_CEILING = 0.90` (APACHE-IVa, a purpose-built day-1 score, reaches
@@ -1009,6 +1461,58 @@ reach `experiments/out/` (PhysioNet Credentialed Health Data License 1.5.0 + DUA
 restrict derived record-level artifacts). `run_eicu` writes its own `EICU-SUMMARY.md`
 with sections `## EICU-<NAME>` and NEVER writes `summary.md` — `_existing_summary_blocks`'
 regex is `^## (E\d)`, a single digit, so an eICU section there would be silently clobbered.
+`EICU_SUMMARY_SECTIONS` is the frozen 6-tuple `("EICU-PREFLIGHT", "EICU-PREDICTIONS",
+"EICU-POOLED", "EICU-PERSITE", "EICU-COMPARATOR", "EICU-RELIABILITY")` and `_write_summary`
+emits ONLY the names in it (`else: continue`), so a block added to `_certification_blocks`
+without the tuple edit is silently dropped with no error. The panel section is POST-HOC and is
+appended LAST — never inserted — so every `EICU-SUMMARY.md` written before 2026-08-01,
+including those in `experiments/out/` and `experiments/out-sens/`, still parses and preserves.
+
+**PIN AMENDMENT (2026-08-01), recorded because the house rule forbids silent edits to a pinned
+literal.** `EICU_SUMMARY_SECTIONS` was a 5-tuple until this date; the reliability-panel work
+APPENDED `"EICU-RELIABILITY"` as a sixth entry. This is the one pre-existing pinned value the
+panel work changes and the ordering was SPEC (this paragraph) → `experiments/run_eicu.py` →
+`tests/test_constants.py`. It is an APPEND, never an insert or a re-order, so every artifact
+written under the 5-tuple still parses and round-trips; no other pinned literal was touched, and
+the eighteen panel constants live in `certgate/reliability.py`, deliberately OUTSIDE the
+`constants.py` frozen block, which is the a-priori pre-extract surface. This amendment is an
+ENGINEERING pin, not a protocol amendment: `EICU-PROTOCOL.md` §§2–13 are untouched and its
+amendment log (A1–A6) correctly does not mention it.
+
+The panel arm is DESCRIPTIVE: it runs on the pooled target arm only, alters no certified
+quantity, and settles none of the frozen predictions P1–P7 or failure criteria F-A–F-E.
+`reliability.POST_HOC_LABEL` is carried by FIVE artifacts, enumerated rather than claimed in
+general, because a label is a hand-appended string and nothing inherits it: (1) the run
+`warnings`, hence `EICU_diagnostics.json` and the EICU-POOLED block; (2) the top-level `post_hoc`
+key of `EICU_reliability_panel.json`; (3) the `post_hoc` field of the `EICU-RELIABILITY` summary
+block; (4) the `suptitle` of `EICU_reliability_panel.png` — a real-extract figure carries it on
+its FACE; and (5) a LEADING `post_hoc` column on every row of `EICU_reliability.csv`. (5) exists
+because a CSV of real-extract per-bin observed rates is the artifact most easily detached from
+its directory, and a per-row column is the only carrier that survives that detachment; the cost
+is one repeated ASCII string per row and it is worth paying.
+
+**The `EICU-RELIABILITY` block carries its disclosures WITH its numbers.** `EICU-SUMMARY.md` is
+the human-facing artifact and the panel's own `notes` travel only inside
+`EICU_reliability_panel.json`, one copy per payload, so a summary reader would otherwise see the
+numbers without the estimand text that governs them. The block therefore emits, beside the
+distributions:
+
+* `notes` — `list(reliability.NOTES)` verbatim. Mandatory, and `notes[1]` in particular: every
+  interval is a MARGINAL percentile interval with no joint-coverage claim, so two endpoints are
+  never differenced. The block prints `brier_reference`, `brier_primary_matched` and
+  `brier_difference` side by side, which is exactly the arrangement `notes[1]` and `notes[4]`
+  exist to govern.
+* `replicate_spread_note` — the `_summary_stats` spreads (sd / p10 / p50 / p90) across replicates
+  are SPLIT-TO-SPLIT variation on ONE hospital population and ONE extract, NOT sampling
+  uncertainty. The replicates are re-splits, not independent draws — the same non-independence
+  `_failure_criteria` already states for F-A — and the cluster-bootstrap `ci` fields are the only
+  intervals in the block with a coverage claim.
+* `brier_reference_ci_replicate0` — the WHOLE three-name interval dict from the shared reference
+  stream (`brier_reference`, `brier_primary_matched`, `brier_difference`). The key is named for
+  what it holds. It must NOT be named `brier_difference_ci_...`: that name invites a reader to
+  read the first nested interval as the paired-difference interval, which is the confusion
+  `notes[4]` and `brier_difference_note` exist to prevent. The paired interval is the
+  `brier_difference` member inside it.
 eICU CSVs are written ASCII-STRICT (deliberate deviation from `run_synthetic._write_csv`'s
 locale default): every eICU cell is ASCII by construction, so a non-ASCII cell is an
 upstream protocol violation and a crash is correct where a mojibake cell is not.
@@ -1083,7 +1587,15 @@ operator to "expect a decline" must name the corpus size it means; an operator w
 larger mock, sees a certificate, and concludes the pipeline is broken has been misled by
 the documentation, not by the code. The certified branch is therefore reached in the
 suite by an off-default large-site arm (`CERTGATE_EICU_LARGE=1`) rather than left
-unexercised, and raising `EICU_MOCK_SIGNAL_B` toward `synth_fixture.SIGNAL_B = 2.0` is one
+unexercised. Two panel-side consequences follow and are tested directly rather than by
+running the driver: `_reliability_figure` is UNREACHABLE from the always-on arm (which runs
+`quick=True`, and every figure is skipped under `--quick`), so it gets its own unit test over
+two constructed payloads — one ordinary, one all-declined with `reference: None` — asserting the
+PNG is written; and the comparator range map is tested on a planted corpus carrying a
+`predictedhospitalmortality` of `1.4`, asserting the cell becomes NaN, the count lands in
+`meta["comparator_out_of_range"]`, a `[MEASURE]` warning names it, and — the point of the
+map — that the same cell is absent from `complete` and therefore from both the comparator
+scoring and the panel's `p_ref`. Raising `EICU_MOCK_SIGNAL_B` toward `synth_fixture.SIGNAL_B = 2.0` is one
 further option, not the only one; either is a SPEC + `test_constants` decision, not one
 the generator may make on its own. The mock (`experiments/eicu_mock.py`)
 uses REAL eICU column names and DDL column order and plants every documented wart (dual
@@ -1163,3 +1675,26 @@ E-9 has a presence stratum below EICU_MIN_OUTCOME_STRATUM — total absence may 
 the leak gate that partial absence trips) · E-22→the unrecognised-null-token gate covers
 every allowlisted numeric including the patient block, whose hospitaladmitoffset doubles
 as the first-stay tie-breaker.
+
+2026-08-01 post-hoc reliability-panel conformance: RP-1→the panel bins `predict_proba` (p1),
+never `score` (max(p1, 1-p1)); both drivers go through `panel_from_head`, which computes BOTH
+quantities itself so no caller ever supplies `p` · RP-2→one-stage SITE bootstrap only
+(`rng.integers(0, n_sites, n_sites)`), never records — a record bootstrap would reintroduce
+inside the diagnostic layer exactly the failure E7 exists to demonstrate · RP-3→top-up-or-decline
+on every statistic; a reduced draw count is never quantiled; `n_boot_valid` / `n_attempts` are
+reported so the shortfall is visible · RP-4→`coef-out-of-range` is a VALUE-dependent rejection:
+both calibration intervals are suppressed `truncated-resamples`, never topped up into a quantile
+that has deleted its own tail · RP-5→no NaN in any emitted artifact; undefined is `None` with the
+reason in the adjacent `ci_status`, and `None` is distinct from `0.0` · RP-6→every real-extract
+panel artifact carries `POST_HOC_LABEL`; the panel alters no certified quantity and settles no
+frozen prediction · RP-7→the deployed answered mask is never re-derived from a rounded tau:
+`panel_from_head` cross-checks a supplied mask against `head.score(x) >= tau_star` at the RAW
+operative tau and raises `deployed-mask-mismatch` · RP-8→a DESCRIPTIVE layer may never abort the
+certified run: `eicu_etl.build_raw` maps an out-of-range comparator probability to NaN (counted,
+warned, applied before the `complete` mask so every consumer shares one availability definition)
+AND `run_eicu` catches `PanelError` around the panel call, warns to `warnings` + stderr, and
+continues — the shortfall is visible as `n_panels < replicates` · RP-9→the post-hoc marker travels
+with the numbers in every HUMAN-facing artifact, not only the machine one: `E6_POST_HOC_NOTE` in
+E6's `summary.md` block, `POST_HOC_LABEL` in all five eICU carriers, and `reliability.NOTES` +
+`replicate_spread_note` inside the `EICU-RELIABILITY` block so the estimand disclosures are not
+left behind in `EICU_reliability_panel.json`.

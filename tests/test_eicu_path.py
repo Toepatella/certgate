@@ -44,7 +44,9 @@ import numpy as np
 import pytest
 from sklearn.metrics import roc_auc_score
 
-from certgate.constants import ALPHA_LADDER, MIN_CAL_CLUSTERS, SPLIT_FRACTIONS
+from certgate import reliability as rp
+from certgate.constants import (ALPHA_LADDER, MIN_CAL_CLUSTERS, SEED,
+                                SPLIT_FRACTIONS)
 from certgate.harness import hard_violation
 from certgate.model import fit_head
 from certgate.pipeline import run_certgate
@@ -1487,6 +1489,484 @@ def test_the_honesty_assertion_fires_on_a_bad_certificate(pipeline_small):
     with pytest.raises(AssertionError):
         _assert_honest(_rep(err), ctx)               # answers only its mistakes
     assert _assert_honest(_rep(~err), ctx) == "certified"
+
+
+@pytest.fixture(scope="module")
+def mock_certified_run(tmp_path_factory, mock_small):
+    """One QUICK `run_certification` on the always-on corpus, run ONCE.
+
+    This is the only always-on test that drives the RUNNER (rather than the
+    pipeline) end to end, so it is the only place the POST-HOC panel's wiring
+    into `run_eicu` is exercised: the gated writers, the summary section, the
+    figure skip and the label plumbing. `quick=True` skips the figures, which
+    is what keeps the cost in the seconds.
+    """
+    out = str(tmp_path_factory.mktemp("eicu_panel_run") / "out")
+    payload = run_eicu.run_certification(mock_small["dir"], out,
+                                         replicates=1, quick=True,
+                                         verbose=False)
+    return dict(out=out, payload=payload)
+
+
+def test_mock_run_writes_the_reliability_panel(mock_certified_run):
+    """The POST-HOC panel (2026-08-01) reaches disk, gated and labelled.
+
+    The mock declines every rung by arithmetic, so this ALSO exercises the
+    `tau_star=None` / all-False-mask branch on the real runner -- the branch
+    the mock corpus is otherwise unable to reach -- and proves it is a legal
+    shape rather than a crash: every answered statistic is `None` carrying
+    `undefined-point`, and the artifact is still strict JSON.
+    """
+    out = mock_certified_run["out"]
+
+    raw = open(os.path.join(out, "EICU_reliability_panel.json"),
+               encoding="utf-8").read()
+    # `nan` / `Infinity` are NOT valid JSON; a reader would either choke or
+    # (in Python) silently produce a float that no downstream tool can print.
+    assert "NaN" not in raw and "Infinity" not in raw
+    doc = json.loads(raw, parse_constant=_reject_json_constant)
+    assert "POST-HOC" in doc["post_hoc"]
+    assert doc["post_hoc"] == rp.POST_HOC_LABEL
+    assert len(doc["panels"]) == 1
+    panel = doc["panels"][0]
+
+    # the panel carries the SANDBOX's root seed, never certgate's: re-pointing
+    # it at constants.SEED would discard the external verification that is the
+    # whole reason the module was ported rather than re-derived.
+    assert panel["settings"]["seed"] == rp.PANEL_SEED == 20260731
+    assert panel["settings"]["seed"] != SEED
+    assert panel["schema_version"] == "srp/1"
+    assert panel["generated_utc"] is None            # no wall clock, ever
+    assert panel["counts"]["n_sites"] == etl.EICU_N_TARGET_SITES
+    assert panel["operative_alpha"] is None          # the mock certifies nothing
+    assert panel["counts"]["n_answered"] == 0
+    for block in (panel["ece"]["answered"],
+                  panel["calibration"]["answered"],
+                  panel["brier"]["primary_answered"],
+                  panel["skill"]["contrast"]):
+        assert block["ci"] is None
+        assert block["ci_status"] in rp.CI_STATUSES
+    # the DECLINED scope is fully populated at K = 24 >= MIN_SITES_FOR_CI
+    assert panel["ece"]["declined"]["ece"] is not None
+    assert panel["skill"]["all"]["ci_status"] == "ok"
+
+    rows = list(csv.DictReader(open(os.path.join(out, "EICU_reliability.csv"),
+                                    encoding="ascii")))
+    assert len(rows) == 2 * (len(rp.DEFAULT_BIN_EDGES) - 1)      # 14 per replicate
+    assert list(rows[0]) == (["post_hoc", "replicate", "arm"]
+                             + list(rp.PANEL_RELIABILITY_FIELDS))
+    assert {r["scope"] for r in rows} == {"answered", "declined"}
+    assert all(r["ci_status"] in rp.CI_STATUSES for r in rows)
+    # RP-9: the CSV is the panel artifact most easily detached from the
+    # directory that explains it, so the label rides on EVERY row rather than
+    # being inherited from a neighbouring file.
+    assert all(r["post_hoc"] == rp.POST_HOC_LABEL for r in rows)
+
+    text = open(os.path.join(out, "EICU-SUMMARY.md"), encoding="utf-8").read()
+    assert "## EICU-RELIABILITY" in text
+    assert "EICU-RELIABILITY" == run_eicu.EICU_SUMMARY_SECTIONS[-1]
+    block = mock_certified_run["payload"]["reliability"]
+    assert block["post_hoc"] == rp.POST_HOC_LABEL
+    assert block["n_panels"] == 1
+    # RP-9: the estimand disclosures travel WITH the numbers into the
+    # human-facing summary. notes[1] in particular -- the block prints
+    # brier_reference / brier_primary_matched / brier_difference side by side,
+    # which is exactly the arrangement it governs.
+    assert block["notes"] == list(rp.NOTES)
+    assert "MARGINAL" in block["notes"][1]
+    assert "not independent" in block["replicate_spread_note"] or \
+        "NOT independent" in block["replicate_spread_note"]
+    # the key names the WHOLE three-name interval dict it actually holds; the
+    # paired interval is the `brier_difference` member inside it
+    assert "brier_difference_ci_replicate0" not in block
+    assert "brier_reference_ci_replicate0" in block
+    assert block["ci_status_counts"]                  # the vocabulary is counted
+    assert set(block["ci_status_counts"]) <= set(rp.CI_STATUSES)
+    assert set(block["calibration_status_answered_counts"]) <= set(
+        rp.FIT_STATUSES)
+    # the label reaches the run warnings too, hence EICU_diagnostics.json and
+    # the EICU-POOLED block: a separate JSON file inherits nothing.
+    diag = json.load(open(os.path.join(out, "EICU_diagnostics.json"),
+                          encoding="utf-8"))
+    assert rp.POST_HOC_LABEL in diag["warnings"]
+    # quick=True skips every figure, the panel's included
+    assert not os.path.exists(os.path.join(out,
+                                           "EICU_reliability_panel.png"))
+
+    # nothing forbidden, nothing record-length, at any depth
+    run_eicu.assert_aggregate_only(run_eicu._json_ready(doc),
+                                   "EICU_reliability_panel.json")
+    _assert_no_forbidden_key(doc)
+
+
+def _reject_json_constant(token):
+    raise AssertionError(f"non-finite JSON constant {token!r} in the panel")
+
+
+def _assert_no_forbidden_key(node):
+    """Recursive: a future key addition must not reintroduce `site_id` or
+    `answered_mask` under a nested block the flat gate happens to reach."""
+    stack = [node]
+    while stack:
+        item = stack.pop()
+        if isinstance(item, dict):
+            for k, v in item.items():
+                assert k not in run_eicu.EICU_FORBIDDEN_OUT_KEYS, k
+                stack.append(v)
+        elif isinstance(item, (list, tuple)):
+            assert len(item) <= run_eicu.EICU_MAX_OUTPUT_LEN
+            stack.extend(item)
+
+
+def test_panel_gate_is_the_deployed_mask_not_a_rounded_tau(pipeline_small):
+    """The certified branch of the eICU panel call, which the mock corpus
+    cannot reach through `run_certification` (it declines every rung).
+
+    Two things are pinned. (1) `panel_from_head` derives the mask from
+    `head.score(x) >= tau` itself, so a driver never constructs `p` and the
+    `predict_proba` / `score` conflation is structurally unreachable. (2) a
+    mask re-derived from a tau ROUNDED to 6 dp -- which is exactly what
+    `_eval_rung` stores -- is REJECTED when it disagrees with the deployed one
+    at the boundary, instead of silently panelling a different answered set.
+    """
+    ctx = pipeline_small
+    head = fit_head(ctx["train"])
+    target = ctx["target"]
+    scores = head.score(target.x)
+    # an ACTUAL score value, so nudging tau up by one ulp is guaranteed to drop
+    # at least that record out of the answered set
+    tau = float(np.sort(scores)[scores.size // 3])
+
+    panel = rp.panel_from_head(head, target.x, target.y, target.site_id, tau,
+                               n_boot=32)
+    assert panel["counts"]["n_answered"] == int((scores >= tau).sum())
+    assert panel["counts"]["n_answered"] > 0
+
+    # the same call with the deployed mask supplied is identical, not merely close
+    same = rp.panel_from_head(head, target.x, target.y, target.site_id, tau,
+                              answered_mask=(scores >= tau), n_boot=32)
+    assert same == panel
+
+    # a mask built at a tau that rounds to a DIFFERENT set is refused
+    bad = scores >= float(np.nextafter(tau, 1.0))
+    assert not np.array_equal(bad, scores >= tau)
+    with pytest.raises(rp.PanelError, match="deployed-mask-mismatch"):
+        rp.panel_from_head(head, target.x, target.y, target.site_id, tau,
+                           answered_mask=bad, n_boot=32)
+
+
+def _panel_for_figure(*, answered_share, with_reference):
+    """A small but REAL panel payload, shaped exactly as `run_certification`
+    accumulates one (the `replicate` key included)."""
+    rng = np.random.default_rng(11)
+    n_sites, per_site = 24, 40
+    n = n_sites * per_site
+    p = rng.uniform(0.0, 1.0, n)
+    y = rng.uniform(0.0, 1.0, n) < p
+    site_id = np.repeat(np.arange(n_sites), per_site)
+    answered = rng.uniform(0.0, 1.0, n) < answered_share
+    p_ref = (np.clip(p + rng.normal(0.0, 0.1, n), 0.0, 1.0)
+             if with_reference else None)
+    panel = rp.selective_reliability_panel(p, answered, site_id, y, p_ref,
+                                           n_boot=24)
+    return {"replicate": 0, "arm": "primary", "operative_alpha": 0.10, **panel}
+
+
+def test_reliability_figure_renders_including_the_degenerate_shape(tmp_path):
+    """`_reliability_figure` is UNREACHABLE from the always-on mock arm, which
+    runs `quick=True` and skips every figure -- so a crash there would abort a
+    20-replicate REAL-EXTRACT run after all the certification work was done.
+
+    Driving it directly is cheap and covers both shapes it can meet: an
+    ordinary panel with a reference scorer, and the degenerate all-declined /
+    `reference: None` panel the runner produces whenever no rung certifies (the
+    only shape the mock corpus can reach). The second is the one that would
+    take the `no reference-matched Brier` branch and the empty-answered-curve
+    branch together.
+    """
+    normal = _panel_for_figure(answered_share=0.6, with_reference=True)
+    degenerate = _panel_for_figure(answered_share=0.0, with_reference=False)
+    assert degenerate["brier"]["reference"] is None
+    assert degenerate["counts"]["n_answered"] == 0
+
+    for name, payloads in (("normal", [normal]),
+                           ("degenerate", [degenerate]),
+                           ("mixed", [normal, degenerate])):
+        out = str(tmp_path / name)
+        os.makedirs(out, exist_ok=True)
+        run_eicu._reliability_figure(out, payloads, verbose=False)
+        png = os.path.join(out, "EICU_reliability_panel.png")
+        assert os.path.exists(png) and os.path.getsize(png) > 0, name
+
+    # and an empty accumulator (every replicate's panel skipped) is a no-op,
+    # never an exception on `panel_payloads[0]`
+    out = str(tmp_path / "empty")
+    os.makedirs(out, exist_ok=True)
+    run_eicu._reliability_figure(out, [], verbose=False)
+    assert not os.path.exists(os.path.join(out,
+                                           "EICU_reliability_panel.png"))
+
+
+def test_reliability_figure_survives_a_point_outside_its_own_interval(tmp_path):
+    """THE shape that actually crashed, and the one `_panel_for_figure` cannot
+    reach: a percentile interval that does not straddle its own point estimate.
+
+    `site_bootstrap_ci` quantiles the resampling distribution and promises no
+    such straddle, and for a paired ratio-of-sums over 24 sites
+    (`brier.reference.brier_difference`) the point can land outside. A raw
+    `point - ci['lo']` then goes NEGATIVE and matplotlib RAISES
+    `ValueError: 'yerr' must not contain negative values` rather than warning
+    -- inside `_figures`, which `run_certification` calls before it assembles
+    the summary payload, so a descriptive figure took `EICU-SUMMARY.md` and the
+    whole 20-replicate real-extract summary down with it.
+
+    `_panel_for_figure` builds `p_ref` as `clip(p + N(0, 0.1))`, a near-copy of
+    the primary scorer, which puts `brier_difference` comfortably inside its
+    interval every time -- so the shape is planted here on a REAL payload
+    rather than waited for.
+    """
+    # the clamp itself, at the one place it is now defined
+    assert rp.panel_ci_halfwidths(0.001, {"lo": 0.004, "hi": 0.009}) == (0.0,
+                                                                         0.008)
+    assert rp.panel_ci_halfwidths(0.5, {"lo": 0.4, "hi": 0.6}) == (
+        pytest.approx(0.1), pytest.approx(0.1))
+    assert rp.panel_ci_halfwidths(0.5, None) == (0.0, 0.0)
+    # a non-'ok' status carries no interval, and never a zero-width one
+    assert rp.panel_ci_halfwidths(0.5, {"lo": 0.4, "hi": 0.6},
+                                  "degenerate-resamples") == (0.0, 0.0)
+
+    payload = _panel_for_figure(answered_share=0.6, with_reference=True)
+
+    ref = payload["brier"]["reference"]
+    assert ref is not None and ref["ci"] is not None
+    point = float(ref["brier_difference"])
+    # push BOTH endpoints above the point: lo > point is the negative-yerr case
+    ref["ci"]["brier_difference"] = {"lo": point + 0.01, "hi": point + 0.02}
+
+    planted = 0
+    for scope in rp.PANEL_CURVE_SCOPES:
+        for rec in payload["reliability"][scope]:
+            if rec["ci_status"] == "ok" and rec["observed"] is not None:
+                rec["ci"] = {"lo": rec["observed"] + 0.05,
+                             "hi": rec["observed"] + 0.10}
+                planted += 1
+                break
+    assert planted, "no 'ok' bin to plant the inverted interval in"
+
+    # the series contract clamps rather than emitting a negative half-width
+    for scope in rp.PANEL_CURVE_SCOPES:
+        _xs, _ys, lo, hi = rp.panel_reliability_series(payload, scope)
+        assert all(v >= 0.0 for v in lo), scope
+        assert all(v >= 0.0 for v in hi), scope
+
+    out = str(tmp_path / "inverted")
+    os.makedirs(out, exist_ok=True)
+    run_eicu._reliability_figure(out, [payload], verbose=False)
+    png = os.path.join(out, "EICU_reliability_panel.png")
+    assert os.path.exists(png) and os.path.getsize(png) > 0
+
+
+def test_reliability_curve_legend_names_every_plotted_scope(tmp_path,
+                                                            monkeypatch):
+    """The legend entry belongs to the first payload that PLOTS a scope, not to
+    `base`.
+
+    Under RP-8 `base` is merely the lowest-numbered replicate whose panel
+    SURVIVED. If that one answered nothing, its answered curve is empty and a
+    `base`-only label left every later replicate's answered points on the
+    figure as unlabelled scattered dots with no key at all.
+    """
+    base = _panel_for_figure(answered_share=0.0, with_reference=False)
+    later = dict(_panel_for_figure(answered_share=0.6, with_reference=True),
+                 replicate=1)
+    assert base["replicate"] == 0 and base["counts"]["n_answered"] == 0
+
+    seen = {}
+    real_close = run_eicu.plt.close
+
+    def _capture(fig):
+        legend = fig.axes[0].get_legend()
+        seen["labels"] = [t.get_text() for t in legend.get_texts()]
+        real_close(fig)
+
+    monkeypatch.setattr(run_eicu.plt, "close", _capture)
+    out = str(tmp_path / "legend")
+    os.makedirs(out, exist_ok=True)
+    run_eicu._reliability_figure(out, [base, later], verbose=False)
+
+    assert set(seen["labels"]) == {"identity", "answered", "declined"}
+
+
+def test_a_panel_error_costs_a_diagnostic_and_never_the_certificate(
+        tmp_path, monkeypatch, capsys, mock_small):
+    """RP-8, THE GUARD ITSELF: `except rp.PanelError` around the panel call.
+
+    The repair had two halves and only one was pinned. `eicu_etl`'s
+    out-of-range comparator map is covered by
+    `test_out_of_range_comparator_probability_is_mapped_to_missing`, but the
+    wrapper -- the half that bounds the blast radius of every channel we
+    CANNOT name -- was implemented and untested: deleting the `try`/`except`
+    left the suite green. That is the worse half to leave unpinned, because it
+    is the one that runs on the real extract against unmodelled inputs, and it
+    sits AFTER every certification call for the replicate and BEFORE any
+    artifact is written -- so its absence trades a whole 20-replicate
+    real-extract run for a missing diagnostic.
+
+    The failure is planted at the only boundary the runner crosses into the
+    panel (`run_eicu.rp.panel_from_head`), which is also the boundary SPEC
+    names as the single entry point, so this cannot pass by patching a path
+    the driver does not use.
+
+    Four things are asserted (a-d below), and the first is the whole point:
+    the run RETURNS. Remove the `except` and this test goes red before the
+    first assertion is even reached, because `run_certification` propagates
+    the planted `PanelError` instead of returning a payload -- which is
+    exactly the behaviour on a real extract that the guard exists to prevent.
+    """
+    calls = []
+
+    def _boom(*args, **kwargs):
+        calls.append(len(calls))
+        raise rp.PanelError("planted-panel-failure (RP-8 regression probe)")
+
+    monkeypatch.setattr(run_eicu.rp, "panel_from_head", _boom)
+
+    out = str(tmp_path / "rp8")
+    # quick=False on purpose: the always-on panel test runs quick=True and so
+    # never reaches `_figures`, which is exactly where an empty accumulator
+    # would strand a 20-replicate run after all the certification work was done.
+    payload = run_eicu.run_certification(mock_small["dir"], out,
+                                         replicates=1, quick=False,
+                                         verbose=False)
+    assert calls == [0], "the planted failure must be reached exactly once"
+
+    # (a) the certified run COMPLETED and its own artifacts are all there
+    for name in ("EICU_pooled.csv", "EICU_per_site.csv",
+                 "EICU_diagnostics.json", "EICU_certificate.json",
+                 "EICU-SUMMARY.md", "EICU_pooled.png", "EICU_per_site.png"):
+        assert os.path.exists(os.path.join(out, name)), name
+    assert payload["pooled"]["replicates"] == 1
+    for alpha in ALPHA_LADDER:
+        # every rung was still evaluated for the replicate whose panel died
+        assert payload["pooled"]["rungs"][str(float(alpha))][
+            "n_replicates"] == 1
+
+    # (b) the swallow is NOT silent: warnings + stderr, naming the replicate
+    diag = json.load(open(os.path.join(out, "EICU_diagnostics.json"),
+                          encoding="utf-8"))
+    skips = [w for w in diag["warnings"] if "[MEASURE] RP-8" in w]
+    assert len(skips) == 1, diag["warnings"]
+    assert "SKIPPED for replicate 0" in skips[0]
+    assert "planted-panel-failure" in skips[0]
+    assert "unaffected" in skips[0]
+    assert skips == [w for w in payload["pooled"]["warnings"]
+                     if "[MEASURE] RP-8" in w]
+    assert "[MEASURE] RP-8" in capsys.readouterr().err
+    # the POST-HOC label still rides along -- the label is unconditional, the
+    # panel is not
+    assert rp.POST_HOC_LABEL in diag["warnings"]
+
+    # (c) the shortfall is arithmetic (SPEC RP-8: `n_panels < replicates`), the
+    # no-panel note is TRUE of the case that produced it, and the summary still
+    # parses with every certification section present and in frozen order
+    block = payload["reliability"]
+    assert block["n_panels"] == 0 < block["replicates"] == 1
+    assert block["post_hoc"] == rp.POST_HOC_LABEL
+    # the old note read "no panel was produced: the pooled arm ran zero
+    # replicates" UNCONDITIONALLY -- false here, where one replicate ran and was
+    # certified and only its panel is missing. The note must now cover the case
+    # that produced it and point at the warnings that explain it.
+    note = " ".join(block["note"].split())
+    assert "replicates = 1" in note
+    assert "EVERY replicate's panel was SKIPPED under RP-8" in note
+    assert "[MEASURE] RP-8" in note
+    for key in ("ece_answered", "brier_difference", "consistency"):
+        assert key not in block, f"{key} claims a statistic no panel produced"
+
+    path = os.path.join(out, "EICU-SUMMARY.md")
+    sections = run_eicu._existing_summary_blocks(path)
+    expected = [s for s in run_eicu.EICU_SUMMARY_SECTIONS
+                if s in run_eicu._certification_blocks(payload)]
+    assert list(sections) == expected == ["EICU-POOLED", "EICU-PERSITE",
+                                          "EICU-COMPARATOR",
+                                          "EICU-RELIABILITY"]
+    for name, rendered in sections.items():
+        body = json.loads(rendered.strip().removeprefix("```json")
+                          .removesuffix("```"))
+        assert body["_run"]["replicates"] == 1, name
+    assert json.loads(sections["EICU-RELIABILITY"].strip()
+                      .removeprefix("```json").removesuffix("```"))[
+        "n_panels"] == 0
+
+    # (d) nothing CLAIMS a panel that never ran. The two panel artifacts are
+    # still written -- their absence would read as "the panel was never wired
+    # in" rather than "it was skipped, here is why" -- but they are EMPTY, and
+    # the figure, whose title would otherwise name a replicate whose curve does
+    # not exist, is not written at all (quick=False, so its siblings are).
+    doc = json.loads(open(os.path.join(out, "EICU_reliability_panel.json"),
+                          encoding="utf-8").read(),
+                     parse_constant=_reject_json_constant)
+    assert doc["panels"] == []
+    assert doc["post_hoc"] == rp.POST_HOC_LABEL
+    csv_path = os.path.join(out, "EICU_reliability.csv")
+    rows = list(csv.DictReader(open(csv_path, encoding="ascii")))
+    assert rows == []
+    assert list(csv.reader(open(csv_path, encoding="ascii")))[0] == (
+        ["post_hoc", "replicate", "arm"] + list(rp.PANEL_RELIABILITY_FIELDS))
+    assert not os.path.exists(os.path.join(out,
+                                           "EICU_reliability_panel.png"))
+
+
+def test_out_of_range_comparator_probability_is_mapped_to_missing(tmp_path):
+    """RP-8 (2026-08-01). `predictedhospitalmortality` is a VARCHAR(50) holding
+    a probability and only the exact `-1` sentinel mapped to missing, so a stray
+    finite cell outside [0, 1] flowed to two consumers that DISAGREED about it:
+    `_comparator_row` scored AUC and Brier on it silently, while the post-hoc
+    panel's `validate_inputs` rejects it -- after a replicate's certification
+    work and before any artifact is written, so a DESCRIPTIVE layer could have
+    taken the certificate down.
+
+    The released extract carries no such cell (0 of 297,064 rows), which is why
+    this is planted: it is the A6 failure mode (ONE negative-not-`-1`
+    `apacheApsVar.urine` cell in ~4.1M) applied to the one column where it would
+    have been fatal rather than cosmetic.
+    """
+    n = 40
+    rows = {"patient": [], "hospital": [_hospital(1)], "apacheApsVar": [],
+            "apachePredVar": [], "apachePatientResult": []}
+    for i in range(1, n + 1):
+        rows["patient"].append(_patient(
+            i, hospitaldischargestatus="Expired" if i % 5 == 0 else "Alive"))
+        rows["apacheApsVar"].append(_aps(i, i))
+        rows["apachePredVar"].append(_apv(i, i))
+        pred = "1.4" if i == 3 else ("-1" if i == 4 else "0.25")
+        rows["apachePatientResult"].append(
+            _result(i, 1000 + i, "IVa", pred))
+    dst = _write_corpus(str(tmp_path / "oorcomp"), rows)
+
+    _, _, meta = etl.build_raw(dst, verbose=False)
+    assert meta["comparator_out_of_range"] == 1
+    assert any("RP-8" in w for w in meta["warnings"]), (
+        "a value-dependent map must announce itself, exactly as A6 does")
+
+    comp = meta["comparator_predicted_mortality"]
+    r_bad = _row_of(meta, 3)
+    r_sentinel = _row_of(meta, 4)
+    r_ok = _row_of(meta, 5)
+    assert np.isnan(comp[r_bad])            # 1.4 -> missing, like -1
+    assert np.isnan(comp[r_sentinel])
+    assert comp[r_ok] == 0.25
+    # no finite cell outside [0, 1] survives anywhere -- which is precisely the
+    # precondition `reliability.validate_inputs` enforces on p_ref
+    fin = comp[np.isfinite(comp)]
+    assert fin.size and np.all((fin >= 0.0) & (fin <= 1.0))
+
+    # ONE definition of "comparator available": the mapped cell is absent from
+    # the apache-complete arm too, so the comparator scoring and the panel's
+    # p_ref agree instead of disagreeing silently.
+    complete_step = [s for s in meta["attrition"]
+                     if s["step"] == "apache-complete-arm"][0]
+    assert complete_step["n_stays"] == int(np.isfinite(comp).sum())
 
 
 def test_run_eicu_refuses_record_level_output():
