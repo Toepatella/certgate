@@ -217,7 +217,9 @@ def _write_json(path, payload, where, *, per_item_keys=()):
     quantity, while any single item carrying 512+ values is record-level by
     construction. The key is still present in the gated envelope (under a
     placeholder), so it is still checked against ``EICU_FORBIDDEN_OUT_KEYS`` --
-    only the length cap is relaxed, and only for the named keys.
+    only the length cap is relaxed, and only for the named keys. Each item
+    MUST be a dict: on scalars the per-item gate is a no-op, so a flat float
+    list under the named key would otherwise exit the process ungated.
     """
     ready = _json_ready(payload)
     if per_item_keys and isinstance(ready, dict):
@@ -230,6 +232,17 @@ def _write_json(path, payload, where, *, per_item_keys=()):
             items = ready.get(key)
             if isinstance(items, list):
                 for i, item in enumerate(items):
+                    # The per-item gate is a no-op on scalars, so a flat list
+                    # of floats under the named key -- the record-level shape
+                    # this gate exists to stop -- would pass ungated. Only
+                    # dicts (one aggregate payload per replicate) are the
+                    # sanctioned item shape.
+                    if not isinstance(item, dict):
+                        raise etl.EicuError(
+                            f"run_eicu._write_json: {where}.{key}[{i}] is a "
+                            f"{type(item).__name__}, not a dict -- per_item_keys "
+                            f"items must each be one aggregate payload "
+                            f"(reason=record-level-output)")
                     assert_aggregate_only(item, f"{where}.{key}[{i}]")
     else:
         assert_aggregate_only(ready, where)
@@ -1016,6 +1029,15 @@ def _reliability_figure(out, panel_payloads, verbose):
     written, so a descriptive figure would take a 20-replicate certified run
     down with it."""
     if not panel_payloads:
+        # A previous run into the same --out may have left its own panel
+        # figure here; with zero panels this run, that stale PNG would sit
+        # beside an EICU-SUMMARY.md reporting n_panels: 0 and read as current
+        # output. Remove it rather than leave last run's curves masquerading.
+        stale = os.path.join(out, f"{EICU_OUT_PREFIX}_reliability_panel.png")
+        if os.path.exists(stale):
+            os.remove(stale)
+            _say(verbose, f"removed stale {EICU_OUT_PREFIX}"
+                          f"_reliability_panel.png (no panels this run)")
         return
     fig, (axL, axR) = plt.subplots(1, 2, figsize=(12, 4))
     # The joined curve is the LOWEST-numbered replicate present, named on the
@@ -1767,11 +1789,15 @@ def run_certification(data_dir, out, *, arm="primary", replicates=1,
         # condition -- a comparator cell the ETL's range map does not know
         # about, a shape the Cohort contract does not forbid -- would otherwise
         # take the certificate down with it. A descriptive layer must never do
-        # that. The swallow is NOT silent: the reason goes to `warnings` (hence
-        # EICU_diagnostics.json and the EICU-POOLED block) and to stderr, and
-        # `EICU-RELIABILITY.n_panels < replicates` records the shortfall
-        # arithmetically. run_E6 deliberately does NOT wrap: on synthetic data a
-        # PanelError is a wiring bug and must be loud.
+        # that -- which is why the catch below is `except Exception`, not
+        # `except rp.PanelError`: the principle is about who survives the
+        # crash, not about the exception's type. The swallow is NOT silent:
+        # the reason goes to `warnings` (hence EICU_diagnostics.json and the
+        # EICU-POOLED block) and to stderr, non-PanelError types are called
+        # out as wiring defects, and `EICU-RELIABILITY.n_panels < replicates`
+        # records the shortfall arithmetically. run_E6 deliberately does NOT
+        # wrap: on synthetic data any panel exception is a wiring bug and must
+        # be loud.
         op_pooled = rep_pooled.get("operative")
         try:
             panel = rp.panel_from_head(
@@ -1779,10 +1805,22 @@ def run_certification(data_dir, out, *, arm="primary", replicates=1,
                 (float(op_pooled["tau"]) if op_pooled else None),
                 answered_mask=rep_pooled["answered_mask"],
                 p_ref=comparator[t_idx])      # APACHE-IVa; NaN = absent
-        except rp.PanelError as exc:
+        except Exception as exc:
+            # Broadened from `except rp.PanelError` (2026-08-10): a
+            # length-mismatched mask raises a bare numpy broadcast ValueError
+            # from inside the gate cross-check, and a head without
+            # predict_proba raises AttributeError -- neither is a PanelError,
+            # and either would have taken the certified run down from inside
+            # the descriptive layer. Only PanelError is an EXPECTED rejection;
+            # anything else is named as a wiring defect but still costs only
+            # the diagnostic.
+            kind = ("" if isinstance(exc, rp.PanelError) else
+                    f" [UNEXPECTED {type(exc).__name__} -- a panel-wiring "
+                    f"defect, not a data rejection; investigate]")
             msg = (f"[MEASURE] RP-8: the POST-HOC reliability panel was SKIPPED "
-                   f"for replicate {r} -- {exc}. The panel is descriptive; the "
-                   f"certificate for this replicate is unaffected")
+                   f"for replicate {r} -- {exc}.{kind} The panel is "
+                   f"descriptive; the certificate for this replicate is "
+                   f"unaffected")
             warnings.append(msg)
             _say(True, msg, err=True)
         else:

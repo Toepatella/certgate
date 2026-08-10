@@ -53,6 +53,7 @@ from certgate.pipeline import run_certgate
 from certgate.report import render_text
 from certgate.validate import (Cohort, assert_site_disjoint, densify_sites,
                                from_raw, normalized_label)
+from examples import explain_dashboard_eicu as dash_eicu
 from experiments import eicu_etl as etl
 from experiments import eicu_mock as mock
 from experiments import run_eicu
@@ -2508,3 +2509,144 @@ def test_large_mock_reaches_the_certified_branch():
         assert outcome in ("certified", "declined")
         assert rep["diagnostic"]["n_cal_carrying"] > 77, (
             "this arm is pointless unless it clears the crossing point")
+
+
+# ---------------------------------------------------------------------------
+# 2026-08-10 hardening -- the audit fixes around the panel wiring and the
+# eICU dashboard driver (SPEC "A DESCRIPTIVE layer may never abort the
+# certified run", amended the same day)
+# ---------------------------------------------------------------------------
+
+def test_a_non_panel_error_also_costs_only_the_diagnostic(
+        tmp_path, monkeypatch, mock_small):
+    """RP-8 is about who survives the crash, not the exception's type.
+
+    The 2026-08-10 audit demonstrated two panel escapes that are NOT
+    `PanelError` -- a length-mismatched mask raises a bare numpy broadcast
+    `ValueError` from inside the gate cross-check's count, and a duck-typed
+    head without `predict_proba` raises `AttributeError` -- and the old
+    `except rp.PanelError` let either take a 20-replicate certified run down
+    from inside the descriptive layer. The broadened catch must swallow the
+    crash, keep the certificate, and NAME the unexpected type as a wiring
+    defect rather than a data rejection.
+    """
+    def _boom(*args, **kwargs):
+        raise ValueError("planted-non-panel-failure (broadcast-shape probe)")
+
+    monkeypatch.setattr(run_eicu.rp, "panel_from_head", _boom)
+    out = str(tmp_path / "rp8b")
+    payload = run_eicu.run_certification(mock_small["dir"], out,
+                                         replicates=1, quick=True,
+                                         verbose=False)
+    skips = [w for w in payload["pooled"]["warnings"]
+             if "[MEASURE] RP-8" in w]
+    assert len(skips) == 1, payload["pooled"]["warnings"]
+    assert "planted-non-panel-failure" in skips[0]
+    assert "UNEXPECTED ValueError" in skips[0]
+    assert "wiring defect" in skips[0]
+    # and a PanelError stays an EXPECTED rejection: no wiring-defect callout
+    # (pinned by test_a_panel_error_costs_a_diagnostic_and_never_the_
+    # certificate, whose message assertions would fail on the [UNEXPECTED tag)
+
+
+def test_per_item_keys_items_must_be_dicts(tmp_path):
+    """The per-item gate is a no-op on scalars, so a flat float list under the
+    named key -- the record-level shape the gate exists to stop -- previously
+    exited the process ungated (600 floats pass where 513 would abort any
+    other key). Only dicts, one aggregate payload each, are sanctioned."""
+    good = {"post_hoc": rp.POST_HOC_LABEL,
+            "panels": [{"replicate": 0, "ece": 0.1}]}
+    path = str(tmp_path / "good.json")
+    run_eicu._write_json(path, good, "test.good", per_item_keys=("panels",))
+    with open(path, encoding="utf-8") as fh:
+        assert json.load(fh)["panels"][0]["replicate"] == 0
+
+    flat = {"post_hoc": rp.POST_HOC_LABEL,
+            "panels": [float(i) for i in range(600)]}
+    with pytest.raises(etl.EicuError,
+                       match="must each be one aggregate payload"):
+        run_eicu._write_json(str(tmp_path / "flat.json"), flat,
+                             "test.flat", per_item_keys=("panels",))
+
+    # an ndarray is flattened to a plain list by _json_ready first, so it is
+    # the same smuggle in a different wrapper
+    arr = {"panels": np.arange(600, dtype=float)}
+    with pytest.raises(etl.EicuError,
+                       match="must each be one aggregate payload"):
+        run_eicu._write_json(str(tmp_path / "arr.json"), arr,
+                             "test.arr", per_item_keys=("panels",))
+
+
+def test_an_empty_panel_run_removes_a_stale_reliability_png(tmp_path):
+    """Re-running into the same --out after every panel was skipped under
+    RP-8 must not leave the PREVIOUS run's figure beside an EICU-SUMMARY.md
+    reporting n_panels: 0 -- a stale PNG reads as current output."""
+    out = str(tmp_path)
+    png = os.path.join(out, "EICU_reliability_panel.png")
+    with open(png, "wb") as fh:
+        fh.write(b"stale bytes from a previous run")
+    run_eicu._reliability_figure(out, [], verbose=False)
+    assert not os.path.exists(png)
+    # and the no-op stays a no-op when there was nothing stale
+    run_eicu._reliability_figure(out, [], verbose=False)
+    assert not os.path.exists(png)
+
+
+class _CalStub:
+    n_sites = 74
+
+
+def test_dashboard_cross_check_refuses_an_uncomparable_certificate(tmp_path):
+    """The vacuous-success hole: every comparison was guarded by
+    `want is not None`, so a released certificate carrying none of the six
+    fields (operative: null -- a run that certified no rung) skipped them all
+    and STILL returned the 'all match' banner string. A comparison that
+    cannot be made is a failed cross-check, not a passed one."""
+    row = {"alpha": 0.1, "tau": 0.85, "tau_idx": 15, "deploy_mode": "baseline"}
+    ref_path = str(tmp_path / "EICU_certificate.json")
+
+    with open(ref_path, "w", encoding="utf-8") as fh:
+        json.dump({"operative": None, "diagnostic": None}, fh)
+    with pytest.raises(SystemExit, match="does not carry"):
+        dash_eicu._cross_check(row, _CalStub(), 0.855, ref_path)
+
+    # a fully-populated matching reference still returns the confirmation
+    with open(ref_path, "w", encoding="utf-8") as fh:
+        json.dump({"operative": {"alpha": 0.1, "tau": 0.85, "tau_idx": 15,
+                                 "deploy_mode": "baseline"},
+                   "diagnostic": {"coverage": 0.855, "n_cal": 74}}, fh)
+    msg = dash_eicu._cross_check(row, _CalStub(), 0.855, ref_path)
+    assert msg.startswith("alpha, tau, tau_idx")
+
+    # a MISSING file stays the labelled-unverified path, never a false pass
+    msg2 = dash_eicu._cross_check(row, _CalStub(), 0.855,
+                                  str(tmp_path / "absent.json"))
+    assert msg2.startswith(dash_eicu._UNVERIFIED)
+
+
+def test_dashboard_answered_risk_never_prints_nan():
+    """report._bootstrap_estimate emits NaN for an empty answered set and a
+    (NaN, NaN) ci95 when the top-up declines (audit V21); the banner used to
+    print the literal 'nan (95% CI nan-nan)'."""
+    nan = float("nan")
+    assert dash_eicu._answered_risk(
+        {"estimated": {"point": nan, "ci95": (nan, nan)}}) is None
+    assert dash_eicu._answered_risk(
+        {"estimated": {"point": 0.0387, "ci95": (0.0356, nan)}}) is None
+    assert dash_eicu._answered_risk({}) is None
+    assert dash_eicu._answered_risk(
+        {"estimated": {"point": 0.0387, "ci95": (0.0356, 0.0422)}}
+    ) == "0.0387 (95% CI 0.0356-0.0422)"
+
+
+def test_dashboard_out_guard_refuses_the_sidecar_output_dirs(tmp_path):
+    """`out` alone missed the tracked sidecar dirs (out-panel/, out-sens/) --
+    exactly where a record-level page must never land, since .gitignore's own
+    note declares them tracked-by-design."""
+    for d in ("out", "out-panel", "out-sens"):
+        bad = os.path.join(str(tmp_path), d, "explain_dashboard_eicu.html")
+        with pytest.raises(SystemExit, match="record-level-output"):
+            dash_eicu._check_out_path(bad)
+    ok = os.path.join(str(tmp_path), "pages",
+                      "explain_dashboard_eicu_v2.html")
+    assert dash_eicu._check_out_path(ok) == os.path.abspath(ok)

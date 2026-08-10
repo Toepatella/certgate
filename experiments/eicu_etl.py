@@ -1683,6 +1683,11 @@ def build_raw(data_dir, *, arm="primary", strict_levels=True, verbose=True):
     if n_comp_oor:
         extreme = comp_pred[comp_oor]
         comp_pred[comp_oor] = np.nan
+        # The version tag travels with the value: a stay whose comparator
+        # cell was range-mapped to missing has no comparator, so reporting
+        # "IVa" for it would claim a version for a value that does not exist.
+        for r in np.nonzero(comp_oor)[0]:
+            comp_version[int(r)] = ""
         warn.append(
             f"[MEASURE] RP-8: {n_comp_oor} apachePatientResult."
             f"predictedhospitalmortality cell(s) are finite but outside "

@@ -414,7 +414,8 @@ A driver never constructs `p`.
 ```python
 class PanelError(ValueError): ...        # the single exception type; every rejection typed + named
 
-# --- frozen panel constants (module-level, pinned literally by tests/test_constants.py) ------
+# --- frozen panel constants (module-level, pinned by tests/test_constants.py — literally, ----
+# --- except POST_HOC_LABEL, which is pinned by substance: wording may improve w/o a red) -----
 # NOT in constants.py: that block is the A-PRIORI pre-extract surface of the certified protocol
 # and these values were frozen AFTER the extract was seen. SIZE_BINS in harness.py is the
 # precedent for a module-local frozen tuple in the core package.
@@ -715,7 +716,10 @@ docstring gives: it holds one aggregate payload per replicate, so its LENGTH is 
 while any single payload carrying 512+ values would still be record-level by construction and
 still aborts. The key itself stays in the gated envelope under a placeholder, so
 `EICU_FORBIDDEN_OUT_KEYS` is still checked against it — only the length cap is relaxed, and only
-for the named key. Gated as one sequence it tripped the cap at `--replicates 600` and took a
+for the named key. Each item under a `per_item_keys` key MUST be a dict (amended 2026-08-10):
+the per-item gate is a no-op on scalars, so a flat list of floats under the named key — the
+record-level shape the gate exists to stop — previously passed ungated; a non-dict item now
+aborts with the same loudness as a forbidden key. Gated as one sequence it tripped the cap at `--replicates 600` and took a
 certified run down on a purely descriptive artifact. That removes the POST-HOC panel from the
 failure mode without claiming the runner is safe at that scale: `EICU_diagnostics.json` carries
 per-replicate lists of the same shape (`bbse`, `composition_three_way`), is written first and is
@@ -739,15 +743,27 @@ have taken the certificate down with it. Two independent repairs, both required:
   are out of range (the only non-`-1` special value is none), so the map moves no published
   number; it is a guard against the A6 failure mode (`apacheApsVar.urine` held exactly one
   negative-not-`-1` cell in ~4.1M), not a correction of this extract.
-* `run_eicu` still wraps the `panel_from_head` call in `except rp.PanelError`, appends the message
-  to `warnings`, and continues WITHOUT that replicate's panel. Belt and braces is correct here:
-  the ETL map fixes the one channel we can name, and the wrapper bounds the blast radius of every
-  channel we cannot. The panel is descriptive; a defect in it is a missing diagnostic, never a
-  lost certificate. It is the ONLY place a `PanelError` is swallowed — `run_E6` does NOT wrap,
-  because a `deployed-mask-mismatch` on synthetic data is a wiring bug and must be loud. The
-  swallow is never silent: the message goes to `warnings` (hence `EICU_diagnostics.json` and the
-  EICU-POOLED block) AND to stderr, and `EICU-RELIABILITY.n_panels < replicates` is the arithmetic
-  record that a replicate produced none.
+* `run_eicu` wraps the `panel_from_head` call in `except Exception` (amended 2026-08-10; it was
+  `except rp.PanelError` and that was a hole in RP-8's own principle: the 2026-08-10 audit
+  demonstrated two escapes that are not `PanelError` — a length-mismatched `answered_mask` raises
+  a bare numpy broadcast `ValueError` from inside the gate cross-check's count, and a duck-typed
+  head without `predict_proba` raises `AttributeError` — either of which would have taken a
+  20-replicate certified run down from inside the descriptive layer, the exact failure RP-8
+  exists to prevent). The catch appends the message to `warnings` and continues WITHOUT that
+  replicate's panel; when the exception is not a `PanelError` the warning names the exception
+  TYPE and calls it out as a wiring defect to investigate, because only `PanelError` is an
+  *expected* rejection — the broadened catch changes who survives the crash, not whether the
+  defect is visible. Belt and braces is correct here: the ETL map fixes the one channel we can
+  name, and the wrapper bounds the blast radius of every channel we cannot. The panel is
+  descriptive; a defect in it is a missing diagnostic, never a lost certificate. It is the ONLY
+  place panel exceptions are swallowed — `run_E6` does NOT wrap, because any panel exception on
+  synthetic data is a wiring bug and must be loud. The swallow is never silent: the message goes
+  to `warnings` (hence `EICU_diagnostics.json` and the EICU-POOLED block) AND to stderr, and
+  `EICU-RELIABILITY.n_panels < replicates` is the arithmetic record that a replicate produced
+  none. (Known cosmetic nit, accepted rather than fixed: with a column-shaped mask the
+  broadcast in `reliability.py`'s mismatch counter inflates the record count in the error
+  MESSAGE; the abort itself is correct, and `certgate/reliability.py` is not edited — byte-exact
+  port, `PANEL_DICT_SHA256`.)
 
 ## `report.py`
 
@@ -893,10 +909,13 @@ per file below; regressions to any of them are regressions to V6.
   ABSENCE of any experiment-local `sep` override
   (no SHIFT_SEP attribute — every experiment runs the documented SimConfig generator), and
   the SimConfig generator defaults (d=8, sep=2.2, base_rate=0.095, s_u=0.5).
-  ALSO pins the eighteen ported panel constants in `certgate/reliability.py` (literal), the
-  relation `BOOT_MAX_ATTEMPTS == 2 * N_BOOT`, and the NEGATIVE pin that no panel constant
-  entered `certgate/constants.py` — the frozen-constants block stays the a-priori pre-extract
-  surface.
+  ALSO pins the eighteen ported panel constants plus `PANEL_SEED` in `certgate/reliability.py`
+  (literal, except `POST_HOC_LABEL`, which is pinned by substance so wording can improve without
+  a false red), the relation `BOOT_MAX_ATTEMPTS == 2 * N_BOOT`, the literal ORDER of
+  `PANEL_RELIABILITY_FIELDS` (added 2026-08-10 — the released `EICU_reliability.csv` column
+  order was previously only set-compared, so a reorder shipped silently), and the NEGATIVE pin
+  that no panel constant entered `certgate/constants.py` — the frozen-constants block stays the
+  a-priori pre-extract surface.
 - `test_harness.py` — (audit V6 #6/#7: harness.py computes every violation number in the
   paper and had zero tests) `wilson_lcb` against the closed form and monotonicity in k;
   `hard_violation` boundary cases including the empty answered set; `exceedance_reference`
@@ -994,6 +1013,13 @@ per file below; regressions to any of them are regressions to V6.
   even though the other mode certified something); no certifying mode -> status "declined"
   with per-mode reasons. mode_outcomes is pinned against the SAME divergent fixtures
   (covering / certified-not-covering / decline-reason passthrough — fixture audit 2026-07-25).
+- `test_experiments.py` — (verification N2) the instruments that produce the paper's numbers:
+  `_rm_on_pool` against a two-site hand-computed pool (E1's conformance instrument after the
+  audit-V1 rescoring), `_per_site_exceed_frac`, `_rate`'s None-vs-0.0 distinction (zero-certificate
+  cells stay honest), and `_existing_summary_blocks`/`_write_summary` surviving a partial rerun.
+- `test_report_estimated.py` — (verification N1) the V21/V16 fixes stay red-on-revert:
+  `_bootstrap_estimate`'s top-up-or-decline discipline, the NaN-not-0.0 empty answered set,
+  `_feasibility`'s None-not-inf sentinels, and `render_text` surfacing n_boot.
 - `test_fixture_integration.py` — the HOSTILE-EXTRACT fixture (fixture audit 2026-07-25):
   `experiments/synth_fixture.py` (10-table gzip-CSV corpus with every documented wart:
   signed-minute offsets, '> 89' ordinal trap, per-column text booleans, NOT-NULL-empty
@@ -1474,8 +1500,9 @@ APPENDED `"EICU-RELIABILITY"` as a sixth entry. This is the one pre-existing pin
 panel work changes and the ordering was SPEC (this paragraph) → `experiments/run_eicu.py` →
 `tests/test_constants.py`. It is an APPEND, never an insert or a re-order, so every artifact
 written under the 5-tuple still parses and round-trips; no other pinned literal was touched, and
-the eighteen panel constants live in `certgate/reliability.py`, deliberately OUTSIDE the
-`constants.py` frozen block, which is the a-priori pre-extract surface. This amendment is an
+the eighteen panel constants (nineteen names counting `PANEL_SEED`) live in
+`certgate/reliability.py`, deliberately OUTSIDE the `constants.py` frozen block, which is the
+a-priori pre-extract surface. This amendment is an
 ENGINEERING pin, not a protocol amendment: `EICU-PROTOCOL.md` §§2–13 are untouched and its
 amendment log (A1–A6) correctly does not mention it.
 
@@ -1591,7 +1618,11 @@ unexercised. Two panel-side consequences follow and are tested directly rather t
 running the driver: `_reliability_figure` is UNREACHABLE from the always-on arm (which runs
 `quick=True`, and every figure is skipped under `--quick`), so it gets its own unit test over
 two constructed payloads — one ordinary, one all-declined with `reference: None` — asserting the
-PNG is written; and the comparator range map is tested on a planted corpus carrying a
+PNG is written. On an EMPTY payload list `_reliability_figure` writes nothing — and (amended
+2026-08-10) it must also DELETE a pre-existing `EICU_reliability_panel.png` at that path first:
+re-running into the same `--out` after every panel was skipped under RP-8 previously left the
+PREVIOUS run's curves on disk beside an `EICU-SUMMARY.md` reporting `n_panels: 0`, a stale
+figure masquerading as current output. The comparator range map is tested on a planted corpus carrying a
 `predictedhospitalmortality` of `1.4`, asserting the cell becomes NaN, the count lands in
 `meta["comparator_out_of_range"]`, a `[MEASURE]` warning names it, and — the point of the
 map — that the same cell is absent from `complete` and therefore from both the comparator

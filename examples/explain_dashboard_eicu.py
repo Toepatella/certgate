@@ -36,6 +36,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import sys
 
@@ -79,9 +80,14 @@ def _check_out_path(out):
             f"gitignored pattern {_OUT_PREFIX}*{_OUT_SUFFIX} "
             f"(reason=record-level-output)")
     out = os.path.abspath(out)
-    if os.path.sep + "out" + os.path.sep in out + os.path.sep:
-        _fail(f"refusing to write {out!r}: this module never writes into an "
-              f"experiment output directory (reason=record-level-output)")
+    # "out" alone missed the tracked sidecar output dirs (out-panel/,
+    # out-sens/), which .gitignore's own note declares tracked-by-design --
+    # exactly where a record-level page must never land.
+    for d in ("out", "out-panel", "out-sens"):
+        if os.path.sep + d + os.path.sep in out + os.path.sep:
+            _fail(f"refusing to write {out!r}: this module never writes into "
+                  f"an experiment output directory "
+                  f"(reason=record-level-output)")
     return out
 
 
@@ -125,6 +131,11 @@ def _answered_risk(report):
     point, ci = est.get("point"), est.get("ci95")
     if point is None or not ci:
         return None
+    # report._bootstrap_estimate emits NaN for an empty answered set and a
+    # (NaN, NaN) ci95 when the bootstrap top-up declines (audit V21); without
+    # this guard the banner would print the literal "nan (95% CI nan-nan)".
+    if not (math.isfinite(point) and all(math.isfinite(c) for c in ci)):
+        return None
     return f"{point:.4f} (95% CI {ci[0]:.4f}-{ci[1]:.4f})"
 
 
@@ -149,7 +160,7 @@ def _cross_check(row, cal, coverage, ref_path):
         ref = json.load(fh)
     ref_op = ref.get("operative") or {}
     ref_diag = ref.get("diagnostic") or {}
-    bad = []
+    bad, missing = [], []
     for name, got, want in (
             ("alpha", float(row["alpha"]), ref_op.get("alpha")),
             ("tau", float(row["tau"]), ref_op.get("tau")),
@@ -159,8 +170,23 @@ def _cross_check(row, cal, coverage, ref_path):
              None if ref_diag.get("coverage") is None
              else round(float(ref_diag["coverage"]), 6)),
             ("n_cal", int(cal.n_sites), ref_diag.get("n_cal"))):
-        if want is not None and got != want:
+        if want is None:
+            # A field the released certificate does not carry was previously
+            # SKIPPED -- and the unconditional "all match" string below then
+            # asserted six-field agreement over zero comparisons (a released
+            # run that certified no rung has operative: null, silently
+            # skipping four of the six). A comparison that cannot be made is
+            # a failed cross-check, not a passed one.
+            missing.append(name)
+        elif got != want:
             bad.append(f"{name}: this run {got!r} vs released {want!r}")
+    if missing:
+        _fail("the released certificate "
+              f"({ref_path}) does not carry: {', '.join(missing)} -- the "
+              "cross-check cannot be completed, and a page claiming agreement "
+              "it never verified is worse than no page. Re-run the "
+              "certification, or pass --no-cross-check if you know why "
+              "(reason=certificate-mismatch)")
     if bad:
         _fail("this run DISAGREES with the released certificate "
               f"({ref_path}):\n  " + "\n  ".join(bad) +
