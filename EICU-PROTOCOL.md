@@ -32,16 +32,18 @@ that way. The mitigation available to us is mechanical rather than institutional
 pinned literally by a unit test (audit F13), so a post-hoc edit to a protocol constant turns CI red
 and appears in the diff.
 
-> **OPEN, AS OF 2026-07-31: THE REPOSITORY DOES NOT YET EXIST.** `git rev-parse
-> --is-inside-work-tree` returns *"fatal: not a git repository"* in the project directory. So at
-> the time of writing: `.gitignore` is inert (nothing is tracked and nothing is ignored, which also
-> makes SPEC's "the data directory is gitignored" and `.gitignore`'s "`experiments/out/` is
-> intentionally tracked" both untrue); §14.1's steps 0 and 10 error; and **the ordering claim above
-> has no timestamp of any kind.** Until step 0 of the operator checklist is run — `git init`, then
-> a dated commit of this file plus the pins, *before* the download — the honest statement in the
-> paper is "written before the extract was obtained, with no external or version-control
-> timestamp", which is materially weaker than what this section otherwise claims. The in-process
-> DUA gate is unaffected and was verified independently: `run_eicu.assert_aggregate_only` refuses
+> **RESOLVED 2026-07-30: the freeze commit exists and predates the download.** Operator-checklist
+> step 0 was executed before any extract was on disk — `git init`, a full-tree commit of this file
+> plus the constant pins, and a green suite. The reference is
+> **`9f25b491b2554d0a4bd7aaaf44081c185d01715f`** (*"freeze: eICU-CRD v2.0 protocol + constant pins,
+> pre-extract"*, 2026-07-30), pushed to `github.com:Toepatella/certgate` on `main`; staging was
+> verified corpus-clean at commit time (the only eICU-named tracked files are the five source and
+> doc files, and zero `*.csv.gz`). That hash is the pre-registration reference the paper cites, so
+> the paper does **not** carry the softened "no version-control timestamp" wording this section
+> previously required, and `.gitignore` is live and denies the extract by default. What the
+> paragraph above says is unaffected and still governs: a commit in a repository the authors
+> control is weaker evidence than an external registry timestamp, and it should be read that way.
+> The in-process DUA gate was verified independently: `run_eicu.assert_aggregate_only` refuses
 > forbidden keys and any sequence over 512 elements, and `eicu_etl._bump` caps every value-count
 > dict at 200 entries upstream of it.
 
@@ -1001,28 +1003,25 @@ before anything is written up.
 ```
 0.  BEFORE downloading — confirm the freeze is committed and CI is green.
 
-    THE PROJECT DIRECTORY IS NOT YET A GIT WORKING TREE (verified 2026-07-31:
-    `git rev-parse --is-inside-work-tree` -> "fatal: not a git repository"). Until it is,
-    .gitignore is inert, nothing is tracked or ignored, §0's ordering claim has no
-    timestamp of any kind, and steps 0 and 10 below cannot run. Create it FIRST, and make
-    the freeze commit before the extract exists on disk:
+    DONE for the 2026-07-31 run. The freeze commit is
+    9f25b491b2554d0a4bd7aaaf44081c185d01715f ("freeze: eICU-CRD v2.0 protocol + constant
+    pins, pre-extract", 2026-07-30), made before the extract existed on disk; §0 records
+    it and the paper cites it. Nothing in this step needs re-running for that extract.
 
-      git init
-      git add -A                                  # .gitignore already denies *.csv.gz, eicu-*/
+    For a NEW extract, or in a fresh working tree, the freeze must again predate the
+    download. Verify, and only then proceed:
+
       git status --short | grep -i eicu           # MUST show no extract or mock corpus
-      git commit -m "freeze: eICU-CRD v2.0 protocol + constant pins, pre-extract"
-
-    Then, and only then:
-    git log --oneline -1 -- EICU-PROTOCOL.md experiments/eicu_etl.py tests/test_constants.py
-    python -m pytest tests -q     # green, including
-                                  #   tests/test_constants.py::test_eicu_protocol_constants_pinned
-                                  #   tests/test_constants.py::test_eicu_mock_constants_pinned
-                                  # (an absolute test count here goes stale on every new test
-                                  #  and is a false go/no-go signal — check GREEN and those two)
+      git log --oneline -1 -- EICU-PROTOCOL.md experiments/eicu_etl.py tests/test_constants.py
+      python -m pytest tests -q     # green, including
+                                    #   tests/test_constants.py::test_eicu_protocol_constants_pinned
+                                    #   tests/test_constants.py::test_eicu_mock_constants_pinned
+                                    # (an absolute test count here goes stale on every new test
+                                    #  and is a false go/no-go signal — check GREEN and those two)
     Record the commit hash; it is the pre-registration reference reported in the paper.
-    If the repository is not created before the download, §0's ordering claim must be
-    softened in the paper to "written before, with no external or version-control
-    timestamp" — which materially weakens it.
+    If no freeze commit predates the download, §0's ordering claim must be softened in the
+    paper to "written before, with no external or version-control timestamp" — which
+    materially weakens it.
 
 1.  Add the data directory to .gitignore BEFORE the extract exists on disk.
     A path outside the repository is preferred; a gitignored path inside it is the minimum.
@@ -1064,6 +1063,19 @@ before anything is written up.
           ONE FIRST. It is the screen for the ONE leak channel that has no column name and
           that no denylist can see. If it is over the cap, build_raw will refuse the primary
           arm and the answer is step 8b, NOT a widened cap.
+          SCOPE, so the next reading is not a surprise: preflight MEASURES this contrast for
+          45 indicators (the two presence flags plus all 43 `<col>__missing` siblings), while
+          build_raw's abort GATES on the two presence flags only. That is deliberate and it
+          is §10's division of labour — whole-row absence is the flags' business, and the
+          cell-level half of the same channel leaves the flags untouched and is caught by
+          F-D leg 2 (the missingness-ablation drop), not here. So a `[MEASURE]` warning
+          naming a `__missing` sibling over the cap ALONGSIDE an empty
+          reference_check.invalid_conditions is the expected shape, not a gate that failed
+          to fire. It is still a read-this: check leg 2's ablation_drop in step 6 before
+          accepting it. On the 2026-07-31 extract exactly this happened —
+          apv_ejectfx__missing 4.333 and apv_electivesurgery__missing 2.655 over the cap,
+          both presence flags at 0.506 (INVERTED, i.e. absent stays had LOWER mortality),
+          and leg 2's drop 0.0036 against a 0.05 cap.
       - apache_absent_los: aps_absent vs aps_present median LOS       (E-9)
           Materially shorter absent stays means the day-1 window did not close BECAUSE THE
           STAY ENDED — i.e. the outcome channel, not the site channel.
@@ -1130,8 +1142,9 @@ python -m experiments.run_eicu --data <SCRATCH>/eicu-mock --quick
 | `EICU_comparator.csv` | APACHE-IVa comparator rates on the answered set |
 | `EICU_diagnostics.json` | per-site missingness dispersion, coverage bands, categorical drift, `abstention_gap_ranking`, three-way composition |
 | `EICU_certificate.json` | replicate-0 pooled report, arrays stripped, `answered_mask` replaced by its `.sum()` |
-| `EICU_pooled.png`, `EICU_per_site.png` | figures |
-| `EICU-SUMMARY.md` | sections `EICU-PREFLIGHT`, `EICU-PREDICTIONS`, `EICU-POOLED`, `EICU-PERSITE`, `EICU-COMPARATOR` |
+| `EICU_pooled.png`, `EICU_per_site.png`, `EICU_reliability_panel.png` | figures (the third added 2026-08-01 with the post-hoc panel; the label is on its face) |
+| `EICU-SUMMARY.md` | sections `EICU-PREFLIGHT`, `EICU-PREDICTIONS`, `EICU-POOLED`, `EICU-PERSITE`, `EICU-COMPARATOR`, `EICU-RELIABILITY` (sixth appended 2026-08-01) |
+| `EICU_reliability_panel.json`, `EICU_reliability.csv` | POST-HOC selective reliability panel (added 2026-08-01 — descriptive, certifies nothing, settles no frozen prediction): per-replicate panel payloads and per-bin reliability rows, every CSV row carrying a leading `post_hoc` label column |
 | `EICU_provenance.json` | package versions, python version, seeds, input hashes, UTC stamp |
 
 `run_eicu` never writes `summary.md`: `run_synthetic._existing_summary_blocks` parses `^## (E\d)` —
