@@ -36,7 +36,7 @@ and appears in the diff.
 > step 0 was executed before any extract was on disk — `git init`, a full-tree commit of this file
 > plus the constant pins, and a green suite. The reference is
 > **`9f25b491b2554d0a4bd7aaaf44081c185d01715f`** (*"freeze: eICU-CRD v2.0 protocol + constant pins,
-> pre-extract"*, 2026-07-30), pushed to `github.com:Toepatella/certgate` on `main`; staging was
+> pre-extract"*, 2026-07-30), pushed to `git@github.com:Toepatella/certgate.git` on `main`; staging was
 > verified corpus-clean at commit time (the only eICU-named tracked files are the five source and
 > doc files, and zero `*.csv.gz`). That hash is the pre-registration reference the paper cites, so
 > the paper does **not** carry the softened "no version-control timestamp" wording this section
@@ -61,7 +61,6 @@ correction into a visible SPEC + constants diff rather than absorb it.
 | A3 | 2026-07-31 | §5.4a (new) | The nine `apachePredVar` treatment/intervention flags whose measurement timing cannot be cited are NAMED, and `outcome_screen` settles them from data before any certificate. | The denylist applied a "timing unverified" standard to two `apachePatientResult` columns and none at all to `activetx` and eight siblings. | **NO** |
 | A4 | 2026-07-31 | §14.1 | Reference-identity counts taken at S0; typed read-boundary errors; `unrecognised-null-token`; `duplicate-stay-id`; preflight no longer raises on an unknown outcome level; decidable `header_case_as_read`; operator checklist corrected (git precondition, no absolute test count, decline expectation scoped to the frozen corpus sizes). | Ingest-boundary defects, each demonstrated. The reference-count one would have aborted the mandatory first command on the CORRECT extract. | **NO** |
 | A5 | 2026-07-31 | §12.5 (T-26, T-27) | An absent or UNLINKED APACHE block now aborts: `unparseable-join-key` when a child table's `patientunitstayid` tokens fail integer parse past `EICU_MAX_UNPARSEABLE_SHARE`, and `apache-coverage-collapse` when a cohort of ≥ `EICU_MIN_OUTCOME_STRATUM` stays has a presence stratum below that floor. The `unrecognised-null-token` gate widened to the three `patient` numerics. No new constant; both legs reuse frozen thresholds. | Arrival-day audit (2026-07-31, three verifiers): a float-formatted join key (`141258.0`), a header-only child table, and a row-count-preserving key shift each CERTIFIED with 89/161 constant columns, zero warnings, and E-9's `gate_applies=false` — total absence bypassed the leak gate partial absence trips. Separately, Postgres `\N` in `patient.admissionweight` zeroed the column silently, and in `hospitaladmitoffset` silently changed first-stay selection with no ledger trace. | **NO** — demonstrated on mock corpora; no eICU byte read |
-
 | A6 | 2026-07-31 | §5.3, §12.5 (T-2) | `unexpected-negative-sentinel` now aborts only when a column's negative-not-`-1` mass exceeds the already-frozen `EICU_MAX_UNPARSEABLE_SHARE = 0.01`; below it the cells become missing (which `_parse_apache_cell` already did) and a `[MEASURE]` warning names column, count and share. No new constant. | The released extract carries **exactly one** such cell in 4.1M: `apacheApsVar.urine = -11245.5648` at `patientunitstayid = 1805017` (in cohort), against a support that is otherwise contiguous and non-negative (min 0, median 1447.6, max 269323.7, 1824 zeros, n = 84,062 observed). §5.3 pre-specified that the "value < 0 ⇒ missing" rule is adopted **only after the histogram proves the support is contiguous and non-negative**; that histogram was run and it does. The abort was a look-at-this gate, not a correctness gate: the value maps to NaN either way, so no study number changes. | **YES** — first post-hoc amendment; the extract had been read. Every number affected by it must carry the post-hoc label. |
 
 A6 is the **only** post-hoc amendment and the only one that RELAXES a refusal; it is bounded by a
@@ -1071,8 +1070,12 @@ before anything is written up.
           F-D leg 2 (the missingness-ablation drop), not here. So a `[MEASURE]` warning
           naming a `__missing` sibling over the cap ALONGSIDE an empty
           reference_check.invalid_conditions is the expected shape, not a gate that failed
-          to fire. It is still a read-this: check leg 2's ablation_drop in step 6 before
-          accepting it. On the 2026-07-31 extract exactly this happened —
+          to fire. The gate is also ONE-SIDED by construction: it fires only when the
+          ratio EXCEEDS the 2.0 cap (early-death enrichment of absence, the T-20
+          mechanism), so an inverted ratio like 0.506 is not a value the gate examined
+          and cleared — it is outside the gate's direction entirely, and only the
+          MEASURE line reports it. It is still a read-this: check leg 2's ablation_drop
+          in step 6 before accepting it. On the 2026-07-31 extract exactly this happened —
           apv_ejectfx__missing 4.333 and apv_electivesurgery__missing 2.655 over the cap,
           both presence flags at 0.506 (INVERTED, i.e. absent stays had LOWER mortality),
           and leg 2's drop 0.0036 against a 0.05 cap.
@@ -1136,8 +1139,8 @@ python -m experiments.run_eicu --data <SCRATCH>/eicu-mock --quick
 | file (in `--out`, default `experiments/out`) | contents |
 |---|---|
 | `EICU_preflight.json` | the full preflight dict, aggregate-only |
-| `EICU_attrition.csv` | `step, n_stays, n_sites, arm` |
-| `EICU_pooled.csv` | per replicate × α: certified, τ, deploy mode, coverage, answered error, `rm_fresh`, `rm_exceed`, `per_site_exceed_frac`, `n_cal_carrying`, `decline_reason` |
+| `EICU_attrition.csv` | `step, n_stays, n_sites, n_positive, prevalence, arm` (the two outcome columns added by A1) |
+| `EICU_pooled.csv` | per replicate × α: certified, `hard`, τ, `tau_idx`, deploy mode(s), coverage, answered error, `rm_fresh`, `rm_exceed`, `per_site_exceed_frac`, `n_target`, `n_answered`, `n_cal_carrying`, `decline_reason`, plus the F-D leg columns `leak_alarm`, `head_auc_oos`, `head_auc_ablated`, `ablation_drop` (step 6 gates on `leak_alarm`) |
 | `EICU_per_site.csv` | per replicate × hospital × α, with `numbedscategory` / `teachingstatus` / `region` strata and APACHE coverage |
 | `EICU_comparator.csv` | APACHE-IVa comparator rates on the answered set |
 | `EICU_diagnostics.json` | per-site missingness dispersion, coverage bands, categorical drift, `abstention_gap_ranking`, three-way composition |
