@@ -14,8 +14,9 @@ by bibtex over sn-vancouver-num.bst).
 
 Float numbering is forced to the draft's own figure/table numbers via
 \\setcounter before every caption, because the prose references those numbers
-textually ("Table 5", "Figure 1, centre") and Table 5's first callout
-(Section 3.2) precedes Table 1's (Section 4.2).
+textually ("Table 4", "Figure 2, centre"). Figure 1 is the pipeline schematic
+compiled from figures-src/pipeline.tex; the frozen-constants register lives
+in the Supplementary Information as Table S1.
 
 Requires pandoc and a MiKTeX/TeX Live pdflatex + bibtex on PATH.
 Usage: python paper/make_submission.py [--no-compile]
