@@ -126,23 +126,23 @@ python -m experiments.run_synthetic            # full paper grid
 
 The manuscript master is `paper/draft.md` (pandoc markdown; citations are `[@key]` groups against `paper/references.bib`) — the canonical, self-contained home of every result number alongside the generated artifacts in `experiments/out*/`. `python paper/make_submission.py` builds the whole submission package for Discover Computing (Springer Nature `sn-jnl`, pdflatex): `CertGate_DiscoverComputing.pdf` (the submission typescript), `CertGate_SI.pdf` (Supplementary Information A — deferred proofs, reproducibility details, the frozen-constants register as Table S1, and Figures S1–S2), `CertGate_compact.pdf` (a 10pt reading copy, not the typescript), and the Snapp figures zip (`Fig1.pdf`, `Fig2.png`, …). `paper/cover-letter.md` is the submission cover letter. Author-only blanks are marked `[[TBC:...]]` throughout — grep for that token to enumerate what remains before submission.
 
-Figure → source map (as called out in the draft):
+Figure → source map (as called out in the draft; the 2026-08-11 compression pass keeps five figures and three tables in the main text and moves the rest to the peer-reviewed SI):
 
 | Figure | Source |
 |---|---|
 | 1 | `paper/figures-src/pipeline.tex` (schematic, compiled at build time) |
-| 2 | `experiments/out/E1_validity.png` |
-| 3 | `experiments/out/E2_label_shift.png` |
-| 4 | `experiments/out/E3_concept_shift.png` |
-| 5 | `experiments/out/E4_site_sweep.png` |
-| 6 | `experiments/out/E5_explain.png` |
-| 7 | `experiments/out/E6_fairness.png` |
-| 8 | `experiments/out/E7_comparator.png` |
-| 9 | `experiments/out/EICU_pooled.png` |
+| 2 | `experiments/out/E2_label_shift.png` |
+| 3 | `experiments/out/E4_site_sweep.png` |
+| 4 | `experiments/out/E6_fairness.png` |
+| 5 | `experiments/out/EICU_pooled.png` |
 | S1 | `experiments/out/EICU_reliability_panel.png` (SI) |
 | S2 | `experiments/out/EICU_per_site.png` (SI) |
+| S3 | `experiments/out/E1_validity.png` (SI) |
+| S4 | `experiments/out/E3_concept_shift.png` (SI) |
+| S5 | `experiments/out/E5_explain.png` (SI) |
+| S6 | `experiments/out/E7_comparator.png` (SI) |
 
-One artifact PNG deliberately carries no figure number: `E6_reliability.png` (its results appear as prose in §4.7). The frozen-constants register is Table S1 in the SI; main-text tables run 1–8. And `experiments/out-sens/` is the frozen 2026-07-31 sensitivity-arm record: it predates the reliability panel, so it legitimately lacks the three `EICU_reliability*` files a current-code rerun would add.
+Main-text tables: 1 = E6 answered-set composition, 2 = eICU attrition ledger, 3 = eICU per-replicate certificates. SI tables: S1 = frozen-constants register, S2 = E1 exceedance strata, S3 = E6 per-site coverage bins, S4 = influence-cap sweep, S5 = operating characteristics, S6 = E4 frontier. One artifact PNG deliberately carries no figure number: `E6_reliability.png` (its results appear as prose in §4.7). And `experiments/out-sens/` is the frozen 2026-07-31 sensitivity-arm record: it predates the reliability panel, so it legitimately lacks the three `EICU_reliability*` files a current-code rerun would add.
 
 Cloning without SSH keys: `git clone https://github.com/Toepatella/certgate.git`
 
