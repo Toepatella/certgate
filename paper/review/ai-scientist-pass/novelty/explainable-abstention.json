@@ -1,0 +1,129 @@
+{
+  "topic": "Explainable / interpretable abstention or rejection: why a model declines to predict, attribution of abstention decisions, especially clinical ML",
+  "queries_used": [
+    "WebSearch: explainable abstention selective prediction interpretable rejection clinical machine learning 2024 2025",
+    "WebSearch: \"learning to reject\" explanation interpretability \"machine learning with a reject option\" survey 2024",
+    "WebSearch: learning to defer clinical explanation \"defer to expert\" interpretable deferral 2025",
+    "WebSearch: counterfactual explanations of reject option Artelt Hammer abstention explanation",
+    "WebSearch: \"selective prediction\" OR \"selective classification\" explanation \"feature attribution\" abstention healthcare EHR mortality 2025",
+    "WebSearch: \"explainable selective prediction\" OR \"explaining abstention\" guarantee certified risk control",
+    "WebSearch: abstention explanation intensive care multi-site hospital model \"reject option\" mortality prediction interpretable 2024 2025 2026",
+    "WebSearch: \"semi-factual\" OR \"prototype\" explanations of reject option classifiers 2023 2024 Artelt survey \"explaining reject\"",
+    "WebSearch: \"Deferring Concept Bottleneck Models\" learning to defer interventions inaccurate experts arxiv abstract",
+    "WebSearch: \"Learning to Defer: A Survey\" arxiv authors 2025 taxonomy",
+    "SemanticScholar API (graph/v1/paper/search): explainable abstention selective prediction — HTTP 429 rate-limited",
+    "SemanticScholar API (graph/v1/paper/search): explaining reject option abstention — HTTP 429 rate-limited",
+    "Abstract verification fetches: arxiv.org/abs/2503.18826, arxiv.org/abs/2603.14096, arxiv.org/abs/2507.12900, arxiv.org/abs/2604.13285, arxiv.org/abs/2311.09145"
+  ],
+  "papers": [
+    {
+      "title": "Concisely Explaining the Doubt: Minimum-Size Abductive Explanations for Linear Models with a Reject Option",
+      "year": 2026,
+      "venue": "XAI 2026 (4th World Conference on eXplainable Artificial Intelligence); arXiv:2603.14096",
+      "authors": "Gleilson Pedro Fernandes, Thiago Alves Rocha",
+      "relation": "NEAR_MISS",
+      "why": "Closest single paper to CertGate component (4): computes provably minimal abductive explanations of WHY a linear classifier with a reject option rejected an instance (0-1 ILP formulation), motivated by healthcare/finance oversight. Same object (linear model + reject + faithful explanation of the rejection) but no statistical certificate, no cluster/site structure, no clinical validation. A reviewer in this lane would expect it cited next to CertGate's exact linear abstention attributions.",
+      "url": "https://arxiv.org/abs/2603.14096"
+    },
+    {
+      "title": "Interpretable and Fair Mechanisms for Abstaining Classifiers (IFAC)",
+      "year": 2024,
+      "venue": "ECML PKDD 2024 (Machine Learning and Knowledge Discovery in Databases, Springer LNCS); arXiv:2503.18826",
+      "authors": "Daphne Lenders, Andrea Pugnana, Roberto Pellungrini, Toon Calders, Dino Pedreschi, Fosca Giannotti",
+      "relation": "NEAR_MISS",
+      "why": "Abstaining classifier whose rejections are interpretable by construction (rule-based fairness checks + situation testing), so a human can see why each prediction was withheld. Overlaps the explainable-abstention component directly; no finite-sample answered-error certificate, no site-as-unit statistics, fairness-driven rather than error-driven abstention.",
+      "url": "https://arxiv.org/abs/2503.18826"
+    },
+    {
+      "title": "\"I do not know! but why?\" — Local model-agnostic example-based explanations of reject",
+      "year": 2023,
+      "venue": "Neurocomputing, vol. 558",
+      "authors": "Andre Artelt, Roel Visser, Barbara Hammer",
+      "relation": "NEAR_MISS",
+      "why": "The mature statement of the Hammer-group program on explaining reject options: model-agnostic, example-based (counterfactual/semi-factual/factual) explanations of why an instance was rejected. Companion works include 'Even if...' diverse semifactual explanations of reject (IEEE SSCI 2022) and Model Agnostic Local Explanations of Reject (ESANN 2022, arXiv:2205.07623). This corpus defines the lane; CertGate differs by exact linear attributions tied to a certified gate rather than post-hoc example-based explanation, but the related-work section needs this line of work.",
+      "url": "https://www.sciencedirect.com/science/article/pii/S0925231223008457"
+    },
+    {
+      "title": "Explaining Reject Options of Learning Vector Quantization Classifiers",
+      "year": 2022,
+      "venue": "ICAART 2022 (14th International Conference on Agents and Artificial Intelligence); arXiv:2202.07244",
+      "authors": "Andre Artelt, Johannes Brinkrolf, Roel Visser, Barbara Hammer",
+      "relation": "NEAR_MISS",
+      "why": "Earlier classic of the same program: efficient counterfactual explanations of the reject options of prototype-based (LVQ) classifiers. Establishes that explaining rejects was an open problem with very little prior work — useful positioning citation for CertGate's abstention-attribution layer.",
+      "url": "https://arxiv.org/abs/2202.07244"
+    },
+    {
+      "title": "Machine learning with a reject option: a survey",
+      "year": 2024,
+      "venue": "Machine Learning (Springer), 113(5)",
+      "authors": "Kilian Hendrickx, Lorenzo Perini, Dries Van der Plas, Wannes Meert, Jesse Davis",
+      "relation": "NEAR_MISS",
+      "why": "The canonical 2024 survey of reject-option ML (ambiguity vs novelty rejection; confidence-based vs classifier-rejector architectures). Not itself about explanation or certification, but it is the reference frame reviewers will use to place CertGate's gate, and its taxonomy (record-level, i.i.d.) is exactly what CertGate's site-as-unit treatment departs from.",
+      "url": "https://link.springer.com/article/10.1007/s10994-024-06534-x"
+    },
+    {
+      "title": "Model Agnostic Explainable Selective Regression via Uncertainty Estimation",
+      "year": 2023,
+      "venue": "arXiv:2311.09145",
+      "authors": "Andrea Pugnana, Carlos Mougan, Dan Saattrup Nielsen",
+      "relation": "NEAR_MISS",
+      "why": "Explicitly uses XAI techniques to identify the drivers behind selective abstention (in regression) — the same question CertGate's E5 'abstention driver' analysis asks. Model-agnostic post-hoc explanation over uncertainty-based abstention; no finite-sample certificate, no cluster structure, no clinical data.",
+      "url": "https://arxiv.org/abs/2311.09145"
+    },
+    {
+      "title": "Knowing What You Cannot Explain: Learning to Reject Low-Quality Explanations (REX)",
+      "year": 2025,
+      "venue": "arXiv:2507.12900 (revised 2026)",
+      "authors": "Luca Stradiotti, Dario Pesenti, Stefano Teso, Jesse Davis",
+      "relation": "NEAR_MISS",
+      "why": "Couples explanation and rejection in the INVERSE direction: abstain when the model cannot produce a satisfactory explanation, rather than explain why it abstained. A reviewer scanning 'explanation + abstention' will surface it; CertGate should distinguish its direction (explanations OF abstention, under a certificate) from REX's (abstention BECAUSE OF explanations).",
+      "url": "https://arxiv.org/abs/2507.12900"
+    },
+    {
+      "title": "Deferring Concept Bottleneck Models: Learning to Defer Interventions to Inaccurate Experts",
+      "year": 2025,
+      "venue": "NeurIPS 2025 (poster); arXiv:2503.16199",
+      "authors": "Andrea Pugnana et al. (9 authors)",
+      "relation": "NEAR_MISS",
+      "why": "Interpretable deferral via concept bottlenecks: the system can defer instance-wise or concept-wise, so the deferral decision is grounded in human-understandable concepts — the L2D-side analogue of explainable abstention. Consistent surrogate-loss guarantees but no finite-sample answered-error certificate and no cluster-as-unit statistics.",
+      "url": "https://arxiv.org/abs/2503.16199"
+    },
+    {
+      "title": "Learning to Defer: A Survey",
+      "year": 2025,
+      "venue": "Preprint (Zenodo/under review)",
+      "authors": "Joshua Strong, Emma Sun, Harry Rogers, Helen Higham",
+      "relation": "BACKGROUND",
+      "why": "Four-branch taxonomy of the learning-to-defer literature, listing interpretability and uncertainty handling among open practical considerations — confirms explanation-of-deferral is recognized as open, and useful for positioning CertGate's abstention layer against the L2D framing without claiming to solve L2D.",
+      "url": "https://zenodo.org/records/17843044"
+    },
+    {
+      "title": "Interpretable machine learning with reject option",
+      "year": 2018,
+      "venue": "at - Automatisierungstechnik, 66(4)",
+      "authors": "Johannes Brinkrolf, Barbara Hammer",
+      "relation": "BACKGROUND",
+      "why": "The earliest explicit pairing of interpretable models (LVQ) with reject options — the classic the authors may have missed if they only cite 2022+ work; roots the claim that interpretability and abstention have been combined before, though without explanation of individual rejects or any statistical certificate.",
+      "url": "https://www.semanticscholar.org/paper/Interpretable-machine-learning-with-reject-option-Brinkrolf-Hammer/77120fbcad4bb22d99f690a651e17ee600ee007a"
+    },
+    {
+      "title": "L2D-Clinical: Learning to Defer for Adaptive Model Selection in Clinical Text Classification",
+      "year": 2026,
+      "venue": "arXiv:2604.13285",
+      "authors": "Rishik Kondadadi, John E. Ortega",
+      "relation": "BACKGROUND",
+      "why": "Recent clinical deferral system (BERT defers to an LLM) that advertises 'interpretable, task-specific patterns about when deferral helps'; abstract-level check shows the interpretability claim is thin (uncertainty signals + text characteristics, no per-case explanation). Context for clinical deferral, not a threat to CertGate's combination.",
+      "url": "https://arxiv.org/abs/2604.13285"
+    },
+    {
+      "title": "Selective Omniprediction and Fair Abstention",
+      "year": 2025,
+      "venue": "NeurIPS 2025",
+      "authors": "Silvia Casacuberta et al.",
+      "relation": "BACKGROUND",
+      "why": "Theory of selective prediction with abstention under fairness/omniprediction constraints — shows where the theory community is taking abstention semantics, but no explanation layer, no cluster-as-unit certification, no clinical component.",
+      "url": "https://openreview.net/forum?id=BoYGLpNXZd"
+    }
+  ],
+  "collision_verdict": "No COLLISION found in this lane. Nothing located combines site/cluster-as-unit finite-sample certification of answered-set error with an explanation layer for abstention; the lane's closest work (Fernandes & Rocha 2026; IFAC 2024; the Artelt/Hammer corpus) explains or structures individual rejections without any statistical certificate, and the certified-abstention literature surfaced in adjacent searches carries no explanation layer and is record-i.i.d."
+}

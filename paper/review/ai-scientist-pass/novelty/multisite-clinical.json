@@ -1,0 +1,156 @@
+{
+  "topic": "Multi-site / multi-center clinical prediction model validation with statistical guarantees; eICU-CRD selective prediction, uncertainty, abstention, and external validation frameworks",
+  "generated": "2026-08-13",
+  "method_note": "WebSearch (9 query formulations) + PubMed API; Semantic Scholar API rate-limited (HTTP 429) and unavailable this pass. Abstracts of all NEAR_MISS candidates were read before classification. No COLLISION found: no located paper combines site-as-unit statistical independence with a finite-sample certified selective-prediction (answered-error <= alpha at confidence 1-delta) guarantee on clinical data.",
+  "queries_used": [
+    "eICU-CRD selective prediction abstention mortality model uncertainty 2024 2025",
+    "certified selective classification finite-sample guarantee risk control clinical prediction",
+    "hierarchical conformal prediction multi-site hospital cluster exchangeability coverage guarantee",
+    "e-value test martingale anytime-valid monitoring clinical prediction model safety",
+    "\"label shift\" BBSE clinical prediction model hospital deployment correction uncertainty",
+    "Dunn Wasserman Ramdas distribution-free prediction sets two-layer hierarchical model repeated measurements",
+    "\"distribution-free inference\" hierarchical data Lee Barber cluster exchangeability 2025",
+    "conformal prediction eICU hospital-wise calibration mortality \"leave-one-hospital-out\" OR \"cross-site\" coverage",
+    "\"selective prediction\" OR \"abstention\" certificate \"hospitals\" site-level guarantee clinical risk model 2025 2026 betting wealth",
+    "group-conditional selective classification cluster-level risk control abstention guarantee heterogeneous sites",
+    "eICU reject option abstention deferral in-hospital mortality machine learning hospitals generalization",
+    "PubMed: eICU multicenter mortality prediction external validation hospital heterogeneity (2023-)"
+  ],
+  "papers": [
+    {
+      "title": "Distribution-Free Prediction Sets for Two-Layer Hierarchical Models",
+      "year": 2023,
+      "venue": "Journal of the American Statistical Association 118(544):2491-2502 (arXiv 1809.07441, first posted 2018)",
+      "authors": "Robin Dunn, Larry Wasserman, Aaditya Ramdas",
+      "relation": "NEAR_MISS",
+      "why": "The canonical treatment of the group (patient/site), not the record, as the exchangeable unit for distribution-free prediction — CDF pooling, single subsampling, repeated subsampling. It is prediction-set coverage, not certified selective risk, but it is THE classic for CertGate's site-as-unit exchangeability premise; a statistics-literate reviewer will expect it cited.",
+      "url": "https://arxiv.org/abs/1809.07441"
+    },
+    {
+      "title": "Distribution-free inference with hierarchical data",
+      "year": 2026,
+      "venue": "ACM Journal of Data Science (accepted 2025-12-18; arXiv 2306.06342)",
+      "authors": "Yonghoon Lee, Rina Foygel Barber, et al.",
+      "relation": "NEAR_MISS",
+      "why": "Formalizes hierarchical exchangeability and extends conformal prediction and jackknife+ to grouped/repeated-measurement data, including second-moment (dispersion-aware) coverage — directly adjacent to CertGate's site-population-average estimand plus between-site-dispersion clause. Coverage guarantees, not selective-risk certificates.",
+      "url": "https://arxiv.org/abs/2306.06342"
+    },
+    {
+      "title": "When Average Calibration Fails: Site-Conditional Federated Conformal Risk Control (via Risk-Curve Shrinkage)",
+      "year": 2026,
+      "venue": "arXiv preprint 2606.20115",
+      "authors": "Nafis Fuad Shahid",
+      "relation": "NEAR_MISS",
+      "why": "Treats hospitals/institutions as calibration units in federated conformal risk control on medical (FeTS-2022 brain-tumor) data and shows pooled CRC protects the average hospital while violating coverage at 40% of individual institutions — the same aggregate-vs-individual signature CertGate measures in E1/E6, and finite-sample corrections are shown load-bearing. No selective prediction/abstention, no betting certificate; segmentation, not clinical risk scores.",
+      "url": "https://arxiv.org/abs/2606.20115"
+    },
+    {
+      "title": "Certify or Refuse: A Cross-Model Map for Selective Risk Control with Coverage Floors under Covariate Shift",
+      "year": 2026,
+      "venue": "arXiv preprint 2608.10893 (Aug 2026)",
+      "authors": "Jiamiao Liu, Dewen Qiao, Yu Zhang, Xuetao Chen",
+      "relation": "NEAR_MISS",
+      "why": "Certified selective prediction under distribution shift with labeled-source + unlabeled-target resources and an honest-refusal feasibility frontier — conceptually parallel to CertGate's decline-rather-than-overclaim discipline and its BBSE-mode budget, but for covariate (not label) shift, record-level i.i.d. units, NLP experiments, no clinical data, no site clustering.",
+      "url": "https://arxiv.org/abs/2608.10893"
+    },
+    {
+      "title": "A Joint Finite-Sample Certificate for Adaptive Selective Conformal Risk Control",
+      "year": 2026,
+      "venue": "arXiv preprint 2606.08517",
+      "authors": "Xiaoli Yu, Jiamiao Liu",
+      "relation": "NEAR_MISS",
+      "why": "A single finite-sample certificate jointly bounding selected risk, acceptance probability, and utility under adaptive threshold selection — overlaps CertGate's component (2) headline (finite-sample certified selective risk) closely. Record-level exchangeability on vision benchmarks (ImageNet/COCO/ADE20K); no clustered data, no clinical setting, no e-value/betting machinery.",
+      "url": "https://arxiv.org/abs/2606.08517"
+    },
+    {
+      "title": "Selective Conformal Risk Control",
+      "year": 2025,
+      "venue": "arXiv preprint 2512.12844",
+      "authors": "Yunpeng Xu, Wenge Guo, Zhi Wei",
+      "relation": "NEAR_MISS",
+      "why": "Selective prediction with conformal risk control giving finite-sample selective and marginal guarantees for general continuous risks — the same guarantee family as CertGate's answered-error bound, via conformal rather than betting/e-value machinery, with the record as the unit and no multi-site or clinical component.",
+      "url": "https://arxiv.org/pdf/2512.12844"
+    },
+    {
+      "title": "Anytime-Valid Confirmation of Label-Shift Corrections",
+      "year": 2026,
+      "venue": "arXiv preprint 2606.14028",
+      "authors": "Seungjin Choi",
+      "relation": "NEAR_MISS",
+      "why": "Shows the likelihood ratio between a label-shift-corrected predictive and the source predictive is a conditional e-value, giving an anytime-valid (Ville) confirmation rule for label-shift corrections — the intersection of CertGate's components (2) e-value/martingale and (3) label shift, but for confirming a pre-specified correction in GP regression simulations; no selective prediction, no clustered clinical data, no BBSE estimation.",
+      "url": "https://arxiv.org/abs/2606.14028"
+    },
+    {
+      "title": "Distribution-free uncertainty quantification for classification under label shift",
+      "year": 2021,
+      "venue": "UAI 2021 (arXiv 2103.03323)",
+      "authors": "Aleksandr Podkopaev, Aaditya Ramdas",
+      "relation": "NEAR_MISS",
+      "why": "The classic for distribution-free UQ under label shift with importance-weight (BBSE-style) correction and explicit handling of weight-estimation uncertainty — the direct ancestor of CertGate's BBSE mode with an honest q_t budget. Coverage, not selective-risk certification, and record-level units.",
+      "url": "https://arxiv.org/abs/2103.03323"
+    },
+    {
+      "title": "Tracking the risk of a deployed model and detecting harmful distribution shifts",
+      "year": 2022,
+      "venue": "ICLR 2022 (arXiv 2110.06177)",
+      "authors": "Aleksandr Podkopaev, Aaditya Ramdas",
+      "relation": "NEAR_MISS",
+      "why": "Sequential testing / confidence-sequence (betting-adjacent) machinery to certify that a deployed model's risk has not harmfully increased — the closest classic to CertGate's use of anytime-valid wealth arguments for deployed-model error control. No abstention layer, no cluster-as-unit structure; a methods reviewer from the SAVI community would expect it in related work.",
+      "url": "https://arxiv.org/abs/2110.06177"
+    },
+    {
+      "title": "Conformal selective prediction with cost-aware deferral for safe clinical triage under distribution shift",
+      "year": 2026,
+      "venue": "Scientific Reports (Nature Portfolio)",
+      "authors": "Hyun Kwon, Dae-Jin Kim",
+      "relation": "NEAR_MISS",
+      "why": "Clinical selective prediction combining conformal finite-sample coverage with cost-aware deferral to clinicians under distribution shift (PhysioNet 2019 sepsis, not eICU) — overlaps the clinical-selective-prediction-with-guarantees lane a health-informatics reviewer patrols, but coverage-of-sets rather than answered-error certification, temporal (not site) shift, no hospital-as-unit treatment.",
+      "url": "https://www.nature.com/articles/s41598-026-40637-w"
+    },
+    {
+      "title": "A Self-Adaptive Mixup-Augmented Selective Prediction Framework: A Case Study on In-Hospital Mortality Prediction",
+      "year": 2026,
+      "venue": "IEEE Journal of Biomedical and Health Informatics 30(7):5642-5655; doi:10.1109/JBHI.2025.3639425 (via PubMed, PMID 41329580)",
+      "authors": "Kaidi Gong, Yuan Xu, Xiaolei Xie",
+      "relation": "NEAR_MISS",
+      "why": "Selective prediction (learned abstention) for ICU in-hospital mortality with uncertainty-plus-interpretation integration — the same task and abstention framing as CertGate's application, and it pairs abstention with explanation as CertGate's component (4) does. Empirical selective-risk reduction only: no finite-sample certificate, no site-level statistics, no pre-registered protocol.",
+      "url": "https://doi.org/10.1109/JBHI.2025.3639425"
+    },
+    {
+      "title": "A hierarchical conformal framework for uncertainty-aware length of stay prediction in multi-hospital settings",
+      "year": 2026,
+      "venue": "Scientific Reports (Nature Portfolio)",
+      "authors": "Marzieh Amiri Shahbazi, Ali Baheri, Nasibeh Azadeh-Fard",
+      "relation": "NEAR_MISS",
+      "why": "Explicitly treats hospitals as clustering units for conformal calibration in healthcare (HCUP NIS, 3,793 hospitals), deploying the Dunn et al. two-layer schemes (CDF pooling / subsampling) plus Bayesian uncertainty — the nearest published multi-hospital-conformal-in-healthcare neighbor. Interval coverage for LOS regression, primary method carries no finite-sample guarantee, no abstention, no certification.",
+      "url": "https://www.nature.com/articles/s41598-026-37450-w"
+    },
+    {
+      "title": "Selective Omniprediction and Fair Abstention",
+      "year": 2025,
+      "venue": "NeurIPS 2025",
+      "authors": "Silvia Casacuberta, et al.",
+      "relation": "BACKGROUND",
+      "why": "(C,G)-multigroup selective classification with provable per-group abstention guarantees — theoretical context for group-level abstention fairness; multicalibration-style guarantees over subpopulations, not cluster-sampling independence, and no clinical or finite-sample-certificate component.",
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2025/file/3826a7e2a07ee41ca42eaf57ed337df4-Paper-Conference.pdf"
+    },
+    {
+      "title": "Detecting and Remediating Harmful Data Shifts for the Responsible Deployment of Clinical AI Models",
+      "year": 2025,
+      "venue": "JAMA Network Open 8(6):e2513685; doi:10.1001/jamanetworkopen.2025.13685 (via PubMed, PMID 40465297)",
+      "authors": "Vallijah Subasri, Amrit Krishnan, et al. (Verma, Goldenberg, Dolatabadi)",
+      "relation": "BACKGROUND",
+      "why": "Label-agnostic monitoring of a multi-hospital in-hospital-mortality model using a black-box shift estimator (BBSE) with MMD testing across 7 Toronto hospitals — real-world clinical use of CertGate's BBSE ingredient, but for drift detection and retraining, with no certification, abstention, or site-level statistical guarantee.",
+      "url": "https://doi.org/10.1001/jamanetworkopen.2025.13685"
+    },
+    {
+      "title": "Calibration Drift Under Cross-Institutional Deployment: An External Validation Framework for ICU Mortality Prediction Across MIMIC-IV and eICU",
+      "year": 2026,
+      "venue": "medRxiv preprint 10.64898/2026.05.03.26352335",
+      "authors": "Krutarth Patel, Phanindra Beedala",
+      "relation": "BACKGROUND",
+      "why": "An eICU-based external-validation framework for ICU mortality (MIMIC-IV develop, eICU 114,060-stay validate; calibration metrics, recalibration, APACHE benchmarking, fairness audit) — occupies the eICU cross-institution validation lane and documents the prevalence/label-shift failure CertGate's mode 2 targets, but is descriptive: no statistical guarantee, no abstention, no site-as-unit inference.",
+      "url": "https://www.medrxiv.org/content/10.64898/2026.05.03.26352335v1"
+    }
+  ]
+}

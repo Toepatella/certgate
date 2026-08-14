@@ -1,0 +1,146 @@
+{
+  "topic": "E-values, test martingales, betting-based confidence sequences applied to risk control, selective prediction, model certification, or deployment monitoring",
+  "date_checked": "2026-08-13",
+  "method_notes": "WebSearch with ten query formulations; every candidate's abstract read via arXiv before classification. Semantic Scholar API returned HTTP 429 on both attempts (no key), so results rest on WebSearch coverage. No paper found that treats the site/cluster as the unit of statistical independence for a certified selective-prediction guarantee - the headline combination appears clear in this lane. The closest single object is Bai & Jin's SCoRE (e-value selective risk control, record-level exchangeability).",
+  "queries_used": [
+    "e-value risk control selective prediction betting martingale 2025",
+    "anytime-valid risk monitoring deployed machine learning model confidence sequence betting",
+    "\"selective classification\" OR \"selective prediction\" e-value abstention finite-sample guarantee arxiv",
+    "e-values clustered data hierarchical \"cluster-level\" hospitals sequential testing site-level independence",
+    "testing by betting monitoring clinical prediction model hospital deployment e-process anytime-valid",
+    "Podkopaev Ramdas tracking risk deployed model harmful distribution shift confidence sequences",
+    "Podkopaev Ramdas distribution-free uncertainty quantification classification label shift BBSE",
+    "\"hospital-level\" OR \"site-level\" OR \"cluster\" exchangeability certified risk control eICU multi-site selective prediction",
+    "\"e-value\" OR \"e-process\" OR \"confidence sequence\" \"label shift\" importance weights sequential risk control",
+    "Gauthier Bach Jordan e-values conformal prediction arxiv",
+    "Semantic Scholar API paper/search (rate-limited 429, both attempts)"
+  ],
+  "papers": [
+    {
+      "title": "Conformal Selective Prediction with General Risk Control (SCoRE)",
+      "year": 2026,
+      "venue": "arXiv 2603.24704 (stat.ME), March 2026",
+      "authors": "Tian Bai, Ying Jin",
+      "relation": "NEAR_MISS",
+      "why": "The closest object found in this lane: constructs generalized e-values to give finite-sample, model-free error control on exactly the cases the system chooses to answer - the same certified-selective-prediction mechanism as CertGate's headline, including a covariate-shift extension. It stays record-level exchangeable: no site/cluster as the unit of independence, no BBSE label-shift mode with cluster-robust uncertainty, no explainable abstention, no pre-registered multi-site clinical validation. A reviewer will certainly expect this citation and a differentiation paragraph; the site-as-unit estimand is the load-bearing difference.",
+      "url": "https://arxiv.org/abs/2603.24704"
+    },
+    {
+      "title": "Tracking the risk of a deployed model and detecting harmful distribution shifts",
+      "year": 2022,
+      "venue": "ICLR 2022",
+      "authors": "Aleksandr Podkopaev, Aaditya Ramdas",
+      "relation": "NEAR_MISS",
+      "why": "The canonical anchor of this lane: time-uniform betting confidence sequences monitoring the risk of a deployed model and flagging harmful (vs benign) shifts with false-alarm control. Same statistical machinery (Waudby-Smith/Ramdas line) applied to deployment risk, but sequential monitoring rather than a one-shot certificate, no selective prediction, and records - not sites - are the independence unit. Expected citation in any e-value risk-control related-work section.",
+      "url": "https://arxiv.org/abs/2110.06177"
+    },
+    {
+      "title": "Distribution-free uncertainty quantification for classification under label shift",
+      "year": 2021,
+      "venue": "UAI 2021 (PMLR v161)",
+      "authors": "Aleksandr Podkopaev, Aaditya Ramdas",
+      "relation": "NEAR_MISS",
+      "why": "Direct precedent for CertGate's second assumption mode: BBSE-style importance reweighting of distribution-free UQ (conformal sets and calibration) under label shift, with unlabeled target data. It is conformal/calibration rather than a betting certificate, record-level rather than cluster-robust, and has no honest importance-weight budget that declines rather than overclaims. A reviewer scanning the BBSE-mode contribution will expect this cited and distinguished.",
+      "url": "https://proceedings.mlr.press/v161/podkopaev21a.html"
+    },
+    {
+      "title": "On Continuous Monitoring of Risk Violations under Unknown Shift",
+      "year": 2025,
+      "venue": "UAI 2025; arXiv 2506.16416",
+      "authors": "Alexander Timans, Rajeev Verma, Eric Nalisnick, Christian A. Naesseth",
+      "relation": "NEAR_MISS",
+      "why": "Testing-by-betting sequential procedure that detects violations of bounded risks for a deployed decision mechanism under unknown distribution shift, with false-alarm control - the monitoring-side mirror of CertGate's certificate, on the same e-process machinery. No selective prediction/abstention layer, no cluster-as-unit, no clinical multi-site validation.",
+      "url": "https://arxiv.org/abs/2506.16416"
+    },
+    {
+      "title": "Selective Conformal Risk Control",
+      "year": 2025,
+      "venue": "arXiv 2512.12844 (cs.LG), December 2025",
+      "authors": "Yunpeng Xu, Wenge Guo, Zhi Wei",
+      "relation": "NEAR_MISS",
+      "why": "Two-stage framework integrating selective classification with conformal risk control on the selected subset, with exact finite-sample guarantees (SCRC-T). Overlaps the certified-selective-prediction component, but via conformal exchangeability arguments, not e-values/betting; record-level; no site clusters, label shift, or clinical multi-site data.",
+      "url": "https://arxiv.org/abs/2512.12844"
+    },
+    {
+      "title": "Anytime-Valid Confirmation of Label-Shift Corrections",
+      "year": 2026,
+      "venue": "ICML 2026 Workshop on Hypothesis Testing; arXiv 2606.14028",
+      "authors": "Seungjin Choi",
+      "relation": "NEAR_MISS",
+      "why": "Shows the per-observation likelihood ratio between a label-shift-corrected predictive and the source predictive is a conditional e-value, whose running product is a nonnegative martingale, giving anytime-valid confirmation of a posited label-shift correction. This is the exact intersection of CertGate's two statistical ingredients (e-value/martingale machinery + label-shift correction), though for confirming a correction rather than certifying answered-set error, with no selection, no clusters, no clinical data. Small workshop paper but directly on the seam.",
+      "url": "https://arxiv.org/abs/2606.14028"
+    },
+    {
+      "title": "Conformal Selective Acting: Anytime-Valid Risk Control for RLVR-Trained LLMs",
+      "year": 2026,
+      "venue": "arXiv 2605.20270 (cs.LG), May 2026",
+      "authors": "Hamed Khosravi, Xiaoming Huo",
+      "relation": "NEAR_MISS",
+      "why": "Ville-type e-processes controlling SELECTIVE risk (explicitly distinguished from marginal risk) for act/abstain decisions on LLM output streams, with per-deployment error budgets and no pooling across deployments. Overlaps components (2) and the abstention framing; the setting is sequential LLM streams under an RLVR filtration - not exchangeable hospital sites as the independence unit, no label-shift mode, no clinical data.",
+      "url": "https://arxiv.org/abs/2605.20270"
+    },
+    {
+      "title": "Certify or Refuse: A Cross-Model Map for Selective Risk Control with Coverage Floors under Covariate Shift",
+      "year": 2026,
+      "venue": "arXiv 2608.10893 (cs.CL), August 2026",
+      "authors": "Jiamiao Liu, Dewen Qiao, Yu Zhang, Xuetao Chen",
+      "relation": "NEAR_MISS",
+      "why": "Uses the same 'certified selective prediction' vocabulary - answer at least a beta-fraction while keeping answered-set error below alpha, with finite-sample sample-complexity bounds - under bounded-ratio covariate shift. No e-values/betting, no site-as-unit, QA benchmarks not clinical data, and covariate shift is explicitly out of CertGate's scope; still worth citing to disambiguate the overlapping terminology.",
+      "url": "https://arxiv.org/abs/2608.10893"
+    },
+    {
+      "title": "Active, anytime-valid risk controlling prediction sets",
+      "year": 2024,
+      "venue": "NeurIPS 2024; arXiv 2406.10490",
+      "authors": "Ziyu Xu, Nikos Karampatziakis, Paul Mineiro",
+      "relation": "NEAR_MISS",
+      "why": "Extends risk-controlling prediction sets to the sequential setting via a wealth (betting) process, giving anytime-valid finite-sample risk control under a labeling budget. Same betting-for-risk-control machinery; differs in target (prediction-set risk over a stream with active labeling) and has no site clusters, abstention gate, or clinical validation.",
+      "url": "https://arxiv.org/abs/2406.10490"
+    },
+    {
+      "title": "E-Values Expand the Scope of Conformal Prediction",
+      "year": 2025,
+      "venue": "arXiv 2503.13050",
+      "authors": "Etienne Gauthier, Francis Bach, Michael I. Jordan",
+      "relation": "BACKGROUND",
+      "why": "Systematic treatment of conformal e-prediction: batch anytime-valid conformal prediction, fixed-size sets with data-dependent coverage, ambiguous ground truth. Establishes the e-value-for-distribution-free-UQ context a reviewer in this lane will have in mind; no selective risk control on an answered set, no clusters, no clinical setting.",
+      "url": "https://arxiv.org/abs/2503.13050"
+    },
+    {
+      "title": "Adaptive auditing of AI systems with anytime-valid guarantees",
+      "year": 2026,
+      "venue": "arXiv 2605.07002",
+      "authors": "Siyu Zhou, Patrick Vossler, Venkatesh Sivaraman, Yifan Mai, Jean Feng",
+      "relation": "BACKGROUND",
+      "why": "Testing-by-betting (SAVI) dueling e-processes for adaptively auditing whether an AI system has a failure mode below a performance threshold. Shows the betting-audit framing is active (Jean Feng's group also works on clinical AI monitoring), but it audits generative systems adaptively rather than certifying answered-set error, with no selection gate, clusters, or clinical data.",
+      "url": "https://arxiv.org/abs/2605.07002"
+    },
+    {
+      "title": "Prediction-Powered Risk Monitoring of Deployed Models for Detecting Harmful Distribution Shifts",
+      "year": 2026,
+      "venue": "ICML 2026; arXiv 2602.02229",
+      "authors": "Guangyi Zhang, Yunlong Cai, Guanding Yu, Osvaldo Simeone",
+      "relation": "BACKGROUND",
+      "why": "Semi-supervised anytime-valid lower bounds on running risk (prediction-powered inference plus time-uniform bounds) for detecting harmful shifts, extending the Podkopaev-Ramdas monitoring line. Assumption-free finite-sample type-I control, but monitoring not certification, no selection, no clusters, no clinical data.",
+      "url": "https://arxiv.org/abs/2602.02229"
+    },
+    {
+      "title": "Estimating means of bounded random variables by betting",
+      "year": 2024,
+      "venue": "Journal of the Royal Statistical Society: Series B (with discussion); arXiv 2010.09686",
+      "authors": "Ian Waudby-Smith, Aaditya Ramdas",
+      "relation": "BACKGROUND",
+      "why": "The foundational betting/e-value confidence-sequence construction the whole lane (and CertGate's certificate) descends from. Not a novelty threat - a methodological ancestor that must be cited; its finite-sample nonasymptotic bounds are what make a site-level n~208 certificate feasible at all.",
+      "url": "https://arxiv.org/abs/2010.09686"
+    },
+    {
+      "title": "Game-theoretic statistics and safe anytime-valid inference",
+      "year": 2023,
+      "venue": "Statistical Science 38(4); arXiv 2210.01948",
+      "authors": "Aaditya Ramdas, Peter Grunwald, Vladimir Vovk, Glenn Shafer",
+      "relation": "BACKGROUND",
+      "why": "The survey that fixes the lane's vocabulary (e-values, e-processes, test martingales, Ville's inequality, optional stopping). Standard citation establishing that CertGate's certificate sits inside game-theoretic statistics; no overlap with the site-as-unit selective-prediction combination itself.",
+      "url": "https://arxiv.org/abs/2210.01948"
+    }
+  ]
+}

@@ -1,0 +1,157 @@
+{
+  "topic": "Label shift (prior probability shift, BBSE) combined with selective classification / abstention / conformal / certified risk control",
+  "date": "2026-08-13",
+  "no_collision_found": true,
+  "collision_note": "Nothing found that certifies answered-set error at finite sample with the site/cluster as the unit of independence, and nothing that combines a betting/e-value selective certificate with BBSE label-shift correction. The closest structural overlaps are Bai & Jin (e-value selective risk control, record-level) and Choi (anytime-valid e-value confirmation of label-shift corrections, no abstention).",
+  "queries_used": [
+    "WebSearch: conformal prediction label shift selective classification 2024 2025",
+    "WebSearch: black box shift estimation BBSE abstention certified risk control",
+    "SemanticScholar API: label shift conformal prediction (HTTP 429, rate-limited)",
+    "WebSearch: PAC prediction sets label shift Podkopaev Ramdas distribution-free uncertainty label shift",
+    "WebSearch: selective classification under label shift abstention prior probability shift 2025",
+    "WebSearch: federated conformal prediction label shift Plassier ICML clients",
+    "WebSearch: e-value test martingale label shift detection sequential betting distribution shift risk tracking",
+    "WebSearch: \"conformal risk control\" OR \"risk-controlling prediction\" label shift 2025 abstention clinical",
+    "WebSearch: multi-site hospital cluster conformal prediction selective abstention certificate eICU external validation label shift",
+    "WebSearch: testing by betting selective prediction abstention certificate answered error rate e-value risk control",
+    "SemanticScholar API: selective prediction label shift certificate (HTTP 429, rate-limited)",
+    "Abstract-level verification via WebFetch of arXiv pages for every NEAR_MISS candidate (2608.10893, 2606.14028, 2606.14909, 2605.20956, 2606.08517, 2603.24704, 1802.07024, PMC12470254)"
+  ],
+  "papers": [
+    {
+      "title": "Conformal Selective Prediction with General Risk Control (SCoRE)",
+      "year": 2026,
+      "venue": "arXiv:2603.24704 (stat.ME)",
+      "authors": "Tian Bai, Ying Jin",
+      "relation": "NEAR_MISS",
+      "why": "Closest single overlap with CertGate's certificate component: constructs (generalized) e-values for finite-sample control of the risk on answered cases in selective prediction, and states the framework 'can be readily extended to settings with distribution shifts', with health risk prediction named as an application. No site/cluster unit of independence, no BBSE-specific label-shift machinery, no clinical multi-site validation. A reviewer in this lane will expect this citation.",
+      "url": "https://arxiv.org/abs/2603.24704"
+    },
+    {
+      "title": "PAC Prediction Sets under Label Shift",
+      "year": 2024,
+      "venue": "ICLR 2024 (arXiv:2310.12964)",
+      "authors": "Wenwen Si, Sangdon Park, Insup Lee, Edgar Dobriban, Osbert Bastani",
+      "relation": "NEAR_MISS",
+      "why": "PAC (1-delta) prediction sets under label shift that explicitly propagate the uncertainty of ESTIMATED importance weights — the direct analogue of CertGate's 'BBSE with an honest q_t budget', in the prediction-set rather than selective-gate formulation. Record-level i.i.d., no clusters, no betting, no abstention-vs-answer certificate. Must-cite for the honest-weight-uncertainty claim.",
+      "url": "https://arxiv.org/abs/2310.12964"
+    },
+    {
+      "title": "Distribution-free uncertainty quantification for classification under label shift",
+      "year": 2021,
+      "venue": "UAI 2021 (PMLR v161; arXiv:2103.03323)",
+      "authors": "Aleksandr Podkopaev, Aaditya Ramdas",
+      "relation": "NEAR_MISS",
+      "why": "The classic on conformal prediction and calibration under label shift (reweighted conformal with known/oracle weights). Foundational for any label-shift+distribution-free-guarantee paper; no selective gate, no cluster unit, weights assumed known. Reviewer-expected citation.",
+      "url": "https://proceedings.mlr.press/v161/podkopaev21a.html"
+    },
+    {
+      "title": "A General Framework for Abstention Under Label Shift",
+      "year": 2018,
+      "venue": "arXiv:1802.07024 (unpublished; last revised 2022)",
+      "authors": "Amr M. Alexandari, Anshul Kundaje, Avanti Shrikumar",
+      "relation": "NEAR_MISS",
+      "why": "Earlier classic the authors may have missed: abstention explicitly adapted to label shift at test time, optimizing arbitrary metrics from calibrated probabilities, evaluated on biological and clinical data. No finite-sample certificate, no 1-delta guarantee, no cluster structure — but it is the exact 'abstention + label shift' pairing by name, so a reviewer may search for it.",
+      "url": "https://arxiv.org/abs/1802.07024"
+    },
+    {
+      "title": "Conformal Prediction for Federated Uncertainty Quantification Under Label Shift",
+      "year": 2023,
+      "venue": "ICML 2023 (PMLR v202; arXiv:2306.05131)",
+      "authors": "Vincent Plassier, Mehdi Makni, Aleksandr Rubashevskii, Eric Moulines, Maxim Panov",
+      "relation": "NEAR_MISS",
+      "why": "The closest existing 'multi-site + label shift + distribution-free guarantee' combination: federated conformal prediction with importance weighting for label shift BETWEEN clients (sites). Targets coverage of prediction sets, not certified answered-set error; clients are a federation/privacy construct, not the unit of statistical independence for a selective certificate. Reviewer-expected citation for the multi-site label-shift angle.",
+      "url": "https://arxiv.org/abs/2306.05131"
+    },
+    {
+      "title": "Tracking the risk of a deployed model and detecting harmful distribution shifts",
+      "year": 2022,
+      "venue": "ICLR 2022 (arXiv:2110.06177)",
+      "authors": "Aleksandr Podkopaev, Aaditya Ramdas",
+      "relation": "NEAR_MISS",
+      "why": "Sequential, anytime-valid (confidence-sequence / betting-adjacent) monitoring of a deployed model's risk under distribution shift — overlaps CertGate's martingale-certificate component and its deployment-monitoring story. Record-level stream, no abstention gate, no label-shift correction, no cluster unit.",
+      "url": "https://arxiv.org/abs/2110.06177"
+    },
+    {
+      "title": "Anytime-Valid Confirmation of Label-Shift Corrections",
+      "year": 2026,
+      "venue": "ICML 2026 Workshop on Hypothesis Testing (arXiv:2606.14028)",
+      "authors": "Seungjin Choi",
+      "relation": "NEAR_MISS",
+      "why": "Combines two CertGate components in one place: e-value / nonnegative-martingale sequential testing (Ville's inequality) applied to validating a pre-specified label-shift correction. No selective prediction, no answered-set error certificate, no sites-as-unit, synthetic data only — but the 'e-values + label-shift correction' pairing is now in the literature and should be cited.",
+      "url": "https://arxiv.org/abs/2606.14028"
+    },
+    {
+      "title": "Selective Classification Under Distribution Shifts",
+      "year": 2024,
+      "venue": "Transactions on Machine Learning Research",
+      "authors": "Hengyue Liang, Le Peng, Ju Sun",
+      "relation": "NEAR_MISS",
+      "why": "Generalizes selective classification to jointly reject in-distribution errors, label-shifted (Type B), and covariate-shifted (Type C) samples with margin-based confidence scores. Empirical risk-coverage evaluation only — no finite-sample 1-delta certificate, sample-level units, standard vision/WILDS benchmarks. Reviewer-expected citation for 'selective classification under label shift'.",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12470254/"
+    },
+    {
+      "title": "Certify or Refuse: A Cross-Model Map for Selective Risk Control with Coverage Floors under Covariate Shift",
+      "year": 2026,
+      "venue": "arXiv:2608.10893 (cs.CL)",
+      "authors": "Jiamiao Liu, Dewen Qiao, Yu Zhang, Xuetao Chen",
+      "relation": "NEAR_MISS",
+      "why": "Headline-adjacent language: certified selective predictors (answer >= beta fraction with <= alpha error) with minimax rates using labeled source + unlabeled target data — but under COVARIATE shift with bounded density ratios, record-level, NLP experiments, no e-values/betting, no clusters, no clinical data. Fresh (Aug 2026); worth citing to delimit CertGate's label-shift + site-unit territory.",
+      "url": "https://arxiv.org/abs/2608.10893"
+    },
+    {
+      "title": "A Deployment Audit of Release-Side Risk in Conformal Triage under Prevalence Shift",
+      "year": 2026,
+      "venue": "arXiv:2605.20956 (cs.LG)",
+      "authors": "Chengze Li, Xiao Liu, Hanrong Zhang, Haiyang Peng, Yanghao Ruan, Huanhuan Ma, Chunyu Miao, Qichao Zhou, Xiangrong Qi, Philip Yu",
+      "relation": "NEAR_MISS",
+      "why": "Clinical conformal triage (release/flag/defer) audited under prevalence (= label) shift, with data split into prevalence-correction / calibration / evaluation roles on a retrospective NSCLC cohort. Descriptive audit, no 1-delta finite-sample certificate, no betting, no site-as-unit. Overlaps the clinical label-shift-triage motivation closely enough to expect a citation.",
+      "url": "https://arxiv.org/abs/2605.20956"
+    },
+    {
+      "title": "Conformal selective prediction with cost-aware deferral for safe clinical triage under distribution shift",
+      "year": 2026,
+      "venue": "Scientific Reports",
+      "authors": "(author list not captured; Nature cookie wall blocked the fetch — verified via search snippets only)",
+      "relation": "NEAR_MISS",
+      "why": "Clinical selective prediction as a cost-aware deferral problem unifying calibrated probabilities, conformal sets, and a transparent deferral rule, evaluated on temporally shifted early-sepsis splits (~50% retained-case error reduction). Temporal shift rather than label-shift correction, no BBSE, no e-values, no site-as-unit certificate — but it is 'conformal selective prediction + clinical triage + distribution shift' in a Springer Nature venue adjacent to the target collection.",
+      "url": "https://www.nature.com/articles/s41598-026-40637-w"
+    },
+    {
+      "title": "A Joint Finite-Sample Certificate for Adaptive Selective Conformal Risk Control",
+      "year": 2026,
+      "venue": "arXiv:2606.08517 (cs.LG)",
+      "authors": "Xiaoli Yu, Jiamiao Liu",
+      "relation": "NEAR_MISS",
+      "why": "A finite-sample certificate jointly bounding selected risk and an acceptance floor under adaptive threshold selection — the same 'certificate for a selective predictor' framing as CertGate's core claim, though i.i.d. record-level, no distribution shift, no e-values per abstract, and vision benchmarks only. Same first-author cluster as 'Certify or Refuse'; cite to position the site-as-unit contribution.",
+      "url": "https://arxiv.org/abs/2606.08517"
+    },
+    {
+      "title": "Detecting and Correcting for Label Shift with Black Box Predictors",
+      "year": 2018,
+      "venue": "ICML 2018 (arXiv:1802.03916)",
+      "authors": "Zachary C. Lipton, Yu-Xiang Wang, Alexander J. Smola",
+      "relation": "BACKGROUND",
+      "why": "The BBSE origin paper — consistency and error bounds for moment-matching label-shift estimation with invertible confusion matrices. CertGate names BBSE, so this is certainly already cited; recorded here as the lane's foundation.",
+      "url": "https://arxiv.org/abs/1802.03916"
+    },
+    {
+      "title": "Audited Conformal Prediction for Classification under Unknown Distribution Shift",
+      "year": 2026,
+      "venue": "arXiv:2606.14909 (stat.ML)",
+      "authors": "Yanfei Zhou, Rizal Fathony, Nam H. Nguyen, Matteo Sesia",
+      "relation": "BACKGROUND",
+      "why": "Conformal prediction under unknown shift using a small labeled target set to train an audit model flagging likely failures; marginal-coverage guarantees. Unknown (not label-specific) shift, no selective error certificate, no clusters, no clinical data — related context for the shift-aware conformal landscape.",
+      "url": "https://arxiv.org/abs/2606.14909"
+    },
+    {
+      "title": "False Sense of Safety in Selective Signal Classification: Auditing Bound Tightness and Exchangeability for Risk Control",
+      "year": 2026,
+      "venue": "arXiv:2606.15153",
+      "authors": "(author list not captured; classified from search-result excerpts)",
+      "relation": "BACKGROUND",
+      "why": "Audits selective-classification risk-control bounds and finds uncertified empirical thresholding exceeds its declared budget in up to 73% of trials while exact and betting bounds hold under exchangeability — independent evidence for CertGate's motivation that certified (betting) bounds are needed for selective gates, though with no shift correction and no cluster unit.",
+      "url": "https://arxiv.org/abs/2606.15153"
+    }
+  ]
+}

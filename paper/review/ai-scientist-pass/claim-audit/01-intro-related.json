@@ -1,0 +1,286 @@
+{
+  "section": "Title/abstract + S1 Introduction + S2 Related work",
+  "line_range": [1, 47],
+  "claims": [
+    {
+      "quote": "certifying with finite-sample confidence $1-\\delta$",
+      "value": "1-delta",
+      "source": "n/a (mathematical form of the guarantee)",
+      "status": "ANALYTIC",
+      "note": "Confidence-level identity, not an empirical number."
+    },
+    {
+      "quote": "the error rate among answered cases ... stays at or below $\\alpha$",
+      "value": "<= alpha",
+      "source": "n/a (mathematical form of the guarantee)",
+      "status": "ANALYTIC",
+      "note": "Bound statement, not an empirical number."
+    },
+    {
+      "quote": "a label-shift mode carrying its four parameters' uncertainty inside the guarantee",
+      "value": "4 parameters",
+      "source": "certgate/report.py:142-145 ('The [rho_lo, rho_hi] box covers FOUR estimated parameters'), frozen by tests/test_report.py",
+      "status": "TRACED",
+      "note": "Design constant of the BBSE box; guarantee text is frozen (audit V2/V13)."
+    },
+    {
+      "quote": "On a 208-site synthetic cohort",
+      "value": 208,
+      "source": "experiments/run_synthetic.py:51 ANCHOR_SITES = 208, pinned tests/test_constants.py:111; E4 grid row n_sites=208 in experiments/out/summary.md",
+      "status": "TRACED",
+      "note": "Frozen anchor site count of the synthetic grid."
+    },
+    {
+      "quote": "the $\\alpha=0.10$ rung certifies all 200 draws",
+      "value": "200/200 certified at alpha=0.10",
+      "source": "experiments/out/summary.md E1 '0.1': certify_rate=1.0, n_certified=200, R=200",
+      "status": "TRACED",
+      "note": "Exact match."
+    },
+    {
+      "quote": "at 0.983 mean coverage",
+      "value": 0.983,
+      "source": "experiments/out/summary.md E1 '0.1'.mean_coverage = 0.9828",
+      "status": "TRACED",
+      "note": "Display rounding 0.9828 -> 0.983 (3 dp)."
+    },
+    {
+      "quote": "with no exceedance of the certified quantity",
+      "value": 0,
+      "source": "experiments/out/summary.md E1 '0.1'.rm_exceed_rate = 0.0, total_rm_exceed = 0",
+      "status": "TRACED",
+      "note": "Exact match."
+    },
+    {
+      "quote": "inside $\\delta=0.05$",
+      "value": 0.05,
+      "source": "certgate/constants.py DELTA, pinned tests/test_constants.py:33; summary.md header 'delta: 0.05'",
+      "status": "TRACED",
+      "note": "Frozen constant."
+    },
+    {
+      "quote": "under a prevalence shift to 0.22",
+      "value": 0.22,
+      "source": "experiments/out/summary.md E2 target_base_rate = 0.22; run_synthetic.py:52 SHIFT_BASE = 0.22, pinned via E2_SHIFT_SWEEP tests/test_constants.py:119",
+      "status": "TRACED",
+      "note": "Frozen shift anchor."
+    },
+    {
+      "quote": "the uncorrected baseline certifies and violates in 39.5% of draws",
+      "value": 0.395,
+      "source": "experiments/out/summary.md E2 baseline '0.1': joint_certify_and_hard_rate = 0.395 (= hard_violation_rate = 0.395, certify_rate = 1.0)",
+      "status": "TRACED",
+      "note": "Joint certify-and-hard-violate rate; exact match."
+    },
+    {
+      "quote": "while the corrected mode declines all 200",
+      "value": "200/200 declined",
+      "source": "experiments/out/summary.md E2 bbse '0.1': decline_rate = 1.0, n_certified = 0, R = 200",
+      "status": "TRACED",
+      "note": "Exact match."
+    },
+    {
+      "quote": "a concept-shift control hard-violates 70% as its exclusion predicts",
+      "value": 0.7,
+      "source": "experiments/out/summary.md E3 '0.1'.hard_violation_rate = 0.7",
+      "status": "TRACED",
+      "note": "Exact match."
+    },
+    {
+      "quote": "and $\\alpha=0.05$ needs about 300 sites",
+      "value": "~300 sites",
+      "source": "experiments/out/summary.md E4 grid '0.05': certify_rate 0.0 at 60/100/150/208 sites, 0.285 at 300, 1.0 at 400",
+      "status": "TRACED",
+      "note": "Prose compression: frontier first opens at 300 (certify_rate 0.285), fully reliable at 400. Intro's 'first becomes certifiable near 300' is the precise form; not drift."
+    },
+    {
+      "quote": "On eICU-CRD v2.0 (164,322 stays, 207 hospitals)",
+      "value": "164322 stays",
+      "source": "experiments/out/EICU-SUMMARY.md EICU-POOLED n_records = 164322; preflight attrition 'primary-cohort' n_stays = 164322",
+      "status": "TRACED",
+      "note": "Exact match."
+    },
+    {
+      "quote": "On eICU-CRD v2.0 (164,322 stays, 207 hospitals)",
+      "value": "207 hospitals",
+      "source": "experiments/out/EICU-SUMMARY.md EICU-POOLED n_sites = 207; preflight attrition 'primary-cohort' n_sites = 207",
+      "status": "TRACED",
+      "note": "207 = post-outcome-known cohort sites (208 raw hospitals, one drops at outcome-known). Draft correctly uses the cohort figure."
+    },
+    {
+      "quote": "$\\alpha=0.10$ certifies on all 20 by-site re-splits of one hospital population",
+      "value": "20/20 certified",
+      "source": "experiments/out/EICU-SUMMARY.md EICU-POOLED '0.1': certify_rate = 1.0, n_certified = 20, replicates = 20",
+      "status": "TRACED",
+      "note": "Exact match; 'one hospital population' matches the rm_fresh_means caveat in the same block."
+    },
+    {
+      "quote": "at 0.890 coverage",
+      "value": 0.89,
+      "source": "experiments/out/EICU-SUMMARY.md EICU-POOLED '0.1'.mean_coverage = 0.8904",
+      "status": "TRACED",
+      "note": "Display rounding 0.8904 -> 0.890 (3 dp)."
+    },
+    {
+      "quote": "and the stricter rung refused",
+      "value": "alpha=0.05: 0/20 certified",
+      "source": "experiments/out/EICU-SUMMARY.md EICU-POOLED '0.05': certify_rate = 0.0, n_certified = 0",
+      "status": "TRACED",
+      "note": "Exact match."
+    },
+    {
+      "quote": "the published split's answered set shows mortality 0.046",
+      "value": 0.046,
+      "source": "experiments/out/EICU_reliability_panel.json replicate 0 composition.answered.observed_positive_fraction = 0.045819; corroborated by experiments/out/EICU_diagnostics.json composition_three_way replicate 0 oracle_positive_fraction = 0.045819",
+      "status": "TRACED",
+      "note": "Display rounding 0.045819 -> 0.046. Panel values carry the POST_HOC label; the diagnostics copy is the non-panel corroboration."
+    },
+    {
+      "quote": "against 0.090 in its pool",
+      "value": 0.09,
+      "source": "experiments/out/EICU_reliability_panel.json replicate 0 composition.all.observed_positive_fraction = 0.089788",
+      "status": "TRACED",
+      "note": "Display rounding 0.089788 -> 0.090 (replicate-0 target-pool mortality; the cohort-wide base_prevalence 0.088868 would round to 0.089, so the pool value is the one being quoted)."
+    },
+    {
+      "quote": "It ships in two assumption modes",
+      "value": 2,
+      "source": "SPEC.md assumption modes; experiments/out/summary.md E2 arms 'baseline' + 'bbse'",
+      "status": "TRACED",
+      "note": "Design count: exchangeable baseline and BBSE label-shift, both present as the only arms in E2 and the eICU mode_outcomes."
+    },
+    {
+      "quote": "whose four estimated parameters carry their own uncertainty inside the certificate",
+      "value": "4 parameters",
+      "source": "certgate/report.py:142-145, frozen by tests/test_report.py",
+      "status": "TRACED",
+      "note": "Second occurrence (S1, line 25); same frozen guarantee-text constant."
+    },
+    {
+      "quote": "On a 208-site synthetic cohort matched to the size, prevalence, and heterogeneity profile",
+      "value": 208,
+      "source": "experiments/run_synthetic.py:51 ANCHOR_SITES = 208, pinned tests/test_constants.py:111",
+      "status": "TRACED",
+      "note": "Second occurrence (S1, line 27)."
+    },
+    {
+      "quote": "at $\\alpha = 0.10$ every one of 200 calibration draws certifies",
+      "value": "200/200",
+      "source": "experiments/out/summary.md E1 '0.1': certify_rate = 1.0, n_certified = 200, R = 200",
+      "status": "TRACED",
+      "note": "Second occurrence (S1, line 27); exact match."
+    },
+    {
+      "quote": "certifies at $0.9828$ mean coverage",
+      "value": 0.9828,
+      "source": "experiments/out/summary.md E1 '0.1'.mean_coverage = 0.9828",
+      "status": "TRACED",
+      "note": "Exact 4-dp match (intro carries full precision; abstract rounds)."
+    },
+    {
+      "quote": "the certified quantity exceeds $\\alpha$ on none of them",
+      "value": 0,
+      "source": "experiments/out/summary.md E1 '0.1'.rm_exceed_rate = 0.0",
+      "status": "TRACED",
+      "note": "Exact match."
+    },
+    {
+      "quote": "inside the $\\delta = 0.05$ budget",
+      "value": 0.05,
+      "source": "certgate/constants.py DELTA = 0.05, pinned tests/test_constants.py:33",
+      "status": "TRACED",
+      "note": "Frozen constant; second occurrence."
+    },
+    {
+      "quote": "under a site-level prevalence shift from $0.095$ to $0.22$",
+      "value": "0.095 -> 0.22",
+      "source": "certgate/data.py:51 SimConfig.base_rate = 0.095 (pinned tests/test_constants.py:140); summary.md E2 shift_sweep null arm target_base = 0.095 and target_base_rate = 0.22 (E2_SHIFT_SWEEP pinned tests/test_constants.py:119)",
+      "status": "TRACED",
+      "note": "Both endpoints are frozen constants and appear in the E2 artifact."
+    },
+    {
+      "quote": "the uncorrected baseline certifies and hard-violates on $39.5\\%$ of draws",
+      "value": 0.395,
+      "source": "experiments/out/summary.md E2 baseline '0.1'.joint_certify_and_hard_rate = 0.395",
+      "status": "TRACED",
+      "note": "Second occurrence (S1, line 27); exact match."
+    },
+    {
+      "quote": "the label-shift mode declines all 200 rather than overclaim",
+      "value": "200/200 declined",
+      "source": "experiments/out/summary.md E2 bbse '0.1'.decline_rate = 1.0, R = 200",
+      "status": "TRACED",
+      "note": "Second occurrence; exact match."
+    },
+    {
+      "quote": "$\\alpha = 0.05$ first becomes certifiable near 300 sites",
+      "value": "300 sites",
+      "source": "experiments/out/summary.md E4 grid '0.05': certify_rate 0.0 at 208, 0.285 at 300, 1.0 at 400",
+      "status": "TRACED",
+      "note": "'First becomes certifiable near 300' matches first nonzero certify_rate at n_sites=300."
+    },
+    {
+      "quote": "A finite-sample $(\\alpha, 1-\\delta)$ certificate",
+      "value": "(alpha, 1-delta)",
+      "source": "n/a (mathematical form)",
+      "status": "ANALYTIC",
+      "note": "Notation, not an empirical number."
+    },
+    {
+      "quote": "the equivalent record-as-unit certifier grants the $\\alpha = 0.05$ budget the site-unit walk refuses",
+      "value": "site 0/200 vs record 200/200 (s_u=0.5) and 198/200 (s_u=2.0)",
+      "source": "experiments/out/summary.md E7 arms: at '0.05' site.certify_rate = 0.0 (both s_u arms); record.certify_rate = 1.0 (s_u=0.5) and 0.99 (s_u=2.0)",
+      "status": "TRACED",
+      "note": "Exact match."
+    },
+    {
+      "quote": "then violates it at up to twice $\\delta$ under between-site heterogeneity (E7)",
+      "value": "~2*delta",
+      "source": "experiments/out/summary.md E7 record '0.05'.rm_exceed_rate = 0.096 at s_u=2.0 (0.035 at s_u=0.5) vs DELTA = 0.05",
+      "status": "TRACED",
+      "note": "0.096/0.05 = 1.92, honestly summarized as 'up to twice delta'; heterogeneity arm (s_u=2.0) is the max."
+    },
+    {
+      "quote": "folds the estimation uncertainty of all four corrected parameters into the $1-\\delta$ budget",
+      "value": "4 parameters",
+      "source": "certgate/report.py:142-145, frozen by tests/test_report.py",
+      "status": "TRACED",
+      "note": "Third occurrence (contribution 2)."
+    },
+    {
+      "quote": "into the $1-\\delta$ budget through a cluster-robust box",
+      "value": "1-delta",
+      "source": "n/a (mathematical form)",
+      "status": "ANALYTIC",
+      "note": "Budget identity; the split DELTA = BBSE_DELTA_CONF + BBSE_DELTA_BET = 0.025 + 0.025 is pinned in tests/test_constants.py:37-39 but not quoted here."
+    },
+    {
+      "quote": "replacing a $39.5\\%$-violation baseline with a gate that certifies or declines",
+      "value": 0.395,
+      "source": "experiments/out/summary.md E2 baseline '0.1'.joint_certify_and_hard_rate = 0.395",
+      "status": "TRACED",
+      "note": "Third occurrence (contribution 2); exact match."
+    },
+    {
+      "quote": "CertGate draws on four literatures that each solve part of the problem",
+      "value": 4,
+      "source": "self-referential to S2's own structure",
+      "status": "OUT_OF_SCOPE",
+      "note": "Structural count of the section's own paragraphs; verified S2 has exactly four italic-headed literature paragraphs (lines 40, 42, 44, 46)."
+    },
+    {
+      "quote": "a 2025-26 wave of selective-risk work [@scrc2025; @score2026; @yu2026joint]",
+      "value": "2025-26",
+      "source": "citation metadata (reference years)",
+      "status": "OUT_OF_SCOPE",
+      "note": "Publication-date characterization of cited works; citation spot-check 2026-08-10 recorded all entries VERIFIED (paper/TODO.md S6)."
+    },
+    {
+      "quote": "certified record-level selective-risk rules overrun their budget by 9-30% under grouped deployment [@zhou2026falsesense]",
+      "value": "9-30%",
+      "source": "cited external paper (@zhou2026falsesense), not a project artifact",
+      "status": "OUT_OF_SCOPE",
+      "note": "A cited paper's reported figure, attributed in-text; covered by the 2026-08-10 citation spot-check (paper/TODO.md S6), not by the project's single-source-of-numbers policy."
+    }
+  ]
+}
