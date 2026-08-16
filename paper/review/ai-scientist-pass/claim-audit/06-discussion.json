@@ -1,0 +1,219 @@
+{
+  "section": "S5 Discussion + S6 Conclusion + limitations",
+  "line_range": [192, 207],
+  "audited_utc": "2026-08-15",
+  "method": "Read paper/draft.md lines 192-207 only; traced every quantitative claim to experiments/out/summary.md, experiments/out/EICU-SUMMARY.md, EICU_certificate.json, EICU_pooled.csv, EICU_diagnostics.json, out/EICU_reliability_panel.json, out-sens/, certgate/constants.py, and the read-only replay experiments/panel_s2_tables.py (stdout only; nothing written to the repo).",
+  "claims": [
+    {
+      "quote": "at confidence $1-\\delta$",
+      "value": "1 - delta (= 0.95 with DELTA = 0.05)",
+      "source": "certgate/constants.py DELTA = 0.05 (identity)",
+      "status": "ANALYTIC",
+      "note": "Mathematical identity; DELTA pinned at 0.05."
+    },
+    {
+      "quote": "E1's heterogeneity arm shows aggregate conformance holding at zero exceedances",
+      "value": "0 R_M exceedances at every s_u",
+      "source": "experiments/out/summary.md E1: su_sensitivity[s_u=0.5/1.0/2.0].rm_exceed_rate = 0.0/0.0/0.0; total_rm_exceed = 0",
+      "status": "TRACED",
+      "note": "Exact."
+    },
+    {
+      "quote": "while the per-site diagnostic rises five-fold",
+      "value": "~5x rise in per-site diagnostic across the s_u arm",
+      "source": "experiments/out/summary.md E1: su_sensitivity hard_violation_rate_diag 0.02 (s_u=0.5) -> 0.10 (s_u=1.0) -> 0.095 (s_u=2.0)",
+      "status": "TRACED",
+      "note": "'Five-fold' matches hard_violation_rate_diag (0.02 -> 0.10 = 5.0x at s_u=1.0; 4.75x at s_u=2.0). The sibling diagnostic mean_per_site_exceed_frac rises only ~3x (0.055 -> 0.1634); the draft does not name which diagnostic, so the reading rests on hard_violation_rate_diag."
+    },
+    {
+      "quote": "statistical power comes from roughly 80 calibration *hospitals*",
+      "value": "draft: roughly 80; artifact: 74",
+      "source": "experiments/out/EICU_certificate.json diagnostic.n_cal = 74, n_cal_carrying = 74; experiments/out/EICU_pooled.csv n_cal_carrying = 74 on all 40 rows; EICU-SUMMARY.md EICU-PREFLIGHT reference_check.split_projection.n_cal = 74",
+      "status": "DRIFT",
+      "note": "Soft drift / loose rounding: the artifact value is 74 calibration hospitals in every re-split, and the draft itself states 74 in Section 4.10 and the Figure 5 / Table 3 captions (draft.md lines 170, 172, 396, 422). '~80' appears to be inherited from METHODS.md:11 ('~80 site-level observations'). Recommend 'roughly 75' or '74'."
+    },
+    {
+      "quote": "not the $\\sim\\!10^5$ records they contain",
+      "value": "~1e5 records",
+      "source": "experiments/out/EICU-SUMMARY.md EICU-POOLED n_records = 164322 (primary cohort, 207 sites); EICU_certificate.json n_target = 15169 for the held-out pool; calibration split ~0.40 of remaining sites",
+      "status": "TRACED",
+      "note": "Order-of-magnitude claim; the calibration hospitals' own records are ~6e4 (EICU-PROTOCOL.md:544 '~60k records'), the cohort 1.6e5 -- both order 1e5."
+    },
+    {
+      "quote": "for any reader tempted to call $\\alpha = 0.10$ weak",
+      "value": "alpha = 0.10",
+      "source": "certgate/constants.py ALPHA_LADDER = (0.05, 0.10); EICU-SUMMARY.md 'alpha ladder: (0.05, 0.1)'",
+      "status": "TRACED",
+      "note": "Frozen constant."
+    },
+    {
+      "quote": "E4 prices the stricter rung in units of sites",
+      "value": "alpha=0.05 certify_rate 0/0/0/0/0.285/1.0 at 60/100/150/208/300/400 sites",
+      "source": "experiments/out/summary.md E4 grid['0.05']",
+      "status": "TRACED",
+      "note": "Qualitative restatement of the E4 frontier; numbers not restated in this range."
+    },
+    {
+      "quote": "subject to clause (2)",
+      "value": "cross-reference to guarantee clause (2) (dispersion)",
+      "source": "draft Section 3.7 clause list / certgate/report.py guarantee text",
+      "status": "OUT_OF_SCOPE",
+      "note": "Internal cross-reference, not an empirical number."
+    },
+    {
+      "quote": "E2 is the relevant evidence: at the pool sizes tested, that mode declines rather than certifies",
+      "value": "BBSE decline_rate 1.0 at target_base 0.22 (R=200); 0.91-1.0 across the shift sweep",
+      "source": "experiments/out/summary.md E2 bbse['0.1'].decline_rate = 1.0, certify_rate = 0.0; shift_sweep_alpha0.10 bbse decline_rate 0.91/0.95/1.0/0.99/1.0",
+      "status": "TRACED",
+      "note": "Qualitative; note BBSE does certify 9/100 at the null-shift point (target_base 0.095), consistent with 'at the pool sizes tested ... declines rather than certifies' as a headline."
+    },
+    {
+      "quote": "neither tag applies and the certificate is void (E3)",
+      "value": "E3 concept-shift control: certificate fails as excluded",
+      "source": "experiments/out/summary.md E3: rm_exceed_rate = 1.0 at alpha 0.1, verified_mean_answered_risk_alpha0.10 = 0.161, tilt_pushes_risk_above_alpha = true",
+      "status": "TRACED",
+      "note": "Qualitative restatement."
+    },
+    {
+      "quote": "on the published split the answered set's observed mortality is 0.046",
+      "value": "0.046 (artifact 0.045819)",
+      "source": "experiments/out/EICU_certificate.json diagnostic.composition.oracle_true_class.positive_fraction = 0.0458192 (594/12964); out/EICU_reliability_panel.json panels[0].composition.answered.observed_positive_fraction = 0.045819; EICU_diagnostics.json composition_three_way[replicate 0].oracle_positive_fraction",
+      "status": "TRACED",
+      "note": "Replicate 0 = the published split; 3-dp rounding of 0.045819."
+    },
+    {
+      "quote": "against 0.090 in its pool",
+      "value": "0.090 (artifact 0.089788)",
+      "source": "experiments/out/EICU_reliability_panel.json panels[0].composition.all.observed_positive_fraction = 0.089788 (1362/15169); panels[0].skill.all.positive_rate = 0.089788",
+      "status": "TRACED",
+      "note": "Replicate-0 held-out target-pool prevalence; 3-dp rounding."
+    },
+    {
+      "quote": "On eICU-CRD v2.0",
+      "value": "eICU-CRD v2.0",
+      "source": "experiments/out/EICU-SUMMARY.md title 'CertGate eICU-CRD v2.0 -- real-data summary'; EICU-PROTOCOL.md",
+      "status": "TRACED",
+      "note": "Dataset name/version."
+    },
+    {
+      "quote": "the $\\alpha = 0.10$ rung certifies at 0.890 mean coverage",
+      "value": "0.890 (artifact 0.8904)",
+      "source": "experiments/out/EICU-SUMMARY.md EICU-POOLED rungs['0.1'].mean_coverage = 0.8904; EICU-RELIABILITY coverage.mean = 0.89039",
+      "status": "TRACED",
+      "note": "3-dp rounding of a 4-dp summary key (6-dp panel key 0.89039 agrees)."
+    },
+    {
+      "quote": "across all 20 re-splits",
+      "value": "20/20 certified at alpha 0.10",
+      "source": "experiments/out/EICU-SUMMARY.md EICU-POOLED rungs['0.1'].n_certified = 20, n_replicates = 20, certify_rate = 1.0",
+      "status": "TRACED",
+      "note": "Exact."
+    },
+    {
+      "quote": "with the stricter rung refused",
+      "value": "alpha 0.05 certified on 0/20",
+      "source": "experiments/out/EICU-SUMMARY.md EICU-POOLED rungs['0.05'].n_certified = 0, certify_rate = 0.0, mode_non_contribution baseline:failsafe|bbse:failsafe = 20",
+      "status": "TRACED",
+      "note": "Exact."
+    },
+    {
+      "quote": "three pre-declared leak screens come back clear",
+      "value": "3 screens, 0 hits",
+      "source": "experiments/out/EICU-SUMMARY.md EICU-POOLED failure_criteria['F-D'] legs discrimination / missingness_ablation / unfalsifiable_success, each fired=false, n_hits=0 (max_head_auc_oos 0.867222 < 0.9; observed_max_drop 0.006348 < 0.05); EICU_pooled.csv leak_alarm = False on all 40 rows",
+      "status": "TRACED",
+      "note": "'THREE legs' is the artifact's own wording; draft Section 4.10 line 180 names the same three."
+    },
+    {
+      "quote": "its effective-sample-size loss prevents certification below roughly 400 clusters",
+      "value": "~400 clusters",
+      "source": "README.md 'Scope -- what is OUT' table (audit F34 rationale); paper/TODO.md section 8 records that the arithmetic 'is not derived in SPEC.md or the manuscript'",
+      "status": "UNVERIFIABLE",
+      "note": "Design-rationale figure with no experiment or derivation in any generated artifact (no covariate-shift arm exists in experiments/out). Reviewer item R5-31 in paper/review/revision-plan.md:292 raised the same point; TODO.md section 8 leaves it 'for your call'. Not a mismatch, but not traceable to an artifact."
+    },
+    {
+      "quote": "a direct threat to Assumption 1",
+      "value": "cross-reference to Assumption 1",
+      "source": "draft Section 3 Assumption 1",
+      "status": "OUT_OF_SCOPE",
+      "note": "Internal cross-reference."
+    },
+    {
+      "quote": "roughly three quarters of answered errors are false negatives at this prevalence",
+      "value": "~0.75 (E1 pooled fresh pools: 0.769; E6: 0.756)",
+      "source": "experiments/panel_s2_tables.py stdout (read-only replay of experiments/out/E1_validity.csv, SI Table S5): E1.table7_answered.fn_share_of_errors = 0.769 (fn 1218592 / (fp 366089 + fn 1218592)); E6.table7_answered.fn_share_of_errors = 0.756; draft line 54 states '77% in E1' and line 132 '76.9%'",
+      "status": "TRACED",
+      "note": "Traces to the SYNTHETIC grid at prevalence 0.0968. Caution: on the eICU answered sets the same quantity derived from out/EICU_reliability_panel.json (n_observed_positive, n_predicted_positive, model_error_rate per replicate) is ~0.96 (replicate 0: FN 537 / FP 6 = 0.989; pooled over 20 replicates 0.956). The sentence does not name the cohort; if 'this prevalence' is read as eICU's ~9%, the number understates. Recommend qualifying '(E1)' as line 54 does."
+    },
+    {
+      "quote": "the head's $\\hat{p} = 1/2$ boundary",
+      "value": "0.5 decision threshold",
+      "source": "experiments/out/EICU-SUMMARY.md EICU-RELIABILITY settings.decision_threshold = 0.5 and consistency.note ('DECISION_THRESHOLD = 0.5 is Head.predict's own rule'); out/EICU_reliability_panel.json panels[0].settings.decision_threshold = 0.5",
+      "status": "TRACED",
+      "note": "Design constant of the head's predict rule."
+    },
+    {
+      "quote": "*Only the influence cap is swept* among the frozen constants",
+      "value": "1 constant swept (M_INFLUENCE)",
+      "source": "SPEC.md:56 (M in {25,50,100,200,500,1000,5000} sensitivity on E1 s_u=0.5, certify rates 1.0/1.0/1.0/1.0/1.0/0.03/0.0); experiments/panel_s2_tables.py stdout E1.table6 reproduces those rates (M=1000 certify_rate 0.03, n_certified 6; M=5000 0.0)",
+      "status": "TRACED",
+      "note": "Design statement; the M sweep is the only per-constant sensitivity recorded. (experiments/out-sens/ is the apache-complete cohort arm, not a constant sweep.)"
+    },
+    {
+      "quote": "3,996 patient identifiers appear at more than one hospital",
+      "value": "3996",
+      "source": "experiments/out/EICU_diagnostics.json cross_site_patients.n_uniquepid_multi_hospital = 3996; EICU-SUMMARY.md EICU-PREFLIGHT cross_site_patients and warning T-5",
+      "status": "TRACED",
+      "note": "Exact."
+    },
+    {
+      "quote": "(share 0.029, a lower bound)",
+      "value": "0.029 (artifact 0.029004)",
+      "source": "experiments/out/EICU_diagnostics.json cross_site_patients.share = 0.0290042 (3996/137773); EICU-SUMMARY.md T-5 warning: 'This is a LOWER bound'",
+      "status": "TRACED",
+      "note": "3-dp rounding; 'lower bound' is the artifact's own qualifier."
+    },
+    {
+      "quote": "20 re-splits of one hospital population",
+      "value": "20 replicates",
+      "source": "experiments/out/EICU-SUMMARY.md EICU-POOLED replicates = 20; F-A note 'the replicates share ONE hospital population'",
+      "status": "TRACED",
+      "note": "Exact."
+    },
+    {
+      "quote": "on eICU it fitted but certified nothing",
+      "value": "BBSE fitted = true on every replicate; bbse:failsafe on 20/20",
+      "source": "experiments/out/EICU_diagnostics.json bbse[*].fitted = true, mode_outcomes bbse = failsafe at both rungs; EICU-SUMMARY.md EICU-POOLED rungs['0.1'].mode_non_contribution bbse:failsafe = 20",
+      "status": "TRACED",
+      "note": "Exact."
+    },
+    {
+      "quote": "three of the four BBSE intervals are asymptotic",
+      "value": "3 of 4 (c0, c1, pi_source percentile bootstraps; q_target Clopper-Pearson for single-site pools)",
+      "source": "certgate/constants.py BBSE_BONFERRONI = 4; SPEC.md:832-838 and certgate/report.py:150 guarantee text (pinned by tests/test_report.py:138,161)",
+      "status": "TRACED",
+      "note": "Design fact. Nuance: for multi-site target pools (eICU's 24-site pool: EICU_certificate.json diagnostic.bbse.n_boot = 2000) the q interval is also a cluster bootstrap, so all four are asymptotic there; draft Section 3.6 (line 94) states the split precisely."
+    },
+    {
+      "quote": "with measured joint miscoverage 0.038",
+      "value": "0.038 realized joint miscoverage of the (c0, c1, pi_s) box",
+      "source": "METHODS.md:43 only ('0.038 against a nominal <= 0.019 (joint coverage 0.962 vs 0.981 nominal; 400 replicates at both 42 and 83 auxiliary sites ...)'); SPEC.md:836 defers to 'METHODS reports the measured value'",
+      "status": "UNVERIFIABLE",
+      "note": "No generated artifact, CSV/JSON, or test pins this probe; the number exists only in hand-maintained prose (METHODS.md, present since the pre-extract freeze commit 9f25b49) and the draft (lines 94, 206). CODE-AUDIT.md:527-535 records an older probe of the 3-parameter box at nominal 0.975 (joint 0.942/0.945 at 42 aux sites), a different nominal. Consistent between METHODS and draft, but not traceable to a machine artifact under the single-source policy."
+    },
+    {
+      "quote": "against a nominal $\\le 0.019$",
+      "value": "0.01875 = 3 x BBSE_DELTA_CONF / BBSE_BONFERRONI",
+      "source": "certgate/constants.py BBSE_DELTA_CONF = 0.025, BBSE_BONFERRONI = 4 -> 3 x 0.00625 = 0.01875 <= 0.019",
+      "status": "ANALYTIC",
+      "note": "Bonferroni arithmetic on frozen constants."
+    }
+  ],
+  "counts": {
+    "n_claims": 29,
+    "TRACED": 22,
+    "ANALYTIC": 2,
+    "OUT_OF_SCOPE": 2,
+    "DRIFT": 1,
+    "UNVERIFIABLE": 2
+  }
+}

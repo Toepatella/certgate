@@ -1,0 +1,496 @@
+{
+  "section": "S3 Methods (3.1-3.10)",
+  "line_range": [48, 119],
+  "audit_date": "2026-08-15",
+  "method_note": "Every claim in draft.md lines 48-119 traced against experiments/out/summary.md, experiments/out/EICU-SUMMARY.md + EICU_*.json/csv, certgate/constants.py + tests/test_constants.py, certgate/{certify,shift,model,harness,report,data}.py, tests/test_certify.py, and the read-only replay `python -m experiments.panel_s2_tables` (stdout only; run 2026-08-15 into the scratchpad, byte-identical to a prior run; self-check 194/194 tau matches vs E1_validity.csv). No project file was modified.",
+  "claims": [
+    {
+      "line": 52,
+      "quote": "on the order of two hundred collection sites",
+      "value": "~200 (design anchor 208)",
+      "source": "experiments/run_synthetic.ANCHOR_SITES=208 (pinned tests/test_constants.py:111); summary.md E4 sweep includes 208; E1_validity.csv n_sites=208; EICU-SUMMARY.md n_hospitals=208",
+      "status": "TRACED",
+      "note": "Both the synthetic anchor and the eICU extract are 208 sites."
+    },
+    {
+      "line": 52,
+      "quote": "each contribute between 20 and 5,000 records",
+      "value": "[20, 5000]",
+      "source": "certgate/data.py SimConfig size_lo=20, size_hi=5000 (clipped lognormal, size_mu=6.0, size_sigma=1.1)",
+      "status": "TRACED",
+      "note": "Generator clip bounds; the eICU extract's own site-size range is not asserted here."
+    },
+    {
+      "line": 52,
+      "quote": "outcome prevalence is roughly 9-10%",
+      "value": "9-10%",
+      "source": "certgate/data.py SimConfig base_rate=0.095; EICU-SUMMARY.md attrition prevalence 0.0896 (raw) / 0.0889 (primary cohort)",
+      "status": "TRACED",
+      "note": "Synthetic 9.5%; eICU 8.9-9.1% -- 'roughly 9-10%' is a fair envelope; also restated at line 110 ('9-10%-prevalence task')."
+    },
+    {
+      "line": 52,
+      "quote": "a bounded score $s(x) \\in [0.5, 1]$ -- the max-softmax",
+      "value": "[0.5, 1]",
+      "source": "certgate/model.py:56 score = max(p1, 1-p1) in [0.5, 1]",
+      "status": "ANALYTIC",
+      "note": "Range identity of max(p, 1-p) for a binary posterior; code docstring agrees."
+    },
+    {
+      "line": 52,
+      "quote": "with probability at least $1-\\delta$ over the draw of calibration sites ... is at most $\\alpha$",
+      "value": "1-delta; alpha",
+      "source": "constants.py DELTA=0.05; ALPHA_LADDER=(0.05,0.10)",
+      "status": "ANALYTIC",
+      "note": "Guarantee statement form; numeric values traced separately below."
+    },
+    {
+      "line": 54,
+      "quote": "The head's hard label is $\\hat{y}_i = \\mathbb{1}[\\hat{p}(x_i) \\ge 1/2]$",
+      "value": "threshold 1/2",
+      "source": "certgate/model.py:52-53 predict = predict_proba(x) >= 0.5",
+      "status": "TRACED",
+      "note": ""
+    },
+    {
+      "line": 54,
+      "quote": "most answered errors are false negatives (77% in E1)",
+      "value": "77%",
+      "source": "panel_s2_tables stdout: E1.table7_answered.fn_share_of_errors = 0.769 (fn=1,218,592 / (fp 366,089 + fn 1,218,592)); draft section 4.2 line 132 states 76.9%",
+      "status": "TRACED",
+      "note": "Display rounding of 0.769 -> 77%. Source is the read-only replay command (writes no file); the value lives in SI Table S5 / section 4.2, not in experiments/out/."
+    },
+    {
+      "line": 58,
+      "quote": "$S_{\\text{train}}$ (40%, fits the risk model), $S_{\\text{aux}}$ (20%, ...), and $S_{\\text{cal}}$ (40%, ...)",
+      "value": "0.40 / 0.20 / 0.40",
+      "source": "certgate/constants.py SPLIT_FRACTIONS=(0.40, 0.20, 0.40); certgate/data.py split_sites; summary.md header",
+      "status": "TRACED",
+      "note": ""
+    },
+    {
+      "line": 58,
+      "quote": "pinned to their literal values by a unit test",
+      "value": "structural",
+      "source": "tests/test_constants.py",
+      "status": "TRACED",
+      "note": "Structural claim; the pin test exists and covers every constants.py value."
+    },
+    {
+      "line": 62,
+      "quote": "a construction with 17.5% true risk certifies at $\\alpha = 5\\%$ under naive truncation",
+      "value": "17.5% true risk; alpha=0.05",
+      "source": "tests/test_certify.py::test_mcap_counterexample_regression: 140 sites (n=20, 0 err) + 10 sites (n=2000, 400 err) -> 4000/22800 = 0.1754; ALPHA=0.05; asserts truncated MPEB reading certifies and influence path refuses",
+      "status": "TRACED",
+      "note": "17.54% rounds to 17.5%."
+    },
+    {
+      "line": 62,
+      "quote": "influence weight $g_c = \\min(n_c, M)$ with $M = 100$",
+      "value": "M=100",
+      "source": "certgate/constants.py M_INFLUENCE=100; certgate/certify.py influence_atoms",
+      "status": "TRACED",
+      "note": ""
+    },
+    {
+      "line": 66,
+      "quote": "On this cohort's size distribution $89.5\\%$ of sites exceed 100 records",
+      "value": "89.5%",
+      "source": "panel_s2_tables stdout: cap_facts.share_sites_above_M = 0.8949 over 83,200 generator site draws (400 x 208, seeded from constants.SEED); analytic P(exp(N(6.0,1.1)) > 100) = 0.898",
+      "status": "TRACED",
+      "note": "Display rounding of 0.8949 -> 89.5%. Empirical MC over the generator's own size draw; not stored in experiments/out/ (stdout-only command). paper/review/verification.md R1-14 quotes the analytic 89.8% -- the draft uses the empirical figure, consistent within MC error."
+    },
+    {
+      "line": 66,
+      "quote": "a 5,000-record hospital and a 100-record one enter with identical total influence",
+      "value": "min(5000,100)=min(100,100)=100",
+      "source": "g_c = min(n_c, M), M=100",
+      "status": "ANALYTIC",
+      "note": ""
+    },
+    {
+      "line": 70,
+      "quote": "$Z_c = \\frac{g_c}{M\\, n_c}\\sum_{i \\in c} \\text{ans}_i\\,(\\text{err}_i - \\alpha) + \\alpha \\;\\in\\; [0, 1]$",
+      "value": "Z_c in [0,1]",
+      "source": "certgate/certify.py influence_atoms (docstring identical formula); tests/test_certify.py::test_atom_range_and_empty_site_neutral asserts range",
+      "status": "ANALYTIC",
+      "note": "Formula matches implementation; range asserted by test."
+    },
+    {
+      "line": 72,
+      "quote": "No record-carrying calibration site answered nothing in these results",
+      "value": "0 silent record-carrying calibration sites",
+      "source": "panel_s2_tables stdout: E1.neutral_atoms.max_record_carrying_silent_cal_sites = 0 (over 194 recorded draws); E6.zero_coverage_sites = 0",
+      "status": "TRACED",
+      "note": "Verified for the synthetic E1/E6 results. The eICU artifacts do not report a calibration-site silence count (EICU_per_site.csv lists target hospitals), so the eICU half of 'these results' rests on the runner, not a released number."
+    },
+    {
+      "line": 76,
+      "quote": "We test the null $H_0: \\mathbb{E}[Z] \\ge \\alpha$",
+      "value": "H0 form",
+      "source": "certgate/certify.py wsr_reject docstring",
+      "status": "ANALYTIC",
+      "note": ""
+    },
+    {
+      "line": 82,
+      "quote": "$\\lambda_t = \\min(\\sqrt{2\\ln(1/\\delta)/(\\hat{\\sigma}^2_{t-1} n)}, 0.9/(1-\\alpha))$",
+      "value": "cap 0.9/(1-alpha)",
+      "source": "certgate/constants.py WSR_LAMBDA_CAP=0.9; certgate/certify.py:86-89",
+      "status": "TRACED",
+      "note": "Formula matches code line-for-line."
+    },
+    {
+      "line": 84,
+      "quote": "with a variance floor of $10^{-8}$",
+      "value": "1e-8",
+      "source": "certgate/constants.py WSR_VAR_FLOOR=1e-8",
+      "status": "TRACED",
+      "note": ""
+    },
+    {
+      "line": 84,
+      "quote": "running moments initialized at $(0.5, 0.25)$",
+      "value": "(0.5, 0.25)",
+      "source": "certgate/constants.py WSR_MU0, WSR_S2_0 = 0.5, 0.25",
+      "status": "TRACED",
+      "note": ""
+    },
+    {
+      "line": 84,
+      "quote": "we certify if and only if $\\sup_t K_t \\ge 1/\\delta$",
+      "value": "1/delta crossing",
+      "source": "certgate/certify.py:91 log_wealth >= log(1/delta)",
+      "status": "TRACED",
+      "note": "Ville's inequality bound by delta is ANALYTIC."
+    },
+    {
+      "line": 84,
+      "quote": "Supplementary Information A.1 gives the four steps",
+      "value": "4 steps",
+      "source": "paper/draft.md SI A.1 enumerates (i)-(iv)",
+      "status": "TRACED",
+      "note": "In-draft structural cross-reference."
+    },
+    {
+      "line": 84,
+      "quote": "a deterministic permutation seeded from the protocol constants and deliberately carries no target identifier",
+      "value": "structural",
+      "source": "certgate/certify.py certification_rng: SeedSequence([SEED, alpha idx, mode idx, sha256(stream)]) -- no target label",
+      "status": "TRACED",
+      "note": ""
+    },
+    {
+      "line": 84,
+      "quote": "the *information floor* $\\ln(1/\\delta)(1-\\alpha)/n$",
+      "value": "ln(1/delta)(1-alpha)/n",
+      "source": "certgate/certify.py margin_floor",
+      "status": "TRACED",
+      "note": "Formula identical to code."
+    },
+    {
+      "line": 88,
+      "quote": "a grid of 23 values evenly spaced in $[0.55, 0.99]$",
+      "value": "23; [0.55, 0.99]",
+      "source": "certgate/constants.py TAU_GRID=np.linspace(0.55, 0.99, 23); tests/test_constants.py:53-56",
+      "status": "TRACED",
+      "note": ""
+    },
+    {
+      "line": 88,
+      "quote": "Both budgets $\\alpha \\in \\{0.05, 0.10\\}$ are certified by separate walks",
+      "value": "{0.05, 0.10}",
+      "source": "certgate/constants.py ALPHA_LADDER=(0.05, 0.10)",
+      "status": "TRACED",
+      "note": ""
+    },
+    {
+      "line": 88,
+      "quote": "each rung is individually valid at $1-\\delta$, and the selected claim holds jointly at $1-2\\delta = 0.90$",
+      "value": "0.90",
+      "source": "constants.py DELTA=0.05; certgate/report.py:134-137 prints 1 - len(ALPHA_LADDER)*DELTA = 0.90 (frozen string in tests/test_report.py)",
+      "status": "TRACED",
+      "note": "1 - 2(0.05) = 0.90; also restated at line 102."
+    },
+    {
+      "line": 88,
+      "quote": "At the 208-site scale (about 83 calibration clusters)",
+      "value": "83",
+      "source": "certgate/data.py split_sites with SPLIT_FRACTIONS: round(0.4*208)=83 train, round(0.2*208)=42 aux, cal=208-83-42=83; CODE-AUDIT.md V8 uses 42 aux / 83",
+      "status": "TRACED",
+      "note": "Arithmetic from frozen constants (synthetic anchor). The eICU run has n_cal=74 after its 24-site target holdout (EICU-SUMMARY split_projection) -- the sentence is scoped to the synthetic 208-site design."
+    },
+    {
+      "line": 88,
+      "quote": "we expect $\\alpha = 0.10$ to be the operative rung; E4 maps the frontier",
+      "value": "alpha=0.10 operative at 208",
+      "source": "summary.md E1: 0.05 certify_rate 0.0, 0.1 certify_rate 1.0; E4 grid n_sites=208: 0.05 certify_rate 0.0, 0.1 certify_rate 1.0",
+      "status": "TRACED",
+      "note": ""
+    },
+    {
+      "line": 94,
+      "quote": "invert $q = c_0(1-\\pi_t) + c_1\\pi_t$ for the target prevalence",
+      "value": "BBSE identity",
+      "source": "certgate/shift.py pi_t = (q - c0)/(c1 - c0)",
+      "status": "ANALYTIC",
+      "note": ""
+    },
+    {
+      "line": 94,
+      "quote": "Estimation uncertainty is carried inside the guarantee for all four estimated parameters",
+      "value": "4",
+      "source": "certgate/constants.py BBSE_BONFERRONI=4 (c0, c1, pi_source, q_target)",
+      "status": "TRACED",
+      "note": ""
+    },
+    {
+      "line": 94,
+      "quote": "cluster bootstrap (ten or more declared sites) for $q$",
+      "value": "10",
+      "source": "certgate/constants.py BBSE_MIN_TARGET_SITES=10; shift.py:98,221",
+      "status": "TRACED",
+      "note": ""
+    },
+    {
+      "line": 94,
+      "quote": "held at Bonferroni level $\\delta_{\\text{conf}}/4$",
+      "value": "0.025/4 = 0.00625",
+      "source": "certgate/shift.py:256 lvl = BBSE_DELTA_CONF / BBSE_BONFERRONI",
+      "status": "TRACED",
+      "note": ""
+    },
+    {
+      "line": 94,
+      "quote": "propagated to a weight interval $[\\rho_{\\text{lo}}, \\rho_{\\text{hi}}]$ over the box's sixteen corners",
+      "value": "16 = 2^4",
+      "source": "certgate/shift.py:150-173 '16 box corners'; METHODS.md section 5",
+      "status": "TRACED",
+      "note": ""
+    },
+    {
+      "line": 94,
+      "quote": "$\\delta_{\\text{conf}} + \\delta_{\\text{bet}} = \\delta$ with $\\delta_{\\text{conf}} = \\delta_{\\text{bet}} = 0.025$",
+      "value": "0.025 + 0.025 = 0.05",
+      "source": "certgate/constants.py BBSE_DELTA_CONF=0.025, BBSE_DELTA_BET=0.025, DELTA=0.05",
+      "status": "TRACED",
+      "note": ""
+    },
+    {
+      "line": 94,
+      "quote": "the three percentile bootstrap intervals are asymptotic",
+      "value": "3 (c0, c1, pi_source)",
+      "source": "certgate/shift.py S_aux cluster bootstrap over (c0, c1, pi_s); report.py:149",
+      "status": "TRACED",
+      "note": "Count of bootstrap-derived box parameters; the fourth (q) is Clopper-Pearson or a target-site bootstrap."
+    },
+    {
+      "line": 94,
+      "quote": "we measure the three-parameter box's realized joint miscoverage at $0.038$",
+      "value": "0.038",
+      "source": "NOT FOUND in any artifact. Prose copies only: METHODS.md section 5 ('0.038 against a nominal <= 0.019 (joint coverage 0.962 vs 0.981 nominal; 400 replicates at both 42 and 83 auxiliary sites, per-parameter miss ~0.010-0.015 against nominal 0.003)'). CODE-AUDIT.md V8 records an EARLIER, different measurement (joint 0.942/0.945 at 42 aux sites, 0.927 at 83; miscoverage ~0.055-0.058 vs nominal 0.025) taken under the pre-V2 three-way Bonferroni.",
+      "status": "UNVERIFIABLE",
+      "note": "No script in experiments/ or tests/ regenerates the box-coverage measurement and no JSON/CSV holds it; the only carriers are METHODS.md prose and the draft. The 400-replicate / 42-and-83-site design is stated in METHODS.md but not in the draft. Not a drift (no artifact disagrees) -- an unsourced empirical number."
+    },
+    {
+      "line": 94,
+      "quote": "against a nominal $\\le 0.019$",
+      "value": "0.01875 -> 0.019",
+      "source": "3 x (BBSE_DELTA_CONF / BBSE_BONFERRONI) = 3 x 0.00625 = 0.01875",
+      "status": "ANALYTIC",
+      "note": "Bonferroni arithmetic from frozen constants; rounds up to 0.019."
+    },
+    {
+      "line": 94,
+      "quote": "two to nine declared target sites",
+      "value": "2 <= K < 10",
+      "source": "certgate/shift.py:221 `if 2 <= n_ts < BBSE_MIN_TARGET_SITES` -> decline; constants BBSE_MIN_TARGET_SITES=10",
+      "status": "TRACED",
+      "note": ""
+    },
+    {
+      "line": 94,
+      "quote": "an ill-conditioned confusion gap $(c_1 - c_0) < 0.10$",
+      "value": "0.10",
+      "source": "certgate/constants.py BBSE_GAP_FLOOR=0.10; shift.py:272 worst-case lo_c1 - hi_c0",
+      "status": "TRACED",
+      "note": ""
+    },
+    {
+      "line": 94,
+      "quote": "a $q$ interval implying a prevalence outside $(0,1)$",
+      "value": "(0,1)",
+      "source": "certgate/shift.py bbse-misspecified decline (q interval not inside [c0_lo, c1_hi]); METHODS.md decline (iii)",
+      "status": "TRACED",
+      "note": "Structural decline condition."
+    },
+    {
+      "line": 96,
+      "quote": "E3 injects a concept tilt *verified* capable of pushing answered error above $\\alpha$ and shows the certificate fail",
+      "value": "verified true; rm_exceed 1.0",
+      "source": "summary.md E3: tilt_pushes_risk_above_alpha=true, verified_mean_answered_risk_alpha0.10=0.161, 0.1 rm_exceed_rate=1.0",
+      "status": "TRACED",
+      "note": "Qualitative claim backed by the E3 block."
+    },
+    {
+      "line": 100,
+      "quote": "they are frozen as exact strings per mode combination",
+      "value": "structural",
+      "source": "tests/test_report.py frozen guarantee strings; certgate/report.py guarantee_text",
+      "status": "TRACED",
+      "note": ""
+    },
+    {
+      "line": 102,
+      "quote": "exceeds $\\alpha$ at binomial-dispersion rates ... approaching one batch in two as batches grow",
+      "value": "-> 1/2",
+      "source": "Binomial median at p=alpha; summary.md E1 exceedance_by_size binomial_reference 0.3937/0.4822/0.4838/0.4898 by size bin",
+      "status": "ANALYTIC",
+      "note": "report.py:118-119 carries the binomial-dispersion clause; the 'one in two' limit is the analytic reading, consistent with the E1 references."
+    },
+    {
+      "line": 102,
+      "quote": "one $1-\\delta$ event is shared by every target pool",
+      "value": "1-delta = 0.95",
+      "source": "certgate/report.py:128-131 (baseline rows only)",
+      "status": "TRACED",
+      "note": ""
+    },
+    {
+      "line": 102,
+      "quote": "a data-driven selection over the $\\{0.05, 0.10\\}$ ladder, so the selected claim holds jointly at $1 - 2\\delta = 0.90$",
+      "value": "{0.05, 0.10}; 0.90",
+      "source": "certgate/report.py:134-137; constants ALPHA_LADDER, DELTA",
+      "status": "TRACED",
+      "note": ""
+    },
+    {
+      "line": 102,
+      "quote": "covers four estimated parameters ... at Bonferroni $\\delta_{\\text{conf}} = 0.025$",
+      "value": "4; 0.025",
+      "source": "certgate/report.py:145-147; constants BBSE_BONFERRONI=4, BBSE_DELTA_CONF=0.025",
+      "status": "TRACED",
+      "note": ""
+    },
+    {
+      "line": 102,
+      "quote": "with $\\delta_{\\text{bet}} = 0.025$ spent on the betting test",
+      "value": "0.025",
+      "source": "certgate/constants.py BBSE_DELTA_BET=0.025",
+      "status": "TRACED",
+      "note": "The frozen report string names delta_conf only; delta_bet's value is a constants fact."
+    },
+    {
+      "line": 106,
+      "quote": "The deployed head is L2-regularized logistic regression ($C = 1.0$)",
+      "value": "C=1.0",
+      "source": "certgate/constants.py HEAD_C=1.0; certgate/model.py:75 LogisticRegression(C=HEAD_C, max_iter=HEAD_MAX_ITER)",
+      "status": "TRACED",
+      "note": ""
+    },
+    {
+      "line": 108,
+      "quote": "Three artifacts make the gate explainable",
+      "value": "3 (global coefficients, local attributions, declined-case margin)",
+      "source": "certgate/explain.py; section text",
+      "status": "TRACED",
+      "note": "Structural count."
+    },
+    {
+      "line": 108,
+      "quote": "$\\phi_j(x) = w_j(x_j - \\mu_j)$ with $\\text{logit}(\\hat{p}(x)) = \\text{base} + \\sum_j \\phi_j$",
+      "value": "additive identity",
+      "source": "certgate/explain.py linear attribution",
+      "status": "ANALYTIC",
+      "note": "Exact for a linear logit; Shapley coincidence is a cited identity."
+    },
+    {
+      "line": 108,
+      "quote": "margin-to-answer $m(x) = \\text{logit}\\,\\tau^* - |\\text{logit}\\,\\hat{p}(x)| > 0$",
+      "value": "definition",
+      "source": "certgate/explain.py declined-case margin",
+      "status": "ANALYTIC",
+      "note": ""
+    },
+    {
+      "line": 110,
+      "quote": "the answered-set class composition is reported three ways",
+      "value": "3 (predicted-class, BBSE-implied, oracle)",
+      "source": "experiments/out/E6_composition.json composition: predicted_class / bbse_true_class / oracle_true_class",
+      "status": "TRACED",
+      "note": ""
+    },
+    {
+      "line": 110,
+      "quote": "on a 9-10%-prevalence task",
+      "value": "9-10%",
+      "source": "certgate/data.py base_rate=0.095; EICU-SUMMARY.md prevalence 0.089-0.091",
+      "status": "TRACED",
+      "note": "Restatement of the line-52 claim."
+    },
+    {
+      "line": 114,
+      "quote": "influence-weighted answered risk $R_M$ on a fresh 200-site evaluation pool exceeds $\\alpha$",
+      "value": "200 eval sites",
+      "source": "summary.md E1 eval_sites=200; conformance_metric string",
+      "status": "TRACED",
+      "note": ""
+    },
+    {
+      "line": 114,
+      "quote": "required to stay at or below $\\delta$ over at least 200 independent calibration draws",
+      "value": "delta=0.05 target; R=200",
+      "source": "summary.md E1 R=200, conformance_metric 'target <= DELTA=0.05'",
+      "status": "TRACED",
+      "note": ""
+    },
+    {
+      "line": 114,
+      "quote": "the one-sided 95% Wilson lower bound [@wilson1927] on its answered error exceeds $\\alpha$",
+      "value": "95% one-sided",
+      "source": "certgate/harness.py wilson_lcb(level=0.95), hard_violation uses 0.95",
+      "status": "TRACED",
+      "note": ""
+    },
+    {
+      "line": 114,
+      "quote": "small answered sets exceed $\\alpha$ by chance at rates approaching 50% at the boundary",
+      "value": "-> 50%",
+      "source": "Binomial reference; summary.md E1 exceedance_by_size binomial_reference up to 0.4898",
+      "status": "ANALYTIC",
+      "note": ""
+    },
+    {
+      "line": 118,
+      "quote": "one protocol seed drives the whole grid through a fixed hashing rule",
+      "value": "SEED=20260721",
+      "source": "certgate/constants.py SEED=20260721; summary.md header 'seed: 20260721'; certify.py certification_rng sha256 rule",
+      "status": "TRACED",
+      "note": ""
+    },
+    {
+      "line": 118,
+      "quote": "(Figures 2-4 and Table 1 in the main text; Supplementary Figures S3-S6 and Tables S2-S3 and S6)",
+      "value": "figure/table scope of the one-command claim",
+      "source": "CLAUDE.md 'Still not wired' (section 3.10/SI A.3 scope: Figures 2-4, Table 1, SI Figures S3-S6, Tables S2-S3 and S6); experiments/panel_s2_tables.py NOTE (Tables S4-S5 excluded)",
+      "status": "TRACED",
+      "note": "Structural cross-reference; consistent with the project map after the 2026-08-11 renumbering."
+    },
+    {
+      "line": 118,
+      "quote": "Supplementary Tables S4-S5 come from a second read-only command ... verifies itself against the released E1 artifact",
+      "value": "self-check 194/194",
+      "source": "experiments/panel_s2_tables.py (writes nothing; hard-asserts replay vs E1_validity.csv); replay 2026-08-15: self_check compared=194, tau_mismatches=0",
+      "status": "TRACED",
+      "note": ""
+    }
+  ],
+  "summary": {
+    "n_claims": 60,
+    "n_traced": 48,
+    "n_analytic": 11,
+    "n_unverifiable": 1,
+    "n_drift": 0,
+    "n_out_of_scope": 0
+  }
+}
