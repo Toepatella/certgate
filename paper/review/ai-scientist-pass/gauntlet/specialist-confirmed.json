@@ -1,0 +1,542 @@
+[
+ {
+  "lane": "stats",
+  "id": "STAT-1",
+  "verdict": "WEAKENED",
+  "title": "'No assumption beyond boundedness' contradicts the paper's own Assumption 1; Table S1 mis-attributes what the bet cap is for",
+  "severity": "MINOR",
+  "location": "paper/draft.md line 84 (Section 3.4: 'finite-sample, with no assumption beyond boundedness'), line 224 (A.1(iv): 'no distributional assumption beyond the boundedness in (i)'), line 248 (Table S1 row 'WSR bet cap ... required for the supermartingale property')",
+  "detail": "Half confirmed, half over-stated. (a) CONFIRMED: draft line 84 ('finite-sample, with no assumption beyond boundedness') and A.1(iv) line 224 ('no distributional assumption beyond the boundedness in (i)') do conflict with Assumption 1 (line 78) and A.1(iii) (line 218: 'does not follow from boundedness'), both added in the S1-2 closure (commit 146dbd5, 2026-08-10) after the boundedness phrase already existed; the 2026-08-11 compression (c017b92) then dropped 'distributional' from the section 3.4 sentence and made it worse. Prose fix: 'no distributional assumption beyond boundedness and the sampling condition of Assumption 1' at both sites. Not raised in any prior audit (checked revision-plan, REVIEW-FABLE, CODE-AUDIT, claim-audit 02/07). (b) OVER-STATED: the Table S1 claim 'required for nonnegativity (Ville), not for the supermartingale inequality' is itself imprecise. The per-factor inequality E[1+lambda(alpha-Z)|F] <= 1 holds for any predictable lambda >= 0, but the process inequality E[K_t|F_{t-1}] = K_{t-1}*m_t <= K_{t-1} reverses when K_{t-1} < 0 and m_t < 1, so the cap (lam_cap = 0.9/(1-alpha), factor >= 0.1, verified in certify.py:86-91) is load-bearing for K_t being a supermartingale, not only for Ville. Correct fix is one word: 'required for the *nonnegative* supermartingale property (A.1(iii))' -- consistent with A.1(iii)'s own wording. Do not adopt the reviewer's 'not for the supermartingale inequality' phrasing."
+ },
+ {
+  "lane": "stats",
+  "id": "STAT-2",
+  "verdict": "CONFIRMED",
+  "title": "BBSE estimand gloss 'reweighted to the target class prevalence' is exact only when the record-pooled S_aux prevalence equals the influence-weighted source prevalence",
+  "severity": "MINOR",
+  "location": "paper/draft.md line 102 (clause 1: 'reweighted to the target class prevalence the BBSE correction identifies'), line 94 (Section 3.6), report.py lines 87-103 (head_clause text); certgate/shift.py lines 230-236 (params: pi_s = pos/n_ record-pooled over S_aux) and 164-167 (rho_of)",
+  "detail": "The certified statistic under BBSE is E[Z(rho)] - alpha = (1/w_max) * E_c[(g_c/n_c) * sum_i ans_i (err_i - alpha) w_rho(y_i)]. Under the label-shift model (common P(x|y), site-specific pi_c) this equals sum_y w(y) E[ans*(err-alpha) | y] * E_c[g_c pi_c(y)], so the effective SOURCE class mass in the influence-weighted estimand is the g_c-weighted prevalence pi_tilde_s = E_c[g_c pi_c]/E_c[g_c] (with 89.5% of sites capped, essentially the unweighted site-mean prevalence). fit_bbse estimates pi_source as the RECORD-pooled S_aux prevalence pos/n (and the odds ratio rho = odds(pi_t)/odds(pi_s) from it). Hence the reweighted influence-weighted mass sits at an effective prevalence pi' with odds(pi') = odds(pi_t) * odds(pi_tilde_s)/odds(pi_s^pooled), which equals pi_t only when site size and prevalence are uncorrelated (worked example: half the sites n=20 at 5% and half n=5000 at 20% gives pi_s^pooled = 0.199, pi_tilde_s = 0.175; for a target at pi_t = 0.10 the certified quantity is R_M at an effective 8.6%, i.e. under-representing positives - the direction is not guaranteed conservative). The printed bound on R_M(rho_true) with rho_true = odds(pi_t)/odds(pi_s^pooled) remains VALID (the box/convexity argument does not care which pi_s is used); what is imprecise is describing that quantity as the site-population risk 'at the target class prevalence'. The E2 harness cannot surface this because data.py draws sizes and u_c independently (lines 93-96), and on eICU BBSE certified nothing, so no published number moves. Two remedies: (a) add the condition to clause 1 / Section 3.6 ('...at the target class prevalence, exactly when the influence-weighted and record-pooled source prevalences agree; otherwise at the effective prevalence odds(pi_t)*odds(pi_tilde_s)/odds(pi_s)'), or (b) a SPEC + test_constants change to estimate pi_source g_c-weighted in fit_bbse.params (which is what the M-influence estimand actually needs) - the latter changes numbers and is a design decision, not an editorial one."
+ },
+ {
+  "lane": "stats",
+  "id": "STAT-3",
+  "verdict": "CONFIRMED",
+  "title": "'The clip on pi_t only widens the resulting interval' is not the correct justification for corner coverage",
+  "severity": "MINOR",
+  "location": "paper/draft.md line 228 (A.2: 'the clip on pi_t only widens the resulting interval, so the corners bound every rho the box implies'), line 257 (Table S1 pi_t clip row: 'can only widen [rho_lo, rho_hi]'); METHODS.md Section 5 same phrase; SPEC.md lines 269-275 and shift.py rho_box_interval docstring give the correct statement",
+  "detail": "Clipping pi_t into [1e-4, 1-1e-4] is a contraction: a corner whose unclipped pi_t is negative (possible after the misspecification gate, which only requires q_lo >= c0_lo and q_hi <= c1_hi, not q_lo >= c0_hi) is pulled UP to 1e-4, so the clipped corner range is a subset of - never wider than - the unclipped one. The argument that actually works, and that the SPEC and code docstring state, is: clip is monotone non-decreasing, so clip(pi_t) stays coordinate-wise monotone in (q, c0, c1) and rho stays coordinate-wise monotone in the four box parameters; therefore min/max over the 16 corners of the CLIPPED rho bound rho at every interior parameter combination, and the true (unclipped) rho is covered whenever the true pi_t (and pi_s) lie inside the clip range - outside it the exposure is bounded at the PI_CLIP odds scale. Coordinate-wise monotonicity itself checks: d pi_t/dq = 1/(c1-c0) > 0; d pi_t/dc0 = (q-c1)/(c1-c0)^2 has a sign that does not depend on c0; d pi_t/dc1 = -(q-c0)/(c1-c0)^2 has a sign that does not depend on c1; c1-c0 >= 0.10 on the gated region; and coordinate-wise monotonicity suffices for corner extremes by moving one coordinate at a time. Suggest replacing 'only widens' in A.2, Table S1 and METHODS with 'preserves coordinate-wise monotonicity, so corner coverage of the clipped rho holds; the unclipped odds ratio is covered whenever the true pi_t lies in [1e-4, 1-1e-4]'."
+ },
+ {
+  "lane": "stats",
+  "id": "STAT-4",
+  "verdict": "WEAKENED",
+  "title": "BBSE rows print 'confidence >= 0.95' that the paper's own miscoverage measurement does not support; the asymptotic-interval count is three only for single-site pools",
+  "severity": "MINOR",
+  "location": "paper/draft.md line 94 (Section 3.6 disclosure), line 102 (clause 7), report.py lines 85-103 and 141-153; A.2 line 228",
+  "detail": "Main ask is out of scope and already deliberately handled: 'With confidence >= 0.95' is the frozen head_clause string (report.py:85-103, pinned by tests/test_report.py; draft line 102 mirrors it), so writing 'nominal' there is a SPEC change, and the measured-shortfall disclosure (0.038 vs <= 0.019) was the CODE-AUDIT V8 closure and already travels in section 3.6, clause 7 and section 6.1 -- at most section 3.6 can borrow METHODS section 5's sentence 'the printed >= 0.95 should be read with this measured shortfall in mind'. The reviewer's 0.937 also omits the q_target Bonferroni share: 0.038 + 0.00625 + 0.025 ~ 0.069, i.e. ~0.93. What survives as prose-actionable, no numbers move: (i) section 3.6 'the three percentile bootstrap intervals are asymptotic' and section 6.1 'three of the four BBSE intervals are asymptotic' are exact only for single-site pools; for >= 10-site pools (including the eICU 24-hospital arm, where BBSE fitted) the q interval is a fourth percentile cluster bootstrap (shift._q_interval docstring: 'asymptotic like the S_aux box'; SPEC 256-258) not covered by the 0.038 measurement -- the ai-scientist claim-audit (06-discussion.json) noted the same nuance without closing it; (ii) the Clopper-Pearson interval's records-iid-within-site condition is stated in the docstring, not the prose -- one clause. Clause 7 itself is frozen; qualify the section 3.6/6.1 prose instead."
+ },
+ {
+  "lane": "stats",
+  "id": "STAT-5",
+  "verdict": "CONFIRMED",
+  "title": "Assumption 1 is a superpopulation (iid-draw) condition, but the eICU limitation text describes the certified population as the finite set of eICU hospitals, under which the calibration split is a without-replacement sample",
+  "severity": "MINOR",
+  "location": "paper/draft.md line 78 (Assumption 1) and A.1(iii) line 218 versus line 206 (Section 6.1: 'the certified population is the eICU hospitals surviving the cohort predicates - not US hospitals generally'); Section 3.1 line 52 ('the population of sites from which the calibration sites were drawn')",
+  "detail": "A.1(iii) consumes E[Z_t | F_{t-1}] = E[Z], which holds when calibration sites are iid draws from a (super)population - exactly true in the synthetic harness. If the eICU 'population' is read literally as the finite set of ~208 hospitals, then S_cal (a seeded 40% subset) is a sample WITHOUT replacement from it: the sequence is exchangeable but not iid, the conditional mean of the next atom is (N*mu - S_{t-1})/(N-t+1) rather than mu, and the per-step supermartingale inequality does not hold as written (the Waudby-Smith-Ramdas without-replacement construction would be the matching tool). The finite-population reading is also incoherent with the estimand (it would include the S_train/S_aux hospitals the head was fitted on), so the intended reading is clearly the superpopulation these hospitals represent - which is what Assumption 1 states. Suggest one sentence reconciling the two: 'the certified population is the hospital population the eICU hospitals surviving the cohort predicates represent (Assumption 1 treats them as iid draws from it), not US hospitals generally', optionally noting that a finite-population/without-replacement reading would require the WoR betting variant. This is a framing gap, not an error in the proof; no number changes."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-1",
+  "verdict": "CONFIRMED",
+  "title": "'Rung' used from the abstract onward without ever being defined",
+  "severity": "MAJOR",
+  "location": "Abstract (Results, Conclusions); §1 para 4; §3.5 title; passim (~20 uses)",
+  "detail": "Abstract: \"the α = 0.10 rung certifies all 200 draws\" and \"the stricter rung refused\"; §1: \"the operative rung is a property of how many hospitals contribute\". The ladder metaphor first appears in the §3.5 title (\"the budget ladder\") but even there the paper never says \"we call each candidate α a rung of a two-rung ladder {0.05, 0.10}\". A collection reader hits an undefined codeword in the first results sentence."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-2",
+  "verdict": "WEAKENED",
+  "title": "Abstract Methods sentence stacks three unglossed technical terms",
+  "severity": "MAJOR",
+  "location": "Abstract, Methods",
+  "detail": "Quotation is accurate (line 13) and the three terms are unglossed, but two constraints the finding ignores: (a) 'influence-weighted' was INSERTED on audit demand — S1-14(i)/R2-04 required the abstract to name the estimand as influence-weighted (revision-plan.md:204-208), so it cannot simply be replaced by 'each hospital counts equally'; a gloss may be appended but the name stays; (b) the abstract is 246 words by wc against the 250-word cap (TODO.md:221,240), and DS-23/S1-14 already ruled 'substitution, not addition'. 'four parameters' can drop the count ('its estimated parameters') without harm. Restated: gloss by substitution inside the cap, keeping 'influence-weighted'."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-3",
+  "verdict": "CONFIRMED",
+  "title": "Abstract Results is a 90-word semicolon chain using undefined internal terms",
+  "severity": "MAJOR",
+  "location": "Abstract, Results",
+  "detail": "\"...under a prevalence shift to 0.22 the uncorrected baseline certifies and violates in 39.5% of draws while the corrected mode declines all 200, a concept-shift control hard-violates 70% as its exclusion predicts, and α = 0.05 needs about 300 sites.\" 'draws', 'hard-violates', 'as its exclusion predicts' are undefined here ('hard-violation' is defined only in §3.9). Four findings in one sentence; split and gloss."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-4",
+  "verdict": "CONFIRMED",
+  "title": "Abstract Conclusions is a bare number, not a conclusion",
+  "severity": "MAJOR",
+  "location": "Abstract, Conclusions",
+  "detail": "\"The certificate's disclosures travel with it: the published split's answered set shows mortality 0.046 against 0.090 in its pool.\" 'Published split' is undefined, and the reader cannot infer the point (the gate lowers answered error partly by abstaining on the sickest patients; the certificate should be read with that). Also the Results ends on \"bounding gross violation, not estimating the rate\" — cryptic without the §4.10 context."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-5",
+  "verdict": "CONFIRMED",
+  "title": "Intro method paragraph is jargon with no plain-language gloss; 'WSR' never expanded",
+  "severity": "MAJOR",
+  "location": "§1 para 3",
+  "detail": "\"influence-capped per-site statistics feed a betting-martingale (WSR) sequential test [7, 8], and a fixed-sequence threshold walk selects the operating point without spending confidence on multiplicity [9, 10], in the risk-control tradition [11, 12].\" 'Influence-capped', 'betting-martingale', 'threshold walk', 'spending confidence on multiplicity' are all unglossed; the acronym WSR is never expanded (Waudby-Smith–Ramdas appears only in §3.4). This is the sentence a collection reader uses to decide whether to keep reading."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-6",
+  "verdict": "CONFIRMED",
+  "title": "Bare experiment codes E1–E7 used before Section 4 introduces them; no roadmap",
+  "severity": "MAJOR",
+  "location": "§1 contributions list; §3.1; §3.4; §3.5; §3.6; §3.10; §4 opening",
+  "detail": "Contributions: \"...violates it at up to twice δ under between-site heterogeneity (E7), while the site-count frontier prices what honest certification costs (E1, E4)\", \"(E2)\", \"(E5)\", \"(E3)\". Then §3.1 \"(77% in E1)\", §3.4 \"the capacity frontier E4 maps\", §3.5 \"E4 maps the frontier\", §3.6 \"E3 injects a concept tilt\", §3.10 \"the released E1 artifact\". The reader is never told 'we run seven synthetic experiments, E1–E7, described in §4.2–4.8'. Fix: one roadmap sentence in §1 (or a 7-row table opening §4: code, question, section) and drop the codes from the contributions list in favour of the plain question each answers."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-7",
+  "verdict": "CONFIRMED",
+  "title": "'BBSE' acronym never expanded; 'cluster-robust box' and 'four corrected parameters' undefined at first use",
+  "severity": "MAJOR",
+  "location": "§1 contribution 2; §2 'Label shift'; §3.6 heading",
+  "detail": "Contribution 2: \"A BBSE-based correction folds the estimation uncertainty of all four corrected parameters into the 1−δ budget through a cluster-robust box\". Related work says \"Black-box shift estimation [13]\" but never attaches the acronym; §3.6 heading is \"Label shift (BBSE)\". A reader who does not know Lipton et al. cannot connect them. Also 'box' (a rectangle of confidence intervals) is never introduced in words."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-8",
+  "verdict": "CONFIRMED",
+  "title": "Intro para 4 duplicates the abstract's results almost verbatim",
+  "severity": "MINOR",
+  "location": "§1 para 4",
+  "detail": "\"at α = 0.10 every one of 200 calibration draws certifies at 0.9828 mean coverage ... the uncorrected baseline certifies and hard-violates on 39.5% of draws while the label-shift mode declines all 200 rather than overclaim; and α = 0.05 first becomes certifiable near 300 sites\" repeats the abstract's Results (0.983 / 39.5% / 300 sites) within a page, still using undefined 'hard-violates', 'calibration draws', 'valid but not vacuous'. Either the abstract or this preview should carry the numbers, not both."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-9",
+  "verdict": "CONFIRMED",
+  "title": "Figure 1 (orientation schematic) is labelled in internal notation defined only pages later",
+  "severity": "MAJOR",
+  "location": "Figure 1 and caption (placed in §3.1)",
+  "detail": "Box labels: \"one WSR supermartingale over site atoms Zc, per rung α ∈{0.05, 0.10} and per mode: exchangeable (full δ) · BBSE (tested at both ρ endpoints, δbet)\"; \"(c0, c1, πs) cluster bootstrap + qt ⇒ box [ρlo, ρhi] at Bonferroni δconf\"; caption: \"BBSE at δbet, its four-parameter uncertainty box tested at both ρ endpoints\". Zc, ρ, c0/c1, δbet, δconf, WSR are all first defined in §3.3–3.6. The pipeline figure is the one place a clinical reader should get plain words (fit model / choose threshold / test on held-out hospitals / certify or decline / explain)."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-10",
+  "verdict": "CONFIRMED",
+  "title": "'max-softmax' is deep-learning jargon for max(p, 1−p)",
+  "severity": "MINOR",
+  "location": "§3.1 para 1",
+  "detail": "\"a bounded score s(x) ∈ [0.5, 1] — the max-softmax of a probabilistic classifier over the binary outcome\" — the paragraph later gives s(x) = max(p̂, 1−p̂); lead with that (\"the model's confidence in its own call\") and drop 'max-softmax'."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-11",
+  "verdict": "WEAKENED",
+  "title": "'Constant always-negative rule' caveat repeated four times",
+  "severity": "MINOR",
+  "location": "§3.1; §4.2 'Operating characteristics'; §4.7 (panel); §4.10 'What the gate is trading away'",
+  "detail": "Count is right (lines 54, 132, 154, 188 in main text; also A.4 line 282 and Table S5 caption line 334) but two of the four are not the caveat repeated: §4.7 (154) and §4.10 (188) report the reliability panel's SKILL MARGIN, a statistic defined relative to the always-negative rule, so the reference rule must be named there (its number differs each time). The caveat proper appears twice (§3.1 conceptual; §4.2 with E1's 0.1039, which is not in any table except Table S5's caption). Restated: keep §3.1 and one E1 number; in §4.7/§4.10 tighten the phrasing ('skill margin', defined once) rather than delete the reference."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-12",
+  "verdict": "CONFIRMED",
+  "title": "Software-engineering register for pre-registration-by-test, repeated ≥4 times",
+  "severity": "MINOR",
+  "location": "§3.2; §3.10; §4.10 para 2; §6.1; Code availability",
+  "detail": "§3.2 \"pinned to their literal values by a unit test, so any drift fails continuous integration\"; §4.10 \"editing one after the data arrived turns continuous integration red and appears in the diff\"; §3.10 \"the frozen constants are pinned by a unit test\"; §6.1 \"pinning attests the others were fixed in advance\"; Code availability \"the test suite that pins every frozen constant\". Say it once, in Methods, in plain words ('all constants were fixed in code before the data were seen; an automated test fails if any is changed'); 'turns CI red', 'appears in the diff' are for engineers."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-13",
+  "verdict": "WEAKENED",
+  "title": "The per-site 'atom' paragraph has no plain-language lead-in",
+  "severity": "MAJOR",
+  "location": "§3.3 (Zc display and following sentences)",
+  "detail": "True that no plain sentence precedes the Z_c display at lines 68-72, but the plain gloss the reviewer asks for already exists one paragraph later: §3.4 opens 'Once each calibration hospital has been reduced to one bounded atom Z_c, certification becomes a finite-sample test of whether the mean of those site-level atoms exceeds the budget' — added 2026-08-11 (commit ad23e46, 'intuition before formalism'). The 'term by term' identity Z_c−α=g_c a_c(e_c−α)/M was added at audit request (S1-1/R1-03; TODO.md:465-466 'central theorem made explicit') and must stay. Restated: echo/move that one plain sentence to before the display; no rewrite."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-14",
+  "verdict": "CONFIRMED",
+  "title": "'Minimum-cluster gate' / '50-record-carrying-cluster gate' referenced before it is introduced, in a hyphen chain",
+  "severity": "MINOR",
+  "location": "§3.3; §4.5; Fig 3 caption; §4.10 'Cohort'",
+  "detail": "§3.3 \"the minimum-cluster gate counts only record-carrying sites\" (gate not yet introduced); §4.5 \"The 60- and 100-site declines come from the 50-record-carrying-cluster gate\"; Fig 3 \"declined by the 50-record-carrying-cluster gate (below ~125 sites)\"; §4.10 \"against the floor of 50 record-carrying calibration clusters\". Introduce once in §3.4/3.5 in plain words: 'the procedure requires at least 50 calibration hospitals that contribute records; below that it declines outright.'"
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-15",
+  "verdict": "CONFIRMED",
+  "title": "Internal clause nicknames used as if familiar",
+  "severity": "MINOR",
+  "location": "§3.3 last sentence; §4.2; §4.10; §5",
+  "detail": "§3.3 \"what follows from that — scope, dispersion, parameter-not-count, and the shared 1−δ event — is stated once in Section 3.7\"; §4.2 \"the aggregate-versus-individual signature clause (2) of the guarantee names\" and \"the parameter-versus-realized-count distinction in action\"; §4.10 \"what clause (2) of the guarantee says can happen\"; §5 \"subject to clause (2)\". Clause numbers are only meaningful if the reader has memorised §3.7; say 'the guarantee's dispersion clause' in words."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-16",
+  "verdict": "CONFIRMED",
+  "title": "Betting-test paragraph uses anytime-valid-inference vocabulary with no gloss",
+  "severity": "MAJOR",
+  "location": "§3.4 (wealth-process display and following sentence)",
+  "detail": "\"the wealth process is Kt = ∏(1 + λs(α − Zs)), λt = min(√(2 ln(1/δ)/(σ̂²ₜ₋₁ n)), 0.9/(1−α)), with a variance floor of 10⁻⁸ and running moments initialized at (0.5, 0.25); we certify if and only if supt Kt ≥ 1/δ. Under H0 the bet λt is predictable and capped so every wealth factor stays positive, making Kt a nonnegative supermartingale, and Ville's inequality bounds the crossing probability by δ.\" 'Wealth process', 'predictable bet', 'nonnegative supermartingale', 'Ville's inequality', 'crossing probability' are never explained. Two plain sentences are missing: start with one unit of money; for each hospital in turn, wager a fraction that its error sits below the budget; if the money ever grows to 1/δ (20×), the budget is certified — because a fair game cannot multiply money 20-fold with probability more than 1/20. The 10⁻⁸ floor and (0.5, 0.25) initialisation belong in SI A.1/A.3."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-17",
+  "verdict": "CONFIRMED",
+  "title": "Assumption 1 restated with undefined filtration notation and 'the proof consumes'",
+  "severity": "MINOR",
+  "location": "§3.4 Assumption 1",
+  "detail": "\"In particular it implies the weaker condition the proof consumes: conditional on the sites already processed, the next site's atom carries the population mean, E[Zt | Ft−1] = E[Z].\" Ft−1 is never defined; 'the proof consumes' is odd. Plain: 'each new hospital, given the ones already processed, has the same expected value — the assumption the argument actually needs.'"
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-18",
+  "verdict": "WEAKENED",
+  "title": "'Information floor' coined by formula only, then reused as if familiar",
+  "severity": "MINOR",
+  "location": "§3.4 last sentence; §4.5; Fig 3 caption; §4.8",
+  "detail": "Partly glossed already: line 84 reads 'At n clusters no test can certify with an arbitrarily small margin; the information floor ln(1/δ)(1−α)/n — a feasibility diagnostic, never a gate — scales as 1/n_cal', which is the meaning the reviewer asks for, just not stated as 'the floor IS that smallest certifiable margin'. The earlier draft's 'a linearized, zero-variance lower bound' gloss (verification.md:490) was cut in compression. Reuses at §4.5 line 144, §4.8 line 158, Fig 3 line 392, Table S1 line 251 verified. Restated: a two-word tightening at line 84, not a missing definition."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-19",
+  "verdict": "WEAKENED",
+  "title": "Threshold-walk paragraph: 'certification margin', 'learn-then-test', 'δ-splitting' unglossed",
+  "severity": "MAJOR",
+  "location": "§3.5 para 1",
+  "detail": "Overstated: line 88 DOES say the plain point — 'walked in a fixed sequence … the walk stops at the first failure — a fixed-sequence … procedure that needs no δ-splitting across the grid'. What is unglossed is 'certification margin' (how far the estimated answered error sits below α on S_aux), 'learn-then-test' (a cited name) and 'δ-splitting' (= no multiple-comparison correction). The 'three levels' sentence was itself audit-requested (S2-2: 'one sentence stating the two levels explicitly', revision-plan.md:218-220); rendering it as a numbered list is fine. Restated: gloss three terms; do not claim the mechanism is unstated."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-20",
+  "verdict": "WEAKENED",
+  "title": "BBSE paragraph is a proof sketch without a plain lead-in; c0, c1, ρ never named in words",
+  "severity": "MAJOR",
+  "location": "§3.6 'Label shift (BBSE)'",
+  "detail": "Partly wrong: ρ IS defined at first use in §3.6 line 94 ('the target-to-source odds ratio ρ') — its only earlier appearance is the Figure 1 caption/labels (VEN-9). c0,c1 are introduced only as 'the confusion rates' (naming them as the head's false- and true-positive rates is a fair ask). The affine/convex sentence already defers to SI A.2 and is one clause. A lead-in exists ('Only the outcome prevalence may differ … P(x|y) is held invariant') but is technical; the reviewer's plain lead-in is accurate. Restated: name c0/c1 and add one plain lead-in sentence; nothing else is missing."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-22",
+  "verdict": "CONFIRMED",
+  "title": "'OR-guarantee', 'concept tilt', E3 in Methods",
+  "severity": "MINOR",
+  "location": "§3.6 'Combination, and what no mode covers'",
+  "detail": "\"so the OR-guarantee reads 'if either tagged assumption holds'\" and \"E3 injects a concept tilt verified capable of pushing answered error above α\". 'OR-guarantee' is internal shorthand; 'tilt' is generator jargon; E3 has not been introduced (see VEN-6)."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-23",
+  "verdict": "WEAKENED",
+  "title": "§3.7 reproduces the frozen guarantee text as seven dense clauses in one paragraph",
+  "severity": "MAJOR",
+  "location": "§3.7 (whole section)",
+  "detail": "'rows' (clause (4) 'baseline rows only', (7) 'BBSE rows add', 'omitted wherever BBSE covers the row') is a code-COMMENT phrase leaked from certgate/report.py:121-127 — it is NOT in the emitted string, so it is editable ('in certificates carrying only the exchangeable mode' / 'in certificates carrying the label-shift mode'). But the clause bodies mirror the frozen emitted guarantee text (report.py:85-154), the seven-clause exhibit was itself audit-requested (S2-29/R2-15 'one full certificate exhibited verbatim'), and a boxed 'Theorem' re-cast of §3.7 was declined 2026-08-11 (ad23e46: 'the clauses ARE the frozen emitted guarantee text'). Restated: relabel the clause headings in plain words and optionally add a one-line paraphrase per clause; do not move or rewrite the text, and mind the 25-page cap."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-24",
+  "verdict": "WEAKENED",
+  "title": "'Parameter, not count' clause needs a concrete example",
+  "severity": "MINOR",
+  "location": "§3.7 clause (3)",
+  "detail": "A concrete example is a fair ask and is a body paraphrase (the deployed clause text report.py:118-119 stays; S2-21 required the 'at the boundary' qualifier, which the draft has at line 102). But the reviewer's arithmetic is loose: for n=100 answered at a TRUE error rate of exactly 10%, P(Bin(100,0.1) > 10) ≈ 0.42, not 'about half'; 'about half' is only the large-batch limit the draft already states. Use 'roughly four batches in ten at n=100, approaching one in two as batches grow'."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-26",
+  "verdict": "WEAKENED",
+  "title": "Validation-metric names defined after their first use; 'evidences ... at the tested power'",
+  "severity": "MINOR",
+  "location": "§3.9",
+  "detail": "Correct that 'hard-violation' is defined at §3.9 line 114 after use in the abstract (13) and §1 ¶4 (27) — a re-raise of open DS-23; but the contributions list (lines 31-34) does NOT use it ('violates', '39.5%-violation'), so that limb is wrong. 'evidences … at the tested power' quote verified. 'oracle access' IS glossed at the §4 opening (line 122: 'because the data-generating process is controlled, the true answered-set risk is computable and a certificate can be checked rather than assumed'); only 'harness' lacks a gloss."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-27",
+  "verdict": "CONFIRMED",
+  "title": "Implementation-level details in the experimental-setup prose",
+  "severity": "MINOR",
+  "location": "§4.1",
+  "detail": "\"The generator follows the specification frozen in data.py\" (a source file name); \"the class signal on one normalized direction supported by features 0–3 (sep = 2.2)\" (undefined generator constant); \"protocol seed 20260721\". The site random-effect SD is written N(0, 0.5²) here but later called 'su' (§4.2 \"raising the site random effect su from 0.5 to 1.0 and 2.0\"; §4.8 \"su = 0.5 ... su = 2.0\") without the symbol ever being introduced."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-28",
+  "verdict": "WEAKENED",
+  "title": "Number-train sentences that restate a table",
+  "severity": "MINOR",
+  "location": "§4.2 (heterogeneity arm; 'Operating characteristics')",
+  "detail": "The operating-characteristics sentence (line 132: 27,972,430 / 0.0968 / 0.0567 / 0.550 / 0.986 / 0.803 / 0.953 / 76.9%) does read Table S5's E1-answered row aloud and can shrink to sensitivity + FN share with a pointer (Table S5 exists because S2-28/R2-06 demanded confusion-matrix metrics). But the heterogeneity-arm numbers (hard rate 0.10/0.095; exceedance fraction 0.055/0.1285/0.1634, line 130) are NOT in Table S5, S2 or any table — Fig S3's caption carries only the hard rates — so cutting them deletes data rather than a duplicate; they need a home first."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-29",
+  "verdict": "CONFIRMED",
+  "title": "'failsafe' and 'misspecified' decline codes never introduced",
+  "severity": "MAJOR",
+  "location": "§4.3; §4.10 'The certificate' (twice)",
+  "detail": "§4.3 \"it declines all 200 draws (194 failsafe, 6 misspecified)\"; §4.10 \"both assumption modes return failsafe on every re-split\" and \"so it returned failsafe\". These are internal decline-reason labels; the reader cannot tell what distinguishes 'failsafe' (fitted but no threshold certified) from 'misspecified' (inputs could not support a correction). Either define once in §3.6 ('we call these two outcomes ...') or replace with plain phrases."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-30",
+  "verdict": "CONFIRMED",
+  "title": "Figure captions re-argue the body text nearly verbatim",
+  "severity": "MINOR",
+  "location": "Fig 2, Fig 3, Fig 4 captions",
+  "detail": "Fig 2 caption \"at the null point BBSE certifies 9% of draws — a correction, not a reflexive decliner\" is the body sentence repeated; Fig 3 caption restates 150 / 300 (0.285) / 400 / 0.9818 exactly as §4.5 does; Fig 4 caption repeats the six bin numbers (0.0523, 0.0670, 0.0595 / 0.9896, 0.9800, 0.9856) that also appear in the §4.7 body and Table S3. Fig 2 also introduces 'anchor shift' undefined. Captions should say what is plotted; the argument lives once, in the body."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-31",
+  "verdict": "CONFIRMED",
+  "title": "Code-style array literals in prose",
+  "severity": "MINOR",
+  "location": "§4.5",
+  "detail": "\"certify rates [0.0, 0.0, 1.0, 1.0, 1.0, 1.0]\" and \"[0.0, 0.0, 0.0, 0.0, 0.285, 1.0]\" restate Table S6 / Figure 3 in Python-list notation. Say 'no draw certifies at 60 or 100 sites and every draw does from 150 upward'."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-32",
+  "verdict": "WEAKENED",
+  "title": "'concept intercept 2.0' and repeated 'load-bearing' rhetoric",
+  "severity": "MINOR",
+  "location": "§4.4",
+  "detail": "'load-bearing' verified at line 140 (§4.4) and line 234 (A.3) — the user wants coined phrases at ~1 use and TODO.md:427 records it thinned to x1, so it crept back; the §4.4 sentence also duplicates §3.6 line 96's 'do real work'. And DS-38's 'A negative control that cannot fail proves nothing' (S2-41 said cut) still opens §4.4. BUT 'concept intercept 2.0' is a S1-5-mandated per-experiment generator disclosure (E3's tilt magnitude); it should be glossed ('an additive 2.0 log-odds shift in P(y|x)'), not dropped."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-33",
+  "verdict": "CONFIRMED",
+  "title": "'added after E1–E7 were published' plus undefined panel vocabulary and six-decimal figures",
+  "severity": "MAJOR",
+  "location": "§4.7 last paragraph",
+  "detail": "\"A post-hoc reliability panel over the same partition (descriptive; added after E1–E7 were published; no certified quantity moves) adds that the answered set is close to calibrated at the deployed threshold (plug-in ECE 0.002914 against 0.033783 on the declined set), the answered-set skill margin over a constant always-negative rule is 0.035948, and the answered-minus-all contrast straddles zero — the composition reading in a second currency.\" 'Published' is project-internal history and reads as a prior publication; ECE is unexpanded; 'skill margin', 'answered-minus-all contrast', 'second currency' are defined only in SI A.4; six-decimal values are out of register with the 4-dp figures around them."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-34",
+  "verdict": "CONFIRMED",
+  "title": "Body and Table 1 caption both make the 'understates by about a third' point",
+  "severity": "MINOR",
+  "location": "§4.7 body; Table 1 caption",
+  "detail": "Body: \"The predicted-class column alone would have understated the true positive load by about a third\"; caption: \"the predicted-class column understates it by about a third\". One is enough."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-35",
+  "verdict": "CONFIRMED",
+  "title": "E7 paragraph is one dense block with unintroduced 'su' and 'information floor'",
+  "severity": "MINOR",
+  "location": "§4.8",
+  "detail": "\"still roughly 24 times the site count, with an information floor smaller by the same factor. At α = 0.05 — the rung the site-unit walk refuses on every one of 400 draws across both heterogeneity arms — the record-unit certifier grants the budget almost always (certify rate 1.0 at su = 0.5, 0.99 at su = 2.0)...\" The finding is important and the closing sentence is good; the paragraph would land better as two short paragraphs (what the comparator is; what it does at each rung)."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-36",
+  "verdict": "CONFIRMED",
+  "title": "Data-release gate described in software terms",
+  "severity": "MINOR",
+  "location": "§4.10 para 1",
+  "detail": "\"a gate on each write refuses payloads carrying a record-level key or an array longer than 512 elements\" — 'write', 'payloads', 'record-level key', 'array' are implementation vocabulary; the reader needs 'every artefact we release from the extract is aggregate; the code refuses to write anything record-level'."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-37",
+  "verdict": "WEAKENED",
+  "title": "'deny-by-default allowlist', 'schema DDL', and 'five failure criteria' that are never listed",
+  "severity": "MINOR",
+  "location": "§4.10 para 2",
+  "detail": "'deny-by-default', 'schema DDL' at line 168 verified as engineering register. But 'never named or reported' is overstated: the five criteria's OUTCOMES are reported piecemeal without their letters — F-A as 'the pre-declared validity criterion … at or below δ' (line 174), F-D's legs as the leak screens (lines 180-182), F-E via the 207-hospital primary cohort, F-B via certification itself; only F-C (protocol failure) is unreported. Restated: either name the five in one line where the count is given, or drop the count."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-38",
+  "verdict": "CONFIRMED",
+  "title": "Table 2 caption carries a 200-word methodological argument; row labels leak ETL step names",
+  "severity": "MAJOR",
+  "location": "Table 2 caption and rows; §4.10 'Cohort'",
+  "detail": "Body: \"Three filters standard in published eICU cohorts are absent, and Table 2's caption gives the argument for each\" — the caption then argues no length-of-stay floor, no minimum-stays filter (\"the protocol projected before the extract was read that a 500-stay threshold would leave roughly 46 hospitals, and on the released extract it leaves 99 of the 207...\") and no APACHE filter. That belongs in the body or SI, not a caption. Rows: \"site-parseable\", \"The primary cohort closes at primary-cohort\", \"(diagnostic) APACHE-APS linked\", \"APACHE-result linked\" are pipeline step names, not reader-facing labels."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-39",
+  "verdict": "CONFIRMED",
+  "title": "'20 re-splits bound gross violation, do not estimate the rate' caveat stated six times",
+  "severity": "MAJOR",
+  "location": "Abstract; §4.10 'What twenty re-splits can and cannot establish' (twice); Fig 5 caption; Table 3 caption (twice); §6.1",
+  "detail": "Abstract \"bounding gross violation, not estimating the rate\"; §4.10 \"20 re-splits cannot resolve a 0.05 rate, and they partition one hospital population, so they are not 20 draws of the site population ... The run bounds the absence of gross violation at the available power. It does not estimate the rate, and no amount of re-splitting one extract would\"; Fig 5 \"(a bound on gross violation, not a rate estimate, since the re-splits partition one population)\"; Table 3 caption \"the 20 re-splits partition one hospital population and are not 20 draws of a site population\" AND \"because all 20 re-splits partition one hospital population, it supports a bounded observation about the absence of gross violation and not an estimate of the violation rate\"; §6.1 \"20 re-splits of one hospital population bound the absence of gross violation but cannot estimate the violation rate\". Once in §4.10 and once in Limitations."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-40",
+  "verdict": "WEAKENED",
+  "title": "'Site-population average, not a per-site bound' caveat stated ~11 times",
+  "severity": "MAJOR",
+  "location": "Abstract; §3.1; §3.3; §3.7 (2); §3.9; §4.2; §4.10 'Per-hospital dispersion'; Fig 5 caption; Table 3 caption; §5; §6.1",
+  "detail": "Count is fair (~12 main-text + 4 SI: lines 13, 52, 72, 102, 114, 130, 172, 176, 194, 196, 206, 216, 290, 296, 396, 422) but the target of three is not reachable by a prose pass: at least six placements were put there by audit demand — abstract (S1-14/R5-04), §3.1 and §3.3 and A.1(ii) (S1-1: R5-01/R1-01/DS-47), §3.7(2) (mirrors the frozen guarantee string, report.py:114-117, CLAUDE.md invariant 'the old per-target-site claim … must never return'), §5 (S1-1 required a Discussion sentence conceding the cost); and TODO.md:463-464 records a dedup pass already run. Restated: thin the diagnostic-explanation echoes ('what the certificate declines to bound' x4 at §3.9, §4.2, §4.10, Fig 5) and the caption/§5 line-196 repeats — roughly 16 → 9 — leaving the audit-placed six."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-41",
+  "verdict": "CONFIRMED",
+  "title": "'Abstains where deaths concentrate (0.046 vs 0.090)' disclosure made four times near-verbatim",
+  "severity": "MAJOR",
+  "location": "Abstract Conclusions; §4.10 'What the gate is trading away'; §5 last paragraph; §6 Conclusion",
+  "detail": "Abstract \"the published split's answered set shows mortality 0.046 against 0.090 in its pool\"; §4.10 \"The answered set's observed mortality is 0.0458 against 0.0898 in the target pool: the gate reaches its budget partly by abstaining where deaths concentrate\"; §5 \"on the published split the answered set's observed mortality is 0.046 against 0.090 in its pool\"; §6 \"it reaches its budget partly by abstaining where deaths concentrate\". Say it fully once in §4.10 and once in the Conclusion."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-42",
+  "verdict": "WEAKENED",
+  "title": "Table 3 caption: six-decimal aside and repeated caveats",
+  "severity": "MINOR",
+  "location": "Table 3 caption",
+  "detail": "Table 3 caption (line 422, 154 words) does repeat the dispersion and re-split caveats (VEN-39/40). But the six-decimal aside was placed deliberately: commit 2aafbe8 (2026-08-10) 'Table 9 caption notes the 0.0478/0.0478 coincidence is genuine' — the 6-dp pair is what proves the two identical 4-dp rows are two quantities and not a transcription copy (claim-audit 10-tables.json:209-211 recomputes both). A shorter footnote is fine, but it must keep the two 6-dp values or the signal is lost."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-43",
+  "verdict": "WEAKENED",
+  "title": "Comparator paragraph: six-decimal Brier figures and the 'currencies' metaphor",
+  "severity": "MINOR",
+  "location": "§4.10 'Comparator'; also §4.7 and §4.10 'trading away'",
+  "detail": "'currency/currencies' x3 verified (lines 154, 178, 188) and 'inside one shared resample' can be glossed. But the 3-dp prescription would erase the finding: the paired Brier difference 0.000975 (0.000136–0.001684) at 3 dp becomes 0.001 (0.000–0.002), making the interval appear to touch zero; 4 dp (0.0010, 0.0001–0.0017) is the floor for that sentence. The panel's 6-dp emit is an artifact rule, not a prose rule, so 4 dp is permissible."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-44",
+  "verdict": "CONFIRMED",
+  "title": "Leak-screen paragraph contains internal ETL logic a reader cannot parse",
+  "severity": "MAJOR",
+  "location": "§4.10 'Leak screens'",
+  "detail": "\"which settles from data the nine treatment flags whose measurement timing could not be established from documentation\" (nine treatment flags never introduced) and \"Two column-level missingness indicators did exceed the ratio cap; the abort gates the two whole-row presence flags, and the cell-level half of that channel is what the ablation screen above bounds.\" A collection reader stops at 'the abort gates the two whole-row presence flags'. The preceding 'fired in the wrong direction' paragraph is a model of the right register; the closing two sentences should be rewritten in the same voice or moved to SI."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-45",
+  "verdict": "CONFIRMED",
+  "title": "P-codes acceptable inline, but 'the amendment that identified APACHE absence' is undefined and collides with the 'one post-hoc amendment'",
+  "severity": "MAJOR",
+  "location": "§4.10 'The seven predictions'; 'Scope'",
+  "detail": "\"under the amendment that identified APACHE absence as a potential leak channel, a confirmed P4 would have been the leak's signature rather than a success\" — no protocol amendment has been described in the main text; two paragraphs later 'Scope' says \"One amendment was made after the extract was read, the only post-hoc change\" (a different, sentinel-parsing amendment). The reader will conflate them. Also \"aps heartrate missing\" (raw column name) and \"three of 480 pool-instances\" (internal noun)."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-46",
+  "verdict": "CONFIRMED",
+  "title": "'Scope' paragraph is ETL jargon",
+  "severity": "MAJOR",
+  "location": "§4.10 'Scope'",
+  "detail": "\"the abort on an unrecognised negative sentinel is now bounded by an already-frozen threshold, because the extract carries exactly one negative-but-not-sentinel cell in roughly 4.1 million against an otherwise contiguous non-negative support ... every figure derived from this extract carries the post-hoc label.\" Plain: 'one malformed value among ~4.1 million cells would have aborted the run; we let the pre-frozen unparseable-share threshold (1%) govern it instead. No constant was added and no number changed; because the change was made after seeing the data, all real-data figures are labelled post-hoc.' 'Post-hoc label' as a noun is internal."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-47",
+  "verdict": "WEAKENED",
+  "title": "Discussion leans on codenames and an awkward noun stack; restates §4 opening",
+  "severity": "MINOR",
+  "location": "§5",
+  "detail": "Two limbs hold: 'averaged over the population of sites calibration sampled' (line 194 and abstract line 13) is genuinely hard to parse, and the Discussion leans on E1/E2/E3/E4 codes (line 194-196; folds into VEN-6). The third limb is stale: 'restates the §4 opening' — 2aafbe8 (2026-08-10) already rephrased '5.5's near-verbatim repetition of 4's opening'; line 198 no longer contains 'cannot separate a certificate that holds because the method is sound' (that phrase is only at line 122), and the paragraph is a synthesis of both evidence bases, not a repeat."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-48",
+  "verdict": "WEAKENED",
+  "title": "Limitations is a single ~450-word paragraph with jargon",
+  "severity": "MINOR",
+  "location": "§6.1",
+  "detail": "§6.1 (line 206) is 406 words in one paragraph and the two quoted phrases are unglossed — the 400-cluster clause is already scheduled for rewording by the claim audit (PHASE1 P1-3, 'hedge as an effective-sample-size estimate'). But the single-paragraph form was a deliberate compression choice under the 25-page cap (commit c017b92: 'Limitations into one compact paragraph naming all twelve boundaries'); itemising costs roughly a third of a page and needs an offsetting cut (the VEN-39/40/41 dedups could fund it). Restated: plain-language fixes are actionable now; itemisation is a layout option contingent on page budget."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-49",
+  "verdict": "CONFIRMED",
+  "title": "'Declines rather than issue a certificate it cannot support' / 'honest' framing repeated ≥7 times",
+  "severity": "MINOR",
+  "location": "§1 contribution 1 & 2; §3.6; §4.2; §4.3; §4.10; §6; §6.1",
+  "detail": "\"what honest certification costs\" (§1); \"certifies or declines rather than issue a certificate it cannot support\" (§1); \"declines rather than falls back\" (§3.6); \"the system declines rather than issue a certificate it cannot support\" (§4.2); \"That is the honest behavior, not a fallback\" and \"refuses rather than repeat the baseline's overclaim\" (§4.3); \"the refusal is the system working rather than failing\" (§4.10); \"a certificate whose honesty features travel with it\" (§6); \"the correction refuses honestly\" (§6.1). The point is made by the numbers; keep one or two."
+ },
+ {
+  "lane": "venue",
+  "id": "VEN-50",
+  "verdict": "CONFIRMED",
+  "title": "Multiple near-synonyms for the certified quantity and for experiment 'arms'",
+  "severity": "MINOR",
+  "location": "Throughout §3–§4",
+  "detail": "'answered-set risk', 'answered risk', 'answered error', 'answered-set error', 'answered 0–1 error', 'certified quantity', 'estimand', 'RM' are used for the same or two closely related quantities; the reader must remember that 'answered error' (record average) ≠ RM (influence-weighted), a distinction §4.7 and Table 3 rely on. Likewise 'arm' labels many things ('E1's exchangeable arm', 'heterogeneity arm', 'pooled target arm', 'per-hospital arm', 'E5's synthetic arm'). Fix two names in §3.3 (e.g. 'answered error' vs 'certified risk RM') and use them consistently."
+ },
+ {
+  "lane": "skeptic",
+  "id": "SKP-1",
+  "verdict": "CONFIRMED",
+  "title": "Real-data operating characteristics are missing; the composition disclosure understates that the alpha=0.10 budget on eICU is met by an always-negative rule",
+  "severity": "MAJOR",
+  "location": "C:/Users/tonyt/OneDrive/Documents/Claude/Projects/certgate/paper/draft.md lines 172, 188, 194, 202, 206; Table 3 (lines 422-435); Table S5 (lines 334-341); SI A.4 line 282",
+  "detail": "Steelman: the disclosure IS prominent (abstract last sentence, a dedicated §4.10 paragraph, §5, §6, and SI A.4 calls the skill margin 'thin'). What is missing is the content the paper itself says carries the evidence. §3.1/§4.2 set the standard ('a budget on an error rate can in principle be met by a degenerate rule', 'the sensitivity and composition columns are what show the gate doing work') and Table S5 applies it to E1/E6 only. From experiments/out/EICU_reliability_panel.json replicate 0 (published split): n_answered 12,964; n_predicted_positive 63 (0.49%); answered deaths 594; bin [0.55,1.0] n=63 observed 0.905 -> TP 57, FP 6, FN 537, TN 12,364. So sensitivity among answered deaths = 0.096, sensitivity vs all 1,362 pool deaths = 0.042, PPV 0.905, FN share of answered errors 537/543 = 0.99, and the constant always-negative rule errs at 0.0458 on the answered set -- less than half of alpha. The declined 2,205 records hold 768/1,362 = 56% of the deaths. EICU_diagnostics.json composition_three_way replicate 0 gives predicted 0.0049 / BBSE-implied 0.0307 / oracle 0.0458 -- the predicted-class column understates the true positive load 9x, yet §4.10 reports only the oracle number while §4.7 makes a point of the E6 'about a third' gap and §3.8 (line 110) sells the three-way report as the artifact that reveals exactly this. Quotable oversell a cynic will use: §6.1 'roughly three quarters of answered errors are false negatives at this prevalence' (eICU: ~99%; the 3/4 is the synthetic E1 figure); §4.10/§6 'reaches its budget partly by abstaining where deaths concentrate' ('partly' when composition alone meets the budget with 2x margin and the head adds 0.0039); §5 'its selective quality would be priced visibly as certified coverage' (coverage 0.855 priced nothing here -- the price sat in composition); §5 'for any reader tempted to call alpha=0.10 weak, E4 prices the stricter rung in units of sites' (at 4.6% answered mortality alpha=0.10 does not bind anything the head does); §4.10 line 172 'answering 12,964 of 15,169 ... at an answered error of 0.0419' with no mention that 63 of those answers are positive. Fix: an eICU row in Table S5 (TP/FP/FN/TN, sensitivity, PPV, predicted-positive fraction) or in Table 3; the three-way composition line for eICU in §4.10 with the same reading given to E6; replace 'partly' with the always-negative comparison in the main text; give the eICU FN share in §6.1."
+ },
+ {
+  "lane": "skeptic",
+  "id": "SKP-2",
+  "verdict": "WEAKENED",
+  "title": "E7 does not demonstrate record-as-unit failure at the heterogeneity the paper calls realistic, and eICU came in below that; the comparator was never run on eICU",
+  "severity": "MAJOR",
+  "location": "C:/Users/tonyt/OneDrive/Documents/Claude/Projects/certgate/paper/draft.md line 158 (§4.8, closing sentence), line 31 (contribution 1), line 186 (P2), line 302 (Fig S6 caption); experiments/out/summary.md E7 block",
+  "detail": "Numbers verified against experiments/out/summary.md E7 and E7_comparator.csv: at s_u=0.5, alpha=0.05 the record certifier certifies 200/200 and exceeds the aggregate budget on 7/200 = 0.035 (exact 95% CI [0.014, 0.071]); at alpha=0.10 the two units are numerically indistinguishable (R_M 0.0576 vs 0.0573, tau 0.55 vs 0.5531). Not previously closed (S1-13 added E7; no audit discussed the s_u=0.5 reading). But the finding overstates: 'contradicted by the paper's own s_u=0.5 row' should read 'unsupported at s_u=0.5' — 7/200 with a CI reaching 0.071 does not establish the record certificate valid either, and Contribution 1 (line 31) is already scoped ('up to twice delta under between-site heterogeneity'); the only unqualified sentence is Section 4.8's closing line 158, and Fig S6's caption reports both arms. Also, P2's 0.027 vs 0.055 is the per-site exceedance fraction at the deployed tau — a joint function of margin-to-alpha and dispersion (eICU runs at tau 0.85 with answered error 0.048 against alpha 0.10) — not a heterogeneity measurement per se, though the paper's own P2 wording invites the reviewer's reading. Defense (iv), running the record-unit certifier on eICU, is a new experiment a prose pass cannot do. Actionable prose remainder: qualify line 158 to the heterogeneity arm; give the s_u=0.5 reading honestly (record certifier granted the rung the site unit refused, exceedance inside delta but with a CI that does not exclude it, and its validity rests on an intra-site correlation no unlabeled-data procedure certifies, whereas the site-unit certificate held at every s_u); state that the 2,000-record subsample (~24 records/site vs ~700 in full S_cal; SPEC.md:1135, run_synthetic.py:58 give no rationale beyond runtime) understates the design effect and so flatters the comparator; and add to Section 6.1 that the record comparator was not run on eICU."
+ },
+ {
+  "lane": "skeptic",
+  "id": "SKP-3",
+  "verdict": "CONFIRMED",
+  "title": "The 'clinically legible' abstention driver is the severity axis -- the mechanism of the composition effect -- and the text does not connect the two",
+  "severity": "MINOR",
+  "location": "C:/Users/tonyt/OneDrive/Documents/Claude/Projects/certgate/paper/draft.md line 184 (§4.10 'What the abstentions point at'), line 186 (P4), line 188",
+  "detail": "With s(x)=max(p,1-p) and tau*=0.85, the declined band is p in (0.15, 0.85) -- every mid- and high-risk stay at 9% prevalence. The drivers reported (Glasgow motor score, FiO2, day-1 intubation; EICU_diagnostics.json abstention_gap_ranking: aps_motor, aps_fio2, aps_ph, aps_intubated) are the day-1 severity markers, so the 'stable and clinically legible' driver is a re-description of 'the gate withholds on the sick' -- i.e. the same fact the next paragraph discloses as the gate's cost. The paragraph reads as an explainability success ('replicates in the way E5's synthetic arm could not', 'what a clinician reviewing a deferred case would be shown') and P4's falsification (physiology, not missingness, drives abstention) is welcomed without noting that physiology-driven abstention at this prevalence is exactly how the answered set loses 56% of its deaths. A cynic quotes line 184 against line 188. Fix: one bridging sentence ('the drivers are severity markers; this is the feature-level face of the composition disclosure below') and temper 'contested' -- contested for the head, not clinically ambiguous."
+ },
+ {
+  "lane": "skeptic",
+  "id": "SKP-4",
+  "verdict": "CONFIRMED",
+  "title": "Comparator paragraph reassures where the numbers show range restriction, and 'in the head's favour' is a comparison on a denominator the head chose",
+  "severity": "MINOR",
+  "location": "C:/Users/tonyt/OneDrive/Documents/Claude/Projects/certgate/paper/draft.md line 178 (§4.10 'Comparator'), line 282 (SI A.4), Table 3 line 435",
+  "detail": "'The answered set is a population on which a mature clinical score behaves about as it does in the literature' -- APACHE-IVa AUC on the answered set is 0.820, against the ~0.87 the paper's own F-D leg cites for this outcome (EICU-SUMMARY.md F-D discrimination note) and the ~0.88 of the original validation. A 0.05-0.06 AUC drop on the answered subset is the composition effect in a third currency (the discriminable deaths were declined), presented as reassurance. Second, the like-for-like Brier 'in the head's favour' (0.037104 vs 0.038079) is scored on records the head selected by its own confidence, and the head was fit on same-era eICU hospitals while APACHE-IVa was developed on 2002-03 data -- two advantages a reviewer will name. Fix: state that the AUC drop is range restriction from declining high-risk cases, and that the Brier comparison favours a model on cases it chose and from the same era; keep 'orientation, not a contest' and drop 'in the head's favour' or qualify it."
+ },
+ {
+  "lane": "skeptic",
+  "id": "SKP-5",
+  "verdict": "WEAKENED",
+  "title": "E3's outcome is fixed by its own precondition and run at one large magnitude; 'a validation design that can fail' overstates what it tests",
+  "severity": "MINOR",
+  "location": "C:/Users/tonyt/OneDrive/Documents/Claude/Projects/certgate/paper/draft.md line 140 (§4.4), line 34 (contribution 4), line 298 (Fig S4 caption); experiments/out/summary.md E3 block",
+  "detail": "Facts verified: summary.md E3 is a single point (concept_intercept 2.0, verified_mean_answered_risk 0.161 = 2.8x E1's 0.0567, rm_exceed_rate 1.0, hard 0.70) while E2 sweeps five magnitudes; the certify rate is inherited from untilted calibration and the estimand exceedance is guaranteed once the poison check passes at this magnitude, so E3 tests the harness's ability to register a violation plus the assumption boundary. But the framing is not a defect: a negative control is supposed to fail, and the verified-poison step guards against a control that trivially passes — the panel credited exactly this machinery (paper/review/risk-crosscheck.md Row F, 'Neutralized'; R2-70), and its specification attack (R1-11, relabelled prior shift) was the residual risk, not this one. 'Verified certain to fail' is a rhetorical exposure of the wording at line 34 ('verified capable of failing') and line 140, not a flaw in the design. A mild-tilt point is a new experiment, out of prose scope. Actionable remainder: reword Contribution 4 / Section 4.4 so E3 is a scope demonstration and scorer positive control, name E1/E2/E7 and F-A–F-E as the arms where the method could have failed, and state the single-magnitude limitation."
+ },
+ {
+  "lane": "skeptic",
+  "id": "SKP-6",
+  "verdict": "CONFIRMED",
+  "title": "The 'alarm that fired backwards' is a two-fold outcome-informative absence at the cap's magnitude; the screen was one-sided and the text reads it as clearance",
+  "severity": "MINOR",
+  "location": "C:/Users/tonyt/OneDrive/Documents/Claude/Projects/certgate/paper/draft.md lines 180-182 (§4.10 leak screens); EICU-SUMMARY.md E-9 warning; EICU-PROTOCOL.md §5.5",
+  "detail": "The registered cap was one-sided (absent:present ratio > 2.0). Measured 0.506: ln(0.506) = -0.681 against ln(2) = 0.693 -- the association is at the cap's magnitude, inverted; a two-sided cap at [0.5, 2.0] would have missed aborting by 0.006. Whole-row APACHE absence encodes stay length (median 27.8h vs 40.7h) -- for a day-1 model that is a prediction-time exposure in the survival direction, and the paper's own explanation ('early discharge rather than early death dominates the absence') is a description of that channel, not a clearance of it. Two __missing indicators (apv_ejectfx 4.33x, apv_electivesurgery 2.66x) exceeded the cap and stayed in the model because the abort was scoped to the two whole-row flags (pre-registered in A1, but the reader is not told the scope was pre-data). The only thing bounding any of this in either direction is the pre-registered ablation leg (<= 0.0063 AUC), and the text does not say that is what it is relying on. Quotables: 'fired in the wrong direction', 'The registered mechanism is sound in principle and is not what governs this extract'. Fix: one sentence stating that the inverse ratio is itself a two-fold outcome association at the cap's magnitude, that the ratio screen was registered one-sided, that the direction-agnostic ablation leg is the bound, and that whole-row absence encodes stay length (a prediction-time exposure to list in §6.1)."
+ },
+ {
+  "lane": "skeptic",
+  "id": "SKP-7",
+  "verdict": "CONFIRMED",
+  "title": "P4's reinterpretation is not marked as pre-data in the text, and the 'seven predictions' paragraph invites the reading that no falsification could have hurt the method",
+  "severity": "MINOR",
+  "location": "C:/Users/tonyt/OneDrive/Documents/Claude/Projects/certgate/paper/draft.md line 186 (§4.10 'The seven predictions'); EICU-PROTOCOL.md amendment log rows A1 (line 59) and A6 (line 64)",
+  "detail": "The protocol log records A1 (P4 confirmation = leak signature) with data-seen NO, so the reinterpretation is legitimate -- but the paper says only 'under the amendment that identified APACHE absence as a potential leak channel', which a reviewer will read as a post-hoc rescue of a falsified prediction; the reader can only infer pre-data status from the separate 'one amendment was made after the extract was read' sentence four paragraphs later. Secondary: P3 and P5 are no-lose predictions (either outcome is reportable as fine), and all three falsifications landed in the benign direction; the paragraph should say plainly that the tests that could have hurt the method were P1/P6 through F-B and the three F-D legs, not the seven predictions as a set. Fix: add 'logged before the extract was read (A1, data-seen: no)' to the P4 sentence and one clause naming where the teeth are."
+ }
+]
