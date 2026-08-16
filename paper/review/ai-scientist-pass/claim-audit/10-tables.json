@@ -3,32 +3,32 @@
   "line_range": [398, 436],
   "claims": [
     {
-      "quote": "E6 three-way answered-set composition ($n_{\\text{answered}} = 25{,}314$)",
+      "quote": "Table 1. E6 three-way answered-set composition ($n_{\\text{answered}} = 25{,}314$)",
       "value": "25314",
       "source": "experiments/out/E6_composition.json composition.*.n_answered = 25314.0",
       "status": "TRACED",
-      "note": "identical across all three estimator blocks"
+      "note": "Same value in all three composition entries."
     },
     {
       "quote": "sits just under the ~9.5% cohort prevalence",
-      "value": "~0.095",
-      "source": "certgate/data.py:51 base_rate: float = 0.095 (synthetic generator default); also summary.md E2 target_base 0.095",
+      "value": "0.095",
+      "source": "certgate/data.py:51 SimConfig.base_rate = 0.095 (frozen synthetic generator default)",
       "status": "TRACED",
-      "note": "oracle fraction 0.0915 < 0.095, so 'just under' holds"
+      "note": "Generator base rate; also appears as the 0.095 source rate in run_synthetic.py (E2 sweep null-shift arm). Oracle 0.0915 < 0.095 is consistent with 'just under'."
     },
     {
       "quote": "the predicted-class column understates it by about a third",
-      "value": "~1/3",
-      "source": "derived from E6_composition.json: 1 - 0.063048/0.091491 = 0.3109",
-      "status": "TRACED",
-      "note": "derived comparison of two traced values; 31% is 'about a third'"
+      "value": "1 - 0.0630/0.0915 = 0.311",
+      "source": "derived from E6_composition.json values in the same table",
+      "status": "ANALYTIC",
+      "note": "Arithmetic on the table's own traced values; 31.1% ~ 'about a third'."
     },
     {
       "quote": "Predicted-class | 0.0630",
       "value": "0.0630",
       "source": "experiments/out/E6_composition.json composition.predicted_class.positive_fraction = 0.06304811566721973",
       "status": "TRACED",
-      "note": "display rounding to 4 dp"
+      "note": "4-dp display rounding."
     },
     {
       "quote": "Predicted-class ... 1,596 / 25,314",
@@ -42,28 +42,28 @@
       "value": "0.0858",
       "source": "experiments/out/E6_composition.json composition.bbse_true_class.positive_fraction = 0.0857576903004051",
       "status": "TRACED",
-      "note": "display rounding to 4 dp"
+      "note": "4-dp display rounding."
     },
     {
       "quote": "2,170.9 expected",
       "value": "2170.9",
       "source": "experiments/out/E6_composition.json composition.bbse_true_class.expected_n_positive = 2170.8701722644546",
       "status": "TRACED",
-      "note": "display rounding to 1 dp"
+      "note": "1-dp display rounding."
     },
     {
       "quote": "$\\hat{\\rho} = 0.830$",
       "value": "0.830",
       "source": "experiments/out/E6_composition.json composition.bbse_true_class.rho = 0.8296804526028088",
       "status": "TRACED",
-      "note": "display rounding to 3 dp"
+      "note": "3-dp display rounding."
     },
     {
       "quote": "Oracle true-class | 0.0915",
       "value": "0.0915",
       "source": "experiments/out/E6_composition.json composition.oracle_true_class.positive_fraction = 0.09149087461483764",
       "status": "TRACED",
-      "note": "display rounding to 4 dp"
+      "note": "4-dp display rounding."
     },
     {
       "quote": "Oracle true-class ... 2,316 / 25,314",
@@ -73,114 +73,128 @@
       "note": ""
     },
     {
+      "quote": "Table 2. eICU-CRD v2.0 attrition ledger",
+      "value": "v2.0",
+      "source": "dataset version metadata",
+      "status": "OUT_OF_SCOPE",
+      "note": "Dataset-version fact, consistent with EICU-SUMMARY.md header and EICU-PROTOCOL.md; not a result number."
+    },
+    {
+      "quote": "Three filters standard in published eICU cohorts are deliberately absent",
+      "value": "3",
+      "source": "self-enumerated in the same caption (LOS floor, min-stays-per-hospital, APACHE-availability); mirrors EICU-PROTOCOL.md conventions table rows 1, 2, 4",
+      "status": "ANALYTIC",
+      "note": "Count is internally verified by the caption's own enumeration; the 'standard in published cohorts' part is a literature characterization recorded in EICU-PROTOCOL.md."
+    },
+    {
       "quote": "the protocol projected before the extract was read that a 500-stay threshold would leave roughly 46 hospitals",
       "value": "500-stay threshold; ~46 hospitals",
-      "source": "EICU-PROTOCOL.md:155 'A Johnson-style `>= 500 stays` hospital filter leaves roughly 46 hospitals'; also line 979 'leaves ~46 hospitals'",
+      "source": "EICU-PROTOCOL.md sec 2.3 (line 155): 'A Johnson-style >= 500 stays hospital filter leaves roughly 46 hospitals'",
       "status": "TRACED",
-      "note": "claim is about the pre-extract protocol projection; protocol is the correct home for it"
+      "note": "Protocol was the pre-extract projection; draft correctly attributes it as a projection."
     },
     {
       "quote": "on the released extract it leaves 99 of the 207",
       "value": "99 of 207",
-      "source": "experiments/out/EICU_preflight.json site_stay_counts.primary-cohort: n_sites = 207, n_below_500 = 108 -> 207 - 108 = 99 at >= 500",
+      "source": "experiments/out/EICU_preflight.json site_stay_counts['primary-cohort']: n_sites = 207, n_below_500 = 108; 207 - 108 = 99",
       "status": "TRACED",
-      "note": "derived by subtraction from the primary-cohort stage counts"
+      "note": "Derived by subtraction from the measured below-500 count at the primary-cohort stage. (Note: n_below_500 = 99 at the raw-unit-stays stage is a coincidence of the same numeral; the correct stage-consistent derivation is 207 - 108 = 99.)"
     },
     {
       "quote": "about 30 calibration clusters under this section's split",
       "value": "~30",
-      "source": "derived: (99 - 24 target) x cal share 74/183 = 30.3; split fractions from EICU_preflight.json reference_check.split_projection (n_target 24, n_cal 74, rest 183)",
+      "source": "derived: (99 sites - 24 target held out) x 0.40 cal fraction = 30; certgate/constants.py:12 SPLIT_FRACTIONS = (0.40, 0.20, 0.40); n_target = 24 per EICU_preflight.json reference_check.split_projection",
       "status": "TRACED",
-      "note": "no direct artifact key; arithmetic from artifact-anchored inputs reproduces ~30 under the fixed-24-target split rule the run uses"
+      "note": "Derivation from a traced count and frozen split constants; matches the 207-site projection's proportions (rest 183 -> cal 74)."
     },
     {
       "quote": "still below the 50 the gate requires",
       "value": "50",
       "source": "certgate/constants.py:23 MIN_CAL_CLUSTERS = 50; also EICU_preflight.json split_projection.min_cal_clusters = 50",
       "status": "TRACED",
-      "note": ""
+      "note": "Frozen constant (audit B-5)."
     },
     {
       "quote": "17 of the 207 primary-cohort hospitals contribute no rows to that table",
       "value": "17 of 207",
-      "source": "experiments/out/EICU-SUMMARY.md EICU-PREFLIGHT warnings T-4 '17 hospitals have ZERO apachePatientResult rows'; site_selection 207 primary vs 190 apache-result-linked (207-190=17)",
+      "source": "EICU_preflight.json / EICU-SUMMARY.md preflight warning T-4: '17 hospitals have ZERO apachePatientResult rows'; n_sites_primary_cohort = 207",
       "status": "TRACED",
-      "note": ""
+      "note": "Consistent with attrition 207 -> 190 at apache-result-linked (207 - 190 = 17)."
     },
     {
       "quote": "raw unit stays | 200,859 | 208 | 18,004 | 0.0896",
       "value": "200859 / 208 / 18004 / 0.0896",
-      "source": "EICU-SUMMARY.md (and EICU_preflight.json) attrition step raw-unit-stays: 200859 / 208 / 18004 / 0.08963501759941053",
+      "source": "experiments/out/EICU_attrition.csv row raw-unit-stays: 200859, 208, 18004, 0.089635",
       "status": "TRACED",
-      "note": "prevalence rounded to 4 dp"
+      "note": "Prevalence 4-dp rounding of 0.089635."
     },
     {
       "quote": "site-parseable | 200,859 | 208 | 18,004 | 0.0896",
       "value": "200859 / 208 / 18004 / 0.0896",
-      "source": "attrition step site-parseable: 200859 / 208 / 18004 / 0.08963501759941053",
+      "source": "experiments/out/EICU_attrition.csv row site-parseable: 200859, 208, 18004, 0.089635",
       "status": "TRACED",
       "note": ""
     },
     {
       "quote": "outcome known | 199,108 | 207 | 18,004 | 0.0904",
       "value": "199108 / 207 / 18004 / 0.0904",
-      "source": "attrition step outcome-known: 199108 / 207 / 18004 / 0.09042328786387287",
-      "status": "TRACED",
-      "note": "prevalence rounded to 4 dp"
-    },
-    {
-      "quote": "adult | 198,490 | 207 | 17,982 | 0.0906",
-      "value": "198490 / 207 / 17982 / 0.0906",
-      "source": "attrition step adult: 198490 / 207 / 17982 / 0.09059398458360622",
-      "status": "TRACED",
-      "note": "prevalence rounded to 4 dp"
-    },
-    {
-      "quote": "first stay per admission | 164,322 | 207 | 14,603 | 0.0889",
-      "value": "164322 / 207 / 14603 / 0.0889",
-      "source": "attrition step first-stay: 164322 / 207 / 14603 / 0.08886819780674529",
-      "status": "TRACED",
-      "note": "prevalence rounded to 4 dp"
-    },
-    {
-      "quote": "**primary cohort** | **164,322** | **207** | **14,603** | **0.0889**",
-      "value": "164322 / 207 / 14603 / 0.0889",
-      "source": "attrition step primary-cohort: 164322 / 207 / 14603 / 0.08886819780674529",
+      "source": "experiments/out/EICU_attrition.csv row outcome-known: 199108, 207, 18004, 0.090423",
       "status": "TRACED",
       "note": ""
     },
     {
-      "quote": "*(diagnostic)* APACHE-APS linked | 157,403 | 207 | 14,285 | 0.0908",
+      "quote": "adult | 198,490 | 207 | 17,982 | 0.0906",
+      "value": "198490 / 207 / 17982 / 0.0906",
+      "source": "experiments/out/EICU_attrition.csv row adult: 198490, 207, 17982, 0.090594",
+      "status": "TRACED",
+      "note": ""
+    },
+    {
+      "quote": "first stay per admission | 164,322 | 207 | 14,603 | 0.0889",
+      "value": "164322 / 207 / 14603 / 0.0889",
+      "source": "experiments/out/EICU_attrition.csv row first-stay: 164322, 207, 14603, 0.088868",
+      "status": "TRACED",
+      "note": ""
+    },
+    {
+      "quote": "primary cohort | 164,322 | 207 | 14,603 | 0.0889",
+      "value": "164322 / 207 / 14603 / 0.0889",
+      "source": "experiments/out/EICU_attrition.csv row primary-cohort: 164322, 207, 14603, 0.088868",
+      "status": "TRACED",
+      "note": ""
+    },
+    {
+      "quote": "(diagnostic) APACHE-APS linked | 157,403 | 207 | 14,285 | 0.0908",
       "value": "157403 / 207 / 14285 / 0.0908",
-      "source": "attrition step apache-aps-linked: 157403 / 207 / 14285 / 0.09075430582644549",
+      "source": "experiments/out/EICU_attrition.csv row apache-aps-linked: 157403, 207, 14285, 0.090754",
       "status": "TRACED",
-      "note": "prevalence rounded to 4 dp"
+      "note": ""
     },
     {
-      "quote": "*(diagnostic)* APACHE-result linked | 138,496 | 190 | 12,270 | 0.0886",
+      "quote": "(diagnostic) APACHE-result linked | 138,496 | 190 | 12,270 | 0.0886",
       "value": "138496 / 190 / 12270 / 0.0886",
-      "source": "attrition step apache-result-linked: 138496 / 190 / 12270 / 0.08859461645101664",
+      "source": "experiments/out/EICU_attrition.csv row apache-result-linked: 138496, 190, 12270, 0.088595",
       "status": "TRACED",
-      "note": "prevalence rounded to 4 dp"
+      "note": ""
     },
     {
-      "quote": "*(diagnostic)* APACHE complete | 135,127 | 190 | 11,959 | 0.0885",
+      "quote": "(diagnostic) APACHE complete | 135,127 | 190 | 11,959 | 0.0885",
       "value": "135127 / 190 / 11959 / 0.0885",
-      "source": "attrition step apache-complete-arm: 135127 / 190 / 11959 / 0.08850192781605452",
+      "source": "experiments/out/EICU_attrition.csv row apache-complete-arm: 135127, 190, 11959, 0.088502",
       "status": "TRACED",
-      "note": "prevalence rounded to 4 dp"
+      "note": ""
     },
     {
       "quote": "certification over 20 by-site re-splits of one hospital population",
       "value": "20",
-      "source": "EICU-SUMMARY.md EICU-POOLED replicates = 20",
+      "source": "EICU-SUMMARY.md EICU-POOLED replicates = 20; EICU_pooled.csv has 20 replicates per rung",
       "status": "TRACED",
       "note": ""
     },
     {
       "quote": "Twenty-four hospitals are held out per re-split",
       "value": "24",
-      "source": "EICU_preflight.json reference_check.split_projection.n_target = 24; EICU-RELIABILITY n_sites mean 24.0",
+      "source": "EICU_preflight.json reference_check.split_projection.n_target = 24; run_eicu pooled arm K = 24",
       "status": "TRACED",
       "note": ""
     },
@@ -192,95 +206,88 @@
       "note": ""
     },
     {
-      "quote": "mean answered error and mean $R_M$ rows are numerically coincident at 0.0478",
-      "value": "0.0478 = 0.0478",
-      "source": "EICU-SUMMARY.md EICU-POOLED rungs['0.1'].mean_rm_fresh = 0.0478; EICU-COMPARATOR rungs['0.1'].mean_certgate_answered_err = 0.0478",
+      "quote": "numerically coincident at 0.0478 (0.047825 against 0.047829 before rounding)",
+      "value": "0.047825 (answered error) vs 0.047829 (R_M)",
+      "source": "recomputed from experiments/out/EICU_pooled.csv alpha=0.1 rows: mean(answered_err_rate) = 0.047825, mean(rm_fresh) = 0.0478290; 4-dp forms in EICU-SUMMARY.md (mean_rm_fresh 0.0478, EICU-COMPARATOR mean_certgate_answered_err 0.0478)",
       "status": "TRACED",
-      "note": ""
+      "note": "Both 6-dp values verified by direct computation over the 20 published per-replicate rows."
     },
     {
-      "quote": "0.047825 against 0.047829 before rounding",
-      "value": "0.047825 / 0.047829",
-      "source": "recomputed from experiments/out/EICU_pooled.csv alpha=0.1 rows: mean(answered_err_rate) = 0.047825 exactly; mean(rm_fresh) = 0.04782895 -> 0.047829 at 6 dp",
+      "quote": "| $\\alpha = 0.05$ | $\\alpha = 0.10$ |",
+      "value": "0.05, 0.10",
+      "source": "certgate/constants.py:13 ALPHA_LADDER = (0.05, 0.10); EICU-SUMMARY.md alpha ladder (0.05, 0.1)",
       "status": "TRACED",
-      "note": "verified by summing all 20 replicate rows"
+      "note": "Frozen constant."
     },
     {
       "quote": "Replicates certifying (of 20) | 0 | 20",
-      "value": "0 (alpha=0.05); 20 (alpha=0.10)",
-      "source": "EICU-POOLED rungs['0.05'].n_certified = 0; rungs['0.1'].n_certified = 20 (n_replicates 20)",
-      "status": "TRACED",
-      "note": ""
-    },
-    {
-      "quote": "$\\alpha = 0.05$ | $\\alpha = 0.10$ (column rungs)",
-      "value": "0.05, 0.10",
-      "source": "EICU-SUMMARY.md header 'alpha ladder: (0.05, 0.1), delta: 0.05' (frozen ladder)",
+      "value": "0 (alpha=0.05), 20 (alpha=0.10), of 20",
+      "source": "EICU-SUMMARY.md EICU-POOLED rungs: 0.05 n_certified = 0 / n_replicates = 20; 0.1 n_certified = 20",
       "status": "TRACED",
       "note": ""
     },
     {
       "quote": "Mean deployed $\\tau^*$ | — | 0.793",
       "value": "0.793",
-      "source": "EICU-POOLED rungs['0.1'].mean_tau = 0.793; CSV tau column mean over 20 replicates = 0.793",
+      "source": "EICU-SUMMARY.md EICU-POOLED rungs['0.1'].mean_tau = 0.793; recomputed 0.7930 from EICU_pooled.csv",
       "status": "TRACED",
       "note": ""
     },
     {
       "quote": "Mean coverage | — | 0.890",
       "value": "0.890",
-      "source": "EICU-POOLED rungs['0.1'].mean_coverage = 0.8904",
+      "source": "EICU-SUMMARY.md EICU-POOLED rungs['0.1'].mean_coverage = 0.8904",
       "status": "TRACED",
-      "note": "display rounding to 3 dp"
+      "note": "3-dp display rounding of 0.8904 (recomputed 0.8904 from CSV)."
     },
     {
       "quote": "Mean answered error | — | 0.0478",
       "value": "0.0478",
-      "source": "EICU-COMPARATOR rungs['0.1'].mean_certgate_answered_err = 0.0478; CSV mean 0.047825",
+      "source": "EICU-SUMMARY.md EICU-COMPARATOR rungs['0.1'].mean_certgate_answered_err = 0.0478; recomputed 0.047825 from EICU_pooled.csv answered_err_rate",
       "status": "TRACED",
       "note": ""
     },
     {
       "quote": "Mean $R_M$ on the held-out pool | — | 0.0478",
       "value": "0.0478",
-      "source": "EICU-POOLED rungs['0.1'].mean_rm_fresh = 0.0478",
+      "source": "EICU-SUMMARY.md EICU-POOLED rungs['0.1'].mean_rm_fresh = 0.0478; recomputed 0.047829 from EICU_pooled.csv rm_fresh",
       "status": "TRACED",
       "note": ""
     },
     {
       "quote": "Replicates with $R_M > \\alpha$ | — | 0",
       "value": "0",
-      "source": "EICU-POOLED rungs['0.1'].rm_exceed_rate = 0.0; failure_criteria F-A n_rm_exceed = 0; CSV rm_exceed all False",
+      "source": "EICU-SUMMARY.md EICU-POOLED rungs['0.1'].rm_exceed_rate = 0.0; failure_criteria['F-A'].n_rm_exceed = 0; EICU_pooled.csv rm_exceed all False",
       "status": "TRACED",
       "note": ""
     },
     {
       "quote": "Mean per-site exceedance fraction | — | 0.0271",
       "value": "0.0271",
-      "source": "EICU-POOLED rungs['0.1'].mean_per_site_exceed_frac = 0.0271; CSV per_site_exceed_frac mean = 0.0271",
+      "source": "EICU-SUMMARY.md EICU-POOLED rungs['0.1'].mean_per_site_exceed_frac = 0.0271; recomputed 0.0271 from EICU_pooled.csv",
       "status": "TRACED",
       "note": ""
     },
     {
       "quote": "Per-hospital pools certifying (of 480) | 0 | 477",
       "value": "0 and 477 of 480",
-      "source": "EICU-PERSITE n_pools = 480; rungs['0.05'].n_certified = 0; rungs['0.1'].n_certified = 477",
+      "source": "EICU-SUMMARY.md EICU-PERSITE: n_pools = 480; rungs['0.05'].n_certified = 0; rungs['0.1'].n_certified = 477",
       "status": "TRACED",
-      "note": "480 = 20 replicates x 24 target hospitals"
+      "note": "480 = 20 replicates x 24 target hospitals."
     },
     {
       "quote": "Per-hospital hard-violation rate (diagnostic) | — | 0.0147",
       "value": "0.0147",
-      "source": "EICU-PERSITE rungs['0.1'].hard_violation_rate_diag = 0.0147",
+      "source": "EICU-SUMMARY.md EICU-PERSITE rungs['0.1'].hard_violation_rate_diag = 0.0147",
       "status": "TRACED",
-      "note": "draft correctly labels it a dispersion diagnostic with no delta target, matching the artifact note"
+      "note": "Caption correctly labels it a dispersion diagnostic with no delta target, matching the artifact's own note."
     },
     {
       "quote": "APACHE-IVa AUC on the answered set | — | 0.820",
       "value": "0.820",
-      "source": "EICU-COMPARATOR rungs['0.1'].mean_apache_iva_auc = 0.8203",
+      "source": "EICU-SUMMARY.md EICU-COMPARATOR rungs['0.1'].mean_apache_iva_auc = 0.8203",
       "status": "TRACED",
-      "note": "display rounding to 3 dp"
+      "note": "3-dp display rounding of 0.8203."
     }
   ]
 }

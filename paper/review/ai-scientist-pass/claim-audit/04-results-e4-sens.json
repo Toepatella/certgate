@@ -1,0 +1,314 @@
+{
+  "section": "S4.5 E4 + S4.6 E5 + S4.7 E6 + S4.8 E7 + S4.9 sensitivity",
+  "line_range": [142, 163],
+  "claims": [
+    {
+      "quote": "sweeps the site count over {60, 100, 150, 208, 300, 400} at both rungs",
+      "value": "[60,100,150,208,300,400]; rungs alpha in {0.05,0.10}",
+      "source": "experiments/out/summary.md E4 key 'sweep' = [60,100,150,208,300,400]; grid keys '0.05'/'0.1'; certgate/constants.py ALPHA_LADDER=(0.05,0.10)",
+      "status": "TRACED",
+      "note": "exact match"
+    },
+    {
+      "quote": "At alpha = 0.10 certification switches on at 150 sites and holds (certify rates [0.0, 0.0, 1.0, 1.0, 1.0, 1.0]",
+      "value": "[0.0, 0.0, 1.0, 1.0, 1.0, 1.0]",
+      "source": "experiments/out/summary.md E4 grid['0.1'].certify_rate per n_sites 60..400",
+      "status": "TRACED",
+      "note": "exact match; 'switches on at 150' is a restatement of the 0->1 transition at n_sites=150"
+    },
+    {
+      "quote": "coverage 0.9818 at the 208-site operating point",
+      "value": "0.9818",
+      "source": "experiments/out/summary.md E4 grid['0.1'][n_sites=208].mean_coverage = 0.9818",
+      "status": "TRACED",
+      "note": "exact match"
+    },
+    {
+      "quote": "The 60- and 100-site declines come from the 50-record-carrying-cluster gate, not the betting test's information floor",
+      "value": "gate constant 50; gate-limited points {60,100}",
+      "source": "certgate/constants.py MIN_CAL_CLUSTERS=50; experiments/out/summary.md E4 gate_limited_n_sites=[60,100] + gate_note",
+      "status": "TRACED",
+      "note": "constant pinned by tests/test_constants.py; artifact attributes exactly the 60- and 100-site points to the gate"
+    },
+    {
+      "quote": "At alpha = 0.05 the certify rates are [0.0, 0.0, 0.0, 0.0, 0.285, 1.0]",
+      "value": "[0.0, 0.0, 0.0, 0.0, 0.285, 1.0]",
+      "source": "experiments/out/summary.md E4 grid['0.05'].certify_rate per n_sites 60..400",
+      "status": "TRACED",
+      "note": "exact match"
+    },
+    {
+      "quote": "unreachable through 208 sites, first appears at 300, and becomes reliable only at 400",
+      "value": "0.0 through 208; 0.285 at 300; 1.0 at 400",
+      "source": "experiments/out/summary.md E4 grid['0.05']",
+      "status": "TRACED",
+      "note": "prose restatement of the certify-rate vector"
+    },
+    {
+      "quote": "the information floor scaling as 1/n_cal",
+      "value": "1/n_cal",
+      "source": "margin_floor scaling (SPEC/methods)",
+      "status": "ANALYTIC",
+      "note": "mathematical scaling property, not an empirical number"
+    },
+    {
+      "quote": "a single-deployment case study (tau* = 0.55; 200 answered, 2 declined)",
+      "value": "tau*=0.55; n_answered=200; n_declined=2",
+      "source": "experiments/out/E5_explain.json tau_star=0.55, abstention_profile.n_answered=200, n_declined=2 (also summary.md E5)",
+      "status": "TRACED",
+      "note": "exact match"
+    },
+    {
+      "quote": "features 0-3 dominate at 1.155-1.178, features 4-7 are negligible",
+      "value": "range [1.155, 1.178]",
+      "source": "experiments/out/E5_explain.json global_importance = [1.1571, 1.1614, 1.1784, 1.1547, -0.0268, -0.0144, -0.0353, -0.0099]",
+      "status": "TRACED",
+      "note": "min 1.1547 -> 1.155 and max 1.1784 -> 1.178 at 3 dp; features 4-7 magnitudes <= 0.036 (negligible)"
+    },
+    {
+      "quote": "Replicated over R = 200 draws (186 with declines; 2,644 declined cases pooled; pooled decline rate 2.15%)",
+      "value": "R=200; 186; 2644; 0.0215",
+      "source": "experiments/out/E5_explain.json replication.R=200, draws_with_declines=186, pooled_declined=2644, pooled_decline_rate=0.0215",
+      "status": "TRACED",
+      "note": "exact match; 2.15% = 0.0215"
+    },
+    {
+      "quote": "no stable single abstention driver exists (top-feature counts 47, 40, 51, 48 across features 0-3",
+      "value": "{0:47, 1:40, 2:51, 3:48}; stable_driver=false",
+      "source": "experiments/out/E5_explain.json replication.top_gap_feature_counts, stable_driver=false",
+      "status": "TRACED",
+      "note": "exact match; counts sum to 186 = draws_with_declines"
+    },
+    {
+      "quote": "modal share 0.274 against a 0.25 chance level",
+      "value": "0.274 vs 0.25",
+      "source": "experiments/out/E5_explain.json replication.top_gap_stability=0.2742 (=51/186); chance level 1/4 is analytic",
+      "status": "TRACED",
+      "note": "0.2742 -> 0.274 display rounding; 0.25 is the analytic 1-of-4-informative-features chance level"
+    },
+    {
+      "quote": "declined cases carry systematically larger attribution magnitudes on every informative feature (mean gaps -0.21 to -0.26)",
+      "value": "range [-0.26, -0.21]",
+      "source": "experiments/out/E5_explain.json replication.gap_mean = [-0.2624, -0.2363, -0.2304, -0.208] on features 0-3",
+      "status": "TRACED",
+      "note": "-0.208 -> -0.21 and -0.2624 -> -0.26 at 2 dp; negative gap = declined larger, matching the prose direction"
+    },
+    {
+      "quote": "E6 deploys a single draw (tau* = 0.55; 40 target sites)",
+      "value": "tau*=0.55; 40 sites",
+      "source": "experiments/out/summary.md E6 tau_star=0.55; experiments/out/E6_reliability.json counts.n_sites=40; panel_s2_tables replay E6.n_sites=40, tau=0.55",
+      "status": "TRACED",
+      "note": "exact match"
+    },
+    {
+      "quote": "Coverage is essentially flat across size bins (0.9896, 0.9800, 0.9856",
+      "value": "[0.9896, 0.9800, 0.9856]",
+      "source": "experiments/out/summary.md E6 size_bins mean_coverage = 0.9896, 0.98, 0.9856 (bins [30,100), [100,300), [300,inf)); same in E6_composition.json",
+      "status": "TRACED",
+      "note": "0.98 stored without trailing zeros; 0.9800 is the same value displayed at 4 dp"
+    },
+    {
+      "quote": "mean answered error below alpha in every bin (0.0523, 0.0670, 0.0595",
+      "value": "[0.0523, 0.0670, 0.0595], all < 0.10",
+      "source": "experiments/out/summary.md E6 size_bins mean_answered_err = 0.0523, 0.067, 0.0595; E6_composition.json identical",
+      "status": "TRACED",
+      "note": "0.067 stored without trailing zero; all three below the operative alpha=0.10"
+    },
+    {
+      "quote": "no site answers nothing",
+      "value": "0 zero-coverage sites of 40",
+      "source": "panel_s2_tables replay E6.zero_coverage_sites=0; experiments/out/E6_fairness.csv all 40 rows have n_answered >= 55; E6_reliability.json counts.n_sites_answered=40",
+      "status": "TRACED",
+      "note": "replay verified this session (stdout-only script; hard self-check vs E1_validity.csv passed)"
+    },
+    {
+      "quote": "R_M is 0.0619 against an unweighted answered error of 0.0555",
+      "value": "0.0619 vs 0.0555",
+      "source": "panel_s2_tables replay E6.record_vs_rm = {rm: 0.0619, record_level_answered_error: 0.0555}; independently recomputed R_M=0.061938 from E6_fairness.csv at M_INFLUENCE=100; E6_reliability.json skill.answered.model_error_rate=0.055542",
+      "status": "TRACED",
+      "note": "replay run twice this session, byte-identical; CSV recomputation agrees at 4 dp"
+    },
+    {
+      "quote": "counting the 15 mid-sized sites (answered error 0.0670) as heavily as the 21 largest (0.0595)",
+      "value": "15 sites @ 0.0670; 21 sites @ 0.0595",
+      "source": "experiments/out/summary.md E6 size_bins: [100,300) n_sites=15 err 0.067; [300,inf) n_sites=21 err 0.0595",
+      "status": "TRACED",
+      "note": "exact match"
+    },
+    {
+      "quote": "how a 9.5%-prevalence task yields a sub-alpha answered error",
+      "value": "0.095",
+      "source": "certgate/data.py SimConfig.base_rate = 0.095 (generator default)",
+      "status": "TRACED",
+      "note": "generator design constant; realized E6-pool prevalence is 0.096799 (E6_reliability.json skill.all.positive_rate) - draft cites the nominal rate"
+    },
+    {
+      "quote": "Over 25,314 answered records, the predicted-class positive fraction is 0.0630",
+      "value": "25314; 0.0630",
+      "source": "experiments/out/E6_composition.json composition.predicted_class: n_answered=25314, positive_fraction=0.06304811566721973",
+      "status": "TRACED",
+      "note": "0.063048 -> 0.0630 display rounding"
+    },
+    {
+      "quote": "the BBSE-implied true-class fraction 0.0858",
+      "value": "0.0858",
+      "source": "experiments/out/E6_composition.json composition.bbse_true_class.positive_fraction = 0.0857576903004051",
+      "status": "TRACED",
+      "note": "0.085758 -> 0.0858 display rounding"
+    },
+    {
+      "quote": "and the oracle fraction 0.0915 - just under the cohort prevalence",
+      "value": "0.0915 < 0.0968",
+      "source": "experiments/out/E6_composition.json composition.oracle_true_class.positive_fraction = 0.09149087461483764; cohort prevalence 0.096799 (E6_reliability.json skill.all.positive_rate; replay E6.always_negative_error=0.0968)",
+      "status": "TRACED",
+      "note": "0.091491 -> 0.0915 display rounding; 'just under' direction verified"
+    },
+    {
+      "quote": "The predicted-class column alone would have understated the true positive load by about a third",
+      "value": "1 - 1596/2316 = 0.311",
+      "source": "derived from E6_composition.json n_positive counts (predicted 1596 vs oracle 2316)",
+      "status": "ANALYTIC",
+      "note": "arithmetic on traced artifact counts; 31.1% ~ 'about a third'"
+    },
+    {
+      "quote": "the answered set is close to calibrated at the deployed threshold (plug-in ECE 0.002914 against 0.033783 on the declined set)",
+      "value": "0.002914; 0.033783",
+      "source": "experiments/out/E6_reliability.json ece.answered.ece=0.002914, ece.declined.ece=0.033783",
+      "status": "TRACED",
+      "note": "exact match at the panel's 6-dp emit convention"
+    },
+    {
+      "quote": "the answered-set skill margin over a constant always-negative rule is 0.035948",
+      "value": "0.035948",
+      "source": "experiments/out/E6_reliability.json skill.answered.skill_margin=0.035948 (constant_predictor_class=false, i.e. always-negative)",
+      "status": "TRACED",
+      "note": "exact match, 6 dp"
+    },
+    {
+      "quote": "the answered-minus-all contrast straddles zero",
+      "value": "0.000204, CI [-0.000723, 0.001144]",
+      "source": "experiments/out/E6_reliability.json skill.contrast.answered_minus_all=0.000204 with ci [-0.000723, 0.001144]; summary.md E6 panel_skill_margin_answered_minus_all=0.000204",
+      "status": "TRACED",
+      "note": "CI contains zero, so 'straddles zero' is verified, not just the point value"
+    },
+    {
+      "quote": "entered as a citation [@zhou2026falsesense]",
+      "value": "citation key",
+      "source": "bibliography",
+      "status": "OUT_OF_SCOPE",
+      "note": "citation metadata, not a result number"
+    },
+    {
+      "quote": "on a 2,000-record subsample of S_cal",
+      "value": "2000",
+      "source": "experiments/out/summary.md E7 record_sample=2000 (comparator note: per-record atoms with M=1 on a 2000-record subsample)",
+      "status": "TRACED",
+      "note": "exact match"
+    },
+    {
+      "quote": "still roughly 24 times the site count, with an information floor smaller by the same factor",
+      "value": "2000/83 = 24.1",
+      "source": "derived: SPLIT_FRACTIONS=(0.40,0.20,0.40) in certgate/constants.py -> S_cal ~ 0.40*208 = 83 sites; 2000/83 = 24.1; floor ratio is the margin_floor 1/n scaling",
+      "status": "ANALYTIC",
+      "note": "arithmetic on traced constants; 'roughly 24' checks out"
+    },
+    {
+      "quote": "At alpha = 0.05 - the rung the site-unit walk refuses on every one of 400 draws across both heterogeneity arms",
+      "value": "site certify_rate 0.0 at s_u=0.5 and s_u=2.0; 400 = 200 draws x 2 arms",
+      "source": "experiments/out/summary.md E7 arms['0.5']['0.05'].site.certify_rate=0.0, arms['2.0']['0.05'].site.certify_rate=0.0, R=200",
+      "status": "TRACED",
+      "note": "exact match"
+    },
+    {
+      "quote": "the record-unit certifier grants the budget almost always (certify rate 1.0 at s_u = 0.5, 0.99 at s_u = 2.0)",
+      "value": "1.0; 0.99",
+      "source": "experiments/out/summary.md E7 arms['0.5']['0.05'].record.certify_rate=1.0; arms['2.0']['0.05'].record.certify_rate=0.99",
+      "status": "TRACED",
+      "note": "exact match"
+    },
+    {
+      "quote": "violates the aggregate budget in 3.5% and 9.6% of those draws respectively",
+      "value": "0.035; 0.096",
+      "source": "experiments/out/summary.md E7 arms['0.5']['0.05'].record.rm_exceed_rate=0.035; arms['2.0']['0.05'].record.rm_exceed_rate=0.096",
+      "status": "TRACED",
+      "note": "exact match"
+    },
+    {
+      "quote": "the latter nearly twice delta",
+      "value": "0.096 vs 2*0.05 = 0.10",
+      "source": "certgate/constants.py DELTA=0.05; ratio 0.096/0.05 = 1.92",
+      "status": "ANALYTIC",
+      "note": "comparison of a traced empirical rate against the traced constant"
+    },
+    {
+      "quote": "At alpha = 0.10 both units certify on all but one of 400 draws (the site unit declines once at s_u = 2.0)",
+      "value": "site 0.995 at s_u=2.0 (199/200); other three cells 1.0",
+      "source": "experiments/out/summary.md E7 arms['2.0']['0.1'].site.certify_rate=0.995; arms['0.5']['0.1'] site=1.0 record=1.0; arms['2.0']['0.1'].record=1.0",
+      "status": "TRACED",
+      "note": "0.995 * 200 = 199, i.e. exactly one decline across 400 draws"
+    },
+    {
+      "quote": "the record unit deploys materially laxer thresholds under heterogeneity (mean tau 0.587 against 0.747)",
+      "value": "0.587 vs 0.747",
+      "source": "experiments/out/summary.md E7 arms['2.0']['0.1'].record.mean_tau=0.5869; site.mean_tau=0.7466",
+      "status": "TRACED",
+      "note": "0.5869 -> 0.587 and 0.7466 -> 0.747 display rounding"
+    },
+    {
+      "quote": "runs deployment at fresh-pool risk 0.081 against the site unit's 0.052",
+      "value": "0.081 vs 0.052",
+      "source": "experiments/out/summary.md E7 arms['2.0']['0.1'].record.mean_rm_fresh=0.0807; site.mean_rm_fresh=0.0522",
+      "status": "TRACED",
+      "note": "0.0807 -> 0.081 and 0.0522 -> 0.052 display rounding"
+    },
+    {
+      "quote": "E1's exchangeable arm is re-run at M in {25, 50, 100, 200, 500, 1000, 5000}",
+      "value": "(25, 50, 100, 200, 500, 1000, 5000); arm s_u=0.5",
+      "source": "experiments/panel_s2_tables.py M_SWEEP=(25,50,100,200,500,1000,5000), cfg=SimConfig(s_u=0.5); replay stdout table6 keys M=25..M=5000",
+      "status": "TRACED",
+      "note": "replay executed this session (writes nothing); hard self-check vs released E1_validity.csv passed (194 compared, 0 tau mismatches); output byte-identical across two runs"
+    },
+    {
+      "quote": "across M in {25, 50, 100} the procedure is effectively invariant (certify rate 1.0, coverage 0.984, zero exceedances)",
+      "value": "certify 1.0/1.0/1.0; coverage 0.9843/0.9843/0.9838; rm_exceed 0.0",
+      "source": "panel_s2_tables replay table6 M=25/50/100 alpha=0.1: certify_rate=1.0, mean_coverage=0.9843, 0.9843, 0.9838, rm_exceed_rate=0.0; matches draft SI Table S4",
+      "status": "TRACED",
+      "note": "0.9843/0.9838 -> 0.984 display rounding; zero exceedances exact"
+    },
+    {
+      "quote": "behavior moves at M = 200, coverage is visibly bought down by M = 500",
+      "value": "M=200: tau 0.5663, coverage 0.9799; M=500: coverage 0.9388",
+      "source": "panel_s2_tables replay table6 M=200 alpha=0.1 (mean_tau 0.5663 vs 0.5522-0.5538 on the plateau, mean_coverage 0.9799); M=500 mean_coverage=0.9388",
+      "status": "TRACED",
+      "note": "qualitative claims; the underlying values match SI Table S4 rows"
+    },
+    {
+      "quote": "the certify rate collapses to 0.03 at M = 1000",
+      "value": "0.03",
+      "source": "panel_s2_tables replay table6 M=1000 alpha=0.1 certify_rate=0.03 (n_certified=6 of 200)",
+      "status": "TRACED",
+      "note": "exact match"
+    },
+    {
+      "quote": "at M = 5000 - where the estimand becomes the record-proportional answered error - nothing certifies at 208 sites",
+      "value": "certify_rate 0.0; size clip 5000; 208 sites",
+      "source": "panel_s2_tables replay table6 M=5000 alpha=0.1 certify_rate=0.0, records_above_cap=0.0; certgate/data.py SimConfig.size_hi=5000 (generator upper size clip -> g_c=n_c for every site); panel_s2_tables.py ANCHOR_SITES=208",
+      "status": "TRACED",
+      "note": "the record-proportional identification is the documented consequence of the 5000 size clip"
+    },
+    {
+      "quote": "The stricter rung is unreachable at every M",
+      "value": "alpha=0.05 certify_rate=0.0 for all seven M values",
+      "source": "panel_s2_tables replay table6 M=25..5000 alpha=0.05: certify_rate=0.0, n_certified=0 in every row",
+      "status": "TRACED",
+      "note": "exact match; supports 'the frontier of Section 4.5 is not an artifact of this constant'"
+    },
+    {
+      "quote": "no M above the frozen value certifies more, so M = 100 is not a setting that makes certification easy",
+      "value": "certify rates at M>100: 1.0, 1.0, 0.03, 0.0 (none exceed 1.0 at M=100)",
+      "source": "panel_s2_tables replay table6 alpha=0.1 certify rates: M=200 1.0, M=500 1.0, M=1000 0.03, M=5000 0.0; M=100 is 1.0; certgate/constants.py M_INFLUENCE=100",
+      "status": "TRACED",
+      "note": "derived comparison over traced rates; frozen value pinned by tests/test_constants.py"
+    }
+  ]
+}

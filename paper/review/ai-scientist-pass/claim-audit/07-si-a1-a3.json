@@ -1,0 +1,489 @@
+{
+  "section": "SI A.1 proofs + A.2 BBSE + A.3 reproducibility",
+  "line_range": [208, 277],
+  "claims": [
+    {
+      "quote": "the crossing rule sup_t K_t >= 1/delta ... is a finite-sample level-delta test of H_0: E[Z] >= alpha",
+      "value": "1/delta threshold, level delta",
+      "source": "mathematical identity (Ville)",
+      "status": "ANALYTIC",
+      "note": "Test construction, not an empirical number."
+    },
+    {
+      "quote": "Each term of the inner sum in Z_c lies in [-alpha, 1-alpha] ... adding alpha places Z_c in [0,1]",
+      "value": "[-alpha, 1-alpha]; [0,1]",
+      "source": "algebra of the atom definition",
+      "status": "ANALYTIC",
+      "note": "Boundedness derivation; range [0,1] also asserted empirically in tests/test_certify.py::test_atom_range_and_empty_site_neutral."
+    },
+    {
+      "quote": "The cap at 0.9/(1-alpha) additionally keeps every realized factor 1 + lambda_t(alpha - Z_t) >= 0.1 > 0",
+      "value": "0.9/(1-alpha); >= 0.1",
+      "source": "certgate/constants.py:20 WSR_LAMBDA_CAP = 0.9 (comment: lambda cap = 0.9/(1-alpha))",
+      "status": "TRACED",
+      "note": "Constant traced; the >= 0.1 floor is the analytic consequence: 1 - (0.9/(1-alpha))*(1-alpha) = 0.1."
+    },
+    {
+      "quote": "K_t is a nonnegative supermartingale with K_0 = 1",
+      "value": "K_0 = 1",
+      "source": "construction of the wealth process",
+      "status": "ANALYTIC",
+      "note": "Initial wealth by definition."
+    },
+    {
+      "quote": "P(sup_t K_t >= 1/delta) <= delta [@ville1939]",
+      "value": "<= delta",
+      "source": "Ville's inequality",
+      "status": "ANALYTIC",
+      "note": "Citation metadata itself is OUT_OF_SCOPE; the bound is an identity."
+    },
+    {
+      "quote": "type-I error at E[Z] = alpha ... additionally pinned by the unit test suite",
+      "value": "boundary type-I test exists",
+      "source": "tests/test_certify.py:70-76 test_wsr_boundary_type_I_at_n80 (n=80, 800 reps, empirical rate <= 0.08)",
+      "status": "TRACED",
+      "note": "Qualitative test-existence claim; the test exists and pins the boundary level."
+    },
+    {
+      "quote": "a Bonferroni box over four estimated parameters (c0, c1, pi_source, q_target), each interval taken at level delta_conf/4",
+      "value": "4 parameters; delta_conf/4",
+      "source": "certgate/constants.py:17 BBSE_BONFERRONI = 4; constants.py:15 BBSE_DELTA_CONF = 0.025",
+      "status": "TRACED",
+      "note": "Width 4 traced; delta_conf/4 = 0.00625 per interval is arithmetic on the frozen constants."
+    },
+    {
+      "quote": "requires 2,000 valid resamples within at most 4,000 attempts (a degenerate pool triggers a decline)",
+      "value": "2000 / 4000",
+      "source": "certgate/constants.py:28-29 BBSE_BOOT = 2000, BBSE_BOOT_MAX_ATTEMPTS = 4000",
+      "status": "TRACED",
+      "note": "Exact match."
+    },
+    {
+      "quote": "exact two-sided Clopper-Pearson interval ... for a single-site pool, and a cluster bootstrap ... declaring ten or more",
+      "value": "K=1 CP; K>=10 bootstrap; K=2-9 declines",
+      "source": "certgate/constants.py:26-27 BBSE_MIN_TARGET_SITES = 10 (comment: 2 <= K < floor declines); SPEC.md:36",
+      "status": "TRACED",
+      "note": "Branch thresholds match the frozen constant and its declared decline band."
+    },
+    {
+      "quote": "the minimum and maximum of rho over the sixteen box corners bound every interior parameter combination",
+      "value": "16 corners",
+      "source": "2^4 corners of a 4-parameter box",
+      "status": "ANALYTIC",
+      "note": "Combinatorial identity given BBSE_BONFERRONI = 4."
+    },
+    {
+      "quote": "per-endpoint normalizations w_max = max(1, rho), under which the raw atom mean is piecewise with a kink at rho = 1",
+      "value": "kink at rho = 1",
+      "source": "algebra of the normalization",
+      "status": "ANALYTIC",
+      "note": "Identity; empirically exhibited in tests/test_shift.py:158-177."
+    },
+    {
+      "quote": "pinned numerically in the test suite on the deployed normalization, including an interval that straddles rho = 1",
+      "value": "straddling-interval test exists",
+      "source": "tests/test_shift.py:158-177 (rhos = [0.5, 0.75, 1.0, 1.25, 1.5], straddles 1; kink asserted)",
+      "status": "TRACED",
+      "note": "Test exists exactly as described."
+    },
+    {
+      "quote": "Python 3.13.3",
+      "value": "3.13.3",
+      "source": "requirements.txt:1 (comment) + experiments/out/provenance.json key python = \"3.13.3\"",
+      "status": "TRACED",
+      "note": "Matches both the pin comment and the released run's provenance."
+    },
+    {
+      "quote": "numpy==2.5.0, scipy==1.18.0, scikit-learn==1.9.0",
+      "value": "2.5.0 / 1.18.0 / 1.9.0",
+      "source": "requirements.txt:2-4; experiments/out/provenance.json versions block",
+      "status": "TRACED",
+      "note": "Exact match in both the pin file and the released provenance."
+    },
+    {
+      "quote": "joblib==1.5.3, threadpoolctl==3.6.0, matplotlib==3.11.0, and pytest==9.1.1",
+      "value": "1.5.3 / 3.6.0 / 3.11.0 / 9.1.1",
+      "source": "requirements.txt:5-8",
+      "status": "TRACED",
+      "note": "Exact match."
+    },
+    {
+      "quote": "All randomness derives from a single protocol seed (20260721)",
+      "value": "20260721",
+      "source": "certgate/constants.py:11 SEED = 20260721",
+      "status": "TRACED",
+      "note": "Exact match."
+    },
+    {
+      "quote": "regenerates the synthetic figures and tables (Figures 2-4, Table 1, Supplementary Figures S3-S6 and Tables S2-S3 and S6)",
+      "value": "figure/table cross-references",
+      "source": "internal manuscript numbering; consistent with CLAUDE.md/README one-command scoping",
+      "status": "OUT_OF_SCOPE",
+      "note": "Structural cross-reference, not a result number; matches the documented panel_s2_tables carve-out."
+    },
+    {
+      "quote": "the eICU results of Section 4.10 (Figure 5, Tables 2 and 3) come from python -m experiments.run_eicu",
+      "value": "figure/table cross-references",
+      "source": "internal manuscript numbering",
+      "status": "OUT_OF_SCOPE",
+      "note": "Structural cross-reference; consistent with the post-compression map in README/CLAUDE.md."
+    },
+    {
+      "quote": "a gate refusing record-level keys and arrays longer than 512 elements",
+      "value": "512",
+      "source": "experiments/run_eicu.py:83 EICU_MAX_OUTPUT_LEN = 512",
+      "status": "TRACED",
+      "note": "Exact match; enforced by assert_aggregate_only."
+    },
+    {
+      "quote": "The influence-cap sweep and the operating-characteristic counts (Supplementary Tables S4 and S5) ... panel_s2_tables",
+      "value": "table cross-references",
+      "source": "internal manuscript numbering; experiments/panel_s2_tables.py (stdout keys still table6/table7 pre-renumber)",
+      "status": "OUT_OF_SCOPE",
+      "note": "Structural; the script exists and is read-only as claimed."
+    },
+    {
+      "quote": "asserts against the released E1 artifact that its replay reproduces every baseline-deploying draw's certified threshold exactly (194 of 194, no mismatches)",
+      "value": "194 of 194, 0 mismatches",
+      "source": "experiments/out/E1_validity.csv: 194 rows with s_u=0.5, certified=True, deploy_mode=baseline (all at alpha=0.10); hard assert experiments/panel_s2_tables.py:202-210; SPEC.md:1074 records 194/194, 0 mismatches",
+      "status": "TRACED",
+      "note": "Independently recounted from the released CSV: exactly 194 baseline-deploying draws in the s_u=0.5 arm. The zero-mismatch half is a hard raise in the script, recorded in SPEC."
+    },
+    {
+      "quote": "the confidence actually spent at each call site ... asserted to be exactly delta on the baseline path and delta_bet on the label-shift path",
+      "value": "delta = 0.05; delta_bet = 0.025",
+      "source": "tests/test_pipeline.py:156-181 (spy on wsr_reject asserts seen == {DELTA} / {BBSE_DELTA_BET}); certgate/constants.py:14,16",
+      "status": "TRACED",
+      "note": "The wrapper test exists and asserts exactly what the draft claims."
+    },
+    {
+      "quote": "the emitted guarantee text, frozen as an exact string per mode combination",
+      "value": "frozen-string test exists",
+      "source": "tests/test_report.py:135,158 (exact guarantee strings incl. delta_conf=0.025)",
+      "status": "TRACED",
+      "note": "Qualitative test-existence claim, verified."
+    },
+    {
+      "quote": "Three full-scale arms are skipped unless explicitly enabled",
+      "value": "3 skipped arms",
+      "source": "tests/test_fixture_integration.py:91 (CERTGATE_FIXTURE), tests/test_eicu_path.py:2447 (CERTGATE_EICU), tests/test_eicu_path.py:2478 (CERTGATE_EICU_LARGE)",
+      "status": "TRACED",
+      "note": "Exactly three env-gated skipif markers; matches the suite's 266 passed / 3 skipped state."
+    },
+    {
+      "quote": "140 clean sites of 20 records with zero errors beside 10 heavy sites of 2,000 records at 20% error, everything answered",
+      "value": "140 x 20 / 10 x 2000 / 20% / all answered",
+      "source": "tests/test_certify.py:50-62 (sizes [20]*140+[2000]*10; errs [0]*140+[400]*10; 400/2000=20%; score=ones, tau=0.5)",
+      "status": "TRACED",
+      "note": "Exact match to the regression test construction."
+    },
+    {
+      "quote": "for a record-weighted selective risk of 17.5%",
+      "value": "17.5%",
+      "source": "tests/test_certify.py:47-48 docstring; arithmetic 4000/22800 = 0.17544",
+      "status": "TRACED",
+      "note": "Display rounding of 17.544% to 17.5%; consistent with the test's own statement."
+    },
+    {
+      "quote": "Truncating each site's realized signed contribution T_c ... at 1 caps the ten heavy sites' adverse evidence at +1 apiece while every clean site keeps its full -1",
+      "value": "+1 heavy / -1 clean",
+      "source": "arithmetic on the construction: clean T_c = 0*(0.95) - 20*0.05 = -1 exactly; heavy T_c = 400*0.95 - 1600*0.05 = 300 -> min(T,1) = 1",
+      "status": "ANALYTIC",
+      "note": "Verified by direct computation; matches tests/test_certify.py:52-53."
+    },
+    {
+      "quote": "a Maurer-Pontil empirical-Bernstein upper bound on the truncated contributions certifies alpha = 5% at delta = 0.05",
+      "value": "alpha = 0.05, delta = 0.05, truncated path certifies",
+      "source": "tests/test_certify.py:16 (ALPHA, DELTA = 0.05, 0.05) and :54 (assert _mpeb_ucb certifies)",
+      "status": "TRACED",
+      "note": "Exact match."
+    },
+    {
+      "quote": "a false certificate at 3.5 times the true risk",
+      "value": "3.5x",
+      "source": "arithmetic: 17.5% / 5% = 3.5",
+      "status": "ANALYTIC",
+      "note": "Ratio verified. Wording caveat (not numeric drift): the true risk is 3.5x the certified budget; the sentence's direction reads inverted."
+    },
+    {
+      "quote": "the influence-weighted atoms have mean above alpha and the betting test does not reject",
+      "value": "mean > alpha; no rejection",
+      "source": "tests/test_certify.py:65-67 (assert z.mean() > ALPHA; assert not wsr_reject)",
+      "status": "TRACED",
+      "note": "Exact match."
+    },
+    {
+      "quote": "Table S1: Protocol seed | 20260721",
+      "value": "20260721",
+      "source": "certgate/constants.py:11 SEED",
+      "status": "TRACED",
+      "note": "Exact match."
+    },
+    {
+      "quote": "Table S1: Split fractions | 0.40 / 0.20 / 0.40",
+      "value": "(0.40, 0.20, 0.40)",
+      "source": "certgate/constants.py:12 SPLIT_FRACTIONS",
+      "status": "TRACED",
+      "note": "Exact match."
+    },
+    {
+      "quote": "Table S1: Budget ladder alpha | {0.05, 0.10}",
+      "value": "(0.05, 0.10)",
+      "source": "certgate/constants.py:13 ALPHA_LADDER",
+      "status": "TRACED",
+      "note": "Exact match."
+    },
+    {
+      "quote": "Table S1: Confidence delta | 0.05",
+      "value": "0.05",
+      "source": "certgate/constants.py:14 DELTA",
+      "status": "TRACED",
+      "note": "Exact match."
+    },
+    {
+      "quote": "Table S1: delta_conf / delta_bet | 0.025 / 0.025",
+      "value": "0.025 / 0.025",
+      "source": "certgate/constants.py:15-16 BBSE_DELTA_CONF, BBSE_DELTA_BET",
+      "status": "TRACED",
+      "note": "Exact match; sum = DELTA as claimed."
+    },
+    {
+      "quote": "Table S1: Bonferroni width | 4",
+      "value": "4",
+      "source": "certgate/constants.py:17 BBSE_BONFERRONI",
+      "status": "TRACED",
+      "note": "Exact match."
+    },
+    {
+      "quote": "Table S1: Influence cap M | 100",
+      "value": "100",
+      "source": "certgate/constants.py:18 M_INFLUENCE",
+      "status": "TRACED",
+      "note": "Exact match."
+    },
+    {
+      "quote": "approx 90% of sites are capped",
+      "value": "~90% (derived 89.8%)",
+      "source": "derived from frozen generator params certgate/data.py:53-56 (lognormal mu=6.0 sigma=1.1: P(n_c>100)=0.898); independently recomputed as 89.8% in paper/review/verification.md:531",
+      "status": "TRACED",
+      "note": "Derivation, not a released-artifact measurement; verified during external verification. Distinct quantity from the released capped_influence_share = 0.8838 (record-mass share) in experiments/out/EICU_certificate.json."
+    },
+    {
+      "quote": "Table S1: Threshold grid | 23 points, 0.55 to 0.99 step 0.02",
+      "value": "np.linspace(0.55, 0.99, 23)",
+      "source": "certgate/constants.py:19 TAU_GRID; (0.99-0.55)/22 = 0.02",
+      "status": "TRACED",
+      "note": "Exact match; 23 points imply step 0.02."
+    },
+    {
+      "quote": "starts at 0.55 because s(x) in [0.5,1] and tau = 0.5 answers everything",
+      "value": "score range [0.5, 1]",
+      "source": "certgate/model.py:55-58 score = max(p1, 1-p1) in [0.5, 1]",
+      "status": "TRACED",
+      "note": "Range is structural from the score definition."
+    },
+    {
+      "quote": "Table S1: WSR bet cap | 0.9/(1-alpha) | keeps every wealth factor >= 0.1 > 0",
+      "value": "0.9; floor 0.1",
+      "source": "certgate/constants.py:20 WSR_LAMBDA_CAP = 0.9",
+      "status": "TRACED",
+      "note": "Constant traced; 0.1 floor is the analytic consequence (see A.1(iii) claim)."
+    },
+    {
+      "quote": "Table S1: WSR variance floor | 1e-8",
+      "value": "1e-8",
+      "source": "certgate/constants.py:21 WSR_VAR_FLOOR",
+      "status": "TRACED",
+      "note": "Exact match."
+    },
+    {
+      "quote": "Table S1: WSR (mu0, sigma2_0) | (0.5, 0.25)",
+      "value": "(0.5, 0.25)",
+      "source": "certgate/constants.py:22 WSR_MU0, WSR_S2_0",
+      "status": "TRACED",
+      "note": "Exact match; 0.25 = max variance of a [0,1] variable is analytic."
+    },
+    {
+      "quote": "Table S1: Min calibration clusters | 50 record-carrying",
+      "value": "50",
+      "source": "certgate/constants.py:23 MIN_CAL_CLUSTERS (comment: RECORD-CARRYING)",
+      "status": "TRACED",
+      "note": "Exact match including the record-carrying qualifier."
+    },
+    {
+      "quote": "Table S1: Min target pool | 10 records",
+      "value": "10",
+      "source": "certgate/constants.py:24 MIN_ANSWERABLE",
+      "status": "TRACED",
+      "note": "Exact match."
+    },
+    {
+      "quote": "Table S1: BBSE gap floor (c1 - c0) | 0.10",
+      "value": "0.10",
+      "source": "certgate/constants.py:25 BBSE_GAP_FLOOR",
+      "status": "TRACED",
+      "note": "Exact match."
+    },
+    {
+      "quote": "Table S1: BBSE min target sites | 10 ... pools declaring 2-9 sites decline",
+      "value": "10; decline band 2-9",
+      "source": "certgate/constants.py:26-27 BBSE_MIN_TARGET_SITES = 10 (2 <= K < floor declines)",
+      "status": "TRACED",
+      "note": "Exact match."
+    },
+    {
+      "quote": "measured rho-interval miss up to 46% at K = 2 against a nominal 2.5%",
+      "value": "46% at K=2 vs 2.5% nominal",
+      "source": "SPEC.md:254 (measured rho-miss up to 46% at K=2 and 10% at K=3 vs nominal); also certgate/shift.py:212 and tests/test_shift.py:285 comments",
+      "status": "TRACED",
+      "note": "Matches the verification-F1 record frozen into SPEC and code comments. Caveat: the underlying measurement run has no machine-generated artifact in experiments/out*/ - the SPEC record is the only home."
+    },
+    {
+      "quote": "Table S1: BBSE resamples | 2,000 valid within 4,000 attempts",
+      "value": "2000 / 4000",
+      "source": "certgate/constants.py:28-29 BBSE_BOOT, BBSE_BOOT_MAX_ATTEMPTS",
+      "status": "TRACED",
+      "note": "Exact match. The '2.5% quantile' rationale in the basis column is qualitative (bootstrap tail quantile)."
+    },
+    {
+      "quote": "Table S1: Report bootstrap | 500 resamples | estimated tier only",
+      "value": "500",
+      "source": "certgate/report.py:157 _bootstrap_estimate(..., n_boot=500, ...)",
+      "status": "TRACED",
+      "note": "Exact match; default parameter, estimated tier only as claimed."
+    },
+    {
+      "quote": "Table S1: pi_t clip | 1e-4",
+      "value": "1e-4",
+      "source": "certgate/constants.py:30 PI_CLIP",
+      "status": "TRACED",
+      "note": "Exact match."
+    },
+    {
+      "quote": "Table S1: Standardization tolerance | 1e-9 relative",
+      "value": "1e-9",
+      "source": "certgate/constants.py:31 SD_REL_TOL (comment: relative)",
+      "status": "TRACED",
+      "note": "Exact match including the relative qualifier."
+    },
+    {
+      "quote": "Table S1: Head C / max iterations | 1.0 / 2,000",
+      "value": "1.0 / 2000",
+      "source": "certgate/constants.py:32-33 HEAD_C, HEAD_MAX_ITER",
+      "status": "TRACED",
+      "note": "Exact match; C=1.0 is indeed sklearn's LogisticRegression default."
+    },
+    {
+      "quote": "These eighteen constants are pinned by the same unit test",
+      "value": "18",
+      "source": "tests/test_constants.py:513 ('Eighteen constants ported byte-exactly'); module count of frozen names in certgate/reliability.py:68-137 = 18",
+      "status": "TRACED",
+      "note": "Counted: SCHEMA_VERSION, PANEL_SEED, DEFAULT_BIN_EDGES, DECISION_THRESHOLD, LOGIT_EPS, IRLS_MAX_ITER, IRLS_TOL, IRLS_MAX_ABS_COEF, IRLS_MIN_WEIGHT, IRLS_MIN_RECORDS, N_BOOT, BOOT_MAX_ATTEMPTS, CI_LEVEL, MIN_SITES_FOR_CI, ROUND_DP, FIG_DPI, CI_STATUSES, FIT_STATUSES = 18."
+    },
+    {
+      "quote": "Panel schema version | srp/1 | emitted verbatim and hashed as the first bytes of the input digest",
+      "value": "srp/1",
+      "source": "certgate/reliability.py:68 SCHEMA_VERSION; tests/test_constants.py:526",
+      "status": "TRACED",
+      "note": "Exact match, including the digest-prefix role."
+    },
+    {
+      "quote": "Panel seed | 20260731 | root seed for the panel's own SHA-256 seeding rule",
+      "value": "20260731",
+      "source": "certgate/reliability.py:70 PANEL_SEED; tests/test_constants.py:531 (also asserts != constants.SEED)",
+      "status": "TRACED",
+      "note": "Exact match; renamed-never-re-pointed discipline is pinned by the test."
+    },
+    {
+      "quote": "Bin edges | {0, 0.02, 0.05, 0.10, 0.20, 0.35, 0.55, 1.01} | seven fixed a-priori probability bins",
+      "value": "8 edges / 7 bins",
+      "source": "certgate/reliability.py:74 DEFAULT_BIN_EDGES; tests/test_constants.py:549-559 (len == 8)",
+      "status": "TRACED",
+      "note": "Exact tuple match; 8 edges give 7 bins; 1.01 sentinel role matches the code comment."
+    },
+    {
+      "quote": "narrow at low probability, where a 9-10%-prevalence cohort concentrates",
+      "value": "9-10% prevalence",
+      "source": "certgate/data.py:51 base_rate = 0.095 (synthetic); experiments/out/EICU-SUMMARY.md:61-117 eICU pool prevalences 0.0885-0.0908",
+      "status": "TRACED",
+      "note": "Loose design-rationale band: synthetic 9.5% is in-band; eICU pools run 8.85-9.08%, so the lower edge slightly overstates a few splits (8.9% rounds to 9%). Not numeric drift, but the band's floor is generous by ~0.1-0.15 pp for the real cohort."
+    },
+    {
+      "quote": "the trailing 1.01 is a sentinel above 1, so p-hat = 1 lands in the last bin under a strict upper test",
+      "value": "1.01 sentinel",
+      "source": "certgate/reliability.py:74-81 comment; tests/test_constants.py:550-553",
+      "status": "TRACED",
+      "note": "Exact match to the documented mechanism."
+    },
+    {
+      "quote": "Decision threshold | 0.5 | y-hat = 1[p-hat >= 0.5]",
+      "value": "0.5",
+      "source": "certgate/reliability.py:89 DECISION_THRESHOLD; tests/test_constants.py:586",
+      "status": "TRACED",
+      "note": "Exact match; coincides with Head.predict's rule as claimed."
+    },
+    {
+      "quote": "Panel resamples | 2,000 valid within 4,000 attempts",
+      "value": "2000 / 4000",
+      "source": "certgate/reliability.py:111,113 N_BOOT = 2000, BOOT_MAX_ATTEMPTS = 4000; tests/test_constants.py:607-614",
+      "status": "TRACED",
+      "note": "Exact match; enforced as the relation 2*n_boot."
+    },
+    {
+      "quote": "Interval level | 0.95 | two-sided percentile interval",
+      "value": "0.95",
+      "source": "certgate/reliability.py:119 CI_LEVEL; tests/test_constants.py:608",
+      "status": "TRACED",
+      "note": "Exact match."
+    },
+    {
+      "quote": "Min sites for an interval | 10 ... the same measured tiny-K lesson as the BBSE minimum target sites, at the same value",
+      "value": "10 (== BBSE_MIN_TARGET_SITES)",
+      "source": "certgate/reliability.py:120 MIN_SITES_FOR_CI; tests/test_constants.py:618-619 asserts equality with C.BBSE_MIN_TARGET_SITES",
+      "status": "TRACED",
+      "note": "Exact match; the same-value claim is pinned by an explicit assert."
+    },
+    {
+      "quote": "IRLS max iterations / tolerance | 100 / 1e-8",
+      "value": "100 / 1e-8",
+      "source": "certgate/reliability.py:96,98 IRLS_MAX_ITER, IRLS_TOL; tests/test_constants.py:595-596",
+      "status": "TRACED",
+      "note": "Exact match; reaching either emits a status, as claimed."
+    },
+    {
+      "quote": "IRLS |beta| range / min weight / min records | 30.0 / 1e-10 / 20",
+      "value": "30.0 / 1e-10 / 20",
+      "source": "certgate/reliability.py:100,107,109 IRLS_MAX_ABS_COEF, IRLS_MIN_WEIGHT, IRLS_MIN_RECORDS; tests/test_constants.py:601-603",
+      "status": "TRACED",
+      "note": "Exact match."
+    },
+    {
+      "quote": "Logit epsilon | 1e-6",
+      "value": "1e-6",
+      "source": "certgate/reliability.py:94 LOGIT_EPS; tests/test_constants.py:593",
+      "status": "TRACED",
+      "note": "Exact match."
+    },
+    {
+      "quote": "Emit rounding / figure DPI | 6 dp / 110",
+      "value": "6 / 110",
+      "source": "certgate/reliability.py:126,129 ROUND_DP = 6, FIG_DPI = 110; tests/test_constants.py:623-624",
+      "status": "TRACED",
+      "note": "Exact match; round-once-at-emit and the settings exemption match the code comments."
+    },
+    {
+      "quote": "Status vocabularies | 6 interval / 8 fit statuses | exhaustive, and pinned as tuples",
+      "value": "6 / 8",
+      "source": "certgate/reliability.py:130-137 CI_STATUSES (6), FIT_STATUSES (8); tests/test_constants.py:635-636 assert len 8 and 6",
+      "status": "TRACED",
+      "note": "Counted: CI = ok, empty-bin, too-few-sites, degenerate-resamples, undefined-point, truncated-resamples; FIT = ok, too-few-records, single-class, degenerate-design, separable, coef-out-of-range, not-converged, singular."
+    },
+    {
+      "quote": "[@ville1939]",
+      "value": "citation",
+      "source": "bibliography",
+      "status": "OUT_OF_SCOPE",
+      "note": "Citation metadata."
+    }
+  ]
+}

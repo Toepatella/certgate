@@ -4,311 +4,304 @@
   "claims": [
     {
       "quote": "regenerates Figures 2-4, Table 1, and Supplementary Figures S3-S6 with Supplementary Tables S2-S3 and S6 from a single command",
-      "value": "one-command scope: Figs 2-4, Table 1, SI Figs S3-S6, SI Tables S2-S3 + S6",
-      "source": "CLAUDE.md 'Still not wired' paragraph; experiments/run_synthetic.py",
-      "status": "TRACED",
-      "note": "Matches the documented scoping of the one-command claim exactly (panel_s2_tables outputs deliberately excluded)."
+      "value": "Figures 2-4, Table 1, SI Figs S3-S6, SI Tables S2-S3+S6",
+      "source": "document structure; matches the documented run_synthetic scope (CLAUDE.md 'Still not wired' note, draft SI A.3)",
+      "status": "OUT_OF_SCOPE",
+      "note": "Reproducibility-scope cross-reference, not a result number; consistent with the panel_s2_tables carve-out for S4-S5."
     },
     {
       "quote": "Supplementary Tables S4-S5 from a second read-only command (`python -m experiments.panel_s2_tables`)",
-      "value": "SI Tables S4-S5 via panel_s2_tables",
-      "source": "experiments/panel_s2_tables.py; CLAUDE.md 'Still not wired' (read-only source of SI Tables S4-S5)",
-      "status": "TRACED",
-      "note": "Script exists and is documented as the read-only source of S4-S5; it hard-asserts replay against released E1_validity.csv."
+      "value": "SI Tables S4-S5",
+      "source": "document structure; experiments/panel_s2_tables.py exists and is documented as the read-only S4-S5 source",
+      "status": "OUT_OF_SCOPE",
+      "note": "Structural cross-reference matching the documented not-wired-into-run_synthetic status."
     },
     {
       "quote": "eICU Collaborative Research Database v2.0",
       "value": "v2.0",
-      "source": "dataset version metadata (also EICU-SUMMARY.md title)",
+      "source": "dataset version metadata (also echoed in EICU-SUMMARY.md title)",
       "status": "OUT_OF_SCOPE",
-      "note": "Dataset-version metadata, consistent with EICU-SUMMARY.md header."
+      "note": "Dataset version identifier, citation-level metadata."
     },
     {
       "quote": "PhysioNet Credentialed Health Data License 1.5.0 and a signed Data Use Agreement 1.5.0",
       "value": "1.5.0 / 1.5.0",
-      "source": "license metadata (EICU-SUMMARY.md header cites PhysioNet DUA 1.5.0)",
+      "source": "license metadata (DUA 1.5.0 also echoed in EICU-SUMMARY.md header)",
       "status": "OUT_OF_SCOPE",
-      "note": "License/agreement version facts, consistent with the DUA 1.5.0 reference in EICU-SUMMARY.md."
+      "note": "License/agreement version numbers, citation-level metadata."
     },
     {
       "quote": "The environment is pinned (`requirements.txt`, Python 3.13.3)",
-      "value": "Python 3.13.3",
-      "source": "requirements.txt line 1 ('CertGate pinned environment -- Python 3.13.3')",
+      "value": "3.13.3",
+      "source": "experiments/out/provenance.json key 'python' = \"3.13.3\"",
       "status": "TRACED",
-      "note": "Exact match."
+      "note": "Exact match to the provenance of the 2026-08-10 full grid run."
     },
     {
-      "quote": "under the MIT license",
-      "value": "MIT",
-      "source": "repository license metadata",
+      "quote": "archived at Zenodo (DOI: [[TBC:zenodo-doi]])",
+      "value": "[[TBC]]",
+      "source": "placeholder",
       "status": "OUT_OF_SCOPE",
-      "note": "License metadata, not a result number."
+      "note": "Author-facing TBC placeholder, no number to trace."
     },
     {
-      "quote": "HIPAA Certification no. 1031219-2",
+      "quote": "re-identification risk certified as meeting Safe Harbor standards by Privacert (Cambridge, MA; HIPAA Certification no. 1031219-2)",
       "value": "1031219-2",
-      "source": "external eICU-CRD documentation (Pollard et al. 2018/PhysioNet)",
+      "source": "external eICU-CRD database documentation (Pollard et al. citations)",
       "status": "OUT_OF_SCOPE",
-      "note": "External certification identifier from the dataset's own documentation; citation-metadata class, not project-artifact-traceable."
+      "note": "Third-party certification number for the database itself; citation-level fact, not a project artifact number."
     },
     {
       "quote": "S_train (40%) fits the risk head",
       "value": "0.40",
-      "source": "certgate/constants.py SPLIT_FRACTIONS[0] = 0.40 (pinned in tests/test_constants.py)",
+      "source": "certgate/constants.py SPLIT_FRACTIONS = (0.40, 0.20, 0.40), element 0",
       "status": "TRACED",
-      "note": ""
+      "note": "Frozen constant, pinned by tests/test_constants.py."
     },
     {
       "quote": "S_aux (20%) orders the threshold walk and fits the label-shift machinery",
       "value": "0.20",
-      "source": "certgate/constants.py SPLIT_FRACTIONS[1] = 0.20",
+      "source": "certgate/constants.py SPLIT_FRACTIONS element 1",
       "status": "TRACED",
-      "note": ""
+      "note": "Frozen constant."
     },
     {
       "quote": "S_cal (40%) is reserved for certification",
       "value": "0.40",
-      "source": "certgate/constants.py SPLIT_FRACTIONS[2] = 0.40",
+      "source": "certgate/constants.py SPLIT_FRACTIONS element 2",
       "status": "TRACED",
-      "note": ""
+      "note": "Frozen constant."
     },
     {
       "quote": "each budget rung alpha in {0.05, 0.10}",
       "value": "(0.05, 0.10)",
       "source": "certgate/constants.py ALPHA_LADDER = (0.05, 0.10); summary.md header 'alpha ladder: (0.05, 0.1)'",
       "status": "TRACED",
-      "note": ""
+      "note": "Frozen constant."
     },
     {
       "quote": "BBSE at delta_bet, its four-parameter uncertainty box",
-      "value": "4 parameters",
-      "source": "certgate/constants.py BBSE_BONFERRONI = 4 (box covers c0, c1, pi_source, q_target)",
+      "value": "4",
+      "source": "certgate/constants.py BBSE_BONFERRONI = 4, comment: box covers (c0, c1, pi_source, q_target)",
       "status": "TRACED",
-      "note": "The count matches the constant's documented four-parameter box."
+      "note": "Frozen constant; the four box parameters are named in the constant's comment (audit V2)."
     },
     {
       "quote": "tested at both rho endpoints",
-      "value": "2 endpoints",
-      "source": "structural: an interval has two endpoints",
-      "status": "ANALYTIC",
-      "note": "Structural count of the rho interval's endpoints, not an empirical number."
-    },
-    {
-      "quote": "the answered set's three-way composition is disclosed",
-      "value": "3-way",
-      "source": "design descriptor (CLAUDE.md 'three-way composition disclosure'; draft Sec. 3)",
-      "status": "ANALYTIC",
-      "note": "Structural count of composition categories in the disclosure design, not a measured value."
-    },
-    {
-      "quote": "(Sections 3.2-3.8)",
-      "value": "Sections 3.2-3.8",
-      "source": "internal cross-reference",
-      "status": "OUT_OF_SCOPE",
-      "note": "Structural cross-reference."
-    },
-    {
-      "quote": "at the anchor shift (0.095 -> 0.22)",
-      "value": "source base rate 0.095, anchor target base rate 0.22",
-      "source": "summary.md E2 target_base_rate = 0.22; certgate/data.py SimConfig.base_rate = 0.095 (pinned tests/test_constants.py:140); run_synthetic.py SHIFT_BASE = 0.22, E2_SHIFT_SWEEP anchor",
+      "value": "2 endpoints (lo/hi)",
+      "source": "certgate/pipeline.py 'BBSE dual-endpoint walk'; certgate/certify.py stream 'lo'/'hi'",
       "status": "TRACED",
-      "note": "0.095 is the frozen generator base rate (also the sweep's null point); 0.22 is the E2 anchor target rate."
+      "note": "Design fact: the BBSE walk runs at both endpoints of the rho interval, matching the dual-endpoint implementation."
     },
     {
-      "quote": "the uncorrected baseline hard-violates 39.5% of its alpha = 0.10 certificates",
+      "quote": "at the anchor shift (0.095 $\\to$ 0.22)",
+      "value": "0.095 -> 0.22",
+      "source": "experiments/out/summary.md E2: target_base_rate = 0.22; sweep null point target_base = 0.095; run_synthetic.py SHIFT_BASE comment 'label shift 0.095 -> 0.22'",
+      "status": "TRACED",
+      "note": "Source rate 0.095 is the generator base rate (null-shift arm of E2_SHIFT_SWEEP); anchor target 0.22 matches."
+    },
+    {
+      "quote": "the uncorrected baseline hard-violates 39.5% of its $\\alpha = 0.10$ certificates",
       "value": "0.395",
-      "source": "summary.md E2 baseline['0.1'].hard_violation_rate = 0.395 (joint_certify_and_hard_rate also 0.395 with certify_rate 1.0)",
+      "source": "summary.md E2 baseline['0.1'].hard_violation_rate = 0.395",
       "status": "TRACED",
-      "note": "39.5% is 0.395; all 200 draws certified, so 'of its certificates' matches joint rate."
+      "note": "39.5% = 0.395 exact."
     },
     {
-      "quote": "far above the delta = 0.05 line",
+      "quote": "far above the $\\delta = 0.05$ line",
       "value": "0.05",
       "source": "certgate/constants.py DELTA = 0.05; summary.md header 'delta: 0.05'",
       "status": "TRACED",
-      "note": ""
+      "note": "Frozen constant."
     },
     {
       "quote": "BBSE declines all 200 draws",
-      "value": "200/200 declines",
-      "source": "summary.md E2 R = 200; bbse['0.1'].decline_rate = 1.0, n_certified = 0",
+      "value": "200 declines of R=200",
+      "source": "summary.md E2: R = 200; bbse['0.1'].decline_rate = 1.0, n_certified = 0",
       "status": "TRACED",
-      "note": ""
+      "note": "decline_rate 1.0 on 200 draws."
     },
     {
       "quote": "so certify-and-violate is 0 of 200",
-      "value": "0/200",
-      "source": "summary.md E2 bbse['0.1'].joint_certify_and_hard_rate = 0.0, n_certified = 0, R = 200",
+      "value": "0 / 200",
+      "source": "summary.md E2 bbse['0.1'].joint_certify_and_hard_rate = 0.0, R = 200",
       "status": "TRACED",
-      "note": ""
+      "note": "Exact."
     },
     {
-      "quote": "over the magnitude sweep ... BBSE's certify-and-violate rate stays at 0.0 everywhere",
+      "quote": "BBSE's certify-and-violate rate stays at 0.0 everywhere",
       "value": "0.0 at all 5 sweep points",
       "source": "summary.md E2 shift_sweep_alpha0.10: bbse.joint_certify_and_hard_rate = 0.0 at target_base 0.095/0.13/0.16/0.19/0.22",
       "status": "TRACED",
-      "note": "Baseline dose-response also visible: hard_violation_rate 0.0/0.07/0.08/0.21/0.395."
+      "note": "All five sweep points verified 0.0."
     },
     {
       "quote": "at the null point BBSE certifies 9% of draws",
       "value": "0.09",
-      "source": "summary.md E2 shift_sweep_alpha0.10[target_base=0.095].bbse.certify_rate = 0.09 (9 of 100)",
+      "source": "summary.md E2 shift_sweep_alpha0.10[target_base=0.095].bbse.certify_rate = 0.09 (n_certified 9 of R=100)",
       "status": "TRACED",
-      "note": ""
+      "note": "9% = 0.09 exact at the null-shift arm."
     },
     {
-      "quote": "alpha = 0.10 (orange) switches on at 150 sites and holds at 1.0",
-      "value": "certify_rate 0.0 at 100 sites, 1.0 at 150/208/300/400",
-      "source": "summary.md E4 grid['0.1']: 100 -> 0.0, 150 -> 1.0, 208 -> 1.0, 300 -> 1.0, 400 -> 1.0",
+      "quote": "$\\alpha = 0.10$ (orange) switches on at 150 sites and holds at 1.0",
+      "value": "certify_rate 0.0 at 100, 1.0 at 150/208/300/400",
+      "source": "summary.md E4 grid['0.1']: n_sites 100 -> 0.0; 150 -> 1.0; 208 -> 1.0; 300 -> 1.0; 400 -> 1.0",
       "status": "TRACED",
-      "note": ""
+      "note": "Exact."
     },
     {
-      "quote": "alpha = 0.05 (blue) first appears at 300 (0.285)",
-      "value": "0.285 at 300 sites; 0.0 at 208 and below",
-      "source": "summary.md E4 grid['0.05']: 208 -> 0.0, 300 -> 0.285",
+      "quote": "$\\alpha = 0.05$ (blue) first appears at 300 (0.285)",
+      "value": "0.285 at n_sites=300",
+      "source": "summary.md E4 grid['0.05']: 208 -> 0.0; 300 -> certify_rate 0.285",
       "status": "TRACED",
-      "note": ""
+      "note": "Exact."
     },
     {
       "quote": "and reaches 1.0 only at 400",
-      "value": "1.0 at 400 sites",
-      "source": "summary.md E4 grid['0.05']: 400 -> 1.0",
+      "value": "1.0 at n_sites=400",
+      "source": "summary.md E4 grid['0.05']: 400 -> certify_rate 1.0",
       "status": "TRACED",
-      "note": ""
+      "note": "Exact; 300 is 0.285 so 400 is indeed the first 1.0."
     },
     {
       "quote": "sites declined by the 50-record-carrying-cluster gate",
       "value": "50",
-      "source": "certgate/constants.py MIN_CAL_CLUSTERS = 50; summary.md E4 gate_note",
+      "source": "certgate/constants.py MIN_CAL_CLUSTERS = 50; summary.md E4 gate_note names the same gate",
       "status": "TRACED",
-      "note": ""
+      "note": "Frozen constant (record-carrying calibration clusters, audit B-5)."
     },
     {
       "quote": "(below ~125 sites), a different failure mode from the information floor",
-      "value": "~125 sites",
-      "source": "summary.md E4 gate_note: 'points with n_sites < 125 are declined by the 50-record-carrying-cluster gate, not the betting test's information floor'",
+      "value": "~125",
+      "source": "summary.md E4 gate_note: 'points with n_sites < 125 are declined by the 50-record-carrying-cluster gate'",
       "status": "TRACED",
-      "note": "Tilde matches the artifact's strict '< 125' phrasing; gate_limited_n_sites = [60, 100]."
+      "note": "Draft's '~125' matches the artifact's threshold statement; gate_limited points are 60 and 100."
     },
     {
       "quote": "the dotted vertical guide in both panels marks the 208-site operating point",
-      "value": "208 sites",
+      "value": "208",
       "source": "summary.md E4 sweep includes 208; EICU-SUMMARY.md preflight n_hospitals = 208",
       "status": "TRACED",
-      "note": "208 is the raw eICU hospital count (207 survive outcome-known attrition); E4's sweep pins the 208 grid point."
+      "note": "208 is both an E4 sweep point and the real extract's raw hospital count."
     },
     {
-      "quote": "mean answered-set coverage ... reaching 0.9818 for alpha = 0.10 at the realistic 208-site scale",
+      "quote": "reaching 0.9818 for $\\alpha = 0.10$ at the realistic 208-site scale",
       "value": "0.9818",
       "source": "summary.md E4 grid['0.1'][n_sites=208].mean_coverage = 0.9818",
       "status": "TRACED",
-      "note": ""
+      "note": "Exact."
     },
     {
-      "quote": "mean answered error by site-size bin at tau* = 0.55",
+      "quote": "mean answered error by site-size bin at $\\tau^* = 0.55$",
       "value": "0.55",
-      "source": "summary.md E6 tau_star = 0.55 (grid TAU_GRID starts at 0.55, constants.py)",
+      "source": "summary.md E6 tau_star = 0.55 (also TAU_GRID starts at 0.55 in constants.py)",
       "status": "TRACED",
-      "note": ""
+      "note": "Exact."
     },
     {
-      "quote": "0.0523, 0.0670, and 0.0595 for the [30,100), [100,300), and [300,inf) bins",
-      "value": "0.0523 / 0.067 / 0.0595",
-      "source": "summary.md E6 size_bins mean_answered_err: [30,100) 0.0523, [100,300) 0.067, [300,inf) 0.0595",
+      "quote": "0.0523, 0.0670, and 0.0595 for the [30,100), [100,300), and [300,$\\infty$) bins",
+      "value": "0.0523 / 0.0670 / 0.0595",
+      "source": "summary.md E6 size_bins mean_answered_err: 0.0523, 0.067, 0.0595",
       "status": "TRACED",
-      "note": "0.0670 is 0.067 displayed at fixed 4 dp (trailing zero); E6 keys carry 4 dp by design."
+      "note": "0.0670 is the artifact's 0.067 displayed with a padded trailing zero at 4 dp; other two exact. E6 keys carry 4 dp by design."
     },
     {
-      "quote": "every bar below the alpha = 0.10 dashed line",
+      "quote": "every bar below the $\\alpha = 0.10$ dashed line",
       "value": "all three < 0.10",
-      "source": "summary.md E6 (0.0523, 0.067, 0.0595 all < 0.10); ALPHA_LADDER",
+      "source": "summary.md E6: max bin answered err 0.067 < 0.10 (ALPHA_LADDER rung)",
       "status": "TRACED",
-      "note": ""
+      "note": "Comparison verified against the three artifact values."
     },
     {
-      "quote": "mean per-site coverage by the same bins -- 0.9896, 0.9800, 0.9856 (Table S3)",
-      "value": "0.9896 / 0.98 / 0.9856",
-      "source": "summary.md E6 size_bins mean_coverage: [30,100) 0.9896, [100,300) 0.98, [300,inf) 0.9856",
+      "quote": "mean per-site coverage by the same bins — 0.9896, 0.9800, 0.9856 (Table S3)",
+      "value": "0.9896 / 0.9800 / 0.9856",
+      "source": "summary.md E6 size_bins mean_coverage: 0.9896, 0.98, 0.9856",
       "status": "TRACED",
-      "note": "0.9800 is 0.98 displayed at fixed 4 dp (trailing zeros)."
+      "note": "0.9800 is the artifact's 0.98 padded to 4 dp; other two exact. Table S3 cross-ref not audited here."
+    },
+    {
+      "quote": "the [30,100), [100,300), and [300,$\\infty$) bins ... The [0,30) bin",
+      "value": "bin edges 0/30/100/300/inf",
+      "source": "summary.md E6 size_bin labels: [0,30), [30,100), [100,300), [300,inf)",
+      "status": "TRACED",
+      "note": "Bin labels match the artifact exactly."
     },
     {
       "quote": "The [0,30) bin holds no sites in this deployment and is shown empty",
       "value": "0 sites",
-      "source": "summary.md E6 size_bins[0] ('[0,30)') n_sites = 0, mean_coverage/mean_answered_err null",
+      "source": "summary.md E6 size_bins[0]: size_bin '[0,30)', n_sites = 0, values null",
       "status": "TRACED",
-      "note": ""
+      "note": "Exact."
     },
     {
       "quote": "eICU-CRD v2.0, 20 by-site re-splits",
-      "value": "20 replicates",
+      "value": "20",
       "source": "EICU-SUMMARY.md EICU-POOLED replicates = 20",
       "status": "TRACED",
-      "note": ""
+      "note": "Exact."
     },
     {
-      "quote": "n = 164,322 stays",
+      "quote": "$n = 164{,}322$ stays",
       "value": "164322",
-      "source": "EICU-SUMMARY.md EICU-POOLED n_records = 164322 (also preflight n_healthsystemstays / primary-cohort n_stays)",
+      "source": "EICU-SUMMARY.md EICU-POOLED n_records = 164322 (also preflight n_healthsystemstays / first-stay attrition step)",
       "status": "TRACED",
-      "note": ""
+      "note": "Exact."
     },
     {
       "quote": "over 207 hospitals",
       "value": "207",
-      "source": "EICU-SUMMARY.md EICU-POOLED n_sites = 207 (n_sites_primary_cohort = 207)",
+      "source": "EICU-SUMMARY.md EICU-POOLED n_sites = 207 (primary cohort; 208 raw minus 1 lost at outcome-known)",
       "status": "TRACED",
-      "note": ""
+      "note": "Exact; 207 is the primary-cohort site count, consistent with F-E n_sites_primary_cohort = 207."
     },
     {
-      "quote": "alpha = 0.10 certifies on every re-split",
-      "value": "certify_rate 1.0, 20/20",
-      "source": "EICU-SUMMARY.md EICU-POOLED rungs['0.1'].certify_rate = 1.0, n_certified = 20 of 20",
+      "quote": "$\\alpha = 0.10$ certifies on every re-split",
+      "value": "20/20, certify_rate 1.0",
+      "source": "EICU-SUMMARY.md EICU-POOLED rungs['0.1']: certify_rate = 1.0, n_certified = 20 of 20",
       "status": "TRACED",
-      "note": ""
+      "note": "Exact."
     },
     {
       "quote": "at 0.890 mean coverage",
       "value": "0.890 (artifact 0.8904)",
-      "source": "EICU-SUMMARY.md EICU-POOLED rungs['0.1'].mean_coverage = 0.8904 (panel coverage mean 0.89039 at 6 dp)",
+      "source": "EICU-SUMMARY.md EICU-POOLED rungs['0.1'].mean_coverage = 0.8904",
       "status": "TRACED",
-      "note": "Display rounding of 0.8904 to 3 dp."
+      "note": "Display rounding 0.8904 -> 0.890 at 3 dp."
     },
     {
-      "quote": "while alpha = 0.05 certifies on none",
-      "value": "certify_rate 0.0, 0/20",
-      "source": "EICU-SUMMARY.md EICU-POOLED rungs['0.05'].certify_rate = 0.0, n_certified = 0",
+      "quote": "while $\\alpha = 0.05$ certifies on none",
+      "value": "0/20",
+      "source": "EICU-SUMMARY.md EICU-POOLED rungs['0.05']: certify_rate = 0.0, n_certified = 0",
       "status": "TRACED",
-      "note": ""
+      "note": "Exact."
     },
     {
       "quote": "the pattern Figure 3's frontier anticipates at 74 calibration clusters",
       "value": "74",
       "source": "EICU-SUMMARY.md EICU-PREFLIGHT reference_check.split_projection.n_cal = 74",
       "status": "TRACED",
-      "note": "74 calibration sites from the 207-site split projection (n_train 73, n_aux 36, n_target 24)."
+      "note": "Exact (207 sites -> 24 target, 183 rest -> 73 train / 36 aux / 74 cal)."
     },
     {
       "quote": "each replicate's held-out 24-hospital pool",
       "value": "24",
-      "source": "EICU-SUMMARY.md EICU-PREFLIGHT split_projection.n_target = 24; EICU-RELIABILITY n_sites mean 24.0 (sd 0.0)",
+      "source": "EICU-SUMMARY.md EICU-PREFLIGHT split_projection.n_target = 24; EICU-RELIABILITY n_sites mean = 24.0",
       "status": "TRACED",
-      "note": ""
+      "note": "Exact."
     },
     {
-      "quote": "no replicate exceeds its budget",
-      "value": "rm_exceed_rate 0.0 (0 of 20)",
-      "source": "EICU-SUMMARY.md EICU-POOLED rungs['0.1'].rm_exceed_rate = 0.0; failure_criteria F-A n_rm_exceed = 0",
+      "quote": "no replicate exceeds its budget (a bound on gross violation, not a rate estimate ...)",
+      "value": "0 of 20 exceed",
+      "source": "EICU-SUMMARY.md EICU-POOLED rungs['0.1'].rm_exceed_rate = 0.0; failure_criteria F-A n_rm_exceed = 0 of 20",
       "status": "TRACED",
-      "note": "Caption keeps the artifact's bound-shaped framing (re-splits share one population)."
+      "note": "Exact; the bound-shaped phrasing mirrors the artifact's F-A note."
     },
     {
-      "quote": "the per-site exceedance fraction -- the dispersion the certificate does not bound, at mean 0.027",
+      "quote": "the per-site exceedance fraction — the dispersion the certificate does not bound, at mean 0.027",
       "value": "0.027 (artifact 0.0271)",
       "source": "EICU-SUMMARY.md EICU-POOLED rungs['0.1'].mean_per_site_exceed_frac = 0.0271",
       "status": "TRACED",
-      "note": "Display rounding of 0.0271 to 3 dp."
+      "note": "Display rounding 0.0271 -> 0.027 at 3 dp; the not-bounded framing matches the artifact's estimand note."
     }
   ]
 }
