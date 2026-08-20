@@ -1204,6 +1204,30 @@ Temperature miscalibration is deliberately NOT an arm: the selective score max(p
 any monotone recalibration a relabeling of the same answered sets (the walk certifies a
 different tau index for identical sets), so the gate is insensitive to monotone
 miscalibration BY CONSTRUCTION — the paper states this analytically instead of simulating it.
+· E9 power frontiers (revision-2; streams `_rng(9, arm, ...)`). ARM A BBSE label-shift power
+frontier (review weakness 3; P0.2 pilot in PHASE0-PROBES.md): at the anchor shift
+`SHIFT_BASE`, sweep the SOURCE-site count `E9_SOURCE_SWEEP = (208, 600, 900, 1200)` x
+declared-target modes `E9_TARGET_MODES = ("single-site-cp", "k40-boot")`
+(`E9_TARGET_K = 40`) at `E9_R = 50`, draws `_rng(9, 0, n_idx, mode_idx, r)`; the standard
+pipeline runs in bbse mode only (its internal "lo"/"hi" walk streams unchanged), and every
+certificate is rescored against a fresh 200-site pool drawn under the SAME shift (E2's
+aggregate-estimand precedent). Deliverable per cell: certify rate, decline-reason
+composition, median [rho_lo, rho_hi] width, deployed tau, rm_exceed vs DELTA. Two-sided
+reading fixed in advance: the pilot's monotone k40 frontier (0 at 600 to ~1 at 1200) either
+replicates at R=50 — extending the sites-are-capacity story to the corrected mode, with the
+paper's shift contribution restated as "certifies under genuine shift given capacity,
+declines below it" — or it does not, and the measured threshold ships as the honest price.
+The pilot also showed isolated fresh-pool exceedances in the single-site-declaration mode
+(1-in-few-certificates at R=20, statistically unresolved); the released arm REPORTS that
+mode's exceedance rate with its exact binomial interval either way — if it lands above
+DELTA, the finding ("a single-site declaration under-covers where the multi-site bootstrap
+does not") is a result, not a nuisance. E2's per-magnitude BBSE certify rates (already in the
+released artifact) are surfaced in the paper regardless. ARM B outcome-weighted FNR frontier:
+see the "Outcome-weighted atoms" section; `E9_FNR_LADDER = (0.4, 0.5, 0.55, 0.6)` x
+`E9_FNR_SWEEP = (208, 400, 600)` at R=200, draws `_rng(9, 1, n_idx, r)`, walks from
+`_e9_fnr_rng`. Runtime note superseding the earlier target: with E9-A the new long pole
+(~500 BBSE pipelines at up to 1200 sites), the full revision-2 grid targets < ~2.5 h; E1–E7
+alone keep their < ~45 min envelope.
 Outputs: CSV per experiment + PNG figures (matplotlib, no seaborn) + a summary.md.
 SERIALIZATION (panel S1-11/S2-24): every per-draw CSV carries `decline_reason`; E2 bbse
 rows carry the fit diagnostics (rho_lo/rho_hi/rho_point/gap_lo/q_target/n_target_sites);

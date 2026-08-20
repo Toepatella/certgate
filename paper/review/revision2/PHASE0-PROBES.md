@@ -90,9 +90,40 @@ Two design findings:
 Frozen: `E8_HEAD_ARMS = ("gbm", "degraded")`, `E8_GBM_MAX_ITER = 200`,
 `E8_DEGRADED_ZERO_FEATURES = 2`.
 
+## P0.2 → E9-A frozen: the BBSE power frontier is monotone under a 40-site declaration
+
+R=20 per cell, anchor shift 0.095→0.22, α=0.10, pipeline in bbse mode, certificates
+rescored on a fresh 200-site same-shift pool:
+
+| source sites | mode | certify rate | median ρ-box width | exceed |
+|---|---|---|---|---|
+| 600 | single-site-cp | 0.15 | 4.81 | 1 |
+| 600 | k40-boot | 0.00 | 2.68 | 0 |
+| 900 | single-site-cp | 0.30 | 3.65 | 1 |
+| 900 | k40-boot | 0.50 | 2.61 | 0 |
+| 1200 | single-site-cp | 0.45 | 3.67 | 1 |
+| 1200 | k40-boot | 0.95 | 2.11 | 0 |
+| 1600 | single-site-cp | 0.45 | 4.25 | 1 |
+| 1600 | k40-boot | 1.00 | 2.10 | 0 |
+
+The k40 frontier is clean and monotone with shrinking boxes and zero exceedances —
+the corrected mode certifies under genuine shift given source capacity. The
+single-site-declaration mode plateaus near 0.45 and shows isolated fresh-pool
+exceedances (1 per cell over few certificates — unresolved at R=20); the released
+arm reports that mode's exceedance rate with its exact binomial interval as a
+pre-declared question. **Frozen:** `E9_SOURCE_SWEEP = (208, 600, 900, 1200)`
+(208 anchors to the known E2 regime; 1600 dropped — the frontier already reaches
+~1 at 1200), `E9_TARGET_MODES = ("single-site-cp", "k40-boot")`, `E9_TARGET_K = 40`,
+`E9_R = 50`. Pilot wall-clock ≈ 35 min at 160 pipelines → E9-A ≈ 60–75 min, the
+revision-2 grid's new long pole.
+
+## P0.0 → PASS
+
+Full-grid control rerun on this machine: all 22 synthetic artifacts (E1–E7 CSV/PNG
++ 7 summary blocks net of `_run` stamps) byte-identical to the released
+`experiments/out/`. The byte-identity regression gate for the E8/E9 landing is
+proven workable.
+
 ## Still pending
 
-- **P0.2** BBSE power pilot (source-site counts 600–1600 × two target modes) —
-  queued behind the P0.0 control grid rerun; freezes `E9_SOURCE_SWEEP`/`E9_R`.
-- **P0.4** full `run_eicu` wall-clock — gates the subgroup re-run (3b).
-- **P0.0** control-rerun byte-diff vs released `experiments/out/` — grid running.
+- **P0.4** full `run_eicu` wall-clock — gates the subgroup re-run (3b); running.
