@@ -17,6 +17,7 @@ import argparse
 import collections
 import csv
 import datetime
+import hashlib
 import json
 import os
 import re
@@ -71,7 +72,15 @@ E8_NOISE_R = 300                            # draws per eta (exceedance resoluti
 E8_HEAD_ARMS = ("gbm", "degraded")          # alternative heads (arm C)
 E8_GBM_MAX_ITER = 200
 E8_DEGRADED_ZERO_FEATURES = 2               # informative features denied to the head
-EXPERIMENTS = ("E1", "E2", "E3", "E4", "E5", "E6", "E7", "E8")
+# revision-2 (SPEC "E9"; frozen from the P0.2/P0.3 pilots in PHASE0-PROBES.md)
+E9_SOURCE_SWEEP = (208, 600, 900, 1200)     # BBSE power frontier source-site counts
+E9_TARGET_MODES = ("single-site-cp", "k40-boot")
+E9_TARGET_K = 40                            # declared target sites, bootstrap mode
+E9_R = 50                                   # draws per (source count, target mode)
+E9_FNR_LADDER = (0.4, 0.5, 0.55, 0.6)       # FNR budgets; 0.4 = negative control
+E9_FNR_SWEEP = (208, 400, 600)              # site counts for the FNR frontier
+E9_FNR_R = 200
+EXPERIMENTS = ("E1", "E2", "E3", "E4", "E5", "E6", "E7", "E8", "E9")
 
 
 # ------------------------------------------------------------------ helpers
@@ -1453,10 +1462,247 @@ def run_E8(out, quick):
     return summary
 
 
+# ------------------------------------------------------------------ E9
+
+def _e9_fnr_rng(budget, stream=""):
+    """Permutation stream for the experimental FNR walks (SPEC
+    "Outcome-weighted atoms"): mirrors ``certify.certification_rng``'s
+    sha256-only construction but indexes ``E9_FNR_LADDER`` and carries a
+    leading ``9`` discriminator, so it can never alias a certification stream.
+    The frozen library function and ``ALPHA_LADDER`` are untouched."""
+    h = hashlib.sha256(str(stream).encode()).digest()
+    return np.random.default_rng(np.random.SeedSequence(
+        [SEED, 9, E9_FNR_LADDER.index(budget),
+         int.from_bytes(h[:4], "big"), int.from_bytes(h[4:8], "big")]))
+
+
+def _fnr_on_pool(head, pool, tau):
+    """Influence-weighted FN rate among ANSWERED POSITIVES on a fresh pool
+    (SPEC "Outcome-weighted atoms"): FNR_M = sum_c (g_c/n_c) fn_c /
+    sum_c (g_c/n_c) ap_c with g_c = min(n_c, M). NaN when no positives
+    answer."""
+    score = head.score(pool.x)
+    err = head.predict(pool.x) != pool.y
+    ans = score >= tau
+    sizes = pool.site_sizes.astype(float)
+    g_over_n = np.where(sizes > 0,
+                        np.minimum(sizes, M_INFLUENCE)
+                        / np.maximum(sizes, 1.0), 0.0)
+    num_c = np.bincount(pool.site_id,
+                        weights=(ans & err & pool.y).astype(float),
+                        minlength=pool.n_sites)
+    den_c = np.bincount(pool.site_id, weights=(ans & pool.y).astype(float),
+                        minlength=pool.n_sites)
+    num = float((g_over_n * num_c).sum())
+    den = float((g_over_n * den_c).sum())
+    return (num / den) if den > 0 else float("nan")
+
+
+def run_E9(out, quick):
+    """Power frontiers (revision-2; SPEC "E9").
+
+    Arm A: the BBSE label-shift power frontier -- source-site count x declared
+    target mode at the anchor shift, the standard pipeline in bbse mode only
+    (review weakness 3; the single-site-declaration exceedance question is
+    pre-declared in SPEC). Arm B: the outcome-weighted FNR frontier on
+    unmodified atoms (weakness 2; the claim is a frontier and a price, never
+    a tight FNR guarantee).
+    """
+    R = 3 if quick else E9_R
+    fnr_R = 10 if quick else E9_FNR_R
+
+    # ---- arm A: BBSE power frontier -------------------------------------
+    rows_a = []
+    for n_idx, n_sites in enumerate(E9_SOURCE_SWEEP):
+        for m_idx, mode in enumerate(E9_TARGET_MODES):
+            cfg = SimConfig()
+            for r in range(R):
+                rng = _rng(9, 0, n_idx, m_idx, r)
+                coh = draw_cohort(cfg, n_sites, rng)
+                train, aux, cal = split_sites(coh, rng)
+                head = fit_head(train)
+                if mode == "single-site-cp":
+                    tgt = draw_cohort(cfg, 1, rng, label_base_rate=SHIFT_BASE,
+                                      site_label_prefix=f"e9t{n_idx}_{r}",
+                                      require_both_classes=False)
+                    tgt_sites = None
+                else:
+                    tgt = draw_cohort(cfg, E9_TARGET_K, rng,
+                                      label_base_rate=SHIFT_BASE,
+                                      site_label_prefix=f"e9k{n_idx}_{r}")
+                    tgt_sites = np.array(tgt.site_labels,
+                                         dtype=object)[tgt.site_id]
+                rep = run_certgate(train, aux, cal, tgt.x,
+                                   target_label=f"E9a-{n_sites}-{mode}-{r}",
+                                   target_site_id=tgt_sites,
+                                   oracle_target_y=tgt.y, modes=("bbse",))
+                bd = rep["diagnostic"]["bbse"]
+                evalp = draw_cohort(cfg, E1_EVAL_SITES, rng,
+                                    label_base_rate=SHIFT_BASE,
+                                    site_label_prefix=f"e9v{n_idx}_{r}")
+                lo, hi = bd.get("rho_lo"), bd.get("rho_hi")
+                width = (round(float(hi) - float(lo), 4)
+                         if lo is not None and hi is not None else None)
+                for alpha in ALPHA_LADDER:
+                    row = _row_for(rep, alpha)
+                    certified = row is not None and row["status"] == "certified"
+                    out_row = dict(n_source_sites=n_sites, target_mode=mode,
+                                   draw=r, alpha=alpha, certified=certified,
+                                   tau=None, coverage=None,
+                                   decline_reason=None, rho_lo=lo, rho_hi=hi,
+                                   box_width=width, rm_fresh=None,
+                                   rm_exceed=None)
+                    if certified:
+                        tau = float(row["tau"])
+                        rm = _rm_on_pool(head, evalp, tau)
+                        out_row.update(
+                            tau=round(tau, 4),
+                            coverage=round(float(
+                                (head.score(evalp.x) >= tau).mean()), 4),
+                            rm_fresh=round(rm, 6),
+                            rm_exceed=bool(rm > alpha))
+                    elif row is not None:
+                        out_row["decline_reason"] = \
+                            row.get("reasons", {}).get("bbse")
+                    else:
+                        out_row["decline_reason"] = rep.get("reason")
+                    rows_a.append(out_row)
+    _write_csv(os.path.join(out, "E9_bbse_frontier.csv"), rows_a,
+               ["n_source_sites", "target_mode", "draw", "alpha", "certified",
+                "tau", "coverage", "decline_reason", "rho_lo", "rho_hi",
+                "box_width", "rm_fresh", "rm_exceed"])
+
+    # ---- arm B: FNR frontier on outcome-weighted atoms ------------------
+    rows_b = []
+    for n_idx, n_sites in enumerate(E9_FNR_SWEEP):
+        cfg = SimConfig()
+        for r in range(fnr_R):
+            rng = _rng(9, 1, n_idx, r)
+            train, aux, cal, head = _draw_split(cfg, n_sites, rng)
+            evalp = draw_cohort(cfg, E1_EVAL_SITES, rng,
+                                site_label_prefix=f"e9fv{n_idx}_{r}")
+            sc_cal, er_cal = head.score(cal.x), head.predict(cal.x) != cal.y
+            sc_aux, er_aux = head.score(aux.x), head.predict(aux.x) != aux.y
+            w_cal = cal.y.astype(float)
+            w_aux = aux.y.astype(float)
+            true_fnr = _fnr_on_pool(head, evalp, float(TAU_GRID[0]))
+            for budget in E9_FNR_LADDER:
+                a_aux = influence_atoms(sc_aux, er_aux, aux.site_id,
+                                        aux.n_sites, TAU_GRID, budget,
+                                        M_INFLUENCE, weights=w_aux, wmax=1.0)
+                a_cal = influence_atoms(sc_cal, er_cal, cal.site_id,
+                                        cal.n_sites, TAU_GRID, budget,
+                                        M_INFLUENCE, weights=w_cal, wmax=1.0)
+                _, dep = fixed_sequence_walk(
+                    a_cal, walk_order(a_aux), budget, DELTA, TAU_GRID,
+                    rng=_e9_fnr_rng(budget, "e9-fnr"))
+                row = dict(n_sites=n_sites, draw=r, fnr_budget=budget,
+                           certified=dep is not None, tau=None, coverage=None,
+                           fnr_fresh=None, fnr_exceed=None,
+                           true_fnr_at_lowest_tau=round(true_fnr, 6))
+                if dep is not None:
+                    tau = float(TAU_GRID[dep])
+                    fnr = _fnr_on_pool(head, evalp, tau)
+                    row.update(tau=round(tau, 4),
+                               coverage=round(float(
+                                   (head.score(evalp.x) >= tau).mean()), 4),
+                               fnr_fresh=round(fnr, 6),
+                               fnr_exceed=bool(fnr > budget))
+                rows_b.append(row)
+    _write_csv(os.path.join(out, "E9_fnr.csv"), rows_b,
+               ["n_sites", "draw", "fnr_budget", "certified", "tau",
+                "coverage", "fnr_fresh", "fnr_exceed",
+                "true_fnr_at_lowest_tau"])
+
+    # ---- summary ---------------------------------------------------------
+    frontier = {}
+    for n_sites in E9_SOURCE_SWEEP:
+        for mode in E9_TARGET_MODES:
+            sub = [x for x in rows_a if x["n_source_sites"] == n_sites
+                   and x["target_mode"] == mode and x["alpha"] == 0.10]
+            certs = [x for x in sub if x["certified"]]
+            reasons = {}
+            for x in sub:
+                if not x["certified"]:
+                    key = x["decline_reason"] or "unknown"
+                    reasons[key] = reasons.get(key, 0) + 1
+            widths = [x["box_width"] for x in sub
+                      if x["box_width"] is not None]
+            frontier[f"{n_sites}|{mode}"] = dict(
+                certify_rate=round(len(certs) / R, 4) if sub else None,
+                decline_reasons=reasons,
+                median_box_width=round(float(np.median(widths)), 4)
+                if widths else None,
+                mean_tau=round(float(np.mean(
+                    [x["tau"] for x in certs])), 4) if certs else None,
+                rm_exceed_rate=_rate(
+                    sum(bool(x["rm_exceed"]) for x in certs), len(certs)))
+    fnr = {}
+    for budget in E9_FNR_LADDER:
+        per = {}
+        for n_sites in E9_FNR_SWEEP:
+            sub = [x for x in rows_b if x["fnr_budget"] == budget
+                   and x["n_sites"] == n_sites]
+            certs = [x for x in sub if x["certified"]]
+            per[n_sites] = dict(
+                certify_rate=round(len(certs) / fnr_R, 4) if sub else None,
+                mean_tau=round(float(np.mean(
+                    [x["tau"] for x in certs])), 4) if certs else None,
+                mean_fnr_fresh=round(float(np.mean(
+                    [x["fnr_fresh"] for x in certs])), 4) if certs else None,
+                fnr_exceed_rate=_rate(
+                    sum(bool(x["fnr_exceed"]) for x in certs), len(certs)))
+        fnr[budget] = per
+    truth = [x["true_fnr_at_lowest_tau"] for x in rows_b
+             if x["fnr_budget"] == E9_FNR_LADDER[0]]
+    summary = {
+        "R": R, "fnr_R": fnr_R,
+        "anchor_shift": SHIFT_BASE,
+        "bbse_frontier": frontier,
+        "fnr_frontier": fnr,
+        "true_fnr_at_lowest_tau_mean": round(float(np.mean(truth)), 4)
+        if truth else None,
+        "notes": ("arm A: pipeline in bbse mode only; certificates rescored "
+                  "on a fresh same-shift pool (E2's aggregate-estimand "
+                  "precedent); the single-site-declaration exceedance rate "
+                  "is a pre-declared question (SPEC E9). arm B: experimental "
+                  "secondary certificate on unmodified influence_atoms with "
+                  "weights=y; a frontier and a price, never a tight FNR "
+                  "guarantee; 0.4 is the built-in always-refuses negative "
+                  "control."),
+    }
+
+    # ---- figure ----------------------------------------------------------
+    fig, axes = plt.subplots(1, 2, figsize=(11, 4))
+    a = axes[0]
+    for mode, color in (("single-site-cp", "#cc6677"), ("k40-boot", "#4477aa")):
+        a.plot(E9_SOURCE_SWEEP,
+               [frontier[f"{n}|{mode}"]["certify_rate"]
+                for n in E9_SOURCE_SWEEP], "-o", color=color, label=mode, ms=4)
+    a.set_xlabel("declared source sites")
+    a.set_ylabel("BBSE certify rate (a=0.10)")
+    a.set_title("E9-A label-shift power frontier")
+    a.legend(fontsize=8)
+    a = axes[1]
+    for n_sites, color in zip(E9_FNR_SWEEP, ("#cc6677", "#4477aa", "#228833")):
+        a.plot(E9_FNR_LADDER,
+               [fnr[b][n_sites]["certify_rate"] for b in E9_FNR_LADDER],
+               "-o", color=color, label=f"{n_sites} sites", ms=4)
+    a.set_xlabel("FNR budget")
+    a.set_ylabel("certify rate")
+    a.set_title("E9-B FNR frontier (outcome-weighted atoms)")
+    a.legend(fontsize=8)
+    fig.tight_layout()
+    fig.savefig(os.path.join(out, "E9_frontiers.png"), dpi=110)
+    plt.close(fig)
+    return summary
+
+
 # ------------------------------------------------------------------ driver
 
 _RUNNERS = {"E1": run_E1, "E2": run_E2, "E3": run_E3, "E4": run_E4,
-            "E5": run_E5, "E6": run_E6, "E7": run_E7, "E8": run_E8}
+            "E5": run_E5, "E6": run_E6, "E7": run_E7, "E8": run_E8,
+            "E9": run_E9}
 
 
 def _existing_summary_blocks(path):
@@ -1592,6 +1838,15 @@ def _headline(name, res):
                 f"mpeb={mpe['certify_by_nsites']}; noise certify={noise}; "
                 f"degraded cov={deg['mean_coverage']} "
                 f"exceed={deg['rm_exceed_rate']}")
+    if name == "E9":
+        fr = {k: v["certify_rate"] for k, v in res["bbse_frontier"].items()
+              if k.endswith("k40-boot")}
+        f5 = res["fnr_frontier"][0.5]
+        f55 = res["fnr_frontier"][0.55]
+        return (f"bbse k40 certify={fr}; fnr b=0.5 by sites="
+                f"{[f5[n]['certify_rate'] for n in E9_FNR_SWEEP]} "
+                f"b=0.55={[f55[n]['certify_rate'] for n in E9_FNR_SWEEP]} "
+                f"(truth~{res['true_fnr_at_lowest_tau_mean']})")
     return ""
 
 

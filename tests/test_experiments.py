@@ -120,3 +120,46 @@ def test_e8_flip_labels_rate_and_determinism():
     y3 = np.zeros(20000, dtype=bool)
     _flip_labels((SimpleNamespace(y=y3),), 0.03, _rng(9999, 1))
     assert (y1 != y3).any()                      # stream-sensitive
+
+
+def test_e9_fnr_rng_deterministic_and_ladder_indexed():
+    """SPEC "Outcome-weighted atoms": the FNR permutation stream mirrors
+    certification_rng's sha256 construction, indexes E9_FNR_LADDER, and can
+    never alias a certification stream (leading 9 discriminator)."""
+    from experiments.run_synthetic import _e9_fnr_rng
+    a = _e9_fnr_rng(0.5, "e9-fnr").integers(0, 2 ** 31, 4)
+    b = _e9_fnr_rng(0.5, "e9-fnr").integers(0, 2 ** 31, 4)
+    c = _e9_fnr_rng(0.55, "e9-fnr").integers(0, 2 ** 31, 4)
+    d = _e9_fnr_rng(0.5, "other").integers(0, 2 ** 31, 4)
+    assert (a == b).all()
+    assert not (a == c).all()
+    assert not (a == d).all()
+    import pytest as _pytest
+    with _pytest.raises(ValueError):
+        _e9_fnr_rng(0.10)                        # off the FNR ladder, loudly
+
+
+def test_fnr_on_pool_closed_form():
+    """FNR_M on a two-site toy pool, checked against hand arithmetic."""
+    from types import SimpleNamespace
+    from experiments.run_synthetic import _fnr_on_pool
+
+    class _H:
+        def score(self, x):
+            return x[:, 0]
+
+        def predict(self, x):
+            return x[:, 1] >= 0.5
+
+    # site 0: 3 records (2 answered positives, 1 FN); site 1: 2 records
+    # (1 answered positive, 0 FN). Equal g/n weights -> FNR = weighted mean.
+    x = np.array([[0.9, 0.0], [0.9, 1.0], [0.1, 1.0],
+                  [0.9, 1.0], [0.9, 0.0]])
+    y = np.array([True, True, True, True, False])
+    pool = SimpleNamespace(x=x, y=y, site_id=np.array([0, 0, 0, 1, 1]),
+                           n_sites=2, site_sizes=np.array([3, 2]))
+    got = _fnr_on_pool(_H(), pool, 0.5)
+    # site 0: fn=1 (rec0: answered, pred neg, y pos), ap=2 -> g/n = min(3,M)/3 = 1
+    # site 1: fn=0, ap=1 -> g/n = 1
+    # FNR_M = (1*1 + 1*0) / (1*2 + 1*1) = 1/3
+    assert np.isclose(got, 1.0 / 3.0)

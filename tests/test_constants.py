@@ -157,6 +157,19 @@ def test_e8_constants_pinned():
     assert rs.E8_DEGRADED_ZERO_FEATURES == 2
 
 
+def test_e9_constants_pinned():
+    """Revision-2 E9 arms (SPEC "E9" + "Outcome-weighted atoms"; frozen from
+    the P0.2/P0.3 pilots in paper/review/revision2/PHASE0-PROBES.md)."""
+    from experiments import run_synthetic as rs
+    assert rs.E9_SOURCE_SWEEP == (208, 600, 900, 1200)
+    assert rs.E9_TARGET_MODES == ("single-site-cp", "k40-boot")
+    assert rs.E9_TARGET_K == 40
+    assert rs.E9_R == 50
+    assert rs.E9_FNR_LADDER == (0.4, 0.5, 0.55, 0.6)
+    assert rs.E9_FNR_SWEEP == (208, 400, 600)
+    assert rs.E9_FNR_R == 200
+
+
 def test_experiment_registration_consistent():
     """EXPERIMENTS and _RUNNERS must agree (the --only validator checks one,
     the dispatch loop iterates the other -- registering in only one is a
