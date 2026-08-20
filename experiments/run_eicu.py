@@ -92,7 +92,27 @@ EICU_FORBIDDEN_OUT_KEYS = ("stay_id", "patient_id", "admission_id", "site_raw",
 # this edit is silently dropped with no error.
 EICU_SUMMARY_SECTIONS = ("EICU-PREFLIGHT", "EICU-PREDICTIONS",
                          "EICU-POOLED", "EICU-PERSITE", "EICU-COMPARATOR",
-                         "EICU-RELIABILITY")
+                         "EICU-RELIABILITY", "EICU-SUBGROUPS")
+
+# POST-HOC subgroup descriptives (revision-2 item 3b; SPEC PIN AMENDMENT
+# 2026-08-20; panel item S2-36). These carry NO pre-registration claim: the
+# dimensions and age bands were chosen after the extract was read, and the
+# label below is carried in TWO enumerated places -- (1) a leading `post_hoc`
+# column on every EICU_subgroups.csv row, (2) the `post_hoc` field of the
+# EICU-SUBGROUPS summary block. The cell floor REUSES the frozen
+# eicu_etl.EICU_MIN_OUTCOME_STRATUM (no new threshold constant -- the A5/A6
+# discipline). One MARGINAL dimension at a time, never crossed, never
+# per-hospital x subgroup.
+EICU_SUBGROUP_DIMS = ("age_band", "gender", "ethnicity",
+                      "hospitaladmitsource", "unittype")
+EICU_SUBGROUP_AGE_BANDS = ((18, 45), (45, 65), (65, 75), (75, 200))
+EICU_SUBGROUP_LABEL = ("[MEASURE] POST-HOC SUBGROUP DESCRIPTIVES (2026-08-20): "
+                       "computed after the extract was read; certifies "
+                       "nothing, settles no registered prediction or failure "
+                       "criterion, and no certified quantity descends from "
+                       "it. Rates in cells below the frozen "
+                       "EICU_MIN_OUTCOME_STRATUM record floor are suppressed "
+                       "as null, never 0.0.")
 
 # Executable forms of the pre-declared failure criteria (EICU-PROTOCOL section
 # 10). They are literals HERE rather than prose in a paper so that a run
@@ -1513,15 +1533,118 @@ def _reliability_summary(panel_payloads, *, arm, replicates, pooled_rows):
     return out
 
 
+def _subgroup_masks(x, feature_names):
+    """Marginal subgroup masks from the target cohort's own allowlisted
+    feature columns (SPEC revision-2 item 3b): one-hot equality for the
+    categorical dimensions; age banded only on rows whose ``age__missing``
+    sibling is 0 (imputed ages carry the S_train mean and must not be
+    banded)."""
+    idx = {n: i for i, n in enumerate(feature_names)}
+    masks = {}
+    age = x[:, idx["age"]]
+    miss = (x[:, idx["age__missing"]] == 1.0 if "age__missing" in idx
+            else np.zeros(len(x), dtype=bool))
+    bands = {}
+    for lo, hi in EICU_SUBGROUP_AGE_BANDS:
+        label = f"{lo}-{hi - 1}" if hi < 200 else f"{lo}+"
+        bands[label] = (~miss) & (age >= lo) & (age < hi)
+    masks["age_band"] = bands
+    for dim in EICU_SUBGROUP_DIMS[1:]:
+        prefix = dim + "="
+        levels = {}
+        for name, col in idx.items():
+            if name.startswith(prefix):
+                levels[name[len(prefix):] or "EMPTY"] = x[:, col] == 1.0
+        masks[dim] = levels
+    return masks
+
+
+def _subgroup_rows(head, target, feature_names, tau, replicate, arm):
+    """POST-HOC per-replicate subgroup descriptives at the deployed operative
+    tau (pooled arm only). Suppression: a whole cell below the frozen floor
+    emits null rates with status ``suppressed-below-floor``; an
+    answered/declined scope below the floor emits null for that scope's rates
+    while the cell stays ``ok`` (null means suppressed-or-undefined, never
+    0.0 -- panel NOTES[6] discipline)."""
+    floor = etl.EICU_MIN_OUTCOME_STRATUM
+    rows = []
+    if tau is not None:
+        ans = head.score(target.x) >= tau
+        err = head.predict(target.x) != target.y
+    for dim in EICU_SUBGROUP_DIMS:
+        levels = _subgroup_masks(target.x, feature_names)[dim]
+        for level in sorted(levels):
+            m = levels[level]
+            n = int(m.sum())
+            row = dict(post_hoc=EICU_SUBGROUP_LABEL, replicate=replicate,
+                       arm=arm, dim=dim, level=level, n=n, n_answered=None,
+                       coverage=None, answered_err_rate=None,
+                       answered_pos_rate=None, declined_err_rate=None,
+                       declined_pos_rate=None, status="ok")
+            if tau is None:
+                row["status"] = "no-certificate"
+            elif n < floor:
+                row["status"] = "suppressed-below-floor"
+            else:
+                a, d = m & ans, m & ~ans
+                na, nd = int(a.sum()), int(d.sum())
+                row["n_answered"] = na
+                row["coverage"] = round(na / n, 4)
+                if na >= floor:
+                    row["answered_err_rate"] = round(float(err[a].mean()), 4)
+                    row["answered_pos_rate"] = round(
+                        float(target.y[a].mean()), 4)
+                if nd >= floor:
+                    row["declined_err_rate"] = round(float(err[d].mean()), 4)
+                    row["declined_pos_rate"] = round(
+                        float(target.y[d].mean()), 4)
+            rows.append(row)
+    return rows
+
+
+def _subgroup_summary(rows, *, arm):
+    """EICU-SUBGROUPS block: pooled-over-replicates per level, suppression
+    counted arithmetically (mirrors EICU-RELIABILITY's n_panels shortfall
+    discipline)."""
+    out = {"post_hoc": EICU_SUBGROUP_LABEL, "arm": arm,
+           "floor": etl.EICU_MIN_OUTCOME_STRATUM,
+           "dims": {}, "n_cells_suppressed_whole": sum(
+               1 for r in rows if r["status"] == "suppressed-below-floor")}
+    for dim in EICU_SUBGROUP_DIMS:
+        levels = {}
+        for level in sorted({r["level"] for r in rows if r["dim"] == dim}):
+            sub = [r for r in rows if r["dim"] == dim and r["level"] == level]
+            cov = [r["coverage"] for r in sub if r["coverage"] is not None]
+            aerr = [r["answered_err_rate"] for r in sub
+                    if r["answered_err_rate"] is not None]
+            apos = [r["answered_pos_rate"] for r in sub
+                    if r["answered_pos_rate"] is not None]
+            levels[level] = dict(
+                n_mean=round(float(np.mean([r["n"] for r in sub])), 1),
+                n_replicates=len(sub),
+                coverage_mean=round(float(np.mean(cov)), 4) if cov else None,
+                coverage_min=round(float(np.min(cov)), 4) if cov else None,
+                answered_err_mean=round(float(np.mean(aerr)), 4)
+                if aerr else None,
+                answered_pos_mean=round(float(np.mean(apos)), 4)
+                if apos else None,
+                n_answered_rates_suppressed=sum(
+                    1 for r in sub if r["status"] == "ok"
+                    and r["answered_err_rate"] is None))
+        out["dims"][dim] = levels
+    return out
+
+
 def _certification_blocks(payload):
     """Derive the EICU-POOLED / EICU-PERSITE / EICU-COMPARATOR / the POST-HOC
-    EICU-RELIABILITY sections."""
+    EICU-RELIABILITY and EICU-SUBGROUPS sections."""
     if not payload:
         return {}
     return {"EICU-POOLED": payload.get("pooled"),
             "EICU-PERSITE": payload.get("per_site"),
             "EICU-COMPARATOR": payload.get("comparator"),
-            "EICU-RELIABILITY": payload.get("reliability")}
+            "EICU-RELIABILITY": payload.get("reliability"),
+            "EICU-SUBGROUPS": payload.get("subgroups")}
 
 
 def run_certification(data_dir, out, *, arm="primary", replicates=1,
@@ -1653,6 +1776,7 @@ def run_certification(data_dir, out, *, arm="primary", replicates=1,
     # EICU-RELIABILITY summary block, the face of the figure, and a leading
     # post_hoc column on every EICU_reliability.csv row.
     panel_payloads, panel_curve_rows = [], []
+    subgroup_rows = []
     warnings.append(rp.POST_HOC_LABEL)
     certificate = None
     impute_fill = {}
@@ -1816,6 +1940,14 @@ def run_certification(data_dir, out, *, arm="primary", replicates=1,
             for row in rp.panel_reliability_rows(panel):
                 panel_curve_rows.append({"replicate": r, "arm": arm,
                                          "post_hoc": rp.POST_HOC_LABEL, **row})
+
+        # ---- POST-HOC subgroup descriptives (revision-2 item 3b) ----------
+        # Pooled arm only, at the deployed operative tau; marginal dimensions
+        # only. Descends entirely from data seen after the freeze -- labeled,
+        # floor-suppressed, certifies nothing.
+        subgroup_rows.extend(_subgroup_rows(
+            head, target, feature_names,
+            (float(op_pooled["tau"]) if op_pooled else None), r, arm))
 
         bb = _bbse_block(rep_pooled)
         bb["replicate"] = r
@@ -1991,6 +2123,15 @@ def run_certification(data_dir, out, *, arm="primary", replicates=1,
                  ["post_hoc", "replicate", "arm"]
                  + list(rp.PANEL_RELIABILITY_FIELDS),
                  "EICU_reliability.csv")
+    # POST-HOC subgroup rows: same leading-label discipline as the panel CSV
+    # (RP-9) -- the per-row column is the only carrier that survives the file
+    # being detached from the directory that explains it.
+    _write_table(os.path.join(out, f"{EICU_OUT_PREFIX}_subgroups.csv"),
+                 subgroup_rows,
+                 ["post_hoc", "replicate", "arm", "dim", "level", "n",
+                  "n_answered", "coverage", "answered_err_rate",
+                  "answered_pos_rate", "declined_err_rate",
+                  "declined_pos_rate", "status"], "EICU_subgroups.csv")
 
     if not quick:
         _figures(out, pooled_rows, per_site_rows, panel_payloads, verbose)
@@ -2005,7 +2146,8 @@ def run_certification(data_dir, out, *, arm="primary", replicates=1,
         "comparator": _comparator_summary(comparator_rows, arm=arm),
         "reliability": _reliability_summary(panel_payloads, arm=arm,
                                             replicates=replicates,
-                                            pooled_rows=pooled_rows)}
+                                            pooled_rows=pooled_rows),
+        "subgroups": _subgroup_summary(subgroup_rows, arm=arm)}
     _write_summary(out, _certification_blocks(payload), mode=(
         "QUICK" if quick else "FULL"), replicates=replicates, arm=arm,
         data_sha=_data_sha(data_dir))

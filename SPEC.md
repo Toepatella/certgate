@@ -1628,6 +1628,29 @@ without the tuple edit is silently dropped with no error. The panel section is P
 appended LAST — never inserted — so every `EICU-SUMMARY.md` written before 2026-08-01,
 including those in `experiments/out/` and `experiments/out-sens/`, still parses and preserves.
 
+**PIN AMENDMENT (2026-08-20, revision-2), same house rule.** `EICU_SUMMARY_SECTIONS` gains a
+seventh entry, `"EICU-SUBGROUPS"`, APPENDED LAST for the post-hoc subgroup descriptives below;
+ordering again SPEC (this paragraph) → `experiments/run_eicu.py` → `tests/test_constants.py`.
+Every artifact written under the 6-tuple still parses and preserves.
+
+**POST-HOC subgroup descriptives (revision-2 item 3b; panel item S2-36).** Per replicate, on
+the POOLED target arm at the deployed operative tau, `run_eicu` computes coverage and
+answered/declined error and observed-positive rates for ONE MARGINAL subgroup dimension at a
+time — `EICU_SUBGROUP_DIMS = ("age_band", "gender", "ethnicity", "hospitaladmitsource",
+"unittype")` with `EICU_SUBGROUP_AGE_BANDS = ((18, 45), (45, 65), (65, 75), (75, 200))` — never
+crossed, never per-hospital x subgroup. Masks come from the target cohort's own allowlisted
+feature columns (one-hot equality; age banded only on rows whose `age__missing` sibling is 0),
+so NO ETL or allowlist change exists. Cells whose scope count falls below the REUSED frozen
+floor `eicu_etl.EICU_MIN_OUTCOME_STRATUM` (= 100; A5/A6 discipline: no new constant) emit
+`None` rates with a suppression status — never `0.0` — and the summary counts
+`n_cells_suppressed` so suppression is arithmetically visible; suppression on the answered
+scope at ~9% prevalence is EXPECTED and is itself the equity disclosure. Everything descends
+from data seen after the freeze: the block is labeled by `EICU_SUBGROUP_LABEL`, carried in TWO
+enumerated places ((1) a leading `post_hoc` column on every `EICU_subgroups.csv` row, (2) the
+`post_hoc` field of the `EICU-SUBGROUPS` summary block), certifies nothing, and settles none of
+P1–P7 / F-A–F-E. The dims/bands/label are pinned by an APPENDED post-hoc constants test that
+carries no pre-registration claim (the reliability-panel precedent).
+
 **PIN AMENDMENT (2026-08-01), recorded because the house rule forbids silent edits to a pinned
 literal.** `EICU_SUMMARY_SECTIONS` was a 5-tuple until this date; the reliability-panel work
 APPENDED `"EICU-RELIABILITY"` as a sixth entry. This is the one pre-existing pinned value the

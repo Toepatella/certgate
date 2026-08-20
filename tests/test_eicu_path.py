@@ -1565,7 +1565,13 @@ def test_mock_run_writes_the_reliability_panel(mock_certified_run):
 
     text = open(os.path.join(out, "EICU-SUMMARY.md"), encoding="utf-8").read()
     assert "## EICU-RELIABILITY" in text
-    assert "EICU-RELIABILITY" == run_eicu.EICU_SUMMARY_SECTIONS[-1]
+    # PIN AMENDMENT 2026-08-20: the panel section was appended LAST on
+    # 2026-08-01 and stays at that historical position (index 5); the
+    # revision-2 subgroups section is appended after it -- append-only, never
+    # an insert, so both assertions below are the durable form of the old
+    # "[-1]" check.
+    assert run_eicu.EICU_SUMMARY_SECTIONS.index("EICU-RELIABILITY") == 5
+    assert "EICU-SUBGROUPS" == run_eicu.EICU_SUMMARY_SECTIONS[-1]
     block = mock_certified_run["payload"]["reliability"]
     assert block["post_hoc"] == rp.POST_HOC_LABEL
     assert block["n_panels"] == 1
@@ -1890,7 +1896,8 @@ def test_a_panel_error_costs_a_diagnostic_and_never_the_certificate(
                 if s in run_eicu._certification_blocks(payload)]
     assert list(sections) == expected == ["EICU-POOLED", "EICU-PERSITE",
                                           "EICU-COMPARATOR",
-                                          "EICU-RELIABILITY"]
+                                          "EICU-RELIABILITY",
+                                          "EICU-SUBGROUPS"]
     for name, rendered in sections.items():
         body = json.loads(rendered.strip().removeprefix("```json")
                           .removesuffix("```"))

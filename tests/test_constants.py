@@ -388,9 +388,13 @@ def test_eicu_protocol_constants_pinned():
     # experiments/out/ and out-sens/ included -- still parses and preserves.
     # This is an ENGINEERING pin, not a protocol amendment: EICU-PROTOCOL.md
     # SS2-13 are untouched and its A1-A6 log correctly does not mention it.
+    # PIN AMENDMENT 2026-08-20 (SPEC first): "EICU-SUBGROUPS" APPENDED as the
+    # seventh entry for the revision-2 post-hoc subgroup descriptives --
+    # append-only, so every EICU-SUMMARY.md written under the 6-tuple still
+    # parses and preserves.
     assert run_eicu.EICU_SUMMARY_SECTIONS == (
         "EICU-PREFLIGHT", "EICU-PREDICTIONS", "EICU-POOLED", "EICU-PERSITE",
-        "EICU-COMPARATOR", "EICU-RELIABILITY")
+        "EICU-COMPARATOR", "EICU-RELIABILITY", "EICU-SUBGROUPS")
     # the pre-declared failure criteria are literals in code, not prose
     assert run_eicu.EICU_FB_MIN_COVERAGE == 0.20
     assert run_eicu.EICU_FD_COVERAGE_ALARM == 0.90
@@ -723,3 +727,20 @@ def test_no_panel_regularisation_constant_exists():
               "ALPHA_REG")
     assert not [n for n in dir(RP)
                 if any(t in n.upper() for t in banned)]
+
+
+def test_eicu_subgroup_posthoc_constants_pinned():
+    """Revision-2 item 3b (SPEC PIN AMENDMENT 2026-08-20). POST-HOC pins:
+    these constants carry NO pre-registration claim -- they were chosen after
+    the extract was read and exist to keep the descriptive layer stable, the
+    reliability-panel precedent. The cell floor deliberately REUSES the
+    frozen eicu_etl.EICU_MIN_OUTCOME_STRATUM (no new threshold constant)."""
+    from experiments import run_eicu
+    from experiments import eicu_etl as etl
+    assert run_eicu.EICU_SUBGROUP_DIMS == (
+        "age_band", "gender", "ethnicity", "hospitaladmitsource", "unittype")
+    assert run_eicu.EICU_SUBGROUP_AGE_BANDS == (
+        (18, 45), (45, 65), (65, 75), (75, 200))
+    assert "POST-HOC" in run_eicu.EICU_SUBGROUP_LABEL
+    assert "certifies nothing" in run_eicu.EICU_SUBGROUP_LABEL
+    assert etl.EICU_MIN_OUTCOME_STRATUM == 100

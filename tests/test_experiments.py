@@ -163,3 +163,56 @@ def test_fnr_on_pool_closed_form():
     # site 1: fn=0, ap=1 -> g/n = 1
     # FNR_M = (1*1 + 1*0) / (1*2 + 1*1) = 1/3
     assert np.isclose(got, 1.0 / 3.0)
+
+
+def test_eicu_subgroup_rows_masks_floor_and_no_certificate():
+    """Revision-2 item 3b instrument test on a synthetic stand-in cohort:
+    one-hot masks, age__missing exclusion, whole-cell and per-scope floor
+    suppression (null-never-zero), and the no-certificate path."""
+    from types import SimpleNamespace
+    from experiments.run_eicu import _subgroup_rows
+
+    rng = np.random.default_rng(0)
+    n = 700
+    feature_names = ["age", "age__missing", "gender=Female", "gender=Male",
+                     "ethnicity=Caucasian", "ethnicity=Other/Unknown",
+                     "hospitaladmitsource=Emergency Department",
+                     "unittype=MICU"]
+    x = np.zeros((n, len(feature_names)))
+    x[:, 0] = rng.uniform(20, 90, n)
+    x[:5, 1] = 1.0                                  # 5 imputed ages
+    female = rng.random(n) < 0.55
+    x[:, 2] = female
+    x[:, 3] = ~female
+    x[:, 4] = 1.0                                   # everyone Caucasian
+    x[:, 6] = 1.0
+    x[:, 7] = 1.0
+    y = rng.random(n) < 0.1
+    pool = SimpleNamespace(x=x, y=y)
+
+    class _H:
+        def score(self, x):
+            return np.full(len(x), 0.9)             # everything answered
+
+        def predict(self, x):
+            return np.zeros(len(x), dtype=bool)     # always-negative
+
+    rows = _subgroup_rows(_H(), pool, feature_names, 0.8, 3, "primary")
+    by = {(r["dim"], r["level"]): r for r in rows}
+    # everyone answered -> coverage 1.0 where unsuppressed
+    cauc = by[("ethnicity", "Caucasian")]
+    assert cauc["status"] == "ok" and cauc["coverage"] == 1.0
+    # always-negative head -> answered error == positive rate
+    assert cauc["answered_err_rate"] == cauc["answered_pos_rate"]
+    # declined scope is empty -> its rates suppressed as None, never 0.0
+    assert cauc["declined_err_rate"] is None
+    # the empty Other/Unknown level is a whole-cell suppression
+    other = by[("ethnicity", "Other/Unknown")]
+    assert other["status"] == "suppressed-below-floor"
+    assert other["answered_err_rate"] is None
+    # age bands exclude the 5 imputed rows
+    assert sum(r["n"] for r in rows if r["dim"] == "age_band") == n - 5
+    # no-certificate path: everything null, status marked
+    rows_nc = _subgroup_rows(_H(), pool, feature_names, None, 0, "primary")
+    assert all(r["status"] == "no-certificate" and r["coverage"] is None
+               for r in rows_nc)
