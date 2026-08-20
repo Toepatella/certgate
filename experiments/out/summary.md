@@ -4,7 +4,7 @@
 - seed: 20260721
 - alpha ladder: (0.05, 0.1), delta: 0.05
 
-## E1
+## E1 (preserved from an earlier run)
 ```json
 {
   "_run": {
@@ -91,7 +91,7 @@
 }
 ```
 
-## E2
+## E2 (preserved from an earlier run)
 ```json
 {
   "_run": {
@@ -257,7 +257,7 @@
 }
 ```
 
-## E3
+## E3 (preserved from an earlier run)
 ```json
 {
   "_run": {
@@ -286,7 +286,7 @@
 }
 ```
 
-## E4
+## E4 (preserved from an earlier run)
 ```json
 {
   "_run": {
@@ -376,7 +376,7 @@
 }
 ```
 
-## E5
+## E5 (preserved from an earlier run)
 ```json
 {
   "_run": {
@@ -433,7 +433,7 @@
 }
 ```
 
-## E6
+## E6 (preserved from an earlier run)
 ```json
 {
   "_run": {
@@ -475,7 +475,7 @@
 }
 ```
 
-## E7
+## E7 (preserved from an earlier run)
 ```json
 {
   "_run": {
@@ -547,5 +547,505 @@
       }
     }
   }
+}
+```
+
+## E8
+```json
+{
+  "_run": {
+    "mode": "FULL",
+    "utc": "2026-08-20T20:18:59+00:00"
+  },
+  "R": 200,
+  "noise_R": 300,
+  "sweep": [
+    60,
+    100,
+    150,
+    208,
+    300,
+    400
+  ],
+  "n_boot": 1000,
+  "comparators": {
+    "wsr": {
+      "0.05": {
+        "certify_rate": 0.2133,
+        "rm_exceed_rate": 0.0,
+        "mean_tau": 0.8712,
+        "mean_coverage": 0.8272,
+        "mean_rm_fresh": 0.0215,
+        "certify_by_nsites": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.28,
+          1.0
+        ]
+      },
+      "0.1": {
+        "certify_rate": 0.6667,
+        "rm_exceed_rate": 0.0,
+        "mean_tau": 0.5852,
+        "mean_coverage": 0.9733,
+        "mean_rm_fresh": 0.0535,
+        "certify_by_nsites": [
+          0.0,
+          0.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      }
+    },
+    "hoeffding": {
+      "0.05": {
+        "certify_rate": 0.0,
+        "rm_exceed_rate": null,
+        "mean_tau": null,
+        "mean_coverage": null,
+        "mean_rm_fresh": null,
+        "certify_by_nsites": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "0.1": {
+        "certify_rate": 0.0,
+        "rm_exceed_rate": null,
+        "mean_tau": null,
+        "mean_coverage": null,
+        "mean_rm_fresh": null,
+        "certify_by_nsites": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    "mpeb": {
+      "0.05": {
+        "certify_rate": 0.0,
+        "rm_exceed_rate": null,
+        "mean_tau": null,
+        "mean_coverage": null,
+        "mean_rm_fresh": null,
+        "certify_by_nsites": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "0.1": {
+        "certify_rate": 0.1667,
+        "rm_exceed_rate": 0.0,
+        "mean_tau": 0.7796,
+        "mean_coverage": 0.8989,
+        "mean_rm_fresh": 0.0321,
+        "certify_by_nsites": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      }
+    },
+    "t": {
+      "0.05": {
+        "certify_rate": 1.0,
+        "rm_exceed_rate": 0.0508,
+        "mean_tau": 0.666,
+        "mean_coverage": 0.9472,
+        "mean_rm_fresh": 0.0445,
+        "certify_by_nsites": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "0.1": {
+        "certify_rate": 1.0,
+        "rm_exceed_rate": 0.0,
+        "mean_tau": 0.55,
+        "mean_coverage": 0.985,
+        "mean_rm_fresh": 0.0576,
+        "certify_by_nsites": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      }
+    },
+    "site_boot": {
+      "0.05": {
+        "certify_rate": 1.0,
+        "rm_exceed_rate": 0.0492,
+        "mean_tau": 0.6655,
+        "mean_coverage": 0.9474,
+        "mean_rm_fresh": 0.0445,
+        "certify_by_nsites": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "0.1": {
+        "certify_rate": 1.0,
+        "rm_exceed_rate": 0.0,
+        "mean_tau": 0.55,
+        "mean_coverage": 0.985,
+        "mean_rm_fresh": 0.0576,
+        "certify_by_nsites": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      }
+    }
+  },
+  "noise": {
+    "0.01": {
+      "0.05": {
+        "certify_rate": 0.0,
+        "rm_exceed_rate": null,
+        "mean_tau": null,
+        "mean_coverage": null,
+        "mean_rm_fresh": null
+      },
+      "0.1": {
+        "certify_rate": 1.0,
+        "rm_exceed_rate": 0.0,
+        "mean_tau": 0.6052,
+        "mean_coverage": 0.9629,
+        "mean_rm_fresh": 0.0584
+      },
+      "mean_risk_at_lowest_tau": 0.0655
+    },
+    "0.02": {
+      "0.05": {
+        "certify_rate": 0.0,
+        "rm_exceed_rate": null,
+        "mean_tau": null,
+        "mean_coverage": null,
+        "mean_rm_fresh": null
+      },
+      "0.1": {
+        "certify_rate": 1.0,
+        "rm_exceed_rate": 0.0,
+        "mean_tau": 0.6823,
+        "mean_coverage": 0.9235,
+        "mean_rm_fresh": 0.0563
+      },
+      "mean_risk_at_lowest_tau": 0.0737
+    },
+    "0.03": {
+      "0.05": {
+        "certify_rate": 0.0,
+        "rm_exceed_rate": null,
+        "mean_tau": null,
+        "mean_coverage": null,
+        "mean_rm_fresh": null
+      },
+      "0.1": {
+        "certify_rate": 0.9967,
+        "rm_exceed_rate": 0.0,
+        "mean_tau": 0.7695,
+        "mean_coverage": 0.8558,
+        "mean_rm_fresh": 0.0534
+      },
+      "mean_risk_at_lowest_tau": 0.0826
+    },
+    "0.035": {
+      "0.05": {
+        "certify_rate": 0.0,
+        "rm_exceed_rate": null,
+        "mean_tau": null,
+        "mean_coverage": null,
+        "mean_rm_fresh": null
+      },
+      "0.1": {
+        "certify_rate": 0.63,
+        "rm_exceed_rate": 0.0,
+        "mean_tau": 0.8157,
+        "mean_coverage": 0.8,
+        "mean_rm_fresh": 0.0518
+      },
+      "mean_risk_at_lowest_tau": 0.0871
+    },
+    "0.04": {
+      "0.05": {
+        "certify_rate": 0.0,
+        "rm_exceed_rate": null,
+        "mean_tau": null,
+        "mean_coverage": null,
+        "mean_rm_fresh": null
+      },
+      "0.1": {
+        "certify_rate": 0.0233,
+        "rm_exceed_rate": 0.0,
+        "mean_tau": 0.8357,
+        "mean_coverage": 0.7573,
+        "mean_rm_fresh": 0.0532
+      },
+      "mean_risk_at_lowest_tau": 0.0913
+    }
+  },
+  "heads": {
+    "linear": {
+      "0.05": {
+        "certify_rate": 0.0,
+        "rm_exceed_rate": null,
+        "mean_tau": null,
+        "mean_coverage": null,
+        "mean_rm_fresh": null
+      },
+      "0.1": {
+        "certify_rate": 1.0,
+        "rm_exceed_rate": 0.0,
+        "mean_tau": 0.5535,
+        "mean_coverage": 0.9839,
+        "mean_rm_fresh": 0.0571
+      }
+    },
+    "gbm": {
+      "0.05": {
+        "certify_rate": 0.0,
+        "rm_exceed_rate": null,
+        "mean_tau": null,
+        "mean_coverage": null,
+        "mean_rm_fresh": null
+      },
+      "0.1": {
+        "certify_rate": 1.0,
+        "rm_exceed_rate": 0.0,
+        "mean_tau": 0.5622,
+        "mean_coverage": 0.9823,
+        "mean_rm_fresh": 0.0582
+      }
+    },
+    "degraded": {
+      "0.05": {
+        "certify_rate": 0.0,
+        "rm_exceed_rate": null,
+        "mean_tau": null,
+        "mean_coverage": null,
+        "mean_rm_fresh": null
+      },
+      "0.1": {
+        "certify_rate": 1.0,
+        "rm_exceed_rate": 0.0,
+        "mean_tau": 0.765,
+        "mean_coverage": 0.8799,
+        "mean_rm_fresh": 0.0537
+      }
+    }
+  },
+  "explain_supported": {
+    "linear": true,
+    "gbm": false,
+    "degraded": false
+  },
+  "notes": "arm A: identical atoms and walk order across all five certifiers; two-sided reading pre-committed in SPEC. arm B: flips applied to every cohort alike, so exchangeability holds by construction. arm C: linear reference rows come from the gbm arm's draws; temperature miscalibration is analytically a no-op for the gate (monotone score transform) and is not simulated. explain_supported=False for the degraded head marks the deployed explanation path, not linear-algebra feasibility."
+}
+```
+
+## E9
+```json
+{
+  "_run": {
+    "mode": "FULL",
+    "utc": "2026-08-20T20:18:59+00:00"
+  },
+  "R": 50,
+  "fnr_R": 200,
+  "anchor_shift": 0.22,
+  "bbse_frontier": {
+    "208|single-site-cp": {
+      "certify_rate": 0.0,
+      "decline_reasons": {
+        "failsafe": 50
+      },
+      "median_box_width": 4.9028,
+      "mean_tau": null,
+      "rm_exceed_rate": null
+    },
+    "208|k40-boot": {
+      "certify_rate": 0.0,
+      "decline_reasons": {
+        "failsafe": 50
+      },
+      "median_box_width": 3.4687,
+      "mean_tau": null,
+      "rm_exceed_rate": null
+    },
+    "600|single-site-cp": {
+      "certify_rate": 0.14,
+      "decline_reasons": {
+        "bbse-misspecified": 4,
+        "failsafe": 39
+      },
+      "median_box_width": 4.2536,
+      "mean_tau": 0.8586,
+      "rm_exceed_rate": 0.0
+    },
+    "600|k40-boot": {
+      "certify_rate": 0.0,
+      "decline_reasons": {
+        "failsafe": 50
+      },
+      "median_box_width": 2.8047,
+      "mean_tau": null,
+      "rm_exceed_rate": null
+    },
+    "900|single-site-cp": {
+      "certify_rate": 0.26,
+      "decline_reasons": {
+        "failsafe": 35,
+        "bbse-misspecified": 2
+      },
+      "median_box_width": 3.7739,
+      "mean_tau": 0.8038,
+      "rm_exceed_rate": 0.0
+    },
+    "900|k40-boot": {
+      "certify_rate": 0.38,
+      "decline_reasons": {
+        "failsafe": 31
+      },
+      "median_box_width": 2.6004,
+      "mean_tau": 0.9068,
+      "rm_exceed_rate": 0.0
+    },
+    "1200|single-site-cp": {
+      "certify_rate": 0.4,
+      "decline_reasons": {
+        "failsafe": 27,
+        "bbse-misspecified": 3
+      },
+      "median_box_width": 4.2122,
+      "mean_tau": 0.831,
+      "rm_exceed_rate": 0.1
+    },
+    "1200|k40-boot": {
+      "certify_rate": 0.94,
+      "decline_reasons": {
+        "failsafe": 3
+      },
+      "median_box_width": 2.2184,
+      "mean_tau": 0.884,
+      "rm_exceed_rate": 0.0
+    }
+  },
+  "fnr_frontier": {
+    "0.4": {
+      "208": {
+        "certify_rate": 0.0,
+        "mean_tau": null,
+        "mean_fnr_fresh": null,
+        "fnr_exceed_rate": null
+      },
+      "400": {
+        "certify_rate": 0.0,
+        "mean_tau": null,
+        "mean_fnr_fresh": null,
+        "fnr_exceed_rate": null
+      },
+      "600": {
+        "certify_rate": 0.0,
+        "mean_tau": null,
+        "mean_fnr_fresh": null,
+        "fnr_exceed_rate": null
+      }
+    },
+    "0.5": {
+      "208": {
+        "certify_rate": 0.0,
+        "mean_tau": null,
+        "mean_fnr_fresh": null,
+        "fnr_exceed_rate": null
+      },
+      "400": {
+        "certify_rate": 0.0,
+        "mean_tau": null,
+        "mean_fnr_fresh": null,
+        "fnr_exceed_rate": null
+      },
+      "600": {
+        "certify_rate": 0.005,
+        "mean_tau": 0.55,
+        "mean_fnr_fresh": 0.4194,
+        "fnr_exceed_rate": 0.0
+      }
+    },
+    "0.55": {
+      "208": {
+        "certify_rate": 0.0,
+        "mean_tau": null,
+        "mean_fnr_fresh": null,
+        "fnr_exceed_rate": null
+      },
+      "400": {
+        "certify_rate": 0.285,
+        "mean_tau": 0.5504,
+        "mean_fnr_fresh": 0.4382,
+        "fnr_exceed_rate": 0.0
+      },
+      "600": {
+        "certify_rate": 0.995,
+        "mean_tau": 0.55,
+        "mean_fnr_fresh": 0.45,
+        "fnr_exceed_rate": 0.0
+      }
+    },
+    "0.6": {
+      "208": {
+        "certify_rate": 0.04,
+        "mean_tau": 0.55,
+        "mean_fnr_fresh": 0.4164,
+        "fnr_exceed_rate": 0.0
+      },
+      "400": {
+        "certify_rate": 1.0,
+        "mean_tau": 0.55,
+        "mean_fnr_fresh": 0.4484,
+        "fnr_exceed_rate": 0.0
+      },
+      "600": {
+        "certify_rate": 1.0,
+        "mean_tau": 0.55,
+        "mean_fnr_fresh": 0.45,
+        "fnr_exceed_rate": 0.0
+      }
+    }
+  },
+  "true_fnr_at_lowest_tau_mean": 0.4499,
+  "notes": "arm A: pipeline in bbse mode only; certificates rescored on a fresh same-shift pool (E2's aggregate-estimand precedent); the single-site-declaration exceedance rate is a pre-declared question (SPEC E9). arm B: experimental secondary certificate on unmodified influence_atoms with weights=y; a frontier and a price, never a tight FNR guarantee; 0.4 is the built-in always-refuses negative control."
 }
 ```
