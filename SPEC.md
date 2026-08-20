@@ -1075,6 +1075,24 @@ currently 194/194, 0 mismatches). OPEN: not yet folded into `run_synthetic.py`'s
 writers, so `python -m experiments.run_synthetic` alone does NOT regenerate Tables 6 and 7;
 Appendix A.3's one-command claim covers Tables 1-4 and Figures 1-7 only until it does.
 
+**Companion: `experiments/comparators.py`** (revision-2, E8 arm A). Pure alternative-bound
+arithmetic: `mpeb_ucb` (moved verbatim from the test-local reference in `tests/test_certify.py`,
+which now imports it, so the truncation negative control and the comparator can never drift),
+one-sided `hoeffding_ucb`, `t_ucb`, and `site_bootstrap_ucb` (resamples SITES, never records —
+RP-2). A DAG leaf over numpy/scipy; `certgate/` never imports it, and each bound's docstring
+states its validity class (Hoeffding/MP-EB finite-sample for bounded means; t exact only under
+normality; percentile bootstrap asymptotic).
+
+**Companion: `experiments/panel_confusion_tables.py`** (revision-2 item 3a, the eICU half of
+panel S2-28). Read-only stdout-JSON derivation of per-re-split answered/declined/all confusion
+tables (sens/spec/PPV/NPV/FNR) for all 20 re-splits from the RELEASED
+`experiments/out/EICU_reliability_panel.json` — the composition and skill blocks determine the
+2x2 exactly at the panel's own 0.5 decision threshold. Touches no extract, re-runs nothing,
+writes nothing; refuses to emit unless every reconstructed cell lands within tolerance of an
+integer AND the hand-verified replicate-0 2x2 reproduces (reason=self-check-failed). Point
+rates and counts only — the panel bootstraps no sensitivity statistic, so this table carries
+NO intervals, and every emitted object leads with the panel's own POST_HOC label.
+
 CLI: `python -m experiments.run_synthetic [--quick] [--only E1,E4] [--out experiments/out]`.
 `--quick`: R=10 draws, sweep {60, 208, 400}. Full: R=200, sweep {60, 100, 150, 208, 300, 400}.
 
@@ -1083,6 +1101,12 @@ CLI: `python -m experiments.run_synthetic [--quick] [--only E1,E4] [--out experi
 each experiment is *about* (`SHIFT_BASE`, `CONCEPT_INTERCEPT`) plus E1's declared `E1_SU_SWEEP`,
 all pinned by `tests/test_constants.py`. A separation constant that silently differs between
 experiments made two headline numbers non-reproducible from the stated setup — never again.
+Revision-2 extends the same rule, the same way: E8 arm B's declared label-noise sweep
+`E8_NOISE_SWEEP` is a symmetric flip applied IDENTICALLY to every cohort of that arm (an
+aleatoric floor the experiment is *about*, not a generator fork — exchangeability holds by
+construction), and E8 arm C's transformations are head-side only (a GBM head; the standard
+linear head with its first `E8_DEGRADED_ZERO_FEATURES` features zeroed at fit AND score time);
+all pinned by the appended revision-2 constant tests, with every existing pin untouched.
 
 E1 validity (in-dist), rescored per audit V1: the CONFORMANCE metric is the aggregate one the
 test actually certifies — per draw, the certified tau is applied to a fresh 200-site eval pool
@@ -1138,6 +1162,48 @@ then score BOTH at their deployed taus against the influence-weighted R_M of one
 fresh 200-site pool. The record-unit certifier treats within-site-correlated records as
 independent draws — the exact anti-conservatism the site-as-unit design exists to prevent;
 the deliverable is certify rate + R_M-exceed rate per unit x rung x s_u arm.
+· E8 certificate stress & comparator suite (revision-2; every stream begins `_rng(8, arm, ...)`
+and every walk permutation uses a NEW `certification_rng` stream string, so no E1–E7 draw or
+permutation is consumed and every published number stays byte-identical; design probes recorded
+in `paper/review/revision2/PHASE0-PROBES.md`). ARM A comparator bounds (review weakness 1):
+draws `_rng(8, 0, n_idx, r)` over the E4 sweep at R=200; per rung, compute the IDENTICAL
+cal/aux atoms once and walk them five ways — WSR (stream "e8-comp") and the four
+`experiments/comparators.py` bounds — under the same `walk_order` and the same
+stop-at-first-failure rule, via a LOCAL walk loop (the `_e7_walk` pattern;
+`fixed_sequence_walk` is not modified and gains no injection point — the delta-accounting spy
+must keep working). Each deployed tau is rescored on one shared fresh `E1_EVAL_SITES` pool
+(`rm_fresh`/`rm_exceed`); bootstrap bound resamples on `_rng(8, 0, n_idx, r, 1)` with
+`E8_BOOT = 1000`. PRE-COMMITTED two-sided reading, fixed here before any full run: if WSR's
+certify-rate frontier weakly dominates, the capacity frontier is real and WSR is the best
+available engine; if a finite-sample-valid bound matches or beats it, the frontier is a
+property of the atoms, robust to the bound choice — either outcome closes the comparator gap,
+and choosing the framing after seeing the data is the failure mode this sentence exists to
+prevent. Validity gate: every finite-sample bound's rm_exceed rate must sit at or below DELTA
+within its exact binomial interval.
+ARM B label-noise stress frontier (review weakness 4; the originally planned near-alpha window
+is INFEASIBLE — the walk adapts by deploying higher tau, and the information floor forbids
+certification within ~floor of alpha at this scale; PHASE0-PROBES.md records the probe): flip
+every cohort's labels (train/aux/cal/eval identically) at rate eta over
+`E8_NOISE_SWEEP = (0.01, 0.02, 0.03, 0.035, 0.04)`, streams `_rng(8, 1, eta_idx, r)` with
+flips on `_rng(8, 1, eta_idx, r, 1)` and walk stream "e8-noise", at `E8_NOISE_R = 300`.
+Deliverable: certify rate, coverage, deployed-R_M distribution, and rm_exceed vs DELTA per
+eta. Success criterion, both-sided and fixed in advance: exceedance stays <= DELTA at every
+eta where certificates issue while the certify rate collapses as the aleatoric floor
+approaches the certifiable boundary — decline-before-violate, measured; an exceedance above
+DELTA that survives the estimand/measurement/stream triage is a stop-ship validity finding
+and becomes the headline, never a suppressed cell.
+ARM C alternative heads (panel S2-26/S2-27): `E8_HEAD_ARMS = ("gbm", "degraded")` at the
+208-site anchor, R=200, draws `_rng(8, 2, head_idx, r)`, walks "e8-head-gbm" /
+"e8-head-degraded". Heads: `HistGradientBoostingClassifier(max_iter=E8_GBM_MAX_ITER)` (sklearn
+already pinned — no new dependency), and the standard linear head with its first
+`E8_DEGRADED_ZERO_FEATURES = 2` features zeroed at fit AND score time. Both run the E7-pattern
+local path (head fit outside the library; atoms + walk consume only scores/errors/site ids);
+`run_certgate` gains NO head-injection point, and `explain.py` is out of scope for both heads
+— the summary states `explain_supported: false`, which IS the scoped Contribution-3 answer.
+Temperature miscalibration is deliberately NOT an arm: the selective score max(p, 1-p) makes
+any monotone recalibration a relabeling of the same answered sets (the walk certifies a
+different tau index for identical sets), so the gate is insensitive to monotone
+miscalibration BY CONSTRUCTION — the paper states this analytically instead of simulating it.
 Outputs: CSV per experiment + PNG figures (matplotlib, no seaborn) + a summary.md.
 SERIALIZATION (panel S1-11/S2-24): every per-draw CSV carries `decline_reason`; E2 bbse
 rows carry the fit diagnostics (rho_lo/rho_hi/rho_point/gap_lo/q_target/n_target_sites);
@@ -1155,6 +1221,44 @@ rooted at `reliability.PANEL_SEED = 20260731` (see the `reliability.py` section 
 sandbox's own seed, never re-pointed), consumes no `_rng` draw, and no certified quantity descends
 from it. Runs deterministically either way; full grid target < ~45 min (E1's eval pools and s_u arm
 added ~50%).
+
+## Outcome-weighted atoms — the experimental FNR certificate (revision-2, E9 arm B)
+
+**Estimand.** The influence-weighted false-negative rate among ANSWERED POSITIVES, a
+ratio-of-expectations over the site draw exactly parallel to `R_M`:
+`FNR_M = E[g_c · fn_c] / E[g_c · ap_c]`, where `fn_c` counts answered false negatives and
+`ap_c` answered positives at site `c`. NO library change produces its atom:
+`influence_atoms(score, err, site_id, n_sites, tau_grid, b, M, weights=y, wmax=1.0)` — the
+per-record base collapses to `ans_i · y_i · (err_i − b)`, and `err_i ∧ y_i` is exactly the
+false-negative indicator, so `E[Z] <= b  iff  FNR_M <= b` (the same sign identity as the
+`R_M` atom; the conformance identity was verified to 1e-17 at design time and must be pinned
+by a unit test when the arm lands).
+
+**Validity.** Boundedness survives unchanged: the weighted inner sum stays within
+`[-b·n_c, (1-b)·n_c]` and the `g_c/(M·n_c)` prefactor scales it into `[0,1]` after the `+b`
+shift. The influence weight REMAINS `g_c = min(n_c, M)` on the FULL site size — renormalizing
+by per-site answered positives would make the weight outcome-dependent and void the
+outcome-independence requirement on `g_c`. Sites with no answered positives enter as neutral
+atoms `Z_c = b`, exactly as record-less sites do for `R_M`.
+
+**Budgets and randomness.** Budgets live on their own ladder `E9_FNR_LADDER = (0.4, 0.5,
+0.55, 0.6)` — chosen to bracket the design-time truth (~0.45 on the synthetic grid;
+PHASE0-PROBES.md) so 0.4 is a built-in always-refuses negative control. `ALPHA_LADDER` and
+`certify.certification_rng` are UNTOUCHED: walk permutations come from an experiment-local
+`_e9_fnr_rng(budget, stream)` in `run_synthetic.py` that mirrors `certification_rng`'s
+sha256 construction but indexes `E9_FNR_LADDER`. Each budget is tested by its own walk at the
+full DELTA and reported rung-by-rung; no combined operative-rung selection is defined for the
+experimental certificate.
+
+**Scope and report shape.** Synthetic certification only. The result is an
+`fnr_certificate` object inside E9's CSV/summary — an EXPERIMENTAL secondary certificate,
+never the deployed report: no new mode token flows through `report._statement` (it would
+KeyError, and the frozen guarantee strings are pinned), and a production `_fnr_statement` is
+explicitly future work. On eICU the counterpart is DESCRIPTIVE only — the derived answered-set
+FNR from `experiments/panel_confusion_tables.py` under the panel's POST_HOC label. The claim
+this machinery supports is a FRONTIER and a PRICE — where a class-conditional budget first
+becomes issuable, and that nothing below ~0.55 is issuable at realistic site counts — never a
+tight FNR guarantee.
 
 ## Real-data protocol (eICU-CRD v2.0) — `experiments/eicu_*.py`
 
