@@ -1,0 +1,321 @@
+{
+ "rescore_overalls": [
+  4,
+  4,
+  4,
+  4,
+  4
+ ],
+ "rescore_decisions": [
+  "Reject",
+  "Reject",
+  "Reject",
+  "Reject",
+  "Reject"
+ ],
+ "rescore_aggregated": {
+  "Summary": "The paper presents CertGate, a selective-prediction gate for multi-site clinical risk models that certifies, with finite-sample confidence 1-delta, that an influence-weighted answered-set error rate averaged over the site population stays at or below a budget alpha, treating the hospital (site) rather than the record as the unit of statistical independence. Each calibration hospital is compressed into one bounded atom, a Waudby-Smith-Ramdas betting martingale tests the site-level mean against the budget, and an operating threshold is chosen by a fixed-sequence walk over a grid at two budget rungs (alpha in {0.05, 0.10}). Two assumption modes are shipped: an exchangeable baseline and a BBSE label-shift mode that propagates the estimation uncertainty of four corrected parameters into the guarantee via a cluster-robust bootstrap box; concept shift is explicitly out of scope. A linear head supplies exact additive attributions for every answer and abstention, and a three-way answered-set composition disclosure travels with the certificate. Validation comprises seven pre-registered synthetic experiments on a 208-site generator with oracle access (validity grid, label-shift stress test, verified-falsifiable concept-shift negative control, site-count frontier, attribution study, coverage/composition study, and a record-as-unit comparator that certifies budgets the site-unit walk refuses and then violates them at nearly 2x delta under heterogeneity), plus an end-to-end study on eICU-CRD v2.0 (164,322 stays, 207 hospitals) under a protocol frozen before the extract was read: alpha=0.10 certifies on all 20 by-site re-splits at 0.890 mean coverage, alpha=0.05 on none, with disclosures showing the answered set's mortality (0.046) is roughly half its pool's (0.090).",
+  "Strengths": [
+   "All five reviewers agree the core diagnosis is correct and well-motivated: record-level selective-risk certificates are overconfident under site-clustered deployment, and the paper demonstrates the failure in-harness rather than merely citing it — the record-as-unit comparator on identical draws grants the alpha=0.05 rung the site-unit walk refuses and then violates its aggregate budget at nearly twice delta under heterogeneity.",
+   "The statistical construction is careful and sound within its stated scope (unanimous): bounded per-site atoms tied term-by-term to a precisely stated estimand, a WSR betting martingale with Ville's inequality giving a genuinely finite-sample level in the exchangeable mode, a fixed-sequence walk that spends no extra confidence on multiple looks, and frozen guarantee text that explicitly states what is NOT bounded (per-site dispersion, realized counts, concept shift).",
+   "The validation methodology and candor are unusually rigorous for this literature (unanimous, and singled out by every reviewer): a protocol and constants frozen before the real extract was read, numbered predictions whose falsifications are reported, a concept-shift negative control verified capable of failing before it runs, leak screens including one that fired in the inverted direction and is reported as a caution, a three-way composition disclosure exposing that the gate partly meets its budget by abstaining where deaths concentrate, and an explicit admission that a constant always-negative rule also meets the operative budget.",
+   "A complete real multi-site clinical study on eICU-CRD v2.0 with an attrition ledger, an external clinical comparator (APACHE-IVa), and aggregate-only release discipline for the restricted extract.",
+   "Reproducibility is strong (unanimous): deterministic seeding with byte-identical certificates, literally pinned constants enforced by automated tests as a machine-verifiable pre-registration substitute, and released code with a documented extract-to-certificate pipeline."
+  ],
+  "Weaknesses": [
+   "Limited methodological novelty (unanimous): every component exists — WSR betting martingales, fixed-sequence learn-then-test threshold selection, BBSE label-shift correction with Si et al.-style uncertainty propagation, cluster-as-unit distribution-free inference, and closed-form attributions that are elementary for a linear head. The genuinely new elements (the per-site atom construction; an affine-in-rho convexity observation) are modest; the contribution is a careful composition plus validation discipline rather than new theory.",
+   "The only certifiable budget at realistic scale is close to vacuous (unanimous, and the most damaging finding): on eICU a constant always-predict-survival rule already meets alpha=0.10 (erring at 0.0898 against ~9% prevalence), the answered-set skill margin over that trivial rule is 0.0039, the answered-minus-all skill contrast is negative, and the clinically meaningful rung alpha=0.05 requires roughly 300-400 hospitals — beyond this dataset and most realistic consortia — and certifies nowhere on real data. The shipped certificate's value rests almost entirely on its disclosures rather than on demonstrated headroom over the base rate.",
+   "The label-shift mode, a headline contribution, is never positively demonstrated anywhere in the paper (unanimous): it declines all 200 synthetic draws at the registered shift, certifies only 9% at the null point, and returns failsafe on all 20 eICU re-splits — its demonstrated value is refusal only. Moreover, three of its four confidence intervals are asymptotic percentile bootstraps with measured joint miscoverage 0.038 against a nominal <=0.019, so the headline finite-sample claim holds in full only for the exchangeable mode, in tension with the 'carries its correction's uncertainty inside the guarantee' framing.",
+   "The certified estimand may not match what deployers need (unanimous): it is a site-population average with per-site dispersion explicitly unbounded — on the real cohort a hospital reached 0.286 answered error under a valid certificate averaging 0.048 — yet the introduction motivates the certificate as what a single deploying hospital, clinician, or auditor weighs before trusting automated triage; the per-site quantile bound that would answer that question is deferred to future work.",
+   "The symmetric 0-1 loss is clinically misaligned for mortality triage (four of five reviewers): roughly 77% of answered errors are false negatives, answered-set sensitivity is 0.550, and the gate reaches its budget partly by abstaining where deaths concentrate, so a certificate read as a safety guarantee could mislead; cost-weighted or class-conditional atoms are deferred.",
+   "Real-data evidence is a single cohort (2014-2015) partitioned 20 ways, which the paper concedes bounds gross violation rather than estimating the targeted delta=0.05 rate; temporal common-shock correlation — acknowledged as the assumption most at risk — is unmodeled and untested, and the pre-registration is a self-attested commit in an author-controlled repository (unanimous in substance).",
+   "No empirical comparison against alternative certified site-aware baselines on the same atoms (e.g., cluster-level Hoeffding/empirical-Bernstein/t-based bounds, or hierarchical-conformal adaptations of Dunn et al./Lee et al.), so the headline capacity claims (~150 sites for alpha=0.10; 300-400 for alpha=0.05) cannot be distinguished from artifacts of the specific WSR choice (raised independently by two reviewers).",
+   "Two reviewers note the motivating record-vs-site failure is only clearly material in the inflated-heterogeneity arm (3.5% violation at default heterogeneity is within delta) while the real cohort's dispersion sits below even the default arm, moderating the practical force of the motivating failure on this data.",
+   "The explainability contribution is thin (exact attributions for an L2-logistic head are standard; the synthetic attribution study returns a null; the eICU abstention-driver finding is descriptive and human-unevaluated), and the claim that a stronger black-box head can be substituted at a visible coverage cost is never tested on real data.",
+   "The presentation is dense, idiosyncratic journal-register prose (rungs, atoms, walks, failsafe/misspecified) with long, heavily qualified sentences and substantial disclosure narrative relative to technical content; three of five reviewers rated clarity/presentation as fair, and key operational details and derivations live only in the supplement."
+  ],
+  "Originality": 3,
+  "Quality": 3,
+  "Clarity": 3,
+  "Significance": 2,
+  "Questions": [
+   "Can the authors exhibit any realistic operating regime in which a certified rung is both reachable and non-vacuous relative to the constant always-negative baseline — for example a cost-weighted or class-conditional (false-negative-rate) atom, or an alpha below the pool prevalence at reachable site counts? All five reviewers converge on this as the central question; a positive answer would materially change the assessment.",
+   "Is there any realistic configuration (target pool size, number of declared target sites, shift magnitude, calibration-site count) in which the BBSE label-shift mode certifies under a genuine prevalence shift? If not, should contribution 2 be reframed as a principled safe-refusal mechanism rather than a certified correction, and should its certificates be labeled approximate given the measured joint bootstrap miscoverage of 0.038 against a nominal <=0.019?",
+   "What concrete decision should an individual deploying hospital make on the basis of a site-population-average certificate, given the per-hospital arm shows answered error up to 0.286 under a valid certificate? What would a tolerance bound on an upper quantile of per-site answered risk cost in calibration clusters, even to an order of magnitude?",
+   "Why the WSR betting martingale rather than a fixed-sample one-sided bound (cluster-level empirical-Bernstein, Hoeffding, or t-based) on the same site atoms, given calibration sites arrive as a batch? Please provide a power comparison and clarify whether the 150-site / 300-400-site frontier is fundamental to site-as-unit certification or specific to this test.",
+   "How much coverage does a stronger nonlinear head buy or cost on eICU at the same certified rung? The claim that the linear head can be substituted at a visible cost in coverage is currently unsupported by any real-data experiment.",
+   "Given that the record-as-unit comparator's aggregate violation is within delta at default heterogeneity and the real cohort's dispersion sits below even that arm, what evidence establishes that record-level certification materially fails at real-world dispersion levels? Additionally, can a temporal split or leave-one-region-out design, or a sensitivity analysis for temporal common-shock correlation, sharpen the evidence on Assumption 1 beyond 20 re-splits of one hospital population?"
+  ],
+  "Limitations": [
+   "All reviewers agree the authors are unusually — even exemplarily — thorough about limitations: the site-population-average scope with unbounded per-site dispersion, the parameter-vs-realized-count distinction, the concept-shift exclusion, unmodeled temporal common-shock correlation, the symmetric-loss mismatch, the single real cohort, the asymptotic BBSE intervals with measured undercoverage, and the self-attested pre-registration are all stated in the text, many inside the frozen guarantee itself. Candor is a genuine strength and should be rewarded, not punished.",
+   "Remaining gaps identified across reviews: the practical near-vacuity of the operative alpha=0.10 rung relative to the outcome base rate deserves treatment as a limitation of current applicability rather than only a disclosure; the patient-safety implication of a false-negative-heavy answered set in mortality triage (abstention concentrates on the sickest patients, concentrating human workload there while the certified number describes the easier answered set) deserves explicit analysis beyond composition disclosure; the dependence of the site-count frontier on the chosen test is not acknowledged; and no clinical-utility (net-benefit/decision-curve) analysis or human evaluation of the explanations is provided.",
+   "Residual societal-impact channel raised by multiple reviewers: a hospital administrator or regulator is likely to misread the certificate as a per-hospital safety guarantee despite the dispersion clause — the real-data arm itself shows a hospital at 0.29 answered error under a certified average of 0.048 — and the paper offers disclosure text but no mechanism against that misuse; a certified budget above the outcome prevalence could lend unwarranted authority to the answered set."
+  ],
+  "Ethical_Concerns": false,
+  "Soundness": 3,
+  "Presentation": 3,
+  "Contribution": 2,
+  "Overall": 4,
+  "Confidence": 4,
+  "Decision": "Reject"
+ },
+ "rescore_reviews_full": [
+  {
+   "Summary": "The paper presents CertGate, a selective-prediction gate for multi-site clinical risk models that certifies, with finite-sample confidence 1-delta, that an influence-weighted answered-set error rate averaged over the site population stays below a budget alpha, treating the hospital (site) rather than the record as the unit of statistical independence. Each calibration hospital is compressed into one bounded atom and a Waudby-Smith-Ramdas betting martingale tests the site-level mean against the budget, with the operating threshold chosen by a fixed-sequence walk over a grid. The gate ships two assumption modes: an exchangeable baseline and a BBSE label-shift mode that propagates the estimation uncertainty of four corrected parameters into the guarantee via a Bonferroni box of cluster-robust intervals. A linear head gives every answer and abstention exact additive attributions. Validation comprises seven pre-registered synthetic experiments on a 208-site generator with oracle access (validity grid, label-shift stress test, verified-falsifiable concept-shift negative control, site-count frontier, attribution study, coverage/composition study, and a record-as-unit comparator that certifies-then-violates at nearly 2x delta under heterogeneity), followed by an end-to-end study on eICU-CRD v2.0 (164,322 stays, 207 hospitals) under a protocol frozen before the extract was read: alpha=0.10 certifies on all 20 by-site re-splits at 0.890 mean coverage, alpha=0.05 on none, with composition disclosures showing the answered set's mortality (0.046) is roughly half its pool's (0.090).",
+   "Strengths": [
+    "The failure being fixed is real and demonstrated in-harness rather than merely cited: the record-as-unit comparator on identical draws grants the alpha=0.05 rung the site-unit walk refuses and then violates its aggregate budget at nearly twice delta under heterogeneity, which is a convincing motivation for the site-as-unit design.",
+    "The statistical construction is careful and sound within its stated scope: the per-site bounded atom ties term-by-term to the estimand, the WSR betting test with Ville's inequality gives a genuinely finite-sample level in the exchangeable mode, the fixed-sequence walk spends no extra confidence on multiple looks, and the guarantee text explicitly states what is NOT bounded (per-site dispersion, realized error counts, concept shift).",
+    "The validation design is unusually honest: a concept-shift negative control verified capable of failing before it runs, a protocol and constants frozen before the real extract was read, falsified predictions reported as falsified, a three-way answered-set composition disclosure that exposes how the budget is partly met by abstaining where deaths concentrate, and an explicit admission that a constant always-negative rule also meets the operative budget.",
+    "A complete real-data study on eICU-CRD v2.0 with an attrition ledger tracking deaths at every exclusion step, pre-declared leak screens (one of which fired in the informative reverse direction and is reported as a caution), and an external clinical comparator (APACHE-IVa) on the answered set.",
+    "Reproducibility is strong: deterministic seeding, pinned constants enforced by tests, released code, byte-identical certificates from identical inputs, and a released aggregate-only real-data pipeline."
+   ],
+   "Weaknesses": [
+    "The methodological novelty is a combination of existing components: WSR betting martingales, fixed-sequence learn-then-test threshold walks, cluster-as-unit distribution-free inference, BBSE label-shift correction with parameter-uncertainty propagation following Si et al., and closed-form attributions that are trivial for a linear model. The genuinely new technical elements (the per-site atom construction and the affine-in-rho convexity argument for testing box endpoints) are modest for a prestigious ML venue.",
+    "The only certified budget reachable at realistic scale is close to vacuous: the paper itself concedes that a constant always-predict-survival rule already meets alpha=0.10 on both cohorts (erring at 0.0898-0.1039 versus the ~9-10% prevalence), answered-set sensitivity is 0.550, and 77% of answered errors are false negatives under a symmetric 0-1 loss that mismatches clinical costs. The clinically meaningful rung alpha=0.05 is unreachable below roughly 300 sites and is refused on eICU, so the certified number that actually ships adds little demonstrated headroom over a trivial baseline.",
+    "The label-shift mode, one of three headline contributions, is never shown to certify under a genuine shift anywhere in the paper: it declines all 200 synthetic shifted draws (certifying only 9% at the null point), and on eICU it fits but returns failsafe on every one of 20 re-splits. Its demonstrated value is refusal only. Moreover, three of its four confidence intervals are asymptotic percentile bootstraps with measured joint miscoverage 0.038 against a nominal 0.019, so the paper's finite-sample claim holds in full only for the exchangeable mode, which undercuts the 'carries its own uncertainty inside the guarantee' framing.",
+    "The certified estimand is a site-population average with per-site dispersion explicitly unbounded: on eICU a hospital reached 0.286 answered error under a valid certificate whose pools average 0.048. The paper is honest about this, but it leaves unclear what actionable assurance a single deploying hospital, clinician, or auditor gains from the certificate, which is the deployment scenario the introduction motivates.",
+    "There is no comparison against simpler or alternative certified baselines operating on the same site atoms (e.g., cluster-level Hoeffding, empirical-Bernstein, or t-based one-sided bounds, or hierarchical-conformal adaptations), so the headline capacity claims (alpha=0.10 needs ~150 sites; alpha=0.05 needs 300-400) cannot be distinguished from artifacts of the specific WSR choice; the sequential machinery's benefit over a fixed-sample bound is never quantified for this batch setting.",
+    "Real-data evidence is one cohort with 20 re-splits of a single hospital population (acknowledged to bound gross violation rather than estimate a rate); temporal common-shock correlation, the assumption most at risk, is unmodeled. The explainability contribution is thin: exact attributions for an L2-logistic head are elementary, the synthetic attribution study returns a null, and the abstention-driver finding on eICU is descriptive.",
+    "The presentation is dense journal-register prose with long, heavily hedged sentences and much disclosure narrative relative to technical content; the core derivations are deferred to the supplement, making the paper laborious to evaluate at an ML venue."
+   ],
+   "Originality": 3,
+   "Quality": 3,
+   "Clarity": 2,
+   "Significance": 2,
+   "Questions": [
+    "Why the WSR betting martingale rather than a fixed-sample one-sided bound (cluster-level empirical-Bernstein, Hoeffding, or a t-based interval) on the same site atoms, given calibration sites arrive as a batch rather than a stream? Please provide a power comparison; is the 150-site / 300-400-site frontier fundamental to site-as-unit certification or specific to this test?",
+    "Can you exhibit any realistic configuration (e.g., larger or multi-site declared target pools) in which the BBSE mode certifies under a genuine prevalence shift? If not, should contribution 2 be reframed as a safe-refusal mechanism rather than a certified correction?",
+    "What concrete decision should an individual deploying hospital make on the basis of a site-population-average certificate, given the per-hospital dispersion arm shows answered error up to 0.286 under a valid certificate? Would a quantile-of-per-site-risk certificate be feasible at a stated cluster cost?",
+    "Given a constant always-negative rule meets the alpha=0.10 budget on both cohorts, what would a cost-weighted (e.g., false-negative-weighted) atom look like, does it remain bounded, and at what budget does the certificate become non-trivial relative to the base rate?",
+    "The synthetic generator induces heterogeneity through a prevalence random effect on the outcome log-odds. How robust are the validity grid and frontier if mild site-level perturbations of P(y|x) exist (heterogeneity within the exchangeable tag but off the generator's form)?",
+    "For the rung ladder, the selected claim is stated to hold jointly at 1-2delta via separate walks per rung; please clarify why data reuse across the two walks does not require an adjustment beyond the union bound, and state this argument in the main text."
+   ],
+   "Limitations": [
+    "The authors are unusually thorough about limitations: site-population-average scope, unbounded per-site dispersion, concept-shift exclusion, unmodeled temporal common-shock correlation, symmetric-loss mismatch, single real cohort, asymptotic BBSE intervals with measured undercoverage, and cross-hospital patient overlap are all stated.",
+    "Remaining gaps: the patient-safety implication of a false-negative-heavy answered set in a mortality-triage setting deserves explicit discussion beyond composition disclosure (abstention concentrates on the sick, and answered errors are predominantly missed deaths); the practical near-vacuity of the operative alpha=0.10 rung relative to the outcome base rate could be stated as a limitation of current applicability rather than only as a disclosure; and the dependence of the site-count frontier on the chosen test (no alternative-test baseline) is not acknowledged as a limitation."
+   ],
+   "Ethical_Concerns": false,
+   "Soundness": 3,
+   "Presentation": 2,
+   "Contribution": 2,
+   "Overall": 4,
+   "Confidence": 4,
+   "Decision": "Reject"
+  },
+  {
+   "Summary": "The paper proposes CertGate, a selective-prediction gate for multi-site clinical risk models that certifies, with finite-sample confidence 1-delta, that an influence-weighted answered-set error rate averaged over a site population stays below a budget alpha, treating the hospital (site) rather than the record as the unit of statistical independence. Each calibration hospital is compressed into one bounded atom and tested with the Waudby-Smith-Ramdas betting martingale; an operating threshold is chosen by a fixed-sequence walk over a grid; two assumption modes are offered (an exchangeable baseline and a BBSE label-shift mode that propagates the estimated correction's uncertainty as a cluster-bootstrap box); a linear head gives exact additive attributions for every answer and abstention. Evaluation comprises seven pre-registered synthetic experiments on a 208-site generator with oracle ground truth (validity, label-shift stress, concept-shift negative control, site-count frontier, attributions, coverage/composition, and a record-as-unit comparator that certifies-then-violates at nearly 2x delta under heterogeneity) and an end-to-end run on eICU-CRD v2.0 (164,322 stays, 207 hospitals) under a protocol frozen before the extract was read: alpha=0.10 certifies on all 20 by-site re-splits at 0.890 mean coverage, alpha=0.05 on none, with extensive disclosures including that the answered set's mortality (0.046) is roughly half the pool's (0.090).",
+   "Strengths": [
+    "The core diagnosis is correct and well-motivated: record-level exchangeability fails under grouped multi-site deployment, and the paper demonstrates the failure in-harness rather than only citing it - the record-as-unit comparator grants the alpha=0.05 rung the site-unit walk refuses and then violates its aggregate budget at nearly twice delta under heterogeneity.",
+    "Statistical construction is careful: bounded per-site atoms tied term-by-term to a precisely stated estimand, a WSR betting martingale with Ville's inequality, fixed-sequence threshold selection that spends no extra confidence, and a frozen machine-pinned guarantee text with explicit dispersion, parameter-not-count, and concept-shift-exclusion clauses.",
+    "Unusual candor: a verified-falsifiable concept-shift negative control, a pre-frozen real-data protocol with numbered predictions whose falsifications are reported, a three-way answered-set composition disclosure, an explicit admission that a constant always-negative rule already meets the certified budget on the real pool, and a sensitivity sweep of the one influence-cap constant that moves the certificate.",
+    "Real multi-site clinical data evaluation (eICU-CRD v2.0) with full reproducibility apparatus: released code, deterministic seeding, byte-identical certificates, and an aggregate-only release policy for the restricted extract.",
+    "Related work is thorough and the delta over the nearest prior work (record-level selective-risk certificates; cluster-as-unit conformal machinery; label-shift uncertainty propagation) is stated explicitly."
+   ],
+   "Weaknesses": [
+    "The only budget that ever certifies is close to vacuous at this prevalence: on eICU a constant always-negative rule errs at 0.0898, already inside the certified alpha=0.10, and the paper concedes the answered-set skill margin over that trivial rule is 0.0039 with a negative answered-minus-all contrast. The stricter, practically meaningful rung (alpha=0.05) certifies nowhere on real data and requires roughly 300-400 hospitals synthetically - beyond nearly all real consortia - so the demonstrated certificate largely confirms what the base rate already gives.",
+    "The symmetric 0-1 loss is clinically inappropriate for mortality triage: 77% of answered errors are false negatives and answered-set sensitivity is 0.550 on the synthetic grid, and the gate reaches its budget partly by abstaining where deaths concentrate (answered mortality 0.046 vs 0.090). A certificate read as a safety guarantee could mislead; cost-weighted or class-conditional risk is deferred to future work.",
+    "The label-shift mode, presented as a primary contribution, never produces a useful certificate in any experiment: it declines all 200 draws at the registered synthetic shift, certifies only 9% at the null point, and returns failsafe on all 20 eICU re-splits. Moreover its bootstrap box is asymptotic with measured joint miscoverage 0.038 against a nominal <=0.019, so the headline finite-sample claim holds in full only for the plain exchangeable mode.",
+    "The guarantee is a site-population average with dispersion explicitly unbounded: a hospital reached 0.286 answered error under a valid certificate. For the stated audience (a clinician or auditor at one hospital) the certificate answers little, and the per-site-quantile bound that would answer it is left to future work.",
+    "Real-data evidence is a single cohort from 2014-2015: 20 re-splits partition one hospital population and cannot estimate the violation rate (the paper admits this); temporal common-shock correlation - the most plausible threat to Assumption 1 - is unquantified; 2.9% cross-hospital patients are unfiltered; and the pre-registration is a self-attested commit in an author-controlled repository.",
+    "Methodological novelty is a combination of existing components (WSR betting, learn-then-test fixed-sequence walks, cluster-as-unit hierarchical inference, BBSE, Si et al.-style uncertainty propagation, closed-form linear Shapley attributions); the integration is competent but no new statistical tool is introduced, and the attribution 'study' yields a null on synthetic data and only descriptive, human-unevaluated findings on eICU.",
+    "The prose is dense and idiosyncratic (rungs, atoms, walks, failsafe/misspecified, poison verification), with long qualification-laden sentences; despite good structure the paper is taxing to navigate and several key operational details (e.g., the minimum-cluster gate, the two decline names) are easy to lose."
+   ],
+   "Originality": 3,
+   "Quality": 3,
+   "Clarity": 2,
+   "Significance": 2,
+   "Questions": [
+    "Can you demonstrate any realistic operating regime where a certified rung is both reachable and non-vacuous relative to the always-negative baseline - for example an alpha below the pool prevalence on a real cohort, or a cost-weighted atom - rather than a budget the base rate already satisfies?",
+    "What does the certificate offer a decision-maker at one specific hospital, given the observed per-hospital dispersion (maximum answered error 0.286 under a valid certificate)? Is a tolerance bound on an upper quantile of per-site risk feasible at eICU scale, and if not, at what scale?",
+    "The label-shift mode never certifies in any presented experiment except 9% of draws at the null point. Under what concrete conditions (target pool size, number of declared target sites, shift magnitude) does it certify a rung? A positive demonstration seems necessary to support contribution 2.",
+    "Given the design-time probe showing joint miscoverage of 0.038 against nominal <=0.019 for the bootstrap box, why should BBSE-mode certificates be described as carrying uncertainty 'inside the guarantee' rather than as approximate? Would you label them as such in the emitted guarantee text?",
+    "With sensitivity 0.550 and 77% of answered errors being false negatives, how should a deployer interpret an alpha=0.10 symmetric-error certificate for mortality triage? Have you evaluated a class-conditional (e.g., false-negative-rate) budget with the same site-as-unit machinery?",
+    "How much coverage does a stronger nonlinear head buy or cost on eICU? The claim that the linear head 'can be substituted at a visible cost in coverage' is untested on the real cohort.",
+    "Can you provide any sensitivity analysis for temporal common-shock correlation on eICU (e.g., blocking or resampling by admission period) to support the plausibility of Assumption 1, which you identify as the assumption most at risk?"
+   ],
+   "Limitations": [
+    "The authors are unusually thorough in stating limitations (site-average-only guarantee, concept-shift exclusion, symmetric loss, single cohort, asymptotic BBSE intervals, unmodeled temporal dependence, self-attested pre-registration), which is to their credit.",
+    "Remaining gaps: no clinical-utility analysis (net benefit or decision-curve) to show the certified gate improves any decision over the base rate; no human evaluation of the explanations clinicians are said to be shown; the risk that a certified budget above the outcome prevalence is read as a safety endorsement deserves treatment as a potential negative societal impact, since the gate systematically defers the sickest patients and the certificate could lend unwarranted authority to the answered set."
+   ],
+   "Ethical_Concerns": false,
+   "Soundness": 3,
+   "Presentation": 2,
+   "Contribution": 2,
+   "Overall": 4,
+   "Confidence": 4,
+   "Decision": "Reject"
+  },
+  {
+   "Summary": "The paper presents CertGate, a selective-prediction gate for multi-site clinical risk models that certifies, with finite-sample confidence 1-delta, that an influence-weighted answered-set error rate averaged over a site population stays below a budget alpha, treating the hospital (site) rather than the record as the unit of statistical independence. Each calibration hospital is compressed into one bounded atom and a Waudby-Smith-Ramdas betting martingale walks a fixed-sequence threshold grid at two budget rungs (alpha in {0.05, 0.10}). Two assumption modes are shipped: an exchangeable baseline and a BBSE label-shift mode that propagates the estimation uncertainty of four parameters into the guarantee via a cluster-robust interval box; concept shift is explicitly out of scope. A linear head supplies exact additive attributions for both answers and abstentions, and a three-way answered-set composition disclosure guards against certificates earned by answering easy negatives. Validation covers seven synthetic experiments on a 208-site cohort with oracle ground truth (including a verified-falsifiable concept-shift negative control and a record-as-unit comparator) and an application to eICU-CRD v2.0 (164,322 stays, 207 hospitals) under a protocol frozen before the extract was read, where alpha=0.10 certifies on all 20 by-site re-splits at 0.890 mean coverage and alpha=0.05 on none.",
+   "Strengths": [
+    "The problem is real and well-motivated: record-level selective-risk certificates are overconfident under site-clustered deployment, and the paper demonstrates this failure in-harness (the record-as-unit comparator grants alpha=0.05 rungs the site-unit walk refuses, then violates its aggregate budget at nearly 2x delta under high heterogeneity) rather than merely citing it.",
+    "The validation methodology is unusually rigorous for this literature: a pre-registered protocol frozen before the real extract was read, seven numbered predictions with falsifications reported honestly, a concept-shift negative control verified capable of failing before it is run, leak screens with pre-declared caps (including one that fired in the inverted direction and is reported as a caution), and deterministic byte-identical reproducibility.",
+    "The paper is exceptionally honest about what the certificate does and does not promise: the site-population-average vs per-site distinction, the parameter-vs-realized-count distinction, the three-way composition disclosure showing the gate partly meets its budget by abstaining where deaths concentrate, and the admission that a constant always-negative rule already meets the alpha=0.10 budget on the eICU pool.",
+    "The label-shift mode's design of propagating all four estimated parameters' uncertainty into the budget (declining rather than certifying when the correction cannot be supported) is a principled improvement over point-corrected baselines, and the 39.5% hard-violation rate of the uncorrected baseline under prevalence shift is a compelling motivating failure.",
+    "Real multi-site clinical data (eICU-CRD v2.0) is used end-to-end with an external clinical comparator (APACHE-IVa), attrition ledger, and aggregate-only release discipline; the related-work positioning across four literatures is thorough and clearly identifies the gap."
+   ],
+   "Weaknesses": [
+    "Limited technical novelty: every component is existing machinery - the WSR betting martingale, fixed-sequence/learn-then-test multiple testing, BBSE, uncertainty-box propagation following Si et al., and cluster-as-unit inference following Dunn et al. and Lee et al. The contribution is a careful composition plus validation discipline; no new theory is developed beyond a straightforward application of Ville's inequality to site-level bounded atoms and an affine-in-rho convexity observation.",
+    "The practically achievable guarantee is weak: at realistic hospital counts only alpha=0.10 certifies, and on the real cohort a constant always-negative rule already meets that budget (erring at 0.0898). The clinically meaningful rung (alpha=0.05) requires 300-400 hospitals, beyond most consortia. The paper concedes the certified rung's value is 'the guarantee and its disclosures, not headroom over the base rate', which honestly concedes that the deliverable at deployable scale has limited decision-relevant content.",
+    "The label-shift mode - a headline contribution - never certifies in any realistic tested configuration: it declines all 200 draws at the registered synthetic shift, certifies only 9% at the null point, and returns failsafe on all 20 eICU re-splits. Its demonstrated value is refusal, so contribution 2 is effectively an abstention mechanism, not a working corrected certificate.",
+    "The 'finite-sample' headline is partially undercut in the BBSE mode: three of the four parameter intervals are asymptotic percentile bootstraps whose measured joint miscoverage (0.038) is roughly double the nominal (<=0.019) at this design's cluster count; the full finite-sample claim holds only for the exchangeable mode, yet the title advertises label-shift robustness alongside finite-sample certification.",
+    "The motivating record-vs-site failure is only clearly material under inflated heterogeneity: at the default synthetic heterogeneity the record-unit violation rate (3.5%) sits within delta, and the paper reports the real cohort's dispersion sits below even the default arm, weakening the claim that record-level certification is dangerously overconfident at real-world dispersion levels (the label-shift failure is a separate axis).",
+    "The certified estimand may not match what deployers need: individual hospitals are unbounded (one real hospital shows 0.29 answered error under a certificate averaging 0.048), the symmetric 0-1 loss ignores the false-negative asymmetry that dominates at 9% prevalence (77% of answered errors are false negatives), and a cost-weighted atom is deferred to future work.",
+    "Real-data evidence is a single cohort with 20 re-splits of one hospital population, which the paper concedes bounds only gross violation and cannot estimate the violation rate; the explainability contribution is thin (exact attributions for a linear head are standard) and the claim that a black-box head can be substituted is untested.",
+    "The prose is dense and idiosyncratic (rungs, walks, atoms, heavy em-dash clauses), and much of the text is devoted to disclosure clauses; an ML-venue reader must work hard to extract the method, and several key quantitative details live only in supplementary tables."
+   ],
+   "Originality": 3,
+   "Quality": 3,
+   "Clarity": 3,
+   "Significance": 2,
+   "Questions": [
+    "What deployment decision changes on the basis of an alpha=0.10 certificate that a constant always-negative rule already satisfies on this cohort? Can the framework certify a quantity a trivial rule cannot meet, e.g., a recall-floor-conditioned or cost-weighted answered risk, and if not, why is the current estimand the right one to certify?",
+    "Is there any realistic configuration - multi-site target pools, moderate prevalence shift, more calibration hospitals - in which the BBSE mode issues a certificate on real or realistically sized data? As presented, the mode only ever demonstrates refusal; what evidence supports it as a usable correction rather than a principled decliner?",
+    "Given that the record-as-unit comparator's aggregate violation (3.5%) is within delta at the default heterogeneity and the eICU cohort's dispersion sits below even that arm, what evidence establishes that record-level certification materially fails at real-world dispersion levels, as opposed to only under the su=2.0 synthetic arm?",
+    "How much coverage does the linear head sacrifice relative to a stronger head (e.g., gradient boosting) at the same certified rung on eICU, and does the substitution claim in Section 3.8 survive an actual experiment?",
+    "Why pay the union bound (1-2delta) across the two-rung ladder rather than allocating delta across rungs by alpha-spending, and how would the operative-rung guarantee change?",
+    "The 20 eICU re-splits partition one fixed list of 207 hospitals, which is not the i.i.d. site draw of Assumption 1; beyond the acknowledged without-replacement caveat, can you quantify how this affects the interpretation of 0/20 exceedances against the delta=0.05 criterion?"
+   ],
+   "Limitations": [
+    "The authors are exemplary in stating limitations themselves: the guarantee is a site-population average with per-site risk unbounded, concept shift is out of scope, temporal common-shock correlation is unmodeled and directly threatens Assumption 1, three of four BBSE intervals are asymptotic with measured under-coverage, only the influence cap M is sensitivity-swept, and the real-data evidence is one cohort.",
+    "A residual negative-societal-impact channel deserves more prominence: a hospital administrator or regulator is likely to misread the certificate as a per-hospital safety guarantee despite the dispersion clause - the real-data arm itself shows a hospital at 0.29 answered error under a certified average of 0.048 - and the paper offers disclosure text but no mechanism to prevent that misuse.",
+    "The gate abstains where deaths concentrate (answered-set mortality 0.046 vs 0.090 in pool), so in deployment the human workload is concentrated on the highest-mortality cases while the certified number describes the easier answered set; the operational implications for triage workload and automation bias are not analyzed."
+   ],
+   "Ethical_Concerns": false,
+   "Soundness": 3,
+   "Presentation": 3,
+   "Contribution": 2,
+   "Overall": 4,
+   "Confidence": 4,
+   "Decision": "Reject"
+  },
+  {
+   "Summary": "The paper presents CertGate, a selective-prediction gate for multi-site clinical risk models that certifies, with finite-sample confidence 1-delta, that an influence-weighted answered-set error rate averaged over a site population stays below a budget alpha, treating the hospital (site) rather than the record as the unit of statistical independence. Each calibration hospital is compressed into one bounded atom and a Waudby-Smith-Ramdas betting martingale tests the site-level mean against the budget, with thresholds chosen by a fixed-sequence walk that spends no extra confidence. The gate ships two assumption modes (an exchangeable baseline and a BBSE label-shift mode that propagates the estimation uncertainty of four parameters into the guarantee via a cluster-robust confidence box), plus exact additive attributions for every answer and abstention from a linear head. Validation comprises seven synthetic experiments on a 208-site generator with oracle access (including a verified-falsifiable concept-shift negative control and a record-as-unit comparator that certifies budgets the site-unit walk refuses and then violates them at nearly 2x delta under heterogeneity), and an end-to-end study on eICU-CRD v2.0 (164,322 stays, 207 hospitals) under a protocol frozen before the extract was read, where alpha=0.10 certifies on all 20 by-site re-splits at 0.890 mean coverage while alpha=0.05 certifies on none.",
+   "Strengths": [
+    "The problem is real and well-motivated: record-level selective-risk certificates are demonstrably overconfident under site-clustered deployment, and the paper demonstrates this failure in-harness with a record-as-unit comparator on identical draws rather than merely citing it.",
+    "The validation design is unusually rigorous and honest: a concept-shift negative control verified capable of failing before it runs, a pre-frozen real-data protocol with numbered predictions whose falsifications are reported, an influence-cap sensitivity sweep, leak screens (including one that fired in the unexpected direction and is reported as a caution), and full disclosure that the gate meets part of its budget by abstaining where deaths concentrate.",
+    "The composition disclosure instrument (predicted-class, BBSE-implied, and oracle answered-set class fractions) is a genuinely useful guard against certificates earned by answering only easy negatives, and the paper applies it against itself.",
+    "Reproducibility is strong: pinned constants verified by automated test, deterministic seeding with byte-identical certificates, released code, and a documented extract-to-certificate pipeline for credentialed eICU holders.",
+    "The guarantee text is carefully scoped (site-population average, dispersion clause, parameter-not-count clause, tagged assumptions), and the writing does not overclaim what the certificate bounds."
+   ],
+   "Weaknesses": [
+    "Methodological novelty is limited: the WSR betting martingale, fixed-sequence learn-then-test, BBSE correction, uncertainty-box propagation (Si et al.), and cluster-as-unit machinery all exist; the contribution is their assembly plus an estimand definition (influence-weighted site atoms). No empirical comparison is made against the works identified as closest ([23] for the certificate shape, [28, 29] for cluster-as-unit inference adapted to selective risk), only against a record-as-unit strawman and a clinical severity score.",
+    "The practically certified guarantee is weak: the only reachable rung (alpha=0.10) approximately equals the outcome base rate, which the paper concedes a constant always-negative rule already meets (erring at 0.0898 on the eICU pool); the answered-minus-all skill contrast is negative and the answered set's mortality is half its pool's. The certificate's clinical value therefore rests almost entirely on its disclosures rather than on a useful error bound, and the meaningful rung (alpha=0.05) is unreachable at realistic site counts and never certifies on real data.",
+    "The label-shift mode, one of three headline contributions, is never positively demonstrated: under the registered synthetic shift it declines all 200 draws, and on eICU it fits but returns failsafe on every re-split with a nearly vacuous weight box [0.068, 1.986]. Its own design-time probe measures joint bootstrap miscoverage of 0.038 against a nominal <=0.019, so the finite-sample claim holds in full only for the exchangeable mode; the mode's demonstrated value is refusal, which a much simpler mechanism could deliver.",
+    "The site-population-average estimand does not bound any individual hospital's error: on the real cohort a hospital ran 0.2857 answered error under a valid certificate and 7 of 477 per-hospital pools are hard-violated. The introduction motivates the certificate as what a clinician weighs before trusting automated triage, but a deploying hospital receives no bound on its own answered error, and the paper's per-site guarantee is deferred to future work.",
+    "Real-data evidence is a single cohort partitioned 20 ways: the authors concede this bounds gross violation rather than estimating the delta=0.05 rate, and Assumption 1 (i.i.d. site draws; no temporal common-shock correlation) is acknowledged as the assumption most at risk and is untested. A second independent multi-site cohort is named as the next increment but not provided.",
+    "The record-as-unit comparator's outright validity failure appears only in the high-heterogeneity arm (3.5% violation at default heterogeneity is within delta), and the real cohort's dispersion sits below even the default arm, so the motivating failure's practical force on this data is more modest than the framing suggests; the comparator also runs on a 2,000-record subsample, complicating the comparison.",
+    "The exact-attribution contribution is contingent on a linear head (out-of-sample AUC 0.867 with 161 features); the claimed model-agnosticism of the gate is not exercised, and the coverage cost of a stronger black-box head is asserted but never measured on real data. The symmetric 0-1 loss is clinically misaligned (77% of answered errors are false negatives), with cost-weighted atoms deferred."
+   ],
+   "Originality": 3,
+   "Quality": 3,
+   "Clarity": 3,
+   "Significance": 2,
+   "Questions": [
+    "Can you demonstrate any realistic regime (target pool size, number of declared target sites, shift magnitude) in which the BBSE mode certifies under a genuine prevalence shift? Without one, the mode's contribution reduces to a principled refusal, and its value relative to simply not certifying under detected shift is unclear.",
+    "Why is there no empirical comparison against cluster-aware baselines that could be adapted to this task, e.g., the hierarchical/cluster conformal machinery of Dunn et al. or Lee et al. wrapped around a selective rule, or the joint selective certificate of Yu and Liu applied per-site? The record-as-unit comparator alone does not establish that this specific construction is the best available site-aware option.",
+    "What would a per-site (upper-quantile) guarantee cost in calibration clusters, even roughly? Since deploying hospitals care about their own error rate and your per-hospital arm shows a 0.29 answered error under a valid certificate, this seems central rather than future work.",
+    "Have you measured the coverage cost of a black-box head on the eICU cohort? The claim that a stronger head can be substituted at a visible cost in coverage is currently unsupported by any real-data experiment.",
+    "Could the alpha=0.05 frontier be improved with variance-adaptive or hedged betting strategies, or is the ~300-400 site requirement essentially information-theoretic at this atom construction?",
+    "How sensitive is the E7 comparison to the 2,000-record subsample size, given the record-unit walk's information floor scales with record count?"
+   ],
+   "Limitations": [
+    "The authors are exceptionally forthright about limitations: the site-average-not-per-site scope, the unmodeled temporal common-shock threat to Assumption 1, the asymptotic BBSE intervals with measured miscoverage, the symmetric-loss misalignment, the single-cohort evidence base, and the composition cost of abstention are all stated in the text. The main under-addressed limitation is practical utility: the paper does not squarely confront the question of what a certificate at a budget approximately equal to the base rate buys a deployer beyond its disclosures, nor whether clinicians or auditors would accept a site-population-average bound.",
+    "Potential negative societal impact is modest and reasonably handled (de-identified data under DUA, aggregate-only release policy); a residual risk is that a certificate read as a per-hospital safety promise could mislead a deploying institution, which the dispersion clause mitigates only if read."
+   ],
+   "Ethical_Concerns": false,
+   "Soundness": 3,
+   "Presentation": 3,
+   "Contribution": 2,
+   "Overall": 4,
+   "Confidence": 4,
+   "Decision": "Reject"
+  },
+  {
+   "Summary": "CertGate is a selective-prediction gate for multi-site clinical risk models that treats the hospital (site), rather than the record, as the unit of statistical independence. Each calibration hospital is compressed into a bounded, outcome-independently weighted atom, and a Waudby-Smith-Ramdas betting martingale certifies with finite-sample confidence 1-delta that the influence-weighted answered-set error rate, averaged over the site population, stays at or below a budget alpha; thresholds are selected by a fixed-sequence walk over a grid at two budget rungs (alpha in {0.05, 0.10}). Two assumption modes are part of the emitted guarantee text: an exchangeable baseline and a BBSE label-shift mode that propagates the estimation uncertainty of all four corrected parameters into the budget via a cluster-bootstrap box. A linear head supplies exact additive attributions for every answer and abstention, and a three-way answered-set composition disclosure travels with the certificate. Evaluation comprises seven pre-registered synthetic experiments on a 208-site cohort (validity grid, label-shift stress test with a magnitude sweep, verified-falsifiable concept-shift negative control, site-count frontier, attribution study, coverage/composition study, and a record-as-unit comparator on identical draws), plus eICU-CRD v2.0 (164,322 stays, 207 hospitals) under a protocol frozen before the extract was read, where alpha=0.10 certifies on all 20 by-site re-splits at 0.890 mean coverage and alpha=0.05 on none.",
+   "Strengths": [
+    "The problem is real and well-motivated: record-level selective certificates are overconfident under site clustering, and the paper demonstrates this in-harness with a record-as-unit comparator on identical draws (certifying the alpha=0.05 rung the site-unit walk refuses, then violating its aggregate budget at nearly twice delta in the high-heterogeneity arm) rather than merely citing it.",
+    "The core statistics are sound: bounded per-site atoms tied term-by-term to the estimand, a predictable betting martingale with Ville's inequality, a fixed-sequence walk that spends no extra confidence on multiple looks, and a demonstration (in the SI) that the naive alternative of capping realized contributions is anti-conservative.",
+    "Unusual methodological honesty and disclosure discipline: frozen guarantee text with explicit clauses (site-population average, unbounded per-site dispersion, parameter-not-count), a three-way answered-set composition disclosure that reveals the gate abstains where deaths concentrate, and a pre-registered real-data protocol whose confirmed and falsified predictions are both reported.",
+    "The validation design can fail: the concept-shift negative control is verified capable of raising answered error above budget before it is run, and it shows the certificate failing exactly where the guarantee's exclusion predicts.",
+    "Strong reproducibility: deterministic byte-identical certificates, literally pinned constants as a machine-verifiable pre-registration substitute, released code, and a single command regenerating the synthetic grid.",
+    "The site-count frontier and influence-cap sensitivity sweep give practitioners an actual capacity-planning answer: which budget rung is reachable is priced in hospitals, not asserted."
+   ],
+   "Weaknesses": [
+    "The practical value of the reachable guarantee is thin. At the only certifiable rung (alpha=0.10), a constant always-negative rule already meets the budget on the real cohort (pool error 0.0898), the answered-set skill margin over that rule is 0.0039, the answered-minus-all skill contrast is negative, and the gate reaches budget partly by abstaining where deaths concentrate (answered mortality 0.046 vs 0.090). The paper concedes all of this; but it means the certified number, standing alone, certifies almost nothing a deployer could not get from the base rate, and the regime where the certificate would dominate a trivial rule (alpha=0.05) requires 300-400 hospitals - beyond this dataset and most realistic consortia.",
+    "The label-shift mode, a headline contribution, never yields a useful certificate anywhere in the paper: it declines all 200 synthetic draws under the registered shift, certifies only 9% of draws at the null point, and returns failsafe on all 20 eICU re-splits. Its demonstrated value is the refusal itself. Moreover, three of its four confidence intervals are asymptotic percentile bootstraps with measured joint miscoverage of 0.038 against a nominal <=0.019, so the finite-sample claim holds in full only for the exchangeable mode - in tension with the abstract's framing that the mode 'carries its correction's uncertainty inside the guarantee.'",
+    "Methodological novelty is compositional rather than fundamental: the WSR betting martingale, fixed-sequence/learn-then-test calibration, BBSE, uncertainty-propagated label-shift guarantees (Si et al.), and cluster-as-unit distribution-free inference all exist; the per-site atom is a straightforward construction, and exact additive attributions for a linear model are standard. The integration is careful, but no single component is new.",
+    "The guarantee is a site-population average at joint confidence 1-2delta=0.90 after rung selection; the quantity a deploying hospital actually cares about - its own answered risk - is explicitly unbounded, and the real-data per-hospital arm shows a target hospital at 0.29 answered error under a certificate whose pools average 0.048.",
+    "The symmetric 0-1 loss is misaligned with clinical costs: roughly 77% of answered errors on the synthetic grid are false negatives at ~9.5% prevalence, so the certified budget largely counts missed deaths; a cost-weighted atom is deferred to future work while the clinical framing of the paper implies exactly that use case.",
+    "Real-data evidence is a single cohort, and the 20 by-site re-splits partition one hospital population rather than drawing fresh ones, so the study can bound gross violation but cannot test the delta=0.05 level it targets; Assumption 1 (i.i.d. site sampling) remains unverifiable, with temporal common-shock correlation acknowledged as unmodeled.",
+    "Several supporting studies (attribution case study, coverage/composition study) rest on a single draw or single deployment, and the fitted head is modest (out-of-sample AUC <=0.867), leaving open whether the machinery behaves the same under a stronger black-box head, which is claimed possible but never demonstrated."
+   ],
+   "Originality": 3,
+   "Quality": 3,
+   "Clarity": 3,
+   "Significance": 2,
+   "Questions": [
+    "Given that a constant always-negative rule errs at 0.0898 on the eICU target pools - already inside the alpha=0.10 budget - what concrete deployment decision does the certified rung enable that the base rate plus a point estimate would not? Can you exhibit an operating regime (e.g., a cost-weighted or class-conditional budget) where the certificate is not dominated by a trivial rule at reachable site counts?",
+    "The BBSE mode's three bootstrap intervals have measured joint miscoverage 0.038 against a nominal <=0.019, and the paper states the finite-sample claim holds in full only for the exchangeable mode. Should the label-shift mode's certificate be described as finite-sample at all, and what honest effective delta would you attach to it?",
+    "Since the label-shift mode declines in every synthetic configuration under genuine shift and returns failsafe on all 20 eICU re-splits, is there any realistic data regime (target-pool size, number of declared target sites, shift magnitude) where it certifies a rung? A demonstration would materially strengthen contribution 2.",
+    "How many calibration clusters would a genuine per-site guarantee (a tolerance bound on an upper quantile of per-site answered risk) require, even approximately? This is the quantity a deploying hospital cares about, and an order-of-magnitude answer would clarify whether the site-population average is a fundamental or provisional compromise.",
+    "On eICU, would a temporal split (e.g., 2014 vs 2015 admissions) or a leave-one-region-out design provide sharper evidence about Assumption 1 than 20 re-splits of one hospital population?",
+    "How sensitive are the certified prefix and deployed threshold to the 23-point grid on [0.55, 0.99] and to the margin-sorted walk order fitted on the auxiliary split?",
+    "With ~77% of answered errors being false negatives on the synthetic grid, how should a clinician read a certified symmetric error budget for a mortality task - and can the atom be re-derived for a false-negative-weighted loss without breaking boundedness?"
+   ],
+   "Limitations": [
+    "The authors are unusually thorough about limitations: the site-population (not per-site) scope, the unbounded dispersion, the parameter-vs-realized-count distinction, concept shift being out of scope, the asymptotic BBSE intervals with measured miscoverage, the symmetric loss, temporal common-shock correlation, the single real cohort, and the composition cost (abstaining where deaths concentrate) are all stated in the text, most inside the frozen guarantee itself.",
+    "Residual gaps: the near-vacuity of the alpha=0.10 budget relative to the cohort base rate is disclosed but its implication - that the demonstrated real-data certificate has little standalone decision value - deserves more prominence than a paragraph in Section 4.10; the black-box-head claim is untested; and no out-of-support or positivity screening exists for deployment pools.",
+    "Negative societal impact is adequately handled: the data is de-identified under a credentialed DUA, all released artifacts are aggregate by construction, and the paper explicitly warns against per-site over-reading of the certificate, which is the main foreseeable misuse."
+   ],
+   "Ethical_Concerns": false,
+   "Soundness": 3,
+   "Presentation": 3,
+   "Contribution": 2,
+   "Overall": 4,
+   "Confidence": 4,
+   "Decision": "Reject"
+  }
+ ],
+ "retrace": [
+  {
+   "lane": "title-abstract-intro-related-work",
+   "n_claims": 26,
+   "drift": [
+    {
+     "quote": "and $\\alpha=0.05$ needs about 300 sites",
+     "note": "SOFT only, not hard drift: E4 grid shows certify_rate 0.0 at 208 sites, 0.285 at 300, and 1.0 only at 400. 'Needs about 300' is defensible as the necessity / first-certification reading (E4 headline: alpha=0.05 needs ~300-400), but read as sufficiency it overstates — 300 sites certifies only 28.5% of draws. No number changed or re-rounded; likely the '1 soft' already recorded in Phase 1.",
+     "artifact": "experiments/out/summary.md E4 block (grid 0.05: n_sites 300 certify_rate 0.285; n_sites 400 certify_rate 1.0)"
+    }
+   ],
+   "unverifiable": [
+    {
+     "quote": "certified record-level selective-risk rules overrun their budget by 9–30% under grouped deployment [@zhou2026falsesense]",
+     "note": "Literature-sourced number from a cited external audit, not traceable to any canonical project artifact; belongs to the citation spot-check (paper/TODO.md §6, run 2026-08-10, all entries VERIFIED), not this artifact audit."
+    }
+   ]
+  },
+  {
+   "lane": "Methods §3.1–3.10 + Discussion §5 + Conclusion/Limitations §6–6.1",
+   "n_claims": 54,
+   "drift": [],
+   "unverifiable": [
+    {
+     "quote": "On this cohort's size distribution $89.5\\%$ of sites exceed 100 records",
+     "note": "Not stored in any canonical artifact (stdout-only MC over the generator's size draw, per the prior claim audit). Benign: independent recompute from certgate/data.py SimConfig (lognormal mu=6.0, sigma=1.1, clip [20,5000]) gives 89.6% > 100 (analytic ~89.8%); the prior audit's MC gave 89.49% -> 89.5%. Consistent within MC error; no drift, but the figure has no stored home in experiments/out*/."
+    }
+   ]
+  },
+  {
+   "lane": "Results S4.1-4.10 + Figures section captions + Tables section captions + SI A.3 additions (experiment-labels, cohort-filters)",
+   "n_claims": 226,
+   "drift": [],
+   "unverifiable": [
+    {
+     "quote": "200,859 ICU stays from 139,367 patients admitted to 208 US hospitals in 2014–2015",
+     "note": "Stays/patients/hospitals all TRACED (EICU_preflight.json, test_constants.py pins 200859/139367/208). The '2014–2015' collection window exists in no repo artifact; it is a dataset-documentation fact carried by the cited eICU papers (pollard2018eicu). Standard citation-backed fact, not a defect."
+    }
+   ]
+  }
+ ]
+}
