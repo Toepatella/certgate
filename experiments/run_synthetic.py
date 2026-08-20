@@ -40,6 +40,12 @@ from certgate.explain import (global_importance, local_attribution,
 from certgate.harness import hard_violation, exceedance_reference, SIZE_BINS
 from certgate.report import provenance
 from certgate import reliability as rp
+import dataclasses
+
+from sklearn.ensemble import HistGradientBoostingClassifier
+
+from experiments.comparators import (hoeffding_ucb, mpeb_ucb,
+                                     site_bootstrap_ucb, t_ucb)
 
 # ONE generator (audit V7): every experiment runs the documented SimConfig()
 # defaults; the only experiment-local generator parameters are the shift/tilt
@@ -57,7 +63,15 @@ E2_SHIFT_SWEEP = (0.095, 0.13, 0.16, 0.19, 0.22)   # magnitude sweep; 0.22 = anc
                                             # 0.095 = the null-shift arm (panel S2-6/S2-7)
 E7_RECORD_SAMPLE = 2000                     # record-as-unit subsample of S_cal / S_aux
 E7_SU_ARM = (0.5, 2.0)                      # heterogeneity arms for the comparator
-EXPERIMENTS = ("E1", "E2", "E3", "E4", "E5", "E6", "E7")
+# revision-2 (SPEC "E8"; design probes in paper/review/revision2/PHASE0-PROBES.md)
+E8_COMPARATORS = ("wsr", "hoeffding", "mpeb", "t", "site_boot")
+E8_BOOT = 1000                              # site-bootstrap resamples (arm A)
+E8_NOISE_SWEEP = (0.01, 0.02, 0.03, 0.035, 0.04)   # aleatoric label-flip floor (arm B)
+E8_NOISE_R = 300                            # draws per eta (exceedance resolution)
+E8_HEAD_ARMS = ("gbm", "degraded")          # alternative heads (arm C)
+E8_GBM_MAX_ITER = 200
+E8_DEGRADED_ZERO_FEATURES = 2               # informative features denied to the head
+EXPERIMENTS = ("E1", "E2", "E3", "E4", "E5", "E6", "E7", "E8")
 
 
 # ------------------------------------------------------------------ helpers
@@ -1110,10 +1124,339 @@ def run_E7(out, quick):
     return summary
 
 
+# ------------------------------------------------------------------ E8
+
+class _FnHead:
+    """Duck-typed head for E8 arm C: everything downstream of scoring needs
+    only ``.score``/``.predict`` (the reliability-panel precedent). Never fed
+    to explain.py, which requires the linear ``Head``."""
+
+    def __init__(self, score, predict):
+        self.score, self.predict = score, predict
+
+
+def _bound_walk(atoms, order, alpha, delta, tau_grid, ucb):
+    """Comparator fixed-sequence walk (SPEC E8 arm A): identical order and
+    stop-at-first-failure semantics as ``certify.fixed_sequence_walk``, with
+    ``ucb(atoms[t], delta) <= alpha`` in place of the betting test. The
+    library walk is untouched (no injection point -- the delta-accounting spy
+    must keep working)."""
+    certified = []
+    for t in order:
+        if ucb(atoms[t], delta) <= alpha:
+            certified.append(int(t))
+        else:
+            break
+    if not certified:
+        return [], None
+    return certified, min(certified, key=lambda t: tau_grid[t])
+
+
+def _flip_labels(cohorts, eta, rng):
+    """E8 arm B aleatoric floor: symmetric label flips at rate eta, drawn from
+    one stream over the cohorts in a fixed order. Applied to train/aux/cal AND
+    the eval pool alike, so exchangeability (Assumption 1) holds by
+    construction -- this floor is irreducible error no threshold can screen."""
+    for c in cohorts:
+        flip = rng.random(len(c.y)) < eta
+        c.y[flip] = ~c.y[flip]
+
+
+def run_E8(out, quick):
+    """Certificate stress & comparator suite (revision-2; SPEC "E8").
+
+    Arm A: four alternative one-sided bounds walked on the IDENTICAL atoms and
+    order as the WSR betting test (review weakness 1; two-sided reading
+    pre-committed in SPEC). Arm B: the label-noise stress frontier (weakness
+    4) -- certify rate must collapse before exceedance appears as the
+    aleatoric floor rises. Arm C: alternative heads (S2-26/S2-27) -- validity
+    is head-agnostic, quality is priced as coverage.
+    """
+    R = 10 if quick else 200
+    noise_R = 6 if quick else E8_NOISE_R
+    sweep = QUICK_SWEEP if quick else FULL_SWEEP
+    n_boot = 200 if quick else E8_BOOT
+
+    # ---- arm A: comparator bounds on identical atoms --------------------
+    rows_a = []
+    for n_idx, n_sites in enumerate(sweep):
+        cfg = SimConfig()
+        for r in range(R):
+            rng = _rng(8, 0, n_idx, r)
+            train, aux, cal, head = _draw_split(cfg, n_sites, rng)
+            evalp = draw_cohort(cfg, E1_EVAL_SITES, rng,
+                                site_label_prefix=f"e8av{n_idx}_{r}")
+            sc_cal, er_cal = head.score(cal.x), head.predict(cal.x) != cal.y
+            sc_aux, er_aux = head.score(aux.x), head.predict(aux.x) != aux.y
+            boot_rng = _rng(8, 0, n_idx, r, 1)
+            for alpha in ALPHA_LADDER:
+                a_aux = influence_atoms(sc_aux, er_aux, aux.site_id,
+                                        aux.n_sites, TAU_GRID, alpha,
+                                        M_INFLUENCE)
+                a_cal = influence_atoms(sc_cal, er_cal, cal.site_id,
+                                        cal.n_sites, TAU_GRID, alpha,
+                                        M_INFLUENCE)
+                order = walk_order(a_aux)
+                ucbs = {
+                    "hoeffding": lambda z, d: hoeffding_ucb(z, d),
+                    "mpeb": lambda z, d: mpeb_ucb(z, d),
+                    "t": lambda z, d: t_ucb(z, d),
+                    "site_boot": lambda z, d: site_bootstrap_ucb(
+                        z, d, n_boot, boot_rng),
+                }
+                for method in E8_COMPARATORS:
+                    if method == "wsr":
+                        _, dep = fixed_sequence_walk(
+                            a_cal, order, alpha, DELTA, TAU_GRID,
+                            rng=certification_rng(alpha, MODE_BASELINE,
+                                                  "e8-comp"))
+                    else:
+                        _, dep = _bound_walk(a_cal, order, alpha, DELTA,
+                                             TAU_GRID, ucbs[method])
+                    row = dict(n_sites=n_sites, draw=r, alpha=alpha,
+                               method=method, certified=dep is not None,
+                               tau=None, coverage=None, rm_fresh=None,
+                               rm_exceed=None)
+                    if dep is not None:
+                        tau = float(TAU_GRID[dep])
+                        rm = _rm_on_pool(head, evalp, tau)
+                        row.update(
+                            tau=round(tau, 4),
+                            coverage=round(float(
+                                (head.score(evalp.x) >= tau).mean()), 4),
+                            rm_fresh=round(rm, 6),
+                            rm_exceed=bool(rm > alpha))
+                    rows_a.append(row)
+    _write_csv(os.path.join(out, "E8_comparators.csv"), rows_a,
+               ["n_sites", "draw", "alpha", "method", "certified", "tau",
+                "coverage", "rm_fresh", "rm_exceed"])
+
+    # ---- arm B: label-noise stress frontier -----------------------------
+    rows_b = []
+    for e_idx, eta in enumerate(E8_NOISE_SWEEP):
+        cfg = SimConfig()
+        for r in range(noise_R):
+            rng = _rng(8, 1, e_idx, r)
+            coh = draw_cohort(cfg, ANCHOR_SITES, rng)
+            train, aux, cal = split_sites(coh, rng)
+            evalp = draw_cohort(cfg, E1_EVAL_SITES, rng,
+                                site_label_prefix=f"e8nv{e_idx}_{r}")
+            _flip_labels((train, aux, cal, evalp), eta,
+                         _rng(8, 1, e_idx, r, 1))
+            head = fit_head(train)
+            sc_cal, er_cal = head.score(cal.x), head.predict(cal.x) != cal.y
+            sc_aux, er_aux = head.score(aux.x), head.predict(aux.x) != aux.y
+            risk_floor = _rm_on_pool(head, evalp, float(TAU_GRID[0]))
+            for alpha in ALPHA_LADDER:
+                a_aux = influence_atoms(sc_aux, er_aux, aux.site_id,
+                                        aux.n_sites, TAU_GRID, alpha,
+                                        M_INFLUENCE)
+                a_cal = influence_atoms(sc_cal, er_cal, cal.site_id,
+                                        cal.n_sites, TAU_GRID, alpha,
+                                        M_INFLUENCE)
+                _, dep = fixed_sequence_walk(
+                    a_cal, walk_order(a_aux), alpha, DELTA, TAU_GRID,
+                    rng=certification_rng(alpha, MODE_BASELINE, "e8-noise"))
+                row = dict(eta=eta, draw=r, alpha=alpha,
+                           certified=dep is not None, tau=None, coverage=None,
+                           rm_fresh=None, rm_exceed=None,
+                           risk_at_lowest_tau=round(risk_floor, 6))
+                if dep is not None:
+                    tau = float(TAU_GRID[dep])
+                    rm = _rm_on_pool(head, evalp, tau)
+                    row.update(tau=round(tau, 4),
+                               coverage=round(float(
+                                   (head.score(evalp.x) >= tau).mean()), 4),
+                               rm_fresh=round(rm, 6),
+                               rm_exceed=bool(rm > alpha))
+                rows_b.append(row)
+    _write_csv(os.path.join(out, "E8_noise.csv"), rows_b,
+               ["eta", "draw", "alpha", "certified", "tau", "coverage",
+                "rm_fresh", "rm_exceed", "risk_at_lowest_tau"])
+
+    # ---- arm C: alternative heads ---------------------------------------
+    rows_c = []
+    for h_idx, head_name in enumerate(E8_HEAD_ARMS):
+        cfg = SimConfig()
+        for r in range(R):
+            rng = _rng(8, 2, h_idx, r)
+            train, aux, cal, lin_head = _draw_split(cfg, ANCHOR_SITES, rng)
+            evalp = draw_cohort(cfg, E1_EVAL_SITES, rng,
+                                site_label_prefix=f"e8hv{h_idx}_{r}")
+            if head_name == "gbm":
+                seed = int(_rng(8, 2, h_idx, r, 1).integers(2 ** 31))
+                clf = HistGradientBoostingClassifier(
+                    max_iter=E8_GBM_MAX_ITER, random_state=seed)
+                clf.fit(train.x, train.y)
+
+                def _sc(x, clf=clf):
+                    p = clf.predict_proba(x)[:, 1]
+                    return np.maximum(p, 1.0 - p)
+
+                def _pr(x, clf=clf):
+                    return clf.predict_proba(x)[:, 1] >= 0.5
+
+                alt = _FnHead(_sc, _pr)
+            else:                                      # "degraded"
+                xz = train.x.copy()
+                xz[:, :E8_DEGRADED_ZERO_FEATURES] = 0.0
+                dhead = fit_head(dataclasses.replace(train, x=xz))
+
+                def _sc(x, h=dhead):
+                    xz = x.copy()
+                    xz[:, :E8_DEGRADED_ZERO_FEATURES] = 0.0
+                    return h.score(xz)
+
+                def _pr(x, h=dhead):
+                    xz = x.copy()
+                    xz[:, :E8_DEGRADED_ZERO_FEATURES] = 0.0
+                    return h.predict(xz)
+
+                alt = _FnHead(_sc, _pr)
+            heads = {head_name: alt}
+            if h_idx == 0:
+                # same-draws linear reference, once (the gbm arm's draws)
+                heads["linear"] = lin_head
+            for name, hd in heads.items():
+                sc_cal, er_cal = hd.score(cal.x), hd.predict(cal.x) != cal.y
+                sc_aux, er_aux = hd.score(aux.x), hd.predict(aux.x) != aux.y
+                for alpha in ALPHA_LADDER:
+                    a_aux = influence_atoms(sc_aux, er_aux, aux.site_id,
+                                            aux.n_sites, TAU_GRID, alpha,
+                                            M_INFLUENCE)
+                    a_cal = influence_atoms(sc_cal, er_cal, cal.site_id,
+                                            cal.n_sites, TAU_GRID, alpha,
+                                            M_INFLUENCE)
+                    walk_rng = (certification_rng(alpha, MODE_BASELINE)
+                                if name == "linear" else
+                                certification_rng(alpha, MODE_BASELINE,
+                                                  f"e8-head-{name}"))
+                    _, dep = fixed_sequence_walk(
+                        a_cal, walk_order(a_aux), alpha, DELTA, TAU_GRID,
+                        rng=walk_rng)
+                    row = dict(head=name, draw=r, alpha=alpha,
+                               certified=dep is not None, tau=None,
+                               coverage=None, rm_fresh=None, rm_exceed=None)
+                    if dep is not None:
+                        tau = float(TAU_GRID[dep])
+                        rm = _rm_on_pool(hd, evalp, tau)
+                        row.update(
+                            tau=round(tau, 4),
+                            coverage=round(float(
+                                (hd.score(evalp.x) >= tau).mean()), 4),
+                            rm_fresh=round(rm, 6),
+                            rm_exceed=bool(rm > alpha))
+                    rows_c.append(row)
+    _write_csv(os.path.join(out, "E8_heads.csv"), rows_c,
+               ["head", "draw", "alpha", "certified", "tau", "coverage",
+                "rm_fresh", "rm_exceed"])
+
+    # ---- summary ---------------------------------------------------------
+    def _agg(rows, key_field, key):
+        sub = [x for x in rows if x[key_field] == key]
+        out_by_alpha = {}
+        for alpha in ALPHA_LADDER:
+            s = [x for x in sub if x["alpha"] == alpha]
+            certs = [x for x in s if x["certified"]]
+            out_by_alpha[alpha] = dict(
+                certify_rate=round(len(certs) / len(s), 4) if s else None,
+                rm_exceed_rate=_rate(
+                    sum(bool(x["rm_exceed"]) for x in certs), len(certs)),
+                mean_tau=round(float(np.mean(
+                    [x["tau"] for x in certs])), 4) if certs else None,
+                mean_coverage=round(float(np.mean(
+                    [x["coverage"] for x in certs])), 4) if certs else None,
+                mean_rm_fresh=round(float(np.mean(
+                    [x["rm_fresh"] for x in certs])), 4) if certs else None)
+        return out_by_alpha
+
+    comp = {}
+    for method in E8_COMPARATORS:
+        per = _agg(rows_a, "method", method)
+        for alpha in ALPHA_LADDER:
+            per[alpha]["certify_by_nsites"] = [
+                round(sum(1 for x in rows_a
+                          if x["method"] == method and x["alpha"] == alpha
+                          and x["n_sites"] == n and x["certified"]) / R, 4)
+                for n in sweep]
+        comp[method] = per
+    noise = {}
+    for eta in E8_NOISE_SWEEP:
+        per = _agg(rows_b, "eta", eta)
+        sub = [x for x in rows_b if x["eta"] == eta and x["alpha"] == 0.10]
+        per["mean_risk_at_lowest_tau"] = round(float(np.mean(
+            [x["risk_at_lowest_tau"] for x in sub])), 4) if sub else None
+        noise[eta] = per
+    heads_summary = {name: _agg(rows_c, "head", name)
+                     for name in ("linear",) + E8_HEAD_ARMS}
+
+    summary = {
+        "R": R, "noise_R": noise_R, "sweep": list(sweep), "n_boot": n_boot,
+        "comparators": comp,
+        "noise": noise,
+        "heads": heads_summary,
+        "explain_supported": {"linear": True, "gbm": False,
+                              "degraded": False},
+        "notes": ("arm A: identical atoms and walk order across all five "
+                  "certifiers; two-sided reading pre-committed in SPEC. "
+                  "arm B: flips applied to every cohort alike, so "
+                  "exchangeability holds by construction. arm C: linear "
+                  "reference rows come from the gbm arm's draws; "
+                  "temperature miscalibration is analytically a no-op for "
+                  "the gate (monotone score transform) and is not simulated. "
+                  "explain_supported=False for the degraded head marks the "
+                  "deployed explanation path, not linear-algebra "
+                  "feasibility."),
+    }
+
+    # ---- figure ----------------------------------------------------------
+    fig, axes = plt.subplots(1, 3, figsize=(15, 4))
+    colors = {"wsr": "#4477aa", "hoeffding": "#cc6677", "mpeb": "#228833",
+              "t": "#ccbb44", "site_boot": "#aa3377"}
+    a = axes[0]
+    for method in E8_COMPARATORS:
+        a.plot(sweep, comp[method][0.10]["certify_by_nsites"], "-o",
+               color=colors[method], label=method, ms=3)
+        a.plot(sweep, comp[method][0.05]["certify_by_nsites"], "--o",
+               color=colors[method], ms=3, alpha=0.5)
+    a.set_xlabel("n_sites")
+    a.set_ylabel("certify rate")
+    a.set_title("E8-A comparator frontiers (solid a=0.10, dashed a=0.05)")
+    a.legend(fontsize=7)
+    a = axes[1]
+    etas = list(E8_NOISE_SWEEP)
+    a.plot(etas, [noise[e][0.10]["certify_rate"] for e in etas], "-o",
+           color="#4477aa", label="certify rate (a=0.10)")
+    exc = [noise[e][0.10]["rm_exceed_rate"] for e in etas]
+    a.plot(etas, [np.nan if v is None else v for v in exc], "-s",
+           color="#cc6677", label="R_M-exceed rate")
+    a.axhline(DELTA, color="black", ls="--", lw=0.8, label=f"DELTA={DELTA}")
+    a.set_xlabel("label-noise rate eta")
+    a.set_title("E8-B stress frontier")
+    a.legend(fontsize=7)
+    a = axes[2]
+    names = ("linear",) + E8_HEAD_ARMS
+    xpos = np.arange(len(names))
+    cov = [heads_summary[n][0.10]["mean_coverage"] for n in names]
+    cert = [heads_summary[n][0.10]["certify_rate"] for n in names]
+    a.bar(xpos - 0.15, [np.nan if v is None else v for v in cert], 0.3,
+          color="#4477aa", label="certify rate")
+    a.bar(xpos + 0.15, [np.nan if v is None else v for v in cov], 0.3,
+          color="#66ccee", label="coverage")
+    a.set_xticks(xpos)
+    a.set_xticklabels(names)
+    a.set_title("E8-C heads (a=0.10)")
+    a.legend(fontsize=7)
+    fig.tight_layout()
+    fig.savefig(os.path.join(out, "E8_suite.png"), dpi=110)
+    plt.close(fig)
+    return summary
+
+
 # ------------------------------------------------------------------ driver
 
 _RUNNERS = {"E1": run_E1, "E2": run_E2, "E3": run_E3, "E4": run_E4,
-            "E5": run_E5, "E6": run_E6, "E7": run_E7}
+            "E5": run_E5, "E6": run_E6, "E7": run_E7, "E8": run_E8}
 
 
 def _existing_summary_blocks(path):
@@ -1240,6 +1583,15 @@ def _headline(name, res):
                 f"exceed={a[0.05]['record']['rm_exceed_rate']} vs site "
                 f"certify={a[0.05]['site']['certify_rate']}; "
                 f"a=0.10 record exceed={a[0.10]['record']['rm_exceed_rate']}")
+    if name == "E8":
+        wsr = res["comparators"]["wsr"][0.10]
+        mpe = res["comparators"]["mpeb"][0.10]
+        noise = {e: v[0.10]["certify_rate"] for e, v in res["noise"].items()}
+        deg = res["heads"]["degraded"][0.10]
+        return (f"comp a=0.10 wsr={wsr['certify_by_nsites']} "
+                f"mpeb={mpe['certify_by_nsites']}; noise certify={noise}; "
+                f"degraded cov={deg['mean_coverage']} "
+                f"exceed={deg['rm_exceed_rate']}")
     return ""
 
 

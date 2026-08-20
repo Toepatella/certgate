@@ -89,3 +89,34 @@ def test_summary_preserved_blocks_survive_two_partial_runs(tmp_path):
         text = fh.read()
     assert "(preserved from an earlier run)" in text
     assert '"_run"' in text                        # fresh blocks are stamped
+
+
+def test_e8_bound_walk_mirrors_fixed_sequence_semantics():
+    """SPEC E8 arm A: the comparator walk must share the library walk's
+    contract exactly -- test in order, stop at first failure, deploy the
+    lowest-tau certified index; empty prefix -> (None)."""
+    from experiments.run_synthetic import _bound_walk
+    atoms = np.array([[0.02], [0.04], [0.5], [0.03]])
+    tau_grid = np.array([0.9, 0.8, 0.7, 0.6])
+    ucb = lambda z, d: float(z.mean())          # noqa: E731
+    certified, dep = _bound_walk(atoms, np.array([0, 1, 2, 3]),
+                                 0.05, 0.05, tau_grid, ucb)
+    assert certified == [0, 1]                   # stops at atoms[2] = 0.5
+    assert dep == 1                              # min tau among certified
+    certified, dep = _bound_walk(atoms, np.array([2, 0, 1]),
+                                 0.05, 0.05, tau_grid, ucb)
+    assert certified == [] and dep is None
+
+
+def test_e8_flip_labels_rate_and_determinism():
+    from types import SimpleNamespace
+    from experiments.run_synthetic import _flip_labels, _rng
+    y1 = np.zeros(20000, dtype=bool)
+    y2 = np.zeros(20000, dtype=bool)
+    _flip_labels((SimpleNamespace(y=y1),), 0.03, _rng(9999, 0))
+    _flip_labels((SimpleNamespace(y=y2),), 0.03, _rng(9999, 0))
+    assert (y1 == y2).all()                      # deterministic
+    assert abs(y1.mean() - 0.03) < 0.005         # rate ~ eta
+    y3 = np.zeros(20000, dtype=bool)
+    _flip_labels((SimpleNamespace(y=y3),), 0.03, _rng(9999, 1))
+    assert (y1 != y3).any()                      # stream-sensitive

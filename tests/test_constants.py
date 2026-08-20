@@ -143,6 +143,32 @@ def test_simconfig_generator_defaults_pinned():
     assert (cfg.size_lo, cfg.size_hi) == (20, 5000)
 
 
+def test_e8_constants_pinned():
+    """Revision-2 E8 arms (SPEC "E8"; design record
+    paper/review/revision2/PHASE0-PROBES.md). Appended function: every
+    pre-existing pin above stays byte-untouched."""
+    from experiments import run_synthetic as rs
+    assert rs.E8_COMPARATORS == ("wsr", "hoeffding", "mpeb", "t", "site_boot")
+    assert rs.E8_BOOT == 1000
+    assert rs.E8_NOISE_SWEEP == (0.01, 0.02, 0.03, 0.035, 0.04)
+    assert rs.E8_NOISE_R == 300
+    assert rs.E8_HEAD_ARMS == ("gbm", "degraded")
+    assert rs.E8_GBM_MAX_ITER == 200
+    assert rs.E8_DEGRADED_ZERO_FEATURES == 2
+
+
+def test_experiment_registration_consistent():
+    """EXPERIMENTS and _RUNNERS must agree (the --only validator checks one,
+    the dispatch loop iterates the other -- registering in only one is a
+    silent drop or a KeyError), and every name must stay single-digit: the
+    summary-writer regex ``^## (E\\d)`` would silently alias an E10 block
+    into E1's (CLAUDE.md gotcha, now pinned)."""
+    import re
+    from experiments import run_synthetic as rs
+    assert set(rs.EXPERIMENTS) == set(rs._RUNNERS)
+    assert all(re.fullmatch(r"E\d", n) for n in rs.EXPERIMENTS)
+
+
 # ---- eICU real-data protocol constants (SPEC "Real-data protocol"). These are
 # ---- PRE-REGISTRATION constants: they were frozen before a single eICU byte
 # ---- was read, and pinning them literally is what makes that claim checkable.
