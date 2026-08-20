@@ -46,13 +46,13 @@ PDF_NAME = "CertGate_DiscoverComputing.pdf"
 FIGURE_MAP = {
     1: "pipeline.pdf",
     2: "E2_label_shift.png",
-    3: "E4_site_sweep.png",
-    4: "E6_fairness.png",
-    5: "EICU_pooled.png",
+    3: "EICU_pooled.png",
+    4: "E8_suite.png",
+    5: "E9_frontiers.png",
 }
 # print width per figure, in fractions of \textwidth (single-panel figures
 # do not earn a full page-width)
-FIG_WIDTHS = {1: 0.9, 2: 0.92, 3: 0.85, 4: 0.85, 5: 1.0}
+FIG_WIDTHS = {1: 0.9, 2: 0.92, 3: 1.0, 4: 1.0, 5: 0.9}
 SI_FIGURE_MAP = {
     "S1": "EICU_reliability_panel.png",
     "S2": "EICU_per_site.png",
@@ -60,6 +60,8 @@ SI_FIGURE_MAP = {
     "S4": "E3_concept_shift.png",
     "S5": "E5_explain.png",
     "S6": "E7_comparator.png",
+    "S7": "E4_site_sweep.png",
+    "S8": "E6_fairness.png",
 }
 
 # Back-matter sections in the order the journal's end-matter renders them.
