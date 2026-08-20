@@ -16,14 +16,11 @@ from certgate.constants import TAU_GRID
 ALPHA, DELTA = 0.05, 0.05
 
 
-def _mpeb_ucb(z, delta):
-    """Maurer-Pontil empirical-Bernstein UCB (range 1) -- test-local reference
-    arithmetic ONLY (the truncation negative control; never in the library)."""
-    z = np.asarray(z, dtype=float)
-    n = len(z)
-    v = z.var(ddof=1) if n > 1 else 0.25
-    L = np.log(2.0 / delta)
-    return z.mean() + np.sqrt(2.0 * v * L / n) + 7.0 * L / (3.0 * (n - 1))
+# The Maurer-Pontil reference arithmetic moved verbatim to
+# experiments/comparators.py (revision-2, E8 arm A) so the truncation negative
+# control below and the comparator bound can never drift; still never in the
+# certgate/ library.
+from experiments.comparators import mpeb_ucb as _mpeb_ucb  # noqa: E402
 
 
 def test_atom_range_and_empty_site_neutral():
