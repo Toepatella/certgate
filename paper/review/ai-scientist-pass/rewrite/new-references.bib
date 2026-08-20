@@ -1,0 +1,134 @@
+% new-references.bib — the eight must-cite entries from the ai-scientist-pass novelty audit
+% (Phase 2). Prepared 2026-08-15; every entry verified against its primary source before inclusion,
+% following the house convention of paper/references.bib (arXiv entries carry eprint + archivePrefix +
+% primaryClass; DOIs given where one exists; @misc for preprints, @inproceedings / @article for
+% published venues). Cite keys are the ones fixed by the audit and are not present in references.bib.
+%
+% Verification record (source consulted -> what it confirmed):
+%   lee2025hierarchicalevalues   arXiv API export.arxiv.org/api/query?id_list=2501.02514 + abstract page:
+%                                authors, title, v1 2025-01-05, primary class stat.ME; no comments/journal-ref/
+%                                DOI field, and a 2026-08-15 web search found no venue publication -> @misc.
+%   fernandes2026abductivereject arXiv API id_list=2603.14096: authors, title, v1 2026-03-14, cs.LG; comments
+%                                field "Accepted at XAI 2026 (4th World Conference on Explainable Artificial
+%                                Intelligence)" -> @inproceedings; proceedings volume/pages not yet published.
+%   plassier2023federatedlabelshift  arXiv API id_list=2306.05131 (v2, stat.ML, comment "ICML 2023") +
+%                                proceedings.mlr.press/v202/plassier23a.html: PMLR 202, pages 27907--27947.
+%   alexandari2018abstention     arXiv API id_list=1802.07024: authors (Amr M. Alexandari as listed), title,
+%                                v1 2018-02-20 / v5 2022-06-19, stat.ML; no journal-ref or DOI -> @misc preprint.
+%   podkopaev2022tracking        arXiv API id_list=2110.06177 (v4 2022-05-05, stat.ML, comment "Accepted as a
+%                                conference paper at ICLR 2022"); the OpenReview forum id Ro_zAjZppv comes from
+%                                the DBLP-mirrored record at researchr.org/publication/PodkopaevR22 (openreview.net
+%                                itself sat behind a browser check on 2026-08-15, so the forum page was not read).
+%   wang2026lec                  arXiv API id_list=2512.01556 (v3 2026-05-26, cs.AI): full seven-author list;
+%                                comments field "Accepted by ICML 2026 Regular" -> @inproceedings ICML 2026.
+%                                VERIFY (soft): PMLR volume/pages not verified -- proceedings.mlr.press/v306/
+%                                returned 404 on 2026-08-15; fill in once the volume is indexed.
+%   liu2026certifyrefuse         arXiv API id_list=2608.10893: authors, title, v1 2026-08-11, cs.CL; no
+%                                comments/journal-ref/DOI -> @misc.
+%   cpmors2024jmir               Crossref api.crossref.org/works/10.2196/50369 (eight authors, J Med Internet
+%                                Res vol 26, e50369, issued 2024-03-18, ISSN 1438-8871) cross-checked against
+%                                PubMed PMID 38498038 (identical author list, volume, page, date). The JMIR
+%                                HTML page returned no server-side text, so Crossref + PubMed are the sources.
+%
+% VERIFY flags outstanding: wang2026lec PMLR volume/pages only (acceptance itself confirmed). No other flags.
+
+@misc{lee2025hierarchicalevalues,
+  title        = {Selection from Hierarchical Data with Conformal e-values},
+  author       = {Lee, Yonghoon and Ren, Zhimei},
+  year         = {2025},
+  eprint       = {2501.02514},
+  archivePrefix= {arXiv},
+  primaryClass = {stat.ME},
+  doi          = {10.48550/arXiv.2501.02514},
+  url          = {https://doi.org/10.48550/arXiv.2501.02514},
+  note         = {arXiv:2501.02514}
+}
+
+@inproceedings{fernandes2026abductivereject,
+  title        = {Concisely Explaining the Doubt: Minimum-Size Abductive Explanations for Linear Models with a Reject Option},
+  author       = {Fernandes, Gleilson Pedro and Rocha, Thiago Alves},
+  booktitle    = {4th World Conference on Explainable Artificial Intelligence (XAI 2026)},
+  year         = {2026},
+  eprint       = {2603.14096},
+  archivePrefix= {arXiv},
+  primaryClass = {cs.LG},
+  doi          = {10.48550/arXiv.2603.14096},
+  url          = {https://doi.org/10.48550/arXiv.2603.14096},
+  note         = {arXiv:2603.14096; accepted at XAI 2026 per the arXiv comments field}
+}
+
+@inproceedings{plassier2023federatedlabelshift,
+  title        = {Conformal Prediction for Federated Uncertainty Quantification Under Label Shift},
+  author       = {Plassier, Vincent and Makni, Mehdi and Rubashevskii, Aleksandr and Moulines, Eric and Panov, Maxim},
+  booktitle    = {Proceedings of the 40th International Conference on Machine Learning (ICML)},
+  series       = {Proceedings of Machine Learning Research},
+  volume       = {202},
+  pages        = {27907--27947},
+  year         = {2023},
+  publisher    = {PMLR},
+  eprint       = {2306.05131},
+  archivePrefix= {arXiv},
+  primaryClass = {stat.ML}
+}
+
+@misc{alexandari2018abstention,
+  title        = {A General Framework for Abstention Under Label Shift},
+  author       = {Alexandari, Amr M. and Kundaje, Anshul and Shrikumar, Avanti},
+  year         = {2018},
+  eprint       = {1802.07024},
+  archivePrefix= {arXiv},
+  primaryClass = {stat.ML},
+  doi          = {10.48550/arXiv.1802.07024},
+  url          = {https://doi.org/10.48550/arXiv.1802.07024},
+  note         = {arXiv:1802.07024; preprint, v5 revised 2022}
+}
+
+@inproceedings{podkopaev2022tracking,
+  title        = {Tracking the risk of a deployed model and detecting harmful distribution shifts},
+  author       = {Podkopaev, Aleksandr and Ramdas, Aaditya},
+  booktitle    = {International Conference on Learning Representations (ICLR)},
+  year         = {2022},
+  url          = {https://openreview.net/forum?id=Ro_zAjZppv},
+  eprint       = {2110.06177},
+  archivePrefix= {arXiv},
+  primaryClass = {stat.ML}
+}
+
+@inproceedings{wang2026lec,
+  title        = {{LEC}: Linear Expectation Constraints for Selection-Conditioned Risk Control in Selective Prediction and Routing Systems},
+  author       = {Wang, Zhiyuan and Aniri and Chen, Tianlong and Zhang, Yue and Shen, Heng Tao and Shi, Xiaoshuang and Xu, Kaidi},
+  booktitle    = {Proceedings of the 43rd International Conference on Machine Learning (ICML)},
+  series       = {Proceedings of Machine Learning Research},
+  year         = {2026},
+  publisher    = {PMLR},
+  eprint       = {2512.01556},
+  archivePrefix= {arXiv},
+  primaryClass = {cs.AI},
+  doi          = {10.48550/arXiv.2512.01556},
+  url          = {https://doi.org/10.48550/arXiv.2512.01556},
+  note         = {arXiv:2512.01556; accepted at ICML 2026 per the arXiv v3 comments field. VERIFY: PMLR volume and pages not yet indexed as of 2026-08-15}
+}
+
+@misc{liu2026certifyrefuse,
+  title        = {Certify or Refuse: A Cross-Model Map for Selective Risk Control with Coverage Floors under Covariate Shift},
+  author       = {Liu, Jiamiao and Qiao, Dewen and Zhang, Yu and Chen, Xuetao},
+  year         = {2026},
+  eprint       = {2608.10893},
+  archivePrefix= {arXiv},
+  primaryClass = {cs.CL},
+  doi          = {10.48550/arXiv.2608.10893},
+  url          = {https://doi.org/10.48550/arXiv.2608.10893},
+  note         = {arXiv:2608.10893}
+}
+
+@article{cpmors2024jmir,
+  title        = {Development and Validation of an Interpretable Conformal Predictor to Predict Sepsis Mortality Risk: Retrospective Cohort Study},
+  author       = {Yang, Meicheng and Chen, Hui and Hu, Wenhan and Mischi, Massimo and Shan, Caifeng and Li, Jianqing and Long, Xi and Liu, Chengyu},
+  journal      = {Journal of Medical Internet Research},
+  volume       = {26},
+  pages        = {e50369},
+  year         = {2024},
+  doi          = {10.2196/50369},
+  url          = {https://doi.org/10.2196/50369},
+  note         = {PMID 38498038}
+}
