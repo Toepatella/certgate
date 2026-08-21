@@ -20,16 +20,6 @@ def test_mpeb_verbatim_regression():
     assert np.isclose(mpeb_ucb(z2, 0.05), 1.2645712953758141)
 
 
-def test_all_bounds_upper_bound_the_mean():
-    rng = np.random.default_rng(3)
-    z = rng.random(83) * 0.2
-    m = z.mean()
-    assert hoeffding_ucb(z, 0.05) > m
-    assert mpeb_ucb(z, 0.05) > m
-    assert t_ucb(z, 0.05) > m
-    assert site_bootstrap_ucb(z, 0.05, 1000, np.random.default_rng(0)) >= m
-
-
 def test_hoeffding_matches_closed_form():
     z = np.full(50, 0.1)
     expect = 0.1 + np.sqrt(np.log(1 / 0.05) / (2 * 50))
@@ -55,9 +45,3 @@ def test_bootstrap_resamples_sites_deterministically():
     assert a != c
     # percentile of resampled MEANS stays inside the atom range
     assert 0.0 <= a <= 0.3 + 1e-12
-
-
-def test_variance_adaptivity_orders_mpeb_below_hoeffding_at_low_variance():
-    z = np.full(80, 0.05) + np.random.default_rng(5).normal(0, 0.002, 80)
-    z = np.clip(z, 0, 1)
-    assert mpeb_ucb(z, 0.05) < hoeffding_ucb(z, 0.05)

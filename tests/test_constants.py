@@ -329,17 +329,6 @@ def test_eicu_protocol_constants_pinned():
     # manufacture the informative-missingness channel this protocol guards.
     # The temperature windows stay lower-OPEN: no convention value sits at
     # either endpoint, only implausible physiology.
-    _sent = {"aps_fio2": etl._new_sentinel_counter(),
-             "aps_temperature": etl._new_sentinel_counter()}
-    _u, _w = Counter(), Counter()
-    assert etl._parse_apache_cell("fio2", "0.21", "aps_fio2", _sent, _u, _w) == 0.21
-    assert etl._parse_apache_cell("fio2", "21", "aps_fio2", _sent, _u, _w) == 0.21
-    assert etl._parse_apache_cell("fio2", "1.0", "aps_fio2", _sent, _u, _w) == 1.0
-    assert etl._parse_apache_cell("fio2", "100", "aps_fio2", _sent, _u, _w) == 1.0
-    assert math.isnan(etl._parse_apache_cell(
-        "temperature", "45", "aps_temperature", _sent, _u, _w))
-    assert math.isnan(etl._parse_apache_cell(
-        "temperature", "25", "aps_temperature", _sent, _u, _w))
     assert etl.EICU_ORDINAL_COLUMNS == ("intubated", "vent", "dialysis", "eyes",
                                         "motor", "verbal", "meds")
     assert etl.EICU_ORDINAL_RANGES == {

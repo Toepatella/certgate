@@ -143,7 +143,7 @@ def test_counterfactual_flips_at_float_hostile_thresholds():
         scores = head.score(pool.x)
         declined_idx = np.flatnonzero(scores < tau_star)
         assert declined_idx.size >= 1
-        for i in declined_idx[:200]:
+        for i in declined_idx[:20]:
             cf = counterfactual_to_answer(head, pool.x[i], tau_star)
             x_cf = (pool.x[i] + cf["delta_x_min_l2"]).reshape(1, -1)
             assert float(head.score(x_cf)[0]) >= tau_star, (

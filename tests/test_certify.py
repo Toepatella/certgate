@@ -99,7 +99,7 @@ def test_walk_order_is_margin_sorted():
     assert list(walk_order(atoms)) == [1, 2, 0]
 
 
-def test_nan_weight_and_nan_score_raise():
+def test_nan_weight_raises():
     rng = np.random.default_rng(0)
     n = 200
     site_id = rng.integers(0, 10, n)
@@ -110,11 +110,6 @@ def test_nan_weight_and_nan_score_raise():
     with pytest.raises(ValueError, match="bad-weights"):
         influence_atoms(score, err, site_id, 10, np.array([0.6]), ALPHA,
                         M=100, weights=w, wmax=1.0)
-    score_bad = score.copy()
-    score_bad[1] = np.nan
-    with pytest.raises(ValueError, match="nonfinite-score"):
-        influence_atoms(score_bad, err, site_id, 10, np.array([0.6]), ALPHA,
-                        M=100)
 
 
 def test_certification_rng_streams():

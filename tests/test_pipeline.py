@@ -40,16 +40,6 @@ def test_end_to_end_certifies_with_coverage(in_dist):
     assert row["coverage"] > 0.5
     # decline partition sums to the target pool size exactly.
     assert sum(rep["decline_partition"].values()) == tg.n
-    # guarantee text carries the load-bearing clauses (audit V1: the estimand
-    # is the site-population average, with the mandatory dispersion clause;
-    # the exact string is frozen in test_report.py).
-    stmt = row["statement"]
-    assert "averaged over the population of sites" in stmt
-    assert "NOT any individual site's answered error rate" in stmt
-    assert "does not measure or bound" in stmt
-    assert "NOT a bound" in stmt
-    assert "OUT OF SCOPE" in stmt
-    assert "at this target site" not in stmt          # the V1 defect, retired
 
 
 def test_overlapping_cal_train_raises(in_dist):

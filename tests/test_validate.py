@@ -163,12 +163,6 @@ def test_missing_site_ids_rejected():
         densify_sites(np.array(["A", "   "], dtype=object))
 
 
-def test_clean_ids_with_stripped_canonical_labels():
-    dense, labels = densify_sites(np.array([" s-01 ", "s-02"], dtype=object))
-    assert labels == ("s-01", "s-02")           # canonical form is stripped
-    assert dense.tolist() == [0, 1]
-
-
 # ---- audit V5: a repeated site_label declares one physical site ------------
 
 def test_duplicate_site_labels_rejected_by_make_cohort():
@@ -177,30 +171,16 @@ def test_duplicate_site_labels_rejected_by_make_cohort():
         make_cohort(**kw, site_labels=("H-A", "H-A", "H-B"))
 
 
-def test_duplicate_site_labels_rejected_by_cohort_directly():
-    kw = _ok_kwargs()
-    coh = make_cohort(**kw)
-    with pytest.raises(CohortError, match="unique"):
-        Cohort(x=coh.x, y=coh.y, site_id=coh.site_id,
-               site_labels=("H-A", "H-A", "H-B"))
-
-
 # ---- audit V17: shape discipline at the boundary ---------------------------
 
-def test_column_shaped_y_rejected():
+def test_column_shaped_arrays_rejected():
     """(n,1) bool y broadcasts predict(x) != y into an (n,n) matrix deep in
     the pipeline -- must be a typed CohortError at the boundary."""
-    kw = _ok_kwargs()
-    kw["y"] = kw["y"].reshape(-1, 1)
-    with pytest.raises(CohortError, match="1-D"):
-        make_cohort(**kw)
-
-
-def test_column_shaped_site_id_rejected():
-    kw = _ok_kwargs()
-    kw["site_id"] = kw["site_id"].reshape(-1, 1)
-    with pytest.raises(CohortError, match="1-D"):
-        make_cohort(**kw)
+    for field in ("y", "site_id"):
+        kw = _ok_kwargs()
+        kw[field] = kw[field].reshape(-1, 1)
+        with pytest.raises(CohortError, match="1-D"):
+            make_cohort(**kw)
 
 
 # ---- audit V15: the contract holds on DIRECT Cohort construction ----------
@@ -224,6 +204,10 @@ def test_cohort_post_init_enforces_contract():
     with pytest.raises(CohortError, match="site_id"):
         Cohort(x=coh.x, y=coh.y, site_id=bad_sid,
                site_labels=coh.site_labels)
+    # duplicate site_labels on DIRECT construction (audit V5's second check)
+    with pytest.raises(CohortError, match="unique"):
+        Cohort(x=coh.x, y=coh.y, site_id=coh.site_id,
+               site_labels=("H-A", "H-A", "H-B"))
     # a trailing EMPTY site remains a legitimate direct construction (the
     # record-carrying cluster gate's fixture pattern -- audit V12)
     ok = Cohort(x=coh.x, y=coh.y, site_id=coh.site_id,

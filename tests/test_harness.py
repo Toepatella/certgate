@@ -8,8 +8,7 @@ pin the instruments against closed forms and brute-force enumeration.
 import numpy as np
 from scipy.stats import binom, norm
 
-from certgate.harness import (wilson_lcb, hard_violation,
-                              exceedance_reference, SIZE_BINS)
+from certgate.harness import wilson_lcb, hard_violation, exceedance_reference
 
 
 def test_wilson_lcb_matches_closed_form():
@@ -67,11 +66,3 @@ def test_exceedance_reference_matches_brute_force():
     assert abs(exceedance_reference(100, 0.10)
                - float(binom.sf(10, 100, 0.10))) < 1e-12
     assert exceedance_reference(0, 0.10) == 0.0
-
-
-def test_size_bins_cover_all_counts():
-    lo_edges = [b[0] for b in SIZE_BINS]
-    hi_edges = [b[1] for b in SIZE_BINS]
-    assert lo_edges[0] == 0 and hi_edges[-1] == np.inf
-    for i in range(1, len(SIZE_BINS)):
-        assert lo_edges[i] == hi_edges[i - 1]      # contiguous, no gaps

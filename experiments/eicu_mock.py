@@ -1246,8 +1246,6 @@ def build_apv_row(rng: random.Random, cfg: MockConfig, s: dict, next_id,
             cells[col] = str(s["visit"])
         elif col in ("admitsource", "amilocation"):
             cells[col] = str(rng.randrange(0, 8))
-        else:                                        # defensive: never reached
-            cells[col] = "-1"
     ordered = [cells[c] for c, _ in EICU_MOCK_SCHEMA["apachePredVar"]
                if c not in ("apachepredvarid", "patientunitstayid")]
     return [next_id(), s["stayid"]] + ordered

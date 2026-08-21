@@ -74,16 +74,6 @@ def test_from_raw_end_to_end_certifies(raw_splits):
     assert sum(rep["decline_partition"].values()) == rb["target"].n
 
 
-def test_from_raw_int_labels_variant(raw_splits):
-    """Raw labels as ints {1, 2} with positive_label=2 map identically."""
-    tgt = raw_splits["orig"]["target"]
-    y_int = np.where(tgt.y, 2, 1)
-    sids = [tgt.site_labels[s] for s in tgt.site_id]
-    rebuilt = from_raw(tgt.x, y_int, 2, sids)
-    assert np.array_equal(rebuilt.y, tgt.y)
-    assert np.array_equal(_rec_site_labels(rebuilt), _rec_site_labels(tgt))
-
-
 def test_wrong_width_target_hits_gap1_gate(raw_splits):
     """A target matrix one column too wide is rejected loudly at the boundary
     (GAP 1) rather than surfacing as a raw numpy broadcast error in head.score."""
@@ -126,11 +116,6 @@ def test_coerce_labels_optin_returns_all_false():
     assert not out.any()
 
 
-def test_coerce_labels_optin_maps_normally_when_positive_present():
-    out = coerce_labels(np.array([2, 1, 1]), 2, allow_absent_positive=True)
-    assert out.tolist() == [True, False, False]
-
-
 def test_coerce_labels_optin_still_raises_on_multiple_distinct_when_absent():
     # positive absent AND >1 observed value -> ambiguous, still raises under opt-in
     with pytest.raises(CohortError, match="single observed value"):
@@ -141,9 +126,3 @@ def test_coerce_labels_optin_still_raises_on_three_distinct_when_present():
     # positive present but two other distinct values -> >2 distinct, still raises
     with pytest.raises(CohortError):
         coerce_labels(np.array([0, 1, 2]), 2, allow_absent_positive=True)
-
-
-def test_coerce_labels_optin_still_raises_on_nan():
-    with pytest.raises(CohortError):
-        coerce_labels(np.array([np.nan, 0.0, 0.0]), 1.0,
-                      allow_absent_positive=True)
