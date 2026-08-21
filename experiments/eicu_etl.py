@@ -334,11 +334,6 @@ FEATURE_NAMES = tuple(
 FEATURE_INDEX = {name: i for i, name in enumerate(FEATURE_NAMES)}
 
 
-def feature_names() -> list:
-    """``list(FEATURE_NAMES)`` -- the frozen, deny-by-default allowlist."""
-    return list(FEATURE_NAMES)
-
-
 def assert_no_leak_columns(names) -> None:
     """Refuse any denylisted source column in ``names`` (A.7; T-1).
 
@@ -507,7 +502,7 @@ def require_columns(header_lower, table, needed) -> None:
                    reason="missing-column")
 
 
-def read_table(data_dir, table, *, limit=None):
+def read_table(data_dir, table):
     """Yield lowercase-keyed dict rows from a gzipped eICU CSV.
 
     Resolves ``<table>.csv.gz`` case-INSENSITIVELY against the directory
@@ -543,16 +538,12 @@ def read_table(data_dir, table, *, limit=None):
             header = _lower_header(raw_header, table, path)
             require_columns(header, table, EICU_REQUIRED_COLUMNS.get(table, ()))
             ncols = len(header)
-            emitted = 0
             for row in r:
                 if not row or (len(row) == 1 and not row[0].strip()):
                     continue
                 if len(row) < ncols:
                     row = row + [""] * (ncols - len(row))
                 yield {header[i]: row[i] for i in range(ncols)}
-                emitted += 1
-                if limit is not None and emitted >= limit:
-                    return
     except _READ_ERRORS as e:
         raise _read_failure("read_table", table, path, e, fh) from e
 
@@ -1148,7 +1139,7 @@ def _outcome_missingness(y_raw, aps_present, apv_present):
             "apv_present": _prevalence_contrast(y_pos, apv_present, "apv_present")}
 
 
-def outcome_screen(x_raw, meta, *, names=None, review=EICU_FEATURE_AUC_REVIEW):
+def outcome_screen(x_raw, meta, *, names=None):
     """Screen EVERY allowlisted feature against the outcome, before certifying.
 
     The denylist applies a "leak-suspect: timing relative to outcome
@@ -1163,7 +1154,8 @@ def outcome_screen(x_raw, meta, *, names=None, review=EICU_FEATURE_AUC_REVIEW):
     Returns an AGGREGATE-ONLY dict: per feature, the outcome prevalence by
     stratum (binary columns) or in the top vs bottom decile (continuous), the
     univariate rank AUC, and a ``flagged`` list of every feature whose
-    ``|AUC - 0.5|`` puts it past ``review``. NaN in ``x_raw`` is treated as its
+    ``|AUC - 0.5|`` puts it past ``EICU_FEATURE_AUC_REVIEW``. NaN in ``x_raw``
+    is treated as its
     own stratum for binary columns and ignored for the decile contrast, so the
     screen works on the RAW (pre-imputation) matrix -- which is the only place
     the missingness channel is still visible.
@@ -1208,11 +1200,12 @@ def outcome_screen(x_raw, meta, *, names=None, review=EICU_FEATURE_AUC_REVIEW):
         else:
             entry["kind"] = "degenerate"
         out[name] = entry
-        if entry["auc"] is not None and abs(entry["auc"] - 0.5) > (review - 0.5):
+        if (entry["auc"] is not None
+                and abs(entry["auc"] - 0.5) > (EICU_FEATURE_AUC_REVIEW - 0.5)):
             flagged.append({"feature": name, "auc": entry["auc"]})
     flagged.sort(key=lambda d: (-abs(d["auc"] - 0.5), d["feature"]))
     return {"base_prevalence": None if base is None else round(base, 6),
-            "review_auc": review, "n_features": len(names),
+            "review_auc": EICU_FEATURE_AUC_REVIEW, "n_features": len(names),
             "features": out, "flagged": flagged,
             "outcome_missingness": _outcome_missingness(
                 meta["y_raw"], meta["aps_present"], meta["apv_present"])}

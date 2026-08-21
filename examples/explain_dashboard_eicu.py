@@ -208,7 +208,7 @@ def build(data_dir, out, *, arm="primary", replicate=0, alpha=None,
                                                strict_levels=True,
                                                verbose=verbose)
     etl.assert_no_leak_columns(feature_names)
-    y_raw = list(etl.labels(meta))
+    y_raw = etl.labels(meta)
     site_raw = [str(s) for s in meta["site_raw"]]
     n_records, n_sites = int(x_raw.shape[0]), len(set(site_raw))
     say(f"[dashboard-eicu] cohort {n_records} stays over {n_sites} hospitals, "

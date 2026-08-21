@@ -228,7 +228,9 @@ def site_split(site_raw):
     train_sites = set(rest[:n_tr])
     aux_sites = set(rest[n_tr:n_tr + n_aux])
     cal_sites = set(rest[n_tr + n_aux:])
-    assert not (train_sites & aux_sites & cal_sites)
+    assert not (train_sites & aux_sites)
+    assert not (train_sites & cal_sites)
+    assert not (aux_sites & cal_sites)
     assert len(train_sites | aux_sites | cal_sites | target_sites) == len(uniq)
     idx = {k: [] for k in ("train", "aux", "cal", "target")}
     for i, s in enumerate(site_raw):

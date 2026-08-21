@@ -940,7 +940,8 @@ def run_E6(out, quick):
                else np.nan for b in bin_rows]           # empty bins -> no bar
     ax[0].bar(xpos, heights, color="#66ccee")
     ax[0].set_xticks(xpos); ax[0].set_xticklabels(labels)
-    ax[0].axhline(tau_and_alpha(op), color="crimson", ls="--", label="alpha")
+    ax[0].axhline(op["alpha"] if op else 0.10, color="crimson", ls="--",
+                  label="alpha")
     ax[0].set_title("E6 mean answered error by site-size bin")
     ax[0].set_xlabel("site-size bin"); ax[0].set_ylabel("answered error")
     ax[0].legend()
@@ -1003,10 +1004,6 @@ def _e6_reliability_figure(out, panel):
     axR.set_ylabel("constant error - model error")
     fig.tight_layout(); fig.savefig(os.path.join(out, "E6_reliability.png"),
                                     dpi=rp.FIG_DPI); plt.close(fig)
-
-
-def tau_and_alpha(op):
-    return op["alpha"] if op else 0.10
 
 
 # ------------------------------------------------------------------ E7

@@ -195,15 +195,14 @@ def run_certgate(train, aux, cal, target_x, *, target_label="target",
             f"the canonical normal form) -- the target pool must be "
             f"site-disjoint from every fitting and calibration split "
             f"(audit V9)")
-    n_target_rows_early = int(target_x.shape[0]) if target_x.ndim >= 1 else 0
     dense_target_sites = None
     target_site_labels = None
     if target_site_id is not None:
         sid_arr = np.asarray(target_site_id)
-        if sid_arr.ndim != 1 or sid_arr.shape[0] != n_target_rows_early:
+        if sid_arr.ndim != 1 or sid_arr.shape[0] != n_target_rows:
             raise CohortError(
                 f"run_certgate: target_site_id must be 1-D with one entry per "
-                f"target record ({n_target_rows_early}), got ndim="
+                f"target record ({n_target_rows}), got ndim="
                 f"{sid_arr.ndim} len={sid_arr.shape[0] if sid_arr.ndim else 0} "
                 f"(reason=bad-target-site-id) -- a partial column must never "
                 f"satisfy the disjointness gate (verification F4/N3)")
@@ -284,7 +283,7 @@ def run_certgate(train, aux, cal, target_x, *, target_label="target",
                             target_site_id_supplied=dense_target_sites is not None)
 
     # 4. registered target-pool floor (audit B-6).
-    if int(target_x.shape[0]) < MIN_ANSWERABLE:
+    if n_target_rows < MIN_ANSWERABLE:
         return build_report(target_label=target_label, head=None, cal=cal,
                             target_x=target_x, mode_results={},
                             feasibility={}, bbse_fit=empty_bbse,

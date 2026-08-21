@@ -1724,7 +1724,7 @@ def run_certification(data_dir, out, *, arm="primary", replicates=1,
             f"number below describes THIS extract, not the released dataset")
         _say(verbose, f"[MEASURE] {warnings[-1]}", err=True)
 
-    y_raw = list(etl.labels(meta))
+    y_raw = etl.labels(meta)
     site_raw = [str(s) for s in meta["site_raw"]]
     comparator = np.asarray(meta["comparator_predicted_mortality"],
                             dtype=np.float64)

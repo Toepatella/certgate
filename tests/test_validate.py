@@ -265,7 +265,7 @@ def test_float_ids_beyond_2_53_rejected():
     """verification F3: a float64 site id at or beyond 2**53 has lost integer
     resolution -- emitting a lossy label could silently merge distinct
     hospitals, so it must be a loud typed rejection."""
-    with pytest.raises(CohortError, match="2\*\*53"):
+    with pytest.raises(CohortError, match=r"2\*\*53"):
         densify_sites(np.array([float(2**53), float(2**53 + 2)], dtype=object))
 
 

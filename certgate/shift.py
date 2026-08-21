@@ -107,10 +107,6 @@ def _q_interval(pred, target_site_id, lvl, rng):
     uniq = dense = None
     if target_site_id is not None:
         sid = np.asarray(target_site_id)
-        if sid.ndim != 1 or sid.shape[0] != n:
-            raise ValueError(
-                "fit_bbse: target_site_id must be 1-D and aligned with "
-                "target_x (reason=bad-target-site-id)")
         uniq, dense = np.unique(sid, return_inverse=True)
     n_sites = 1 if uniq is None else int(len(uniq))
     if n_sites <= 1:

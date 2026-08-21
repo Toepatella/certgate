@@ -28,7 +28,7 @@ _PACKAGES = ("numpy", "scipy", "scikit-learn")
 _ASSUMPTION = {"baseline": "exchangeability", "bbse": "label shift"}
 
 
-def provenance(seed=SEED, **arrays_and_meta) -> dict:
+def provenance(**arrays_and_meta) -> dict:
     """Reproducibility block for one run (SPEC report.py; audit F49).
 
     Records package versions (``numpy``, ``scipy``, ``scikit-learn`` via
@@ -60,7 +60,7 @@ def provenance(seed=SEED, **arrays_and_meta) -> dict:
     return {
         "python": platform.python_version(),
         "packages": versions,
-        "seed": int(seed),
+        "seed": int(SEED),
         "input_hashes": input_hashes,
         "meta": meta,
         "timestamp_utc": datetime.datetime.now(
@@ -154,7 +154,7 @@ def _statement(alpha: float, modes) -> str:
     return " ".join(parts)
 
 
-def _bootstrap_estimate(head, cal, tau, weights=None, n_boot=500, seed=SEED,
+def _bootstrap_estimate(head, cal, tau, weights=None, n_boot=500,
                         max_attempts=None):
     """Estimated-tier answered-set risk at ``tau`` (SPEC report.py; v1 report.py:14-35).
 
@@ -171,7 +171,7 @@ def _bootstrap_estimate(head, cal, tau, weights=None, n_boot=500, seed=SEED,
     quantile over fewer draws. An empty answered set yields a NaN point, never
     0.0.
     """
-    rng = np.random.default_rng(seed)
+    rng = np.random.default_rng(SEED)
     score = head.score(cal.x)
     err = head.predict(cal.x) != cal.y
     ans = score >= tau

@@ -649,8 +649,7 @@ def test_mock_cli_parses_and_rejects_unknown_values():
 # ==================================================== 4-5. feature contract ===
 
 def test_feature_name_list_matches_the_pinned_width():
-    names = etl.feature_names()
-    assert names == list(etl.FEATURE_NAMES)
+    names = list(etl.FEATURE_NAMES)
     assert len(names) == etl.EICU_N_FEATURES == 161
     assert len(set(names)) == len(names), "duplicate feature name"
     # every __missing sibling is IMMEDIATELY adjacent to its parent, so a
@@ -674,7 +673,7 @@ def test_leak_denylist_excludes_every_known_leak_from_features():
     feature names in every form the ETL could have emitted it."""
     assert len(etl.EICU_LEAK_DENYLIST) == 36
     bare = _deny_bare()
-    names = etl.feature_names()
+    names = list(etl.FEATURE_NAMES)
     for col in KNOWN_LEAKS:
         assert col in bare, f"{col} is not on EICU_LEAK_DENYLIST"
         for form in (col, f"aps_{col}", f"apv_{col}", f"{col}__missing",
@@ -687,7 +686,7 @@ def test_leak_denylist_excludes_every_known_leak_from_features():
 def test_assert_no_leak_columns_raises_when_a_leak_is_reintroduced():
     """The denylist is only worth what its enforcement is worth: adding a leak
     back in ANY of the sanctioned spellings must raise, not warn."""
-    names = etl.feature_names()
+    names = list(etl.FEATURE_NAMES)
     for reintroduced in ("diedinhospital", "apv_diedinhospital",
                          "apv_diedinhospital__missing",
                          "actualhospitalmortality", "hospitalid",
@@ -1407,7 +1406,7 @@ def test_etl_output_is_deterministic_and_build_matrix_agrees(
     x1, n1, m1 = etl.build_matrix(mock_small["dir"], verbose=False)
     x2, n2, m2 = etl.build_matrix(mock_small["dir"], verbose=False)
     assert np.array_equal(x1, x2)
-    assert n1 == n2 == etl.feature_names()
+    assert n1 == n2 == list(etl.FEATURE_NAMES)
     assert list(m1["site_raw"]) == list(m2["site_raw"])
     assert m1["impute_fill"] == m2["impute_fill"]
     assert np.array_equal(np.asarray(m1["stay_id"]), np.asarray(m2["stay_id"]))
