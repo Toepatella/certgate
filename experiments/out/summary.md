@@ -4,12 +4,12 @@
 - seed: 20260721
 - alpha ladder: (0.05, 0.1), delta: 0.05
 
-## E1 (preserved from an earlier run)
+## E1
 ```json
 {
   "_run": {
     "mode": "FULL",
-    "utc": "2026-08-10T18:39:49+00:00"
+    "utc": "2026-08-21T16:39:15+00:00"
   },
   "R": 200,
   "eval_sites": 200,
@@ -18,8 +18,10 @@
   "0.05": {
     "certify_rate": 0.0,
     "n_certified": 0,
+    "rm_exceed_rate_ci95": null,
     "rm_exceed_rate": null,
     "mean_rm_fresh": null,
+    "hard_violation_rate_diag_ci95": null,
     "hard_violation_rate_diag": null,
     "exceedance_rate_diag": null,
     "mean_per_site_exceed_frac": null,
@@ -28,8 +30,16 @@
   "0.1": {
     "certify_rate": 1.0,
     "n_certified": 200,
+    "rm_exceed_rate_ci95": [
+      0.0,
+      0.0183
+    ],
     "rm_exceed_rate": 0.0,
     "mean_rm_fresh": 0.0567,
+    "hard_violation_rate_diag_ci95": [
+      0.0055,
+      0.0504
+    ],
     "hard_violation_rate_diag": 0.02,
     "exceedance_rate_diag": 0.08,
     "mean_per_site_exceed_frac": 0.055,
@@ -91,12 +101,12 @@
 }
 ```
 
-## E2 (preserved from an earlier run)
+## E2
 ```json
 {
   "_run": {
     "mode": "FULL",
-    "utc": "2026-08-10T18:39:49+00:00"
+    "utc": "2026-08-21T16:39:15+00:00"
   },
   "R": 200,
   "target_base_rate": 0.22,
@@ -107,8 +117,10 @@
       "certify_rate": 0.0,
       "n_certified": 0,
       "hard_violation_rate": null,
+      "hard_violation_rate_ci95": null,
       "exceedance_rate": null,
       "rm_exceed_rate": null,
+      "rm_exceed_rate_ci95": null,
       "joint_certify_and_hard_rate": 0.0,
       "decline_rate": 1.0
     },
@@ -116,8 +128,16 @@
       "certify_rate": 1.0,
       "n_certified": 200,
       "hard_violation_rate": 0.395,
+      "hard_violation_rate_ci95": [
+        0.3268,
+        0.4664
+      ],
       "exceedance_rate": 0.585,
       "rm_exceed_rate": 0.975,
+      "rm_exceed_rate_ci95": [
+        0.9426,
+        0.9918
+      ],
       "joint_certify_and_hard_rate": 0.395,
       "decline_rate": 0.0
     }
@@ -127,8 +147,10 @@
       "certify_rate": 0.0,
       "n_certified": 0,
       "hard_violation_rate": null,
+      "hard_violation_rate_ci95": null,
       "exceedance_rate": null,
       "rm_exceed_rate": null,
+      "rm_exceed_rate_ci95": null,
       "joint_certify_and_hard_rate": 0.0,
       "decline_rate": 1.0
     },
@@ -136,8 +158,10 @@
       "certify_rate": 0.0,
       "n_certified": 0,
       "hard_violation_rate": null,
+      "hard_violation_rate_ci95": null,
       "exceedance_rate": null,
       "rm_exceed_rate": null,
+      "rm_exceed_rate_ci95": null,
       "joint_certify_and_hard_rate": 0.0,
       "decline_rate": 1.0
     }
@@ -150,8 +174,16 @@
         "certify_rate": 1.0,
         "n_certified": 100,
         "hard_violation_rate": 0.0,
+        "hard_violation_rate_ci95": [
+          0.0,
+          0.0362
+        ],
         "exceedance_rate": 0.02,
         "rm_exceed_rate": 0.0,
+        "rm_exceed_rate_ci95": [
+          0.0,
+          0.0362
+        ],
         "joint_certify_and_hard_rate": 0.0,
         "decline_rate": 0.0
       },
@@ -159,8 +191,16 @@
         "certify_rate": 0.09,
         "n_certified": 9,
         "hard_violation_rate": 0.0,
+        "hard_violation_rate_ci95": [
+          0.0,
+          0.3363
+        ],
         "exceedance_rate": 0.0,
         "rm_exceed_rate": 0.0,
+        "rm_exceed_rate_ci95": [
+          0.0,
+          0.3363
+        ],
         "joint_certify_and_hard_rate": 0.0,
         "decline_rate": 0.91
       }
@@ -172,8 +212,16 @@
         "certify_rate": 1.0,
         "n_certified": 100,
         "hard_violation_rate": 0.07,
+        "hard_violation_rate_ci95": [
+          0.0286,
+          0.1389
+        ],
         "exceedance_rate": 0.19,
         "rm_exceed_rate": 0.0,
+        "rm_exceed_rate_ci95": [
+          0.0,
+          0.0362
+        ],
         "joint_certify_and_hard_rate": 0.07,
         "decline_rate": 0.0
       },
@@ -181,8 +229,16 @@
         "certify_rate": 0.05,
         "n_certified": 5,
         "hard_violation_rate": 0.0,
+        "hard_violation_rate_ci95": [
+          0.0,
+          0.5218
+        ],
         "exceedance_rate": 0.0,
         "rm_exceed_rate": 0.0,
+        "rm_exceed_rate_ci95": [
+          0.0,
+          0.5218
+        ],
         "joint_certify_and_hard_rate": 0.0,
         "decline_rate": 0.95
       }
@@ -194,8 +250,16 @@
         "certify_rate": 1.0,
         "n_certified": 100,
         "hard_violation_rate": 0.08,
+        "hard_violation_rate_ci95": [
+          0.0352,
+          0.1516
+        ],
         "exceedance_rate": 0.19,
         "rm_exceed_rate": 0.0,
+        "rm_exceed_rate_ci95": [
+          0.0,
+          0.0362
+        ],
         "joint_certify_and_hard_rate": 0.08,
         "decline_rate": 0.0
       },
@@ -203,8 +267,10 @@
         "certify_rate": 0.0,
         "n_certified": 0,
         "hard_violation_rate": null,
+        "hard_violation_rate_ci95": null,
         "exceedance_rate": null,
         "rm_exceed_rate": null,
+        "rm_exceed_rate_ci95": null,
         "joint_certify_and_hard_rate": 0.0,
         "decline_rate": 1.0
       }
@@ -216,8 +282,16 @@
         "certify_rate": 1.0,
         "n_certified": 100,
         "hard_violation_rate": 0.21,
+        "hard_violation_rate_ci95": [
+          0.1349,
+          0.3029
+        ],
         "exceedance_rate": 0.43,
         "rm_exceed_rate": 0.17,
+        "rm_exceed_rate_ci95": [
+          0.1023,
+          0.2582
+        ],
         "joint_certify_and_hard_rate": 0.21,
         "decline_rate": 0.0
       },
@@ -225,8 +299,16 @@
         "certify_rate": 0.01,
         "n_certified": 1,
         "hard_violation_rate": 0.0,
+        "hard_violation_rate_ci95": [
+          0.0,
+          0.975
+        ],
         "exceedance_rate": 0.0,
         "rm_exceed_rate": 0.0,
+        "rm_exceed_rate_ci95": [
+          0.0,
+          0.975
+        ],
         "joint_certify_and_hard_rate": 0.0,
         "decline_rate": 0.99
       }
@@ -238,8 +320,16 @@
         "certify_rate": 1.0,
         "n_certified": 200,
         "hard_violation_rate": 0.395,
+        "hard_violation_rate_ci95": [
+          0.3268,
+          0.4664
+        ],
         "exceedance_rate": 0.585,
         "rm_exceed_rate": 0.975,
+        "rm_exceed_rate_ci95": [
+          0.9426,
+          0.9918
+        ],
         "joint_certify_and_hard_rate": 0.395,
         "decline_rate": 0.0
       },
@@ -247,8 +337,10 @@
         "certify_rate": 0.0,
         "n_certified": 0,
         "hard_violation_rate": null,
+        "hard_violation_rate_ci95": null,
         "exceedance_rate": null,
         "rm_exceed_rate": null,
+        "rm_exceed_rate_ci95": null,
         "joint_certify_and_hard_rate": 0.0,
         "decline_rate": 1.0
       }
@@ -257,12 +349,12 @@
 }
 ```
 
-## E3 (preserved from an earlier run)
+## E3
 ```json
 {
   "_run": {
     "mode": "FULL",
-    "utc": "2026-08-10T18:39:49+00:00"
+    "utc": "2026-08-21T16:39:15+00:00"
   },
   "R": 200,
   "concept_intercept": 2.0,
@@ -273,15 +365,25 @@
     "certify_rate": 0.0,
     "n_certified": 0,
     "hard_violation_rate": null,
+    "hard_violation_rate_ci95": null,
     "exceedance_rate": null,
-    "rm_exceed_rate": null
+    "rm_exceed_rate": null,
+    "rm_exceed_rate_ci95": null
   },
   "0.1": {
     "certify_rate": 1.0,
     "n_certified": 200,
     "hard_violation_rate": 0.7,
+    "hard_violation_rate_ci95": [
+      0.6314,
+      0.7626
+    ],
     "exceedance_rate": 0.845,
-    "rm_exceed_rate": 1.0
+    "rm_exceed_rate": 1.0,
+    "rm_exceed_rate_ci95": [
+      0.9817,
+      1.0
+    ]
   }
 }
 ```
@@ -550,7 +652,7 @@
 }
 ```
 
-## E8
+## E8 (preserved from an earlier run)
 ```json
 {
   "_run": {
@@ -876,7 +978,7 @@
 }
 ```
 
-## E9
+## E9 (preserved from an earlier run)
 ```json
 {
   "_run": {

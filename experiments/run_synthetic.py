@@ -26,6 +26,7 @@ import matplotlib
 matplotlib.use("Agg")                       # headless: no interactive display
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.stats import binomtest
 
 from certgate.constants import (SEED, ALPHA_LADDER, DELTA, M_INFLUENCE,
                                 MIN_CAL_CLUSTERS, SPLIT_FRACTIONS, TAU_GRID,
@@ -94,6 +95,23 @@ def _rate(k, n):
     """Conditional rate over n certified draws; None (JSON null) when n == 0 --
     0.0 would conflate "no certificates issued" with "zero violations"."""
     return round(k / n, 4) if n else None
+
+
+def _rate_ci95(k, n):
+    """Exact Clopper-Pearson 95% interval for the rate ``_rate(k, n)`` reports
+    (METHODS 9; the scoring rule of SPEC 3.9).
+
+    ``binomtest.proportion_ci`` rather than a ``beta.ppf`` construction: it
+    carries the k == 0 and k == n boundary conventions itself, which is exactly
+    where a hand-rolled version acquires an off-by-one in the shape parameters.
+    Returns ``None`` when n == 0, mirroring ``_rate``'s null convention -- an
+    interval over no draws is undefined, never [0, 1].
+    """
+    if not n:
+        return None
+    ci = binomtest(int(k), int(n)).proportion_ci(confidence_level=0.95,
+                                                 method="exact")
+    return [round(float(ci.low), 4), round(float(ci.high), 4)]
 
 
 def _write_csv(path, rows, fieldnames):
@@ -246,12 +264,16 @@ def run_E1(out, quick):
                 certify_rate=round(n_c / R_arm, 4),
                 n_certified=n_c,
                 # CONFORMANCE (target <= DELTA): the certified aggregate.
+                rm_exceed_rate_ci95=_rate_ci95(
+                    sum(bool(x["rm_exceed"]) for x in certs), n_c),
                 rm_exceed_rate=_rate(sum(bool(x["rm_exceed"]) for x in certs),
                                      n_c),
                 mean_rm_fresh=round(float(np.mean([x["rm_fresh"]
                                                    for x in certs])), 4)
                 if certs else None,
                 # DIAGNOSTICS (no delta target): per-site dispersion.
+                hard_violation_rate_diag_ci95=_rate_ci95(
+                    sum(x["hard"] for x in certs), n_c),
                 hard_violation_rate_diag=_rate(sum(x["hard"] for x in certs),
                                                n_c),
                 exceedance_rate_diag=_rate(sum(x["exceed"] for x in certs),
@@ -436,9 +458,13 @@ def run_E2(out, quick):
             certify_rate=round(n_c / n_draws, 4),
             n_certified=n_c,
             hard_violation_rate=_rate(sum(x["hard"] for x in certs), n_c),
+            hard_violation_rate_ci95=_rate_ci95(
+                sum(x["hard"] for x in certs), n_c),
             exceedance_rate=_rate(sum(x["exceed"] for x in certs), n_c),
             rm_exceed_rate=_rate(sum(bool(x.get("rm_exceed"))
                                      for x in certs), n_c),
+            rm_exceed_rate_ci95=_rate_ci95(
+                sum(bool(x.get("rm_exceed")) for x in certs), n_c),
             joint_certify_and_hard_rate=round(
                 sum(1 for x in certs if x["hard"]) / n_draws, 4),
             decline_rate=round((len(sub) - n_c) / len(sub), 4) if sub else 0.0)
@@ -582,9 +608,13 @@ def run_E3(out, quick):
             certify_rate=round(n_c / R, 4),
             n_certified=n_c,
             hard_violation_rate=_rate(sum(x["hard"] for x in certs), n_c),
+            hard_violation_rate_ci95=_rate_ci95(
+                sum(x["hard"] for x in certs), n_c),
             exceedance_rate=_rate(sum(x["exceed"] for x in certs), n_c),
             rm_exceed_rate=_rate(sum(bool(x.get("rm_exceed"))
-                                     for x in certs), n_c))
+                                     for x in certs), n_c),
+            rm_exceed_rate_ci95=_rate_ci95(
+                sum(bool(x.get("rm_exceed")) for x in certs), n_c))
 
     fig, ax = plt.subplots(figsize=(7, 4))
     alphas = list(ALPHA_LADDER)
