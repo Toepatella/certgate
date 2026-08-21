@@ -390,6 +390,28 @@ def test_q_ci_is_clopper_pearson_at_the_bonferroni_level(source):
     assert q_hi == pytest.approx(exp_hi, abs=1e-12)
 
 
+def test_q_interval_matches_the_scipy_reference_implementation():
+    """The single-site q interval is exact Clopper-Pearson. The existing pin
+    compares it to ``beta.ppf``, which is the SAME construction the code uses --
+    so it cannot catch a wrong quantile pairing. ``binomtest.proportion_ci`` is
+    an independent path with its own k=0 / k=n handling.
+    """
+    from scipy.stats import binomtest
+    from certgate.shift import _q_interval
+    from certgate.constants import BBSE_DELTA_CONF, BBSE_BONFERRONI
+    lvl = BBSE_DELTA_CONF / BBSE_BONFERRONI
+    rng = np.random.default_rng(0)
+    for k, n in ((0, 40), (7, 40), (40, 40), (19, 200), (1, 3)):
+        pred = np.zeros(n, dtype=bool)
+        pred[:k] = True
+        q_lo, q_hi, n_sites = _q_interval(pred, None, lvl, rng)
+        assert n_sites == 1                      # the finite-sample CP branch
+        ref = binomtest(k, n).proportion_ci(confidence_level=1.0 - lvl,
+                                            method="exact")
+        assert q_lo == pytest.approx(float(ref.low), abs=1e-12), (k, n)
+        assert q_hi == pytest.approx(float(ref.high), abs=1e-12), (k, n)
+
+
 def test_fit_bbse_diagnostics_stable_key_set(source):
     """fixture audit 2026-07-25 (audit-V25 discipline extended to the bbse
     sub-dict): full fits and every decline branch emit bbse_diagnostics()'s

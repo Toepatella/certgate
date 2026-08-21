@@ -655,6 +655,35 @@ def test_feature_name_list_matches_the_pinned_width():
     assert sum(1 for n in names if n.startswith("apv_")) == 19 * 2 + 1
 
 
+def test_rank_auc_matches_the_sklearn_reference_implementation():
+    """``_rank_auc`` is hand-rolled because the enclave rule pins `eicu_etl` to
+    numpy + certgate (audit F16), so sklearn cannot be imported there -- but the
+    AUC it produces is a PUBLISHED number (the APACHE-IVa comparison), and until
+    now the only assertion about it was object identity of two call sites.
+
+    Tie handling is the whole risk: the tie-averaged Mann-Whitney form and
+    sklearn's trapezoidal ROC integration agree only if ties are averaged
+    correctly, so the cases below are weighted towards ties.
+    """
+    rng = np.random.default_rng(11)
+    cases = {
+        "continuous": (rng.normal(size=400), rng.random(400) < 0.3),
+        "heavy_ties": (rng.integers(0, 3, 400).astype(float),
+                       rng.random(400) < 0.4),
+        "all_tied": (np.full(200, 2.0), rng.random(200) < 0.5),
+        "binary_scores": ((rng.random(300) < 0.5).astype(float),
+                          rng.random(300) < 0.25),
+        "perfectly_separated": (np.arange(100, dtype=float),
+                                np.arange(100) >= 50),
+    }
+    for name, (v, y) in cases.items():
+        ours = etl._rank_auc(v, y)
+        assert ours == pytest.approx(float(roc_auc_score(y, v)), abs=1e-12), name
+    # the absent-class contract sklearn cannot express: None, never a number
+    assert etl._rank_auc(np.arange(10.0), np.zeros(10, dtype=bool)) is None
+    assert etl._rank_auc(np.arange(10.0), np.ones(10, dtype=bool)) is None
+
+
 def test_leak_denylist_excludes_every_known_leak_from_features():
     """T-1. Every documented leak is on the denylist AND absent from the
     feature names in every form the ETL could have emitted it."""

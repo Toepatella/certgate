@@ -792,6 +792,35 @@ def test_calibration_fit_status_coverage():
         assert fit["slope"] is None and fit["intercept"] is None
 
 
+def test_calibration_fit_matches_the_sklearn_reference_implementation():
+    """The IRLS fit is hand-rolled because `reliability.py` is a numpy-only DAG
+    leaf -- its import guard is an EXACT equality, so sklearn can never be
+    imported there. The reference therefore lives here, in the tests.
+
+    Both solve the same unpenalised two-parameter logistic MLE, so they agree to
+    solver tolerance, not to machine precision. ``C=np.inf`` is essential:
+    scikit-learn regularises by default (C=1.0), which would bias the slope
+    towards zero and make this comparison meaningless. (``penalty=None`` says
+    the same thing but is deprecated as of scikit-learn 1.8.)
+
+    Well-conditioned draws only. The separation, coefficient-range and
+    convergence gates are deliberately out of scope -- those branches are
+    covered by ``test_calibration_fit_status_coverage``, and scikit-learn does
+    not share their vocabulary.
+    """
+    from sklearn.linear_model import LogisticRegression
+    for seed, temperature in ((101, 1.0), (102, 0.5), (103, 2.0)):
+        p, y = _calibrated_draw(20000, seed, temperature)
+        fit = rp.fit_calibration_line(p, y)
+        assert fit["status"] == "ok", (seed, temperature, fit["status"])
+        z = rp.clipped_logit(p).reshape(-1, 1)
+        ref = LogisticRegression(C=np.inf, solver="lbfgs",
+                                 max_iter=5000, tol=1e-10).fit(z, y)
+        assert fit["slope"] == pytest.approx(float(ref.coef_[0][0]), abs=1e-6)
+        assert fit["intercept"] == pytest.approx(float(ref.intercept_[0]),
+                                                 abs=1e-6)
+
+
 def test_irls_termination_order_is_load_bearing():
     """The |beta| range check must run BEFORE the convergence check in the same
     iteration. Constructed exactly: a tolerance so loose the convergence test
