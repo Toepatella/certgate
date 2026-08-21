@@ -53,7 +53,7 @@ HEAD_MAX_ITER = 2000
 MODE_BASELINE, MODE_BBSE = 0, 1
 ```
 
-**Basis for the values (panel item S2-13).** Pinning attests only that a value was fixed before any result was read. The per-constant rationale is tabulated in `paper/draft.md` Table 5 and must stay consistent with this block. Only `M_INFLUENCE` materially moves the certificate, and its sensitivity is measured, not asserted: re-running E1's `s_u=0.5` arm in baseline mode at M ∈ {25, 50, 100, 200, 500, 1000, 5000} (walk order and calibration walk re-derived at each M, each certificate rescored against R_M *at that same M*) gives certify rates 1.0/1.0/1.0/1.0/1.0/0.03/0.0 at α=0.10 and 0.0 everywhere at α=0.05 — a plateau over M ≤ 200 and a collapse above it, with every larger M certifying LESS. See `paper/draft.md` §4.9 / Table 6. Any change to `M_INFLUENCE` must re-run that sweep.
+**Basis for the values (panel item S2-13).** Pinning attests only that a value was fixed before any result was read. The per-constant rationale is tabulated in `paper/draft.md` Table S1 and must stay consistent with this block. Only `M_INFLUENCE` materially moves the certificate, and its sensitivity is measured, not asserted: re-running E1's `s_u=0.5` arm in baseline mode at M ∈ {25, 50, 100, 200, 500, 1000, 5000} (walk order and calibration walk re-derived at each M, each certificate rescored against R_M *at that same M*) gives certify rates 1.0/1.0/1.0/1.0/1.0/0.03/0.0 at α=0.10 and 0.0 everywhere at α=0.05 — a plateau over M ≤ 200 and a collapse above it, with every larger M certifying LESS. See `paper/draft.md` §4.9 / SI Table S4. Any change to `M_INFLUENCE` must re-run that sweep.
 
 ## `validate.py`
 
@@ -1065,15 +1065,16 @@ per file below; regressions to any of them are regressions to V6.
 ## Experiments (`experiments/run_synthetic.py`)
 
 **Companion: `experiments/panel_s2_tables.py`** (panel items S2-13, S2-28). Read-only analysis
-producing `paper/draft.md` Tables 6 (influence-cap sensitivity) and 7 (answered/declined
+producing `paper/draft.md` SI Tables S4 (influence-cap sensitivity) and S5 (answered/declined
 operating characteristics), plus Section 3.3's cap arithmetic and the record-level-vs-`R_M`
 gaps. CLI: `python -m experiments.panel_s2_tables [R]`; prints JSON, writes nothing into
 `experiments/out/`. Reseeds every draw through the same rule `run_synthetic._rng` uses, so it
 reproduces the grid's cohorts without re-running it, and self-checks against the released
 `E1_validity.csv` (at M=100 it must reproduce every baseline-deploying draw's tau exactly —
 currently 194/194, 0 mismatches). OPEN: not yet folded into `run_synthetic.py`'s CSV/summary
-writers, so `python -m experiments.run_synthetic` alone does NOT regenerate Tables 6 and 7;
-Appendix A.3's one-command claim covers Tables 1-4 and Figures 1-7 only until it does.
+writers, so `python -m experiments.run_synthetic` alone does NOT regenerate SI Tables S4 and S5;
+SI A.3's one-command claim covers Figures 3–4, SI Figures S3–S9 and SI Tables S2–S3, S6
+and S9 only until it does.
 
 **Companion: `experiments/comparators.py`** (revision-2, E8 arm A). Pure alternative-bound
 arithmetic: `mpeb_ucb` (moved verbatim from the test-local reference in `tests/test_certify.py`,

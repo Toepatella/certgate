@@ -27,7 +27,7 @@ All success criteria are met. Every figure below is stated once, canonically, in
 
 **Synthetic grid (E1–E7, R=200):** the certificate is valid on the estimand it actually certifies — zero aggregate exceedances under the δ budget, robust to a 4× increase in between-site heterogeneity, while the per-site dispersion diagnostic (which carries no δ target) visibly detaches (E1). The uncorrected baseline certifies-and-violates heavily under label shift and the BBSE correction declines rather than repeat the overclaim, certifying at null shift (E2). The concept-shift negative control is verified poisonous first and then fails the certificate, as an honest method must (E3). The site-count frontier makes α=0.10 the operative rung at the realistic 208-site scale, with α=0.05 a property of ~300–400-site data (E4). The explainability arm reports its cohort-level null as a null (E5), per-site coverage is flat across size bins with the three-way composition disclosed (E6), and the record-as-unit comparator demonstrates in-harness the overconfidence the design premise cites — granting rungs the site-unit walk refuses, then violating its budget at ~2δ under heterogeneity (E7).
 
-**eICU-CRD v2.0 (real data, 2026-07-31):** the credentialed extract ran end to end against a protocol frozen *before* any eICU byte was read (`EICU-PROTOCOL.md`; freeze commit `9f25b49`). **α=0.10 certified on all 20 by-site re-splits and α=0.05 on none**, with every pre-declared failure criterion clear and the leak screens returning clean — one of them inverted (APACHE absence tracks early *discharge*, not early death, on this extract). The caveat that travels with every number: the gate earns part of its low answered error by abstaining where deaths concentrate, which the three-way composition instrument exists to surface. Artifacts are aggregate-only by construction; the extract is gitignored and was never committed. Full record: `experiments/out/EICU-SUMMARY.md`, draft §4.10 and Tables 8–9.
+**eICU-CRD v2.0 (real data, 2026-07-31):** the credentialed extract ran end to end against a protocol frozen *before* any eICU byte was read (`EICU-PROTOCOL.md`; freeze commit `9f25b49`). **α=0.10 certified on all 20 by-site re-splits and α=0.05 on none**, with every pre-declared failure criterion clear and the leak screens returning clean — one of them inverted (APACHE absence tracks early *discharge*, not early death, on this extract). The caveat that travels with every number: the gate earns part of its low answered error by abstaining where deaths concentrate, which the three-way composition instrument exists to surface. Artifacts are aggregate-only by construction; the extract is gitignored and was never committed. Full record: `experiments/out/EICU-SUMMARY.md`, draft §4.10 and Tables 1–2.
 
 ## Scope — what is IN
 
@@ -35,10 +35,10 @@ All success criteria are met. Every figure below is stated once, canonically, in
 |---|---|
 | Site-disjoint splits, site = cluster | The core statistical contribution; record-level bounds are wrong for this data |
 | Influence-capped atoms (cap on weights, never realized contributions) | A naive-truncation counterexample (17.5% true risk certified at 5%) is kept as a permanent regression test; the cap is applied where it cannot recreate it |
-| WSR betting test | Finite-sample, ~10× tighter than empirical-Bernstein at these cluster counts |
+| WSR betting test | Finite-sample, and measurably tighter than the empirical-Bernstein alternative at these cluster counts (quantified in the paper's comparator suite) |
 | Fixed-sequence threshold walk | Multiplicity-free threshold selection; order fixed on the aux split |
 | BBSE label-shift mode, worst-case over a four-parameter confidence box | The flagship robustness result; the asymptotic steps (the S_aux percentile box, and the q cluster bootstrap for multi-site pools) are **disclosed in the guarantee text itself**, with measured realized coverage in METHODS |
-| α ladder {0.05, 0.10} | At ~80 calibration clusters only 0.10 is realistically certifiable; 0.05 is the stretch rung, and the E4 sweep quantifies exactly what more sites buy |
+| α ladder {0.05, 0.10} | At ~84 calibration clusters only 0.10 is realistically certifiable; 0.05 is the stretch rung, and the E4 sweep quantifies exactly what more sites buy |
 | Concept-shift negative control | Certificates fail there *and must* — assumption tags are load-bearing, and the control is verified capable of failing before it is trusted |
 | Explainable abstention layer | The collection's headline theme; exact attributions come nearly free on a linear head |
 | Input-contract validation (loud, at the boundary) | Silent input failure modes are designed out rather than patched: strict labels, finite features, dense site ids, disjointness asserted at pipeline entry |
@@ -57,9 +57,9 @@ All success criteria are met. Every figure below is stated once, canonically, in
 
 ## Design constants (see SPEC.md for the full frozen table)
 
-- Splits **40% train / 20% aux / 40% calibration** (site-disjoint). The aux split serves only the walk order and the BBSE confusion matrix, so calibration gets the largest share (~83 clusters at 208 sites), which is what makes the α=0.10 rung comfortable rather than marginal.
+- Splits **40% train / 20% aux / 40% calibration** (site-disjoint). The aux split serves only the walk order and the BBSE confusion matrix, so calibration gets the largest share (84 clusters at 208 sites, beside 83 train / 41 aux), which is what makes the α=0.10 rung comfortable rather than marginal.
 - δ = 0.05; BBSE split δ_conf = δ_bet = 0.025, Bonferroni over the 4 box parameters (c0, c1, π_source, q_target).
-- Influence cap M = 100 (swept in the paper's Table 6; larger caps certify no more); threshold grid 23 points in [0.55, 0.99].
+- Influence cap M = 100 (swept in SI Table S4; larger caps certify no more); threshold grid 23 points in [0.55, 0.99].
 - Hardening is native, not bolted on: loud input validation, disjointness assertions, finite-weight checks, record-carrying cluster gate, degenerate-bootstrap decline, BBSE misspecification decline, sha256-only seed rule, provenance block in every artifact, pinned dependencies, literal-pinned constants test.
 
 ## Repository map
@@ -83,16 +83,19 @@ certgate/
   conftest.py          ← two-line sys.path shim (examples/ and the root have no __init__.py)
   tests/               ← incl. test_constants.py pinning every frozen scalar
   experiments/
-    run_synthetic.py   ← E1–E7 grid (--quick for smoke)
+    run_synthetic.py   ← E1–E9 grid (--quick for smoke)
     synth_fixture.py   ← hostile multi-table fixture corpus
     fixture_etl.py     ← fixture → cohorts
     eicu_mock.py       ← schema-faithful eICU mock corpus (stdlib only)
     eicu_etl.py        ← eICU extract → cohorts (stdlib + numpy only)
     run_eicu.py        ← eICU preflight + certification runner
-    panel_s2_tables.py ← read-only analysis behind paper Tables 6 and 7
+    comparators.py     ← E8 alternative cluster-aware bounds (pure arithmetic)
+    panel_s2_tables.py ← read-only analysis behind SI Tables S4–S5
+    panel_confusion_tables.py ← read-only derived confusion tables (SI Table S7)
     out/               ← figures + CSVs for the paper (20-replicate eICU aggregates included)
     out-sens/          ← eICU apache-complete sensitivity arm (aggregate-only sidecar)
     out-panel/         ← eICU replicate-0 panel measurement (aggregate-only sidecar, POST-HOC)
+    out-subgroups/     ← eICU subgroup aggregates (aggregate-only sidecar)
   examples/
     real_data_example.py    ← runnable from_raw → run_certgate walkthrough
     explain_dashboard.py    ← self-contained interactive explanation dashboard
@@ -124,25 +127,27 @@ python -m experiments.run_synthetic            # full paper grid
 
 ## Paper
 
-The manuscript master is `paper/draft.md` (pandoc markdown; citations are `[@key]` groups against `paper/references.bib`) — the canonical, self-contained home of every result number alongside the generated artifacts in `experiments/out*/`. `python paper/make_submission.py` builds the whole submission package for Discover Computing (Springer Nature `sn-jnl`, pdflatex): `CertGate_DiscoverComputing.pdf` (the submission typescript), `CertGate_SI.pdf` (Supplementary Information A — deferred proofs, reproducibility details, the frozen-constants register as Table S1, and Figures S1–S2), `CertGate_compact.pdf` (a 10pt reading copy, not the typescript), and the Snapp figures zip (`Fig1.pdf`, `Fig2.png`, …). `paper/cover-letter.md` is the submission cover letter. Author-only blanks are marked `[[TBC:...]]` throughout — grep for that token to enumerate what remains before submission.
+The manuscript master is `paper/draft.md` (pandoc markdown; citations are `[@key]` groups against `paper/references.bib`) — the canonical, self-contained home of every result number alongside the generated artifacts in `experiments/out*/`. `python paper/make_submission.py` builds the whole submission package for Discover Computing (Springer Nature `sn-jnl`, pdflatex): `CertGate_DiscoverComputing.pdf` (the submission typescript), `CertGate_SI.pdf` (Supplementary Information A — deferred proofs, reproducibility details, the frozen-constants register as Table S1, and Figures S1–S9), `CertGate_compact.pdf` (a 10pt reading copy, not the typescript), and the Snapp figures zip (`Fig1.pdf`, `Fig2.png`, …). `paper/cover-letter.md` is the submission cover letter. Author-only blanks are marked `[[TBC:...]]` throughout — grep for that token to enumerate what remains before submission.
 
-Figure → source map (as called out in the draft; the 2026-08-11 compression pass keeps five figures and three tables in the main text and moves the rest to the peer-reviewed SI):
+Figure → source map (as called out in the draft; the current build keeps four figures and two tables in the main text and moves the rest to the peer-reviewed SI):
 
 | Figure | Source |
 |---|---|
 | 1 | `paper/figures-src/pipeline.tex` (schematic, compiled at build time) |
-| 2 | `experiments/out/E2_label_shift.png` |
-| 3 | `experiments/out/E4_site_sweep.png` |
-| 4 | `experiments/out/E6_fairness.png` |
-| 5 | `experiments/out/EICU_pooled.png` |
+| 2 | `experiments/out/EICU_pooled.png` |
+| 3 | `experiments/out/E8_suite.png` |
+| 4 | `experiments/out/E9_frontiers.png` |
 | S1 | `experiments/out/EICU_reliability_panel.png` (SI) |
 | S2 | `experiments/out/EICU_per_site.png` (SI) |
 | S3 | `experiments/out/E1_validity.png` (SI) |
 | S4 | `experiments/out/E3_concept_shift.png` (SI) |
 | S5 | `experiments/out/E5_explain.png` (SI) |
 | S6 | `experiments/out/E7_comparator.png` (SI) |
+| S7 | `experiments/out/E4_site_sweep.png` (SI) |
+| S8 | `experiments/out/E6_fairness.png` (SI) |
+| S9 | `experiments/out/E2_label_shift.png` (SI) |
 
-Main-text tables: 1 = E6 answered-set composition, 2 = eICU attrition ledger, 3 = eICU per-replicate certificates. SI tables: S1 = frozen-constants register, S2 = E1 exceedance strata, S3 = E6 per-site coverage bins, S4 = influence-cap sweep, S5 = operating characteristics, S6 = E4 frontier. One artifact PNG deliberately carries no figure number: `E6_reliability.png` (its results appear as prose in §4.7). And `experiments/out-sens/` is the frozen 2026-07-31 sensitivity-arm record: it predates the reliability panel, so it legitimately lacks the three `EICU_reliability*` files a current-code rerun would add.
+Main-text tables: 1 = eICU attrition ledger, 2 = eICU per-replicate certificates. SI tables: S1 = frozen-constants register, S2 = E1 exceedance strata, S3 = E6 per-site coverage bins, S4 = influence-cap sweep, S5 = operating characteristics, S6 = E4 frontier, S7 = derived answered/declined confusion, S8 = eICU subgroup coverage, S9 = E6 three-way answered-set composition. One artifact PNG deliberately carries no figure number: `E6_reliability.png` (its results appear as prose in §4.7). And `experiments/out-sens/` is the frozen 2026-07-31 sensitivity-arm record: it predates the reliability panel, so it legitimately lacks the three `EICU_reliability*` files a current-code rerun would add.
 
 Cloning without SSH keys: `git clone https://github.com/Toepatella/certgate.git`
 
