@@ -41,7 +41,7 @@ The eICU-CRD v2.0 extract arrived and the frozen operator checklist ran end to e
 
 ## Status (2026-08-21)
 
-Suite **267 passed / 3 skipped green** (~1 min on the project machine; three off-default arms gated behind `CERTGATE_FIXTURE=1` / `CERTGATE_EICU=1` / `CERTGATE_EICU_LARGE=1`). The synthetic grid (E1–E9, R=200) and the real-data run are both published; every result number lives in `experiments/out*/` and the draft. One line per experiment — claims only:
+Suite **271 passed / 3 skipped green** (~1 min on the project machine; three off-default arms gated behind `CERTGATE_FIXTURE=1` / `CERTGATE_EICU=1` / `CERTGATE_EICU_LARGE=1`). The synthetic grid (E1–E9, R=200) and the real-data run are both published; every result number lives in `experiments/out*/` and the draft. One line per experiment — claims only:
 
 - **E1** validity: α=0.10 certifies every draw; aggregate R_M conformance holds at all heterogeneity settings while the per-site dispersion diagnostic (no δ target) detaches — the aggregate-vs-individual signature, measured and labeled. α=0.05 unreachable at 208 sites.
 - **E2** label shift: the uncorrected baseline certifies-and-violates heavily and dose-responsively; BBSE with the honest q_t budget declines rather than repeat the overclaim, and certifies at null shift (a correction, not a reflexive decliner).
