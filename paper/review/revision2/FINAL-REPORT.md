@@ -92,3 +92,16 @@ another ensemble roll is variance, not signal. FROZEN as the submission candidat
 v1.0.0 DOI at the final tag · wang2026lec PMLR volume when indexed · optional figure
 cosmetics (S6 legend occlusion; E-codes inside plot internals). Submission deadline
 2026-10-05.
+
+## Addendum 2026-08-21 — post-freeze trim (author decision)
+
+The author un-froze the branch and landed a six-commit slim pass directly on it, then
+merged `revision-2` to `main`. Paper: §§4.11–4.13 and the §4.10 subgroup paragraph trimmed
+in place (~990 → ~460 words; every figure, table and measured claim kept; abstract and
+contributions 1–2 revert to their pre-revision claims; Table S8 loses its two gender rows;
+abstract 281 → 248 words). Numbers were only ever deleted, never re-rounded:
+`revision_guard` passes at 84 traced tokens, zero untraced, against the pre-revision-2
+baseline `8fd9e9c:paper/draft.md`. Build 25 pp main / 18 pp SI. Suite 281 → 267 passed
+(duplicate and low-value coverage pruned). Every `experiments/out*/` artifact stays
+byte-identical to `598ab29`. **Not re-scored** — the trim removes restatement, not
+evidence, and the n=4 variance argument above still holds.

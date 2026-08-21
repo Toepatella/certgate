@@ -1,7 +1,8 @@
 """Revision-2 prose guard (forked from the archived ai-scientist-pass
 rewrite_guard; SPEC/plan: the no-new-numbers rule becomes a CLAIM-TRACE rule).
 
-Checks OLD (pre-revision, e.g. `git show main:paper/draft.md`) vs NEW:
+Checks OLD (pre-revision, e.g. `git show 8fd9e9c:paper/draft.md` — the last main
+before revision-2 was merged) vs NEW:
  1. every ADDED distinct numeric token in the body appears in claim-trace.md
     (which maps it to a named artifact) -- an untraced new number FAILS;
  2. bare experiment codes E1-E9 never appear in MAIN text (P-codes allowed

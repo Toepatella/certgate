@@ -1,6 +1,7 @@
 # CertGate manuscript — TODO (open items for the human author)
 
 Draft: `paper/draft.md` · References: `paper/references.bib`
+Status 2026-08-21: slim pass landed and `revision-2` merged to `main` — suite 267 passed / 3 skipped; paper trimmed in place to the Discover Computing bar (no venue page limit; abstract 248 words, structured; build 25 pp main + 18 pp SI); claim-trace guard green at 84 traced tokens. The dated status paragraphs below are historical records.
 Status 2026-07-30 (truth-sync): `draft.md` resynced to the 2026-07-25 correctness audit
 (CODE-AUDIT.md V1–V27) and the 2026-07-25 experiment rerun. Retired the per-target-site estimand
 in favour of the site-population average with its mandatory dispersion clause (V1), the "q_t is
@@ -220,7 +221,7 @@ published Discover Computing articles: article type **Research**; submission via
 (https://submission.nature.com/new-submission/10791/3) with a **cover letter required**
 (`paper/cover-letter.md`); abstract **< 250 words** (structured accepted — the published
 clinical exemplar 10.1007/s10791-026-10014-2 uses Background/Methods/Results/Conclusion, and
-the draft's abstract is now structured at 249 words including labels); keywords are Snapp
+the draft's abstract is structured at 248 words by whitespace count, re-measured 2026-08-21 after the venue-bar trim); keywords are Snapp
 metadata only (no published article renders them); **numbered square-bracket citations** with
 an NLM/Vancouver list carrying **full DOI links** (LaTeX route: `sn-jnl.cls` +
 `sn-vancouver-num.bst`, class option `sn-vancouver-num` — implemented in
