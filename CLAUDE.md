@@ -2,6 +2,25 @@
 
 Certified selective prediction with explainable abstention for multi-site clinical risk models. Standalone Python research project targeting a paper. Read this first, then `SPEC.md` before touching any code.
 
+## Simplicity rules — these override any instinct to be thorough
+
+Ship the smallest diff that fully solves the stated problem. Nothing else.
+
+- No features, refactors, cleanup, or abstractions beyond the task. No new classes, layers,
+  wrappers, helpers, config options, or files when editing existing code works.
+- No error handling or validation for scenarios that cannot happen. Validate only at the
+  boundary (`certgate/validate.py`).
+- No unneeded tests. Test what changed; don't build suites around it or test inputs
+  internal code cannot produce.
+- No designing for hypothetical future requirements, no feature flags, no back-compat
+  shims — just change the code.
+- The paper targets Discover Computing, not a top-tier ML conference: scope experiments,
+  analyses, and sections to clear THAT venue's bar comfortably, and no higher.
+- Think something more is needed? Propose it in one sentence; don't build it.
+
+This licenses adding nothing new — it never licenses removing existing hardening: the
+Design discipline and Invariants sections below stay binding.
+
 ## Where numbers live (single-source policy, adopted 2026-08-10)
 
 Result numbers have ONE canonical home: the generated artifacts — `experiments/out/summary.md` (synthetic grid), `experiments/out*/EICU-SUMMARY.md` + the JSON/CSV beside them (real data) — plus `paper/draft.md`, which must be self-contained for submission. This file and `README.md` carry **headlines and claims, not number trains**; when you need a figure, open the artifact or the draft rather than trusting a prose copy. A 2026-08-10 audit found the same fact drifted in up to five hand-maintained copies — do not reintroduce copies here.
