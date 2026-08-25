@@ -1,0 +1,49 @@
+replicate,arm,site,alpha,n_target,reason,certified,tau,coverage,n_answered,answered_err_rate,hard,numbedscategory,teachingstatus,region,aps_coverage,apv_coverage
+0,primary,hosp-61,0.05,174,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,0.977011,0.977011
+0,primary,hosp-61,0.1,174,bbse:bbse-misspecified,True,0.85,0.8793,153,0.0261,False,<100,f,Midwest,0.977011,0.977011
+0,primary,hosp-71,0.05,777,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Midwest,0.97426,0.97426
+0,primary,hosp-71,0.1,777,bbse:bbse-misspecified,True,0.85,0.8945,695,0.0144,False,100 - 249,f,Midwest,0.97426,0.97426
+0,primary,hosp-115,0.05,57,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,South,0.894737,0.894737
+0,primary,hosp-115,0.1,57,bbse:bbse-misspecified,True,0.85,0.7719,44,0.0682,False,<100,f,South,0.894737,0.894737
+0,primary,hosp-122,0.05,2701,baseline:failsafe|bbse:failsafe,False,,,0,,False,>= 500,f,South,0.987042,0.987042
+0,primary,hosp-122,0.1,2701,bbse:failsafe,True,0.85,0.8419,2274,0.0585,False,>= 500,f,South,0.987042,0.987042
+0,primary,hosp-141,0.05,1325,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,South,0.998491,0.998491
+0,primary,hosp-141,0.1,1325,bbse:failsafe,True,0.85,0.8475,1123,0.0321,False,250 - 499,f,South,0.998491,0.998491
+0,primary,hosp-144,0.05,702,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,South,0.98433,0.98433
+0,primary,hosp-144,0.1,702,bbse:failsafe,True,0.85,0.8319,584,0.0411,False,100 - 249,f,South,0.98433,0.98433
+0,primary,hosp-201,0.05,133,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,,0.992481,0.992481
+0,primary,hosp-201,0.1,133,bbse:bbse-misspecified,True,0.85,0.8722,116,0.0517,False,100 - 249,f,,0.992481,0.992481
+0,primary,hosp-202,0.05,853,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,Northeast,0.991794,0.991794
+0,primary,hosp-202,0.1,853,bbse:failsafe,True,0.85,0.8206,700,0.0414,False,100 - 249,f,Northeast,0.991794,0.991794
+0,primary,hosp-203,0.05,124,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,,0.983871,0.983871
+0,primary,hosp-203,0.1,124,bbse:bbse-misspecified,True,0.85,0.8387,104,0.0673,False,100 - 249,f,,0.983871,0.983871
+0,primary,hosp-205,0.05,355,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Northeast,0.295775,0.295775
+0,primary,hosp-205,0.1,355,bbse:bbse-misspecified,True,0.85,0.9887,351,0.0142,False,<100,f,Northeast,0.295775,0.295775
+0,primary,hosp-227,0.05,1246,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,West,0.998395,0.998395
+0,primary,hosp-227,0.1,1246,bbse:failsafe,True,0.85,0.8547,1065,0.0479,False,250 - 499,f,West,0.998395,0.998395
+0,primary,hosp-253,0.05,437,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,Midwest,0.997712,0.997712
+0,primary,hosp-253,0.1,437,bbse:failsafe,True,0.85,0.8101,354,0.0565,False,100 - 249,f,Midwest,0.997712,0.997712
+0,primary,hosp-254,0.05,393,baseline:failsafe|bbse:failsafe,False,,,0,,False,,f,Midwest,0.982188,0.982188
+0,primary,hosp-254,0.1,393,bbse:failsafe,True,0.85,0.8041,316,0.0411,False,,f,Midwest,0.982188,0.982188
+0,primary,hosp-256,0.05,720,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,100 - 249,f,Midwest,0.980556,0.980556
+0,primary,hosp-256,0.1,720,bbse:bbse-misspecified,True,0.85,0.8847,637,0.0251,False,100 - 249,f,Midwest,0.980556,0.980556
+0,primary,hosp-271,0.05,886,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,,f,Midwest,0.977427,0.977427
+0,primary,hosp-271,0.1,886,bbse:bbse-misspecified,True,0.85,0.9029,800,0.0238,False,,f,Midwest,0.977427,0.977427
+0,primary,hosp-318,0.05,1138,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,South,0.964851,0.964851
+0,primary,hosp-318,0.1,1138,bbse:failsafe,True,0.85,0.8603,979,0.0582,False,250 - 499,f,South,0.964851,0.964851
+0,primary,hosp-356,0.05,58,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,Midwest,0.724138,0.724138
+0,primary,hosp-356,0.1,58,bbse:bbse-misspecified,True,0.85,0.9138,53,0.1132,False,<100,f,Midwest,0.724138,0.724138
+0,primary,hosp-357,0.05,706,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,,f,Midwest,0.973088,0.973088
+0,primary,hosp-357,0.1,706,bbse:bbse-misspecified,True,0.85,0.9306,657,0.035,False,,f,Midwest,0.973088,0.973088
+0,primary,hosp-389,0.05,427,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,West,1.0,1.0
+0,primary,hosp-389,0.1,427,bbse:bbse-misspecified,True,0.85,0.911,389,0.0437,False,<100,f,West,1.0,1.0
+0,primary,hosp-391,0.05,913,baseline:failsafe|bbse:failsafe,False,,,0,,False,250 - 499,f,,0.997809,0.997809
+0,primary,hosp-391,0.1,913,bbse:failsafe,True,0.85,0.8193,748,0.0481,False,250 - 499,f,,0.997809,0.997809
+0,primary,hosp-405,0.05,345,baseline:failsafe|bbse:failsafe,False,,,0,,False,100 - 249,f,West,0.994203,0.994203
+0,primary,hosp-405,0.1,345,bbse:failsafe,True,0.85,0.8841,305,0.023,False,100 - 249,f,West,0.994203,0.994203
+0,primary,hosp-433,0.05,140,baseline:failsafe|bbse:failsafe,False,,,0,,False,,f,South,0.985714,0.985714
+0,primary,hosp-433,0.1,140,bbse:failsafe,True,0.85,0.6214,87,0.046,False,,f,South,0.985714,0.985714
+0,primary,hosp-434,0.05,376,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,<100,f,South,0.986702,0.986702
+0,primary,hosp-434,0.1,376,bbse:bbse-misspecified,True,0.85,0.7447,280,0.05,False,<100,f,South,0.986702,0.986702
+0,primary,hosp-438,0.05,183,baseline:failsafe|bbse:bbse-misspecified,False,,,0,,False,,f,South,0.978142,0.978142
+0,primary,hosp-438,0.1,183,bbse:bbse-misspecified,True,0.85,0.8197,150,0.02,False,,f,South,0.978142,0.978142

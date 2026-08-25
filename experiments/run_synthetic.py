@@ -1,16 +1,18 @@
-"""SPEC section "Experiments": the synthetic validation harness (METHODS 8).
+"""The synthetic validation harness.
 
-Runs E1-E6 fully seeded from ``constants.SEED`` and deterministically; writes a
-CSV per experiment, PNG figures (matplotlib Agg -- no seaborn, no interactive
-display), and a ``summary.md`` into the output directory.
+Runs E1-E6 deterministically, all seeded from constants.SEED. Writes one CSV
+per experiment, PNG figures, and a summary.md into the output directory.
+Figures use the matplotlib Agg backend -- no seaborn, no interactive display.
 
-CLI::
+CLI:
 
     python -m experiments.run_synthetic [--quick] [--only E1,E4] [--out DIR]
 
-``--quick``: R=10 draws, cluster sweep {60, 208, 400}. Full: R=200, sweep
-{60, 100, 150, 208, 300, 400}. The full grid targets < ~30 min; --quick is a
-fast smoke of every experiment (E1-quick must show zero hard violations).
+--quick is R=10 draws over the cluster sweep {60, 208, 400} -- a fast smoke of
+every experiment, and E1-quick must show zero hard violations. The full grid is
+R=200 over {60, 100, 150, 208, 300, 400} and targets under ~30 minutes.
+
+Refs: METHODS 8; SPEC section "Experiments".
 """
 
 import argparse
@@ -49,11 +51,12 @@ from sklearn.ensemble import HistGradientBoostingClassifier
 from experiments.comparators import (hoeffding_ucb, mpeb_ucb,
                                      site_bootstrap_ucb, t_ucb)
 
-# ONE generator (audit V7): every experiment runs the documented SimConfig()
-# defaults; the only experiment-local generator parameters are the shift/tilt
-# each experiment is ABOUT, declared here and pinned by tests/test_constants.py.
-# (The old undeclared SHIFT_SEP=1.8 made the E2/E3 headline numbers
-# non-reproducible from the stated setup.)
+# One generator for everything: every experiment runs the documented
+# SimConfig() defaults. The only experiment-local generator parameters are the
+# shift or tilt each experiment is about, declared here and pinned by
+# tests/test_constants.py. An undeclared one makes the headline numbers
+# irreproducible from the stated setup.
+# Ref: audit V7.
 QUICK_SWEEP = (60, 208, 400)
 FULL_SWEEP = (60, 100, 150, 208, 300, 400)
 ANCHOR_SITES = 208
@@ -92,20 +95,24 @@ def _rng(*parts):
 
 
 def _rate(k, n):
-    """Conditional rate over n certified draws; None (JSON null) when n == 0 --
-    0.0 would conflate "no certificates issued" with "zero violations"."""
+    """Conditional rate over n certified draws.
+
+    Returns None (JSON null) when n == 0. A 0.0 there would conflate "no
+    certificates issued" with "zero violations".
+    """
     return round(k / n, 4) if n else None
 
 
 def _rate_ci95(k, n):
-    """Exact Clopper-Pearson 95% interval for the rate ``_rate(k, n)`` reports
-    (METHODS 9; the scoring rule of SPEC 3.9).
+    """Exact Clopper-Pearson 95% interval for the rate _rate(k, n) reports.
 
-    ``binomtest.proportion_ci`` rather than a ``beta.ppf`` construction: it
-    carries the k == 0 and k == n boundary conventions itself, which is exactly
-    where a hand-rolled version acquires an off-by-one in the shape parameters.
-    Returns ``None`` when n == 0, mirroring ``_rate``'s null convention -- an
-    interval over no draws is undefined, never [0, 1].
+    Uses binomtest.proportion_ci rather than a beta.ppf construction. It
+    carries the k == 0 and k == n boundary conventions itself, and that is
+    where a hand-rolled version picks up an off-by-one in the shape parameters.
+    Returns None when n == 0, mirroring _rate's null convention -- an interval
+    over no draws is undefined, never [0, 1].
+
+    Refs: METHODS 9; SPEC 3.9 scoring rule.
     """
     if not n:
         return None
@@ -139,8 +146,8 @@ def _cert_eval(head, report, alpha, target_x, target_y):
         if row is not None:
             out["decline_reason"] = json.dumps(row.get("reasons", {}))
         elif report.get("reason"):
-            # fully-gated report (insufficient-clusters / pool-too-small):
-            # keep the structural gate reason attributable in the CSV
+            # Fully-gated report (insufficient-clusters, pool-too-small):
+            # keep the structural gate reason attributable in the CSV.
             out["decline_reason"] = report["reason"]
         return out
     tau = row["tau"]
@@ -164,10 +171,17 @@ def _draw_split(cfg, n_sites, rng):
 
 
 def _rm_on_pool(head, pool, tau):
-    """Influence-weighted answered-set risk R_M on a fresh multi-site pool
-    (METHODS 3) -- the quantity the certificate actually bounds (audit V1):
-    R_M = sum_c g_c a_c e_c / sum_c g_c a_c = sum_c (g_c/n_c) err_ans_c /
-    sum_c (g_c/n_c) ans_c with g_c = min(n_c, M). NaN when nothing answers."""
+    """Influence-weighted answered-set risk R_M on a fresh multi-site pool.
+
+    This is the quantity the certificate actually bounds:
+
+        R_M = sum_c g_c a_c e_c / sum_c g_c a_c
+            = sum_c (g_c/n_c) err_ans_c / sum_c (g_c/n_c) ans_c
+
+    with g_c = min(n_c, M). Returns NaN when nothing answers.
+
+    Refs: METHODS 3; audit V1.
+    """
     score = head.score(pool.x)
     err = head.predict(pool.x) != pool.y
     ans = score >= tau
@@ -186,11 +200,13 @@ def _rm_on_pool(head, pool, tau):
 
 
 def _per_site_exceed_frac(head, pool, tau, alpha):
-    """DISPERSION DIAGNOSTIC (audit V1 -- no delta target attached): fraction
-    of the pool's answering sites whose own answered error exceeds alpha. Under
-    between-site heterogeneity this rises while the certified aggregate R_M
-    stays within budget; it measures what the certificate deliberately does not
-    bound."""
+    """Fraction of answering sites whose own answered error exceeds alpha.
+
+    A dispersion diagnostic, with no delta target attached. Under between-site
+    heterogeneity it rises while the certified aggregate R_M stays within
+    budget. It measures what the certificate deliberately does not bound
+    (audit V1).
+    """
     score = head.score(pool.x)
     err = head.predict(pool.x) != pool.y
     ans = score >= tau
@@ -209,17 +225,19 @@ def _per_site_exceed_frac(head, pool, tau, alpha):
 # ------------------------------------------------------------------ E1
 
 def run_E1(out, quick):
-    """E1 validity, rescored per audit V1.
+    """E1 validity.
 
-    The CONFORMANCE metric is the aggregate quantity the test actually
-    certifies: per draw, the certified tau is applied to a fresh
-    ``E1_EVAL_SITES``-site pool and the influence-weighted answered risk R_M is
-    computed on it; conformance = fraction of certified draws with R_M > alpha
-    (target <= DELTA). The single-fresh-site hard-violation rate is RETAINED
-    but is a PER-SITE DISPERSION DIAGNOSTIC with no delta target: the
-    certificate deliberately does not bound individual sites, and the
-    ``E1_SU_SWEEP`` arm shows the per-site rate rising with heterogeneity while
-    the certified aggregate stays within budget.
+    The conformance metric is the aggregate quantity the test actually
+    certifies. Per draw, the certified tau is applied to a fresh
+    E1_EVAL_SITES-site pool and R_M is computed there. Conformance is the
+    fraction of certified draws with R_M > alpha, and it targets <= DELTA.
+
+    The single-fresh-site hard-violation rate is kept, but only as a per-site
+    dispersion diagnostic with no delta target. The certificate does not bound
+    individual sites, and the E1_SU_SWEEP arm shows that per-site rate rising
+    with heterogeneity while the certified aggregate stays within budget.
+
+    Refs: audit V1.
     """
     R = 10 if quick else 200
     rows = []
@@ -322,8 +340,8 @@ def run_E1(out, quick):
     certs10 = [x for x in base_rows if x["alpha"] == 0.10 and x["certified"]]
     for lo, hi in SIZE_BINS:
         grp = [x for x in certs10 if lo <= x["n_answered"] < hi]
-        # empty bins report None (-> JSON null), never NaN: NaN is an invalid
-        # JSON token that breaks downstream parsers (uniform with E6's rollup)
+        # Empty bins report None (JSON null), never NaN -- NaN is an invalid
+        # JSON token. Same rule as E6's rollup below.
         if grp:
             obs = round(float(np.mean([x["exceed"] for x in grp])), 4)
             ref = round(float(np.mean([exceedance_reference(x["n_answered"], 0.10)
@@ -354,7 +372,7 @@ def run_E1(out, quick):
             ax[0].text(i, v, f"{v:.3f}",  # label it or it reads as absence
                        ha="center", va="bottom", fontsize=7)
     ax[0].axhline(DELTA, color="crimson", ls="--", label=f"DELTA={DELTA}")
-    ax[0].set_title("E1 certified-aggregate R_M exceed rate")
+    ax[0].set_title("Certified-aggregate R_M exceed rate")
     ax[0].set_xlabel("alpha"); ax[0].set_ylabel("rate"); ax[0].legend()
     labels = [b["size_bin"] for b in bins]
     _pnum = lambda v: np.nan if v is None else v      # empty bin -> gap in line
@@ -362,7 +380,7 @@ def run_E1(out, quick):
                label="observed")
     ax[1].plot(labels, [_pnum(b["binomial_reference"]) for b in bins], "s--",
                label="binomial ref")
-    ax[1].set_title("E1 exceedance vs reference (alpha=0.10)")
+    ax[1].set_title("Exceedance vs reference (alpha=0.10)")
     ax[1].set_xlabel("answered-set size bin"); ax[1].set_ylabel("exceedance")
     ax[1].legend()
     su_vals = [s["s_u"] for s in sens]
@@ -371,7 +389,7 @@ def run_E1(out, quick):
     ax[2].plot(su_vals, [_pnum(s["hard_violation_rate_diag"]) for s in sens],
                "s--", label="per-site hard rate (diagnostic)")
     ax[2].axhline(DELTA, color="crimson", ls=":", label=f"DELTA={DELTA}")
-    ax[2].set_title("E1 heterogeneity: aggregate vs per-site (alpha=0.10)")
+    ax[2].set_title("Heterogeneity: aggregate vs per-site (alpha=0.10)")
     ax[2].set_xlabel("s_u (site random-effect sd)"); ax[2].set_ylabel("rate")
     ax[2].legend(fontsize=8)
     fig.tight_layout(); fig.savefig(os.path.join(out, "E1_validity.png"),
@@ -382,9 +400,12 @@ def run_E1(out, quick):
 # ------------------------------------------------------------------ E2
 
 def _e2_arm(cfg, base, R, seed_parts, prefix, label_suffix):
-    """One magnitude arm of E2. ``seed_parts`` prefixes the per-draw stream, so
-    the 0.22 anchor keeps its original ``_rng(2, r)`` stream (and its published
-    numbers) byte-identical while sweep arms live on distinct streams."""
+    """One magnitude arm of E2.
+
+    seed_parts prefixes the per-draw stream. That keeps the 0.22 anchor on its
+    original _rng(2, r) stream, so its published numbers stay byte-exact while
+    sweep arms live on distinct streams.
+    """
     rows = []
     for r in range(R):
         rng = _rng(*seed_parts, r)
@@ -399,9 +420,9 @@ def _e2_arm(cfg, base, R, seed_parts, prefix, label_suffix):
                              target_label=f"E2s{label_suffix}-{r}",
                              oracle_target_y=tgt.y, modes=("bbse",))
         bd = rep_s["diagnostic"]["bbse"]     # stable key set (fixture audit)
-        # aggregate-estimand rescoring (draft-sync flag 2026-07-30): a fresh
-        # label-shifted eval pool, drawn AFTER the streams above so every
-        # anchor number stays byte-identical
+        # Aggregate-estimand rescoring: a fresh label-shifted eval pool, drawn
+        # after the streams above so every anchor number stays byte-exact.
+        # Ref: draft-sync flag 2026-07-30.
         evalp = draw_cohort(cfg, E1_EVAL_SITES, rng, label_base_rate=base,
                             site_label_prefix=f"{prefix}v{r}")
 
@@ -434,7 +455,7 @@ def _e2_arm(cfg, base, R, seed_parts, prefix, label_suffix):
 def run_E2(out, quick):
     R = 10 if quick else 200
     cfg = SimConfig()                       # documented generator (audit V7)
-    # anchor magnitude, full R, ORIGINAL seed streams (numbers byte-identical)
+    # anchor magnitude, full R, original seed streams (numbers byte-exact)
     rows = _e2_arm(cfg, SHIFT_BASE, R, (2,), "e2t", "")
     # magnitude sweep (panel S2-6/S2-7) at R//2 on distinct streams; the
     # 0.095 point is the null-shift arm (BBSE behaviour when nothing is wrong)
@@ -514,7 +535,7 @@ def run_E2(out, quick):
             for m in ("baseline", "bbse") for a in alphas
             if summary[m][a]["hard_violation_rate"] is not None]
     ax[0].set_ylim(0.0, max(real + [DELTA]) * 1.3)
-    ax[0].set_title(f"E2 hard-violation rate at shift -> {SHIFT_BASE}")
+    ax[0].set_title(f"Hard-violation rate at shift -> {SHIFT_BASE}")
     ax[0].set_xlabel("alpha"); ax[0].set_ylabel("hard-violation rate")
     ax[0].legend()
     bb = summary["bbse"][0.10]            # computed, not copied: stays correct
@@ -538,7 +559,7 @@ def run_E2(out, quick):
     ax[1].axhline(DELTA, color="black", ls=":", label=f"DELTA={DELTA}")
     ax[1].axvline(E2_SHIFT_SWEEP[0], color="grey", ls=":", lw=1,
                   label="null shift (source rate)")
-    ax[1].set_title("E2 magnitude sweep (alpha=0.10)")
+    ax[1].set_title("Magnitude sweep (alpha=0.10)")
     ax[1].set_xlabel("target base rate (source 0.095)")
     ax[1].set_ylabel("rate"); ax[1].legend(fontsize=7)
     fig.tight_layout(); fig.savefig(os.path.join(out, "E2_label_shift.png"),
@@ -561,9 +582,9 @@ def run_E3(out, quick):
                           require_both_classes=False)
         rep = run_certgate(train, aux, cal, tgt.x, target_label=f"E3-{r}",
                            oracle_target_y=tgt.y)
-        # aggregate-estimand rescoring (draft-sync flag 2026-07-30): a fresh
-        # concept-tilted eval pool, drawn AFTER the streams above so the
-        # anchor numbers stay byte-identical
+        # Aggregate-estimand rescoring: a fresh concept-tilted eval pool, drawn
+        # after the streams above so the anchor numbers stay byte-exact.
+        # Ref: draft-sync flag 2026-07-30.
         evalp = draw_cohort(cfg, E1_EVAL_SITES, rng,
                             concept_intercept=CONCEPT_INTERCEPT,
                             site_label_prefix=f"e3v{r}")
@@ -577,10 +598,11 @@ def run_E3(out, quick):
             if alpha == 0.10 and ev["certified"]:
                 verified_risk.append(ev["answered_err_rate"])
             rows.append(dict(draw=r, alpha=alpha, **ev))
-    # construction check: the tilt is verified to push answered risk > alpha.
-    # ENFORCED, not just reported (SPEC E3; REVIEW-FABLE D3): a de-poisoned
-    # tilt aborts before anything is written -- a negative control that fails
-    # verification must never emit passing-looking violation rates.
+    # Construction check: the tilt must push answered risk above alpha, and
+    # that is enforced, not merely reported. A de-poisoned tilt aborts before
+    # anything is written. A negative control that fails verification must
+    # never emit passing-looking violation rates.
+    # Ref: SPEC E3; REVIEW-FABLE D3.
     verified = (float(np.mean(verified_risk)) if verified_risk
                 else float("nan"))
     poisonous = bool(verified > 0.10)
@@ -633,7 +655,7 @@ def run_E3(out, quick):
         else:
             ax.text(i, v, f"{v:.3f}", ha="center", va="bottom", fontsize=8)
     ax.axhline(DELTA, color="black", ls="--", label=f"DELTA={DELTA}")
-    ax.set_title("E3 concept-shift negative control (should FAIL)")
+    ax.set_title("Concept-shift negative control (should FAIL)")
     ax.set_xlabel("alpha"); ax.set_ylabel("hard-violation rate"); ax.legend()
     fig.tight_layout(); fig.savefig(os.path.join(out, "E3_concept_shift.png"),
                                     dpi=110); plt.close(fig)
@@ -679,9 +701,9 @@ def run_E4(out, quick):
                                     if certs else 0.0, 4)))
     summary["grid"] = grid
 
-    # cluster counts whose calibration share falls under the 50-carrying-
-    # cluster floor are structurally gated (reason=insufficient-clusters),
-    # so they sample the gate, not the WSR information floor — annotate.
+    # Cluster counts whose calibration share falls under the 50-carrying-
+    # cluster floor are structurally gated (reason=insufficient-clusters).
+    # They sample the gate, not the WSR information floor — annotate.
     gate_min_sites = int(np.ceil(MIN_CAL_CLUSTERS / SPLIT_FRACTIONS[2]))
     summary["gate_limited_n_sites"] = [n for n in sweep if n < gate_min_sites]
     summary["gate_note"] = (
@@ -702,9 +724,9 @@ def run_E4(out, quick):
     ax[0].axvline(ANCHOR_SITES, color="grey", ls=":", lw=1,
                   label=f"operating point ({ANCHOR_SITES} sites)")
     ax[1].axvline(ANCHOR_SITES, color="grey", ls=":", lw=1)
-    ax[0].set_title("E4 certify rate vs cluster count")
+    ax[0].set_title("Certify rate vs cluster count")
     ax[0].set_xlabel("n_sites"); ax[0].set_ylabel("certify rate"); ax[0].legend()
-    ax[1].set_title("E4 mean coverage vs cluster count")
+    ax[1].set_title("Mean coverage vs cluster count")
     ax[1].set_xlabel("n_sites"); ax[1].set_ylabel("coverage"); ax[1].legend()
     fig.tight_layout(); fig.savefig(os.path.join(out, "E4_site_sweep.png"),
                                     dpi=110); plt.close(fig)
@@ -744,22 +766,22 @@ def run_E5(out, quick):
     profile = cohort_abstention_profile(head, tgt.x, answered)
     gimp = global_importance(head)
 
-    # ---- replication arm (panel S1-4): the single-draw case study above is
-    # ---- n_declined ~ 2, which supports NO cohort-level claim. R fresh draws
-    # ---- on the DISTINCT stream _rng(5, r) (the case-study stream _rng(5)
-    # ---- stays byte-identical); per draw, the abstention profile at that
-    # ---- draw's deployed tau. A null result — no stable single driver — is
-    # ---- the expected outcome for this generator (features 0-3 share one
-    # ---- signal direction with equal loadings) and is reported as such.
+    # ---- Replication arm. The single-draw case study above has n_declined ~ 2,
+    # ---- which supports no cohort-level claim. So: R fresh draws on the
+    # ---- distinct stream _rng(5, r), each giving an abstention profile at its
+    # ---- own deployed tau; the case-study stream _rng(5) stays byte-exact.
+    # ---- A null result — no stable single driver — is expected here, because
+    # ---- features 0-3 share one signal direction with equal loadings.
+    # ---- Ref: panel S1-4.
     R = 10 if quick else 200
     gaps, top_feats = [], []
     pooled_declined = pooled_targets = draws_certified = 0
-    # ---- functionally-grounded counterfactual evaluation (R3-09 protocol,
-    # ---- 2026-07-31): top-ranked single-feature delta vs an equal-|dz|
-    # ---- most-favorable move on a uniformly random feature, both judged by
-    # ---- the DEPLOYED rule score >= tau. Stream _rng(5, r, 1) so the
-    # ---- case-study (_rng(5)) and replication (_rng(5, r)) draws stay
-    # ---- byte-identical.
+    # ---- Functionally-grounded counterfactual evaluation: top-ranked
+    # ---- single-feature delta vs an equal-|dz| most-favorable move on a
+    # ---- uniformly random feature. Both are judged by the deployed rule,
+    # ---- score >= tau. It runs on stream _rng(5, r, 1), so the case-study
+    # ---- (_rng(5)) and replication (_rng(5, r)) draws stay byte-exact.
+    # ---- Ref: R3-09 protocol (2026-07-31).
     cf_cases = cf_top_flips = cf_rand_flips = cf_unflippable = 0
     for r in range(R):
         rng_r = _rng(5, r)
@@ -837,8 +859,7 @@ def run_E5(out, quick):
                            counterfactual_eval=counterfactual_eval)
 
     def _clean(vals):
-        """NaN -> None: NaN is an invalid JSON token and the harness forbids
-        emitting it (audit V22)."""
+        """Map NaN to None -- NaN is an invalid JSON token (audit V22)."""
         return [None if np.isnan(v) else float(v) for v in vals]
 
     payload = dict(
@@ -858,7 +879,7 @@ def run_E5(out, quick):
     fig, ax = plt.subplots(1, 2, figsize=(11, 4))
     feat = np.arange(len(gimp))
     ax[0].bar(feat, gimp, color="#228833")
-    ax[0].set_title("E5 global importance (standardized coefs)")
+    ax[0].set_title("Global importance (standardized coefs)")
     ax[0].set_xlabel("feature"); ax[0].set_ylabel("coef")
     if gaps:
         ax[1].bar(feat, replication["gap_mean"], color="#aa3377",
@@ -869,12 +890,12 @@ def run_E5(out, quick):
             f"(mean +/- 95% CI over {len(gaps)} draws)")
     else:
         ax[1].bar(feat, profile["gap"], color="#aa3377")
-        ax[1].set_title("E5 answered-vs-declined |phi| gap (single draw)")
+        ax[1].set_title("Answered-vs-declined |phi| gap (single draw)")
     ax[1].set_xlabel("feature"); ax[1].set_ylabel("mean |phi| gap")
     fig.tight_layout(); fig.savefig(os.path.join(out, "E5_explain.png"),
                                     dpi=110); plt.close(fig)
-    # an empty ranking (all answered or all declined) reports None, never a
-    # fabricated feature index (audit V22)
+    # An empty ranking (all answered or all declined) reports None, never a
+    # fabricated feature index (audit V22).
     top_gap = (int(profile["gap_ranking"][0])
                if len(profile["gap_ranking"]) else None)
     return dict(tau_star=round(float(tau_star), 4),
@@ -891,8 +912,8 @@ def run_E6(out, quick):
     rng = _rng(6)
     train, aux, cal, head = _draw_split(cfg, ANCHOR_SITES, rng)
     tgt = draw_cohort(cfg, 40, rng, site_label_prefix="e6t")   # multi-site pool
-    # per-record raw site labels: feeds the BBSE q_t cluster bootstrap and the
-    # target-disjointness assertion (audit V2/V9)
+    # Per-record raw site labels. These feed the BBSE q_t cluster bootstrap
+    # and the target-disjointness assertion (audits V2, V9).
     tgt_sites = np.array(tgt.site_labels, dtype=object)[tgt.site_id]
     rep = run_certgate(train, aux, cal, tgt.x, target_label="E6",
                        target_site_id=tgt_sites, oracle_target_y=tgt.y)
@@ -916,9 +937,8 @@ def run_E6(out, quick):
     _write_csv(os.path.join(out, "E6_fairness.csv"), rows,
                ["site", "size", "coverage", "answered_err", "n_answered"])
 
-    # per-size-bin fairness rollup. Empty bins report None (-> JSON null /
-    # blank CSV cell), never NaN: NaN is an invalid JSON token that breaks
-    # downstream parsers and reads as an error in a paper table.
+    # Per-size-bin fairness rollup. Empty bins report None (JSON null, blank
+    # CSV cell), never NaN -- which reads as an error in a paper table.
     bin_rows = []
     for lo, hi in SIZE_BINS:
         grp = [r for r in rows if lo <= r["size"] < hi]
@@ -929,23 +949,23 @@ def run_E6(out, quick):
         bin_rows.append(dict(size_bin=f"[{lo},{hi})", n_sites=len(grp),
                              mean_coverage=cov, mean_answered_err=aerr))
 
-    # the BBSE-implied view is an estimated quantity, present whenever the fit
-    # held -- NOT gated on which mode won deployment (verification N5)
+    # The BBSE-implied view is an estimated quantity, present whenever the fit
+    # held. It is never gated on which mode won deployment (verification N5).
     rho = rep["diagnostic"]["bbse"].get("rho_point")
     comp = composition(head, tgt.x, answered, rho_point=rho, oracle_y=tgt.y)
     comp_json = {k: {kk: (float(vv) if isinstance(vv, (int, float)) else vv)
                      for kk, vv in v.items()} for k, v in comp.items()}
 
-    # POST-HOC reliability panel (added 2026-08-01, after E1-E7 were published).
-    # It is a DESCRIPTIVE diagnostic: it alters no certified quantity and
-    # consumes no _rng(6) draw -- the panel self-seeds from a sha256 of its own
-    # input bytes, so E6's generator sequence (and experiments/panel_s2_tables.py
-    # :e6_arm, which replays it) is untouched. `answered` is passed in so
-    # panel_from_head CROSS-CHECKS it against head.score >= tau_star; the panel
-    # computes p = head.predict_proba(x) itself, which is what makes the
-    # score/predict_proba conflation structurally unreachable here. E6 has NO
-    # reference scorer, so p_ref stays None and brier.reference is an explicit
-    # null.
+    # Post-hoc reliability panel, added 2026-08-01 after E1-E7 were published.
+    # It is descriptive: no certified quantity changes, and it consumes no
+    # _rng(6) draw. The panel self-seeds from a sha256 of its own input bytes,
+    # so E6's generator sequence is untouched, and so is
+    # experiments/panel_s2_tables.py:e6_arm, which replays it.
+    # `answered` is passed in so panel_from_head cross-checks it against
+    # head.score >= tau_star, and the panel computes p = head.predict_proba(x)
+    # itself. That is what makes the score/predict_proba conflation
+    # unreachable. E6 has no reference scorer, so p_ref stays None and
+    # brier.reference is an explicit null.
     panel = rp.panel_from_head(head, tgt.x, tgt.y, tgt.site_id, tau_star,
                                answered_mask=answered,
                                n_boot=(200 if quick else rp.N_BOOT))
@@ -953,8 +973,8 @@ def run_E6(out, quick):
     _write_csv(os.path.join(out, "E6_reliability.csv"),
                rp.panel_reliability_rows(panel),
                list(rp.PANEL_RELIABILITY_FIELDS))
-    # allow_nan=False is the ENFORCEMENT of the no-NaN rule at the write
-    # boundary, not merely a belief about the emit pass.
+    # allow_nan=False enforces the no-NaN rule at the write boundary, rather
+    # than trusting the emit pass to have got it right.
     with open(os.path.join(out, "E6_reliability.json"), "w") as fh:
         json.dump({"post_hoc": rp.E6_POST_HOC_NOTE, **panel}, fh, indent=2,
                   allow_nan=False)
@@ -972,7 +992,7 @@ def run_E6(out, quick):
     ax[0].set_xticks(xpos); ax[0].set_xticklabels(labels)
     ax[0].axhline(op["alpha"] if op else 0.10, color="crimson", ls="--",
                   label="alpha")
-    ax[0].set_title("E6 mean answered error by site-size bin")
+    ax[0].set_title("Mean answered error by site-size bin")
     ax[0].set_xlabel("site-size bin"); ax[0].set_ylabel("answered error")
     ax[0].legend()
     covs = [b["mean_coverage"] if b["mean_coverage"] is not None else np.nan
@@ -980,7 +1000,7 @@ def run_E6(out, quick):
     ax[1].bar(xpos, covs, color="#66ccee")
     ax[1].set_xticks(xpos); ax[1].set_xticklabels(labels)
     ax[1].set_ylim(0.0, 1.0)
-    ax[1].set_title("E6 mean per-site coverage by site-size bin")
+    ax[1].set_title("Mean per-site coverage by site-size bin")
     ax[1].set_xlabel("site-size bin"); ax[1].set_ylabel("coverage")
     fig.tight_layout(); fig.savefig(os.path.join(out, "E6_fairness.png"),
                                     dpi=110); plt.close(fig)
@@ -988,18 +1008,17 @@ def run_E6(out, quick):
                 size_bins=bin_rows,
                 predicted_positive_fraction=round(
                     comp["predicted_class"]["positive_fraction"], 4),
-                # The marker travels WITH the numbers. summary.md is the
-                # artifact the paper is written from, so three new keys inside a
-                # published-grid block must not appear there with no indication
-                # that they were added after E1-E7 were published and are
-                # descriptive only. The copy in E6_reliability.json never
-                # reaches that reader. This is the synthetic-side counterpart of
+                # The marker travels with the numbers. summary.md is what the
+                # paper is written from, and the copy in E6_reliability.json
+                # never reaches that reader. So these three keys must not land
+                # in a published-grid block without saying they came after
+                # E1-E7 and are descriptive only. Synthetic-side counterpart of
                 # POST_HOC_LABEL travelling into EICU-SUMMARY.md.
                 panel_post_hoc=rp.E6_POST_HOC_NOTE,
-                # POST-HOC panel headline. NOT re-rounded: the panel rounds ONCE
-                # at emit time (rp.ROUND_DP = 6) and a second pass here would
-                # make the last decimal irreproducible. These therefore carry
-                # 6 dp while E6's own keys carry 4 -- that asymmetry is the
+                # Post-hoc panel headline, never re-rounded. The panel rounds
+                # once at emit time (rp.ROUND_DP = 6); a second pass here would
+                # make the last decimal irreproducible. So these carry 6 dp
+                # while E6's own keys carry 4 -- that asymmetry is the
                 # round-once invariant, not an inconsistency.
                 panel_ece_answered=hl["ece_answered"],
                 panel_calibration_slope_answered=hl[
@@ -1009,11 +1028,15 @@ def run_E6(out, quick):
 
 
 def _e6_reliability_figure(out, panel):
-    """POST-HOC panel figure: reliability curve (left) and the constant-majority
-    skill margin by scope (right). Same Paul-Tol hex set and dpi=110 as every
-    other figure in this file. The empty-bin, ci_status and clamped-half-width
-    rules live ONCE, in rp.panel_reliability_series -- run_eicu's panel figure
-    reads the same contract, so the two can no longer drift."""
+    """Post-hoc panel figure: reliability curve left, skill margin right.
+
+    The right panel shows the constant-majority skill margin by scope. Both use
+    the same Paul-Tol hex set and dpi=110 as every other figure here.
+
+    The empty-bin, ci_status and clamped-half-width rules live in exactly one
+    place, rp.panel_reliability_series. run_eicu's panel figure reads the same
+    contract, so the two cannot drift.
+    """
     fig, (axL, axR) = plt.subplots(1, 2, figsize=(11, 4))
     axL.plot([0, 1], [0, 1], color="black", ls="--", lw=1, label="identity")
     for scope, colour in zip(rp.PANEL_CURVE_SCOPES, ("#4477aa", "#cc6677")):
@@ -1021,7 +1044,7 @@ def _e6_reliability_figure(out, panel):
         if xs:
             axL.errorbar(xs, ys, yerr=[lo, hi], marker="o", color=colour,
                          capsize=3, label=f"{scope} (n={len(xs)} bins)")
-    axL.set_title("E6 reliability curve (POST-HOC panel)")
+    axL.set_title("Reliability curve (POST-HOC panel)")
     axL.set_xlabel("mean predicted P(y=1)"); axL.set_ylabel("observed rate")
     axL.legend(fontsize=8)
 
@@ -1030,7 +1053,7 @@ def _e6_reliability_figure(out, panel):
     axR.bar(scopes, [np.nan if m is None else m for m in margins],
             color="#66ccee")
     axR.axhline(0.0, color="black", lw=1)
-    axR.set_title("E6 skill margin vs constant-majority baseline")
+    axR.set_title("Skill margin vs constant-majority baseline")
     axR.set_ylabel("constant error - model error")
     fig.tight_layout(); fig.savefig(os.path.join(out, "E6_reliability.png"),
                                     dpi=rp.FIG_DPI); plt.close(fig)
@@ -1049,17 +1072,21 @@ def _e7_walk(score_cal, err_cal, sid_cal, n_cal, score_aux, err_aux, sid_aux,
 
 
 def run_E7(out, quick):
-    """Record-as-unit comparator (panel S1-13).
+    """Record-as-unit comparator.
 
-    Certify the SAME calibration data two ways: (i) the site-unit walk the
-    paper deploys, and (ii) a record-as-unit walk — ``influence_atoms`` over an
-    ``E7_RECORD_SAMPLE``-record subsample with per-record ids and M=1, i.e. the
-    plain record-level betting certifier of the Geifman–El-Yaniv lineage. The
-    record certifier treats within-site-correlated records as independent
-    draws, which is exactly the anti-conservatism the site-as-unit design
-    exists to prevent; both units are then scored at their own deployed taus
-    against the influence-weighted R_M of one shared fresh
-    ``E1_EVAL_SITES``-site pool.
+    Certifies the same calibration data two ways: the site-unit walk the paper
+    deploys, and a record-as-unit walk -- influence_atoms over an
+    E7_RECORD_SAMPLE-record subsample with per-record ids and M=1.
+
+    That second walk is the plain record-level betting certifier of the
+    Geifman–El-Yaniv lineage. It treats within-site-correlated records as
+    independent draws, which is exactly the anti-conservatism the site-as-unit
+    design exists to prevent.
+
+    Both units are then scored at their own deployed taus against the
+    influence-weighted R_M of one shared fresh E1_EVAL_SITES-site pool.
+
+    Refs: panel S1-13.
     """
     R = 10 if quick else 200
     rows = []
@@ -1153,7 +1180,7 @@ def run_E7(out, quick):
         a.axhline(DELTA, color="black", ls="--", label=f"DELTA={DELTA}")
         a.set_xticks(xpos)
         a.set_xticklabels([f"s_u={s}" for s in E7_SU_ARM])
-        a.set_title(f"E7 site vs record unit (alpha={alpha})")
+        a.set_title(f"Site vs record unit (alpha={alpha})")
         a.set_ylabel("rate"); a.legend(fontsize=7)
     fig.tight_layout(); fig.savefig(os.path.join(out, "E7_comparator.png"),
                                     dpi=110); plt.close(fig)
@@ -1163,20 +1190,25 @@ def run_E7(out, quick):
 # ------------------------------------------------------------------ E8
 
 class _FnHead:
-    """Duck-typed head for E8 arm C: everything downstream of scoring needs
-    only ``.score``/``.predict`` (the reliability-panel precedent). Never fed
-    to explain.py, which requires the linear ``Head``."""
+    """Duck-typed head for E8 arm C.
+
+    Everything downstream of scoring needs only .score and .predict, following
+    the reliability-panel precedent. Never fed to explain.py, which requires
+    the linear Head.
+    """
 
     def __init__(self, score, predict):
         self.score, self.predict = score, predict
 
 
 def _bound_walk(atoms, order, alpha, delta, tau_grid, ucb):
-    """Comparator fixed-sequence walk (SPEC E8 arm A): identical order and
-    stop-at-first-failure semantics as ``certify.fixed_sequence_walk``, with
-    ``ucb(atoms[t], delta) <= alpha`` in place of the betting test. The
-    library walk is untouched (no injection point -- the delta-accounting spy
-    must keep working)."""
+    """Comparator fixed-sequence walk (SPEC E8 arm A).
+
+    Same order and stop-at-first-failure semantics as
+    certify.fixed_sequence_walk, with ucb(atoms[t], delta) <= alpha in place of
+    the betting test. The library walk stays untouched -- no injection point,
+    so the delta-accounting spy keeps working.
+    """
     certified = []
     for t in order:
         if ucb(atoms[t], delta) <= alpha:
@@ -1189,24 +1221,32 @@ def _bound_walk(atoms, order, alpha, delta, tau_grid, ucb):
 
 
 def _flip_labels(cohorts, eta, rng):
-    """E8 arm B aleatoric floor: symmetric label flips at rate eta, drawn from
-    one stream over the cohorts in a fixed order. Applied to train/aux/cal AND
-    the eval pool alike, so exchangeability (Assumption 1) holds by
-    construction -- this floor is irreducible error no threshold can screen."""
+    """E8 arm B aleatoric floor: symmetric label flips at rate eta.
+
+    Flips come from one stream over the cohorts in a fixed order, and are
+    applied to train, aux, cal and the eval pool alike. Exchangeability
+    (Assumption 1) therefore holds by construction. This floor is irreducible
+    error that no threshold can screen away.
+    """
     for c in cohorts:
         flip = rng.random(len(c.y)) < eta
         c.y[flip] = ~c.y[flip]
 
 
 def run_E8(out, quick):
-    """Certificate stress & comparator suite (revision-2; SPEC "E8").
+    """Certificate stress and comparator suite.
 
-    Arm A: four alternative one-sided bounds walked on the IDENTICAL atoms and
-    order as the WSR betting test (review weakness 1; two-sided reading
-    pre-committed in SPEC). Arm B: the label-noise stress frontier (weakness
-    4) -- certify rate must collapse before exceedance appears as the
-    aleatoric floor rises. Arm C: alternative heads (S2-26/S2-27) -- validity
-    is head-agnostic, quality is priced as coverage.
+    Three arms:
+
+      - A: four alternative one-sided bounds, walked on the same atoms and in
+        the same order as the WSR betting test (review weakness 1). The
+        two-sided reading is pre-committed in SPEC.
+      - B: the label-noise stress frontier (weakness 4). Certify rate must
+        collapse before exceedance appears as the aleatoric floor rises.
+      - C: alternative heads (S2-26/S2-27). Validity is head-agnostic; quality
+        is priced as coverage.
+
+    Refs: revision-2; SPEC "E8".
     """
     R = 10 if quick else 200
     noise_R = 6 if quick else E8_NOISE_R
@@ -1457,7 +1497,7 @@ def run_E8(out, quick):
                color=colors[method], ms=3, alpha=0.5)
     a.set_xlabel("n_sites")
     a.set_ylabel("certify rate")
-    a.set_title("E8-A comparator frontiers (solid a=0.10, dashed a=0.05)")
+    a.set_title("Comparator frontiers (solid a=0.10, dashed a=0.05)")
     a.legend(fontsize=7)
     a = axes[1]
     etas = list(E8_NOISE_SWEEP)
@@ -1468,7 +1508,7 @@ def run_E8(out, quick):
            color="#cc6677", label="R_M-exceed rate")
     a.axhline(DELTA, color="black", ls="--", lw=0.8, label=f"DELTA={DELTA}")
     a.set_xlabel("label-noise rate eta")
-    a.set_title("E8-B stress frontier")
+    a.set_title("Stress frontier")
     a.legend(fontsize=7)
     a = axes[2]
     names = ("linear",) + E8_HEAD_ARMS
@@ -1481,7 +1521,7 @@ def run_E8(out, quick):
           color="#66ccee", label="coverage")
     a.set_xticks(xpos)
     a.set_xticklabels(names)
-    a.set_title("E8-C heads (a=0.10)")
+    a.set_title("Heads (a=0.10)")
     a.legend(fontsize=7)
     fig.tight_layout()
     fig.savefig(os.path.join(out, "E8_suite.png"), dpi=110)
@@ -1492,11 +1532,13 @@ def run_E8(out, quick):
 # ------------------------------------------------------------------ E9
 
 def _e9_fnr_rng(budget, stream=""):
-    """Permutation stream for the experimental FNR walks (SPEC
-    "Outcome-weighted atoms"): mirrors ``certify.certification_rng``'s
-    sha256-only construction but indexes ``E9_FNR_LADDER`` and carries a
-    leading ``9`` discriminator, so it can never alias a certification stream.
-    The frozen library function and ``ALPHA_LADDER`` are untouched."""
+    """Permutation stream for the experimental FNR walks.
+
+    Mirrors certify.certification_rng's sha256-only construction, but indexes
+    E9_FNR_LADDER and carries a leading 9 discriminator, so it can never alias
+    a certification stream. The frozen library function and ALPHA_LADDER stay
+    untouched (SPEC "Outcome-weighted atoms").
+    """
     h = hashlib.sha256(str(stream).encode()).digest()
     return np.random.default_rng(np.random.SeedSequence(
         [SEED, 9, E9_FNR_LADDER.index(budget),
@@ -1504,10 +1546,13 @@ def _e9_fnr_rng(budget, stream=""):
 
 
 def _fnr_on_pool(head, pool, tau):
-    """Influence-weighted FN rate among ANSWERED POSITIVES on a fresh pool
-    (SPEC "Outcome-weighted atoms"): FNR_M = sum_c (g_c/n_c) fn_c /
-    sum_c (g_c/n_c) ap_c with g_c = min(n_c, M). NaN when no positives
-    answer."""
+    """Influence-weighted false-negative rate among answered positives.
+
+    On a fresh pool, FNR_M = sum_c (g_c/n_c) fn_c / sum_c (g_c/n_c) ap_c with
+    g_c = min(n_c, M). Returns NaN when no positives answer.
+
+    Refs: SPEC "Outcome-weighted atoms".
+    """
     score = head.score(pool.x)
     err = head.predict(pool.x) != pool.y
     ans = score >= tau
@@ -1526,14 +1571,18 @@ def _fnr_on_pool(head, pool, tau):
 
 
 def run_E9(out, quick):
-    """Power frontiers (revision-2; SPEC "E9").
+    """Power frontiers.
 
-    Arm A: the BBSE label-shift power frontier -- source-site count x declared
-    target mode at the anchor shift, the standard pipeline in bbse mode only
-    (review weakness 3; the single-site-declaration exceedance question is
-    pre-declared in SPEC). Arm B: the outcome-weighted FNR frontier on
-    unmodified atoms (weakness 2; the claim is a frontier and a price, never
-    a tight FNR guarantee).
+    Two arms:
+
+      - A: the BBSE label-shift power frontier -- source-site count crossed
+        with declared target mode at the anchor shift, running the standard
+        pipeline in bbse mode only (review weakness 3). The
+        single-site-declaration exceedance question is pre-declared in SPEC.
+      - B: the outcome-weighted FNR frontier on unmodified atoms (weakness 2).
+        The claim is a frontier and a price, never a tight FNR guarantee.
+
+    Refs: revision-2; SPEC "E9".
     """
     R = 3 if quick else E9_R
     fnr_R = 10 if quick else E9_FNR_R
@@ -1708,7 +1757,7 @@ def run_E9(out, quick):
                 for n in E9_SOURCE_SWEEP], "-o", color=color, label=mode, ms=4)
     a.set_xlabel("declared source sites")
     a.set_ylabel("BBSE certify rate (a=0.10)")
-    a.set_title("E9-A label-shift power frontier")
+    a.set_title("Label-shift power frontier")
     a.legend(fontsize=8)
     a = axes[1]
     for n_sites, color in zip(E9_FNR_SWEEP, ("#cc6677", "#4477aa", "#228833")):
@@ -1717,7 +1766,7 @@ def run_E9(out, quick):
                "-o", color=color, label=f"{n_sites} sites", ms=4)
     a.set_xlabel("FNR budget")
     a.set_ylabel("certify rate")
-    a.set_title("E9-B FNR frontier (outcome-weighted atoms)")
+    a.set_title("FNR frontier (outcome-weighted atoms)")
     a.legend(fontsize=8)
     fig.tight_layout()
     fig.savefig(os.path.join(out, "E9_frontiers.png"), dpi=110)
@@ -1733,11 +1782,13 @@ _RUNNERS = {"E1": run_E1, "E2": run_E2, "E3": run_E3, "E4": run_E4,
 
 
 def _existing_summary_blocks(path):
-    """Parse an existing summary.md into {experiment: rendered ```json block```}
-    so a partial (--only) run can preserve the sections it did not recompute
-    instead of clobbering them to a subset. The header pattern tolerates a
-    "(preserved ...)" suffix so preserved sections survive a second partial
-    run (audit V26)."""
+    """Parse an existing summary.md into {experiment: rendered json block}.
+
+    A partial (--only) run uses this to preserve the sections it did not
+    recompute, instead of clobbering summary.md down to a subset. The header
+    pattern tolerates a "(preserved ...)" suffix, so preserved sections survive
+    a second partial run (audit V26).
+    """
     if not os.path.exists(path):
         return {}
     with open(path, encoding="utf-8") as fh:
@@ -1750,10 +1801,13 @@ def _existing_summary_blocks(path):
 
 
 def _write_summary(out, results, quick):
-    """Write summary.md. Every fresh block is stamped with its own run mode and
-    UTC timestamp, and preserved sections are visibly marked in the header --
-    a FULL header above a QUICK-computed block was indistinguishable before
-    (audit V26)."""
+    """Write summary.md.
+
+    Every fresh block is stamped with its own run mode and UTC timestamp, and
+    preserved sections are marked in the header. Without those marks a "FULL"
+    header could sit above a quick-computed block, with nothing to tell them
+    apart (audit V26).
+    """
     path = os.path.join(out, "summary.md")
     # preserve prior sections for experiments not recomputed in this run
     preserved = _existing_summary_blocks(path)
@@ -1810,11 +1864,11 @@ def main(argv=None):
                 print(f"[certgate] {name} done: "
                       f"{_headline(name, results[name])}")
     finally:
-        # an aborted run (e.g. E3's poison-verification gate) must never leave
-        # fresh CSVs beside a silently stale summary (audit V26)
+        # An aborted run (e.g. E3's poison-verification gate) must never leave
+        # fresh CSVs beside a silently stale summary (audit V26).
         _write_summary(args.out, results, args.quick)
-        # run-level provenance beside the artifacts (panel S2-24): package
-        # versions, python, protocol seed, what ran and in which mode
+        # Run-level provenance beside the artifacts (panel S2-24): package
+        # versions, python, protocol seed, what ran and in which mode.
         with open(os.path.join(args.out, "provenance.json"), "w") as fh:
             json.dump(provenance(selected=",".join(selected),
                                  quick=bool(args.quick)), fh, indent=2)

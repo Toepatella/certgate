@@ -9,7 +9,7 @@
 {
   "_run": {
     "mode": "FULL",
-    "utc": "2026-08-21T16:39:15+00:00"
+    "utc": "2026-08-25T07:27:10+00:00"
   },
   "R": 200,
   "eval_sites": 200,
@@ -106,7 +106,7 @@
 {
   "_run": {
     "mode": "FULL",
-    "utc": "2026-08-21T16:39:15+00:00"
+    "utc": "2026-08-25T07:27:10+00:00"
   },
   "R": 200,
   "target_base_rate": 0.22,
@@ -354,7 +354,7 @@
 {
   "_run": {
     "mode": "FULL",
-    "utc": "2026-08-21T16:39:15+00:00"
+    "utc": "2026-08-25T07:27:10+00:00"
   },
   "R": 200,
   "concept_intercept": 2.0,
@@ -388,12 +388,12 @@
 }
 ```
 
-## E4 (preserved from an earlier run)
+## E4
 ```json
 {
   "_run": {
     "mode": "FULL",
-    "utc": "2026-08-10T18:39:49+00:00"
+    "utc": "2026-08-25T07:27:10+00:00"
   },
   "R": 200,
   "sweep": [
@@ -478,12 +478,12 @@
 }
 ```
 
-## E5 (preserved from an earlier run)
+## E5
 ```json
 {
   "_run": {
     "mode": "FULL",
-    "utc": "2026-08-10T18:39:49+00:00"
+    "utc": "2026-08-25T07:27:10+00:00"
   },
   "tau_star": 0.55,
   "n_answered": 200,
@@ -535,12 +535,12 @@
 }
 ```
 
-## E6 (preserved from an earlier run)
+## E6
 ```json
 {
   "_run": {
     "mode": "FULL",
-    "utc": "2026-08-10T18:39:49+00:00"
+    "utc": "2026-08-25T07:27:10+00:00"
   },
   "tau_star": 0.55,
   "size_bins": [
@@ -577,12 +577,12 @@
 }
 ```
 
-## E7 (preserved from an earlier run)
+## E7
 ```json
 {
   "_run": {
     "mode": "FULL",
-    "utc": "2026-08-10T18:39:49+00:00"
+    "utc": "2026-08-25T07:27:10+00:00"
   },
   "R": 200,
   "record_sample": 2000,
@@ -652,12 +652,12 @@
 }
 ```
 
-## E8 (preserved from an earlier run)
+## E8
 ```json
 {
   "_run": {
     "mode": "FULL",
-    "utc": "2026-08-20T20:18:59+00:00"
+    "utc": "2026-08-25T07:27:10+00:00"
   },
   "R": 200,
   "noise_R": 300,
@@ -978,12 +978,12 @@
 }
 ```
 
-## E9 (preserved from an earlier run)
+## E9
 ```json
 {
   "_run": {
     "mode": "FULL",
-    "utc": "2026-08-20T20:18:59+00:00"
+    "utc": "2026-08-25T07:27:10+00:00"
   },
   "R": 50,
   "fnr_R": 200,
