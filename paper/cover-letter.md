@@ -14,12 +14,12 @@ One request on refereeing. The certificate's validity rests on a betting-marting
 
 The eICU-CRD data were accessed under PhysioNet's credentialed license and Data Use Agreement; the database is de-identified under the HIPAA Safe Harbor provision (certified by Privacert, HIPAA Certification no. 1031219-2), and this retrospective secondary analysis required no additional ethics approval. All released artifacts derived from it are aggregate-only. The complete implementation and every synthetic result are reproducible from the public repository named in the manuscript.
 
-This manuscript is original, has not been published previously, and is not under consideration elsewhere. All authors have approved the submission and have no competing interests to declare. [[TBC:adjust-if-competing-interests-exist]]
+This manuscript is original, has not been published previously, and is not under consideration elsewhere. The author has approved the submission and has no competing interests to declare.
 
 Thank you for your consideration.
 
 Sincerely,
 
-[[TBC:corresponding-name]]
-[[TBC:affiliation]]
-[[TBC:corresponding-email]]
+Tony Zhang
+Department of Physiology and Pharmacology, Western University, London, Ontario, Canada
+tzhan659@uwo.ca

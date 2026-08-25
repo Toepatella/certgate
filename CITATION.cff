@@ -2,8 +2,8 @@ cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 title: "CertGate: finite-sample certified selective prediction for multi-site clinical risk models"
 authors:
-  - family-names: "[[TBC:family-name]]"
-    given-names: "[[TBC:given-names]]"
+  - family-names: "Zhang"
+    given-names: "Tony"
 repository-code: "https://github.com/Toepatella/certgate"
 license: MIT
 keywords:
@@ -17,8 +17,8 @@ preferred-citation:
   type: article
   title: "CertGate: finite-sample certified selective prediction for multi-site clinical risk models, with label-shift robustness and explainable abstention"
   authors:
-    - family-names: "[[TBC:family-name]]"
-      given-names: "[[TBC:given-names]]"
+    - family-names: "Zhang"
+      given-names: "Tony"
   journal: "Discover Computing"
   year: 2026
   notes: "Submitted to the collection 'Intelligent Medicine: Machine Learning and Explainable AI for Next-Generation Healthcare'; update this citation on publication."

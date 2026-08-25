@@ -1,10 +1,10 @@
 # CertGate: finite-sample certified selective prediction for multi-site clinical risk models, with label-shift robustness and explainable abstention
 
-[[TBC:author-names]]$^{1}$ [[TBC:orcid]]
+Tony Zhang$^{1}$
 
-$^{1}$ [[TBC:affiliation — department, institution, city, country]]
+$^{1}$ Department of Physiology and Pharmacology, Western University, London, Ontario, Canada
 
-**Corresponding author:** [[TBC:corresponding-name]], [[TBC:corresponding-email]]
+**Corresponding author:** Tony Zhang, tzhan659@uwo.ca
 
 ---
 
@@ -166,7 +166,7 @@ Of the frozen constants, $M$ is the one that visibly moves the certificate, so t
 
 This section reports what the same pipeline did on a cohort nobody constructed. The eICU Collaborative Research Database v2.0 [@pollard2019eicudb; @pollard2018eicu; @pollard2026physionet; @goldberger2000physionet] contains 200,859 ICU stays from 139,367 patients at 208 US hospitals in 2014–2015, under credentialed access and a data use agreement forbidding sharing access. We extend that obligation, as our own release policy, to any record-level derived artifact: every artifact behind this section is aggregate, and the release code refuses to write anything record-level.
 
-The cohort predicates, a 161-column feature allowlist (everything not explicitly allowed is excluded), a 36-entry leak denylist, the split arithmetic, seven numbered predictions and five failure criteria were written from the database's published schema and column documentation and committed before the extract was downloaded; their outcomes are reported where they arise, and no failure criterion fired. A dated commit in a repository the authors control is weaker evidence than a third-party registry timestamp. The protocol constants are pinned in advance in the manner of Section 3.2, so a post-hoc edit would be visible.
+The cohort predicates, a 161-column feature allowlist (everything not explicitly allowed is excluded), a 36-entry leak denylist, the split arithmetic, seven numbered predictions and five failure criteria were written from the database's published schema and column documentation and committed before the extract was downloaded; their outcomes are reported where they arise, and no failure criterion fired. A dated commit in a repository the author controls is weaker evidence than a third-party registry timestamp. The protocol constants are pinned in advance in the manner of Section 3.2, so a post-hoc edit would be visible.
 
 **Cohort.** The unit is the first ICU stay of each hospital admission, the outcome in-hospital mortality from a single documented column, the site the hospital. Table 1 runs 200,859 raw stays down to 164,322 over 207 hospitals at 8.89% prevalence, recording deaths at every step so an outcome-correlated exclusion surfaces as a prevalence movement. Three standard eICU cohort filters — a length-of-stay floor, a minimum-stays cut, an APACHE-completeness requirement — are deliberately absent: each would move the site population the estimand averages over, and all three make certification harder (arguments in Supplementary Information A.3). One hospital contributes no stay with a usable outcome, which is why the primary cohort spans 207 sites rather than 208. Twenty-four hospitals are held out as the target population and the remaining 183 split 73 / 36 / 74 into train, auxiliary and calibration; the procedure repeats over 20 by-site re-splits.
 
@@ -443,13 +443,9 @@ The figures and tables below extend the main text's results with the detail relo
 
 Spearman correlation between the two rank orderings: 0.58. The top driver is the same under both; the ordering beneath it is not.
 
-# Acknowledgements
-
-[[TBC:acknowledgements — optional; delete this section if unused]]
-
 # Data availability
 
-This study uses two data sources. The synthetic cohorts of Sections 4.2–4.8 and 4.12–4.14 are generated deterministically by the included code, publicly available at https://github.com/Toepatella/certgate; the experiment grid regenerates Figures 4–5 and the synthetic Supplementary figures and tables from a single command (`python -m experiments.run_synthetic`), and Supplementary Tables S4–S5 from a second read-only command (`python -m experiments.panel_s2_tables`). The real-data results of Section 4.10 use the eICU Collaborative Research Database v2.0 [@pollard2019eicudb; @pollard2018eicu; @pollard2026physionet; @goldberger2000physionet], which the authors accessed under the PhysioNet Credentialed Health Data License 1.5.0 and a signed Data Use Agreement 1.5.0. That dataset is **not redistributable by us**; as a matter of our own release policy under the agreement's disclosure-avoidance clauses, we treat derived record-level artifacts the same way, so every artifact we release from it is aggregate. eICU-CRD is available from PhysioNet (https://physionet.org/content/eicu-crd/2.0/) to any researcher who completes the required human-subjects training (CITI "Data or Specimens Only Research") and signs the same agreement, and the released code contains the complete extract-to-certificate pipeline, so Section 4.10 is reproducible by such a researcher from their own copy.
+This study uses two data sources. The synthetic cohorts of Sections 4.2–4.8 and 4.12–4.14 are generated deterministically by the included code, publicly available at https://github.com/Toepatella/certgate; the experiment grid regenerates Figures 4–5 and the synthetic Supplementary figures and tables from a single command (`python -m experiments.run_synthetic`), and Supplementary Tables S4–S5 from a second read-only command (`python -m experiments.panel_s2_tables`). The real-data results of Section 4.10 use the eICU Collaborative Research Database v2.0 [@pollard2019eicudb; @pollard2018eicu; @pollard2026physionet; @goldberger2000physionet], which the author accessed under the PhysioNet Credentialed Health Data License 1.5.0 and a signed Data Use Agreement 1.5.0. That dataset is **not redistributable by us**; as a matter of our own release policy under the agreement's disclosure-avoidance clauses, we treat derived record-level artifacts the same way, so every artifact we release from it is aggregate. eICU-CRD is available from PhysioNet (https://physionet.org/content/eicu-crd/2.0/) to any researcher who completes the required human-subjects training (CITI "Data or Specimens Only Research") and signs the same agreement, and the released code contains the complete extract-to-certificate pipeline, so Section 4.10 is reproducible by such a researcher from their own copy.
 
 # Code availability
 
@@ -457,15 +453,15 @@ The complete implementation — the certification package, the synthetic experim
 
 # Funding
 
-[[TBC:funding — mandatory even if none; if none use: "The authors received no funding for this work."]]
+The author received no funding for this work.
 
 # Author contributions
 
-[[TBC:author-contributions — CRediT-style; single-author example: "N.N. conceived and designed the method, implemented the software, performed the experiments, and wrote the manuscript."]]
+T.Z. conceived and designed the method, implemented the software, performed the experiments, and wrote the manuscript.
 
 # Ethics approval and consent to participate
 
-The synthetic components of this study involve no human subjects and no patient data. Section 4.10 analyses the eICU Collaborative Research Database v2.0, a de-identified retrospective database of intensive-care admissions distributed by PhysioNet under a credentialed licence and Data Use Agreement. The database is de-identified to meet the Safe Harbor provision of the US Health Insurance Portability and Accountability Act, with all protected health information removed and the re-identification risk certified as meeting Safe Harbor standards by Privacert (Cambridge, MA; HIPAA Certification no. 1031219-2); hospital and unit identifiers are likewise removed by the distributors and replaced with pseudonymous codes. Because this work is a retrospective secondary analysis of that existing de-identified database under the terms of the agreement, it required no additional ethics approval. The authors completed the required human-subjects research training and are bound by that agreement, including its prohibition on sharing access to the data and on attempting re-identification.
+The synthetic components of this study involve no human subjects and no patient data. Section 4.10 analyses the eICU Collaborative Research Database v2.0, a de-identified retrospective database of intensive-care admissions distributed by PhysioNet under a credentialed licence and Data Use Agreement. The database is de-identified to meet the Safe Harbor provision of the US Health Insurance Portability and Accountability Act, with all protected health information removed and the re-identification risk certified as meeting Safe Harbor standards by Privacert (Cambridge, MA; HIPAA Certification no. 1031219-2); hospital and unit identifiers are likewise removed by the distributors and replaced with pseudonymous codes. Because this work is a retrospective secondary analysis of that existing de-identified database under the terms of the agreement, it required no additional ethics approval. The author completed the required human-subjects research training and is bound by that agreement, including its prohibition on sharing access to the data and on attempting re-identification.
 
 # Consent for publication
 
@@ -473,7 +469,7 @@ Not applicable.
 
 # Competing interests
 
-[[TBC:competing-interests — mandatory even if none; if none use: "The authors declare no competing interests."]]
+The author declares no competing interests.
 
 # Figures
 

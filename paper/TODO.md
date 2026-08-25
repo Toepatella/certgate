@@ -396,19 +396,22 @@ carrying its ready-made "if none" wording inline. The build script
 nothing can ship silently incomplete. A `# Code availability` section now exists (SN code
 policy wants a permanent DOI, not a bare GitHub link), which adds the Zenodo item below.]**
 
-- [ ] Author name(s) + ORCID (`[[TBC:author-names]]`, `[[TBC:orcid]]`)
-- [ ] Affiliation — department, institution, city, country (`[[TBC:affiliation]]`)
-- [ ] Corresponding author name + email (`[[TBC:corresponding-*]]`)
-- [ ] **Funding** statement (mandatory even if "none" — default wording is inline in the token)
-- [ ] **Author contributions** (mandatory at Discover Computing — CRediT example inline)
-- [ ] **Competing interests** (mandatory even if "none" — default wording inline)
-- [ ] Acknowledgements (optional — delete the section if unused)
-- [ ] Author name into `LICENSE` (MIT) and `CITATION.cff`
+- [x] Author name(s) + ORCID (`[[TBC:author-names]]`, `[[TBC:orcid]]`)
+- [x] Affiliation — department, institution, city, country (`[[TBC:affiliation]]`)
+- [x] Corresponding author name + email (`[[TBC:corresponding-*]]`)
+- [x] **Funding** statement (mandatory even if "none" — default wording is inline in the token)
+- [x] **Author contributions** (mandatory at Discover Computing — CRediT example inline)
+- [x] **Competing interests** (mandatory even if "none" — default wording inline)
+- [x] Acknowledgements (optional — delete the section if unused)
+- [x] Author name into `LICENSE` (MIT) and `CITATION.cff`
 - [ ] **Mint the Zenodo DOI**: link GitHub → Zenodo, create a `v1.0.0` release at the
       submission-candidate tag, paste the DOI into `# Code availability` and `CITATION.cff`
-- [ ] Confirm https://github.com/Toepatella/certgate is PUBLIC before submission — the Data
+- [x] Confirm https://github.com/Toepatella/certgate is PUBLIC before submission — the Data
       availability section now names it, and DUA clause 9 requires contributing the code to an
       open repository when results are disseminated. (Do this AFTER the LICENSE name is filled.)
+
+**[Status 2026-08-25: filled. Author Tony Zhang, Department of Physiology and Pharmacology, Western University, London, Ontario, Canada; corresponding tzhan659@uwo.ca. ORCID field DROPPED at the author's request (it was never reaching the PDF anyway — `make_submission.py` cuts the title-block line at the first `$`, and the token sat after `$^{1}$`). Funding and competing-interests use the no-funding / no-competing wording, singularised for one author. Acknowledgements section deleted. Repo confirmed public. ONLY the Zenodo DOI remains: link GitHub→Zenodo, publish a release at tag `submission-candidate-3`, then paste the CONCEPT (all-versions) DOI into `# Code availability` and `CITATION.cff`.]**
+
 
 ## 7. Optional related-work additions — APPLIED 2026-08-10
 
