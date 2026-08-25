@@ -1,19 +1,18 @@
-"""The POST-HOC selective reliability panel (SPEC "reliability.py").
+"""Tests for the post-hoc selective reliability panel.
 
-Ported byte-exactly from the verified ``selective-reliability-panel/srp``
-sandbox, so this file has two jobs at once:
+certgate/reliability.py is a byte-exact port of the selective-reliability-panel
+sandbox, so this file has two jobs.
 
-1. re-assert the sandbox's own contract on certgate soil -- every number in the
-   analytic fixture computed BY HAND in this file, never against whatever the
-   implementation happens to return;
-2. lock the NUMERICAL EQUIVALENCE with the sandbox permanently, via a pinned
-   sha256 over the emitted dict on a frozen fixture. srp is neither installed
-   nor in ``requirements.txt`` and must never be imported here, so the pin is
-   the only thing that can carry that equivalence forward.
+  - Re-assert the sandbox's contract on certgate soil: every number in the
+    analytic fixture is computed by hand here, never read back from the
+    implementation.
+  - Lock numerical equivalence with the sandbox, via the pinned sha256 in
+    section 10.
 
-Speed: the frozen ``N_BOOT = 2000`` is the PRODUCTION value and only
-``tests/test_constants.py`` asserts it. Everything here runs at
-``FAST_N_BOOT``.
+Speed: the frozen N_BOOT = 2000 is the production value, asserted only by
+tests/test_constants.py. Everything here runs at FAST_N_BOOT.
+
+Refs: SPEC "reliability.py".
 """
 import ast
 import hashlib
@@ -61,8 +60,8 @@ def _sigmoid(z):
 def _calibrated_draw(n, seed, temperature=1.0):
     """Labels from a true probability; scores are that probability re-tempered.
 
-    ``logit(reported) = logit(true) / temperature``, so the true model of y on
-    ``logit(reported)`` has slope == temperature.
+    logit(reported) = logit(true) / temperature, so the true model of y on
+    logit(reported) has slope == temperature.
     """
     rng = np.random.default_rng(seed)
     z_true = rng.normal(-1.2, 1.7, size=n)
@@ -71,7 +70,7 @@ def _calibrated_draw(n, seed, temperature=1.0):
 
 
 # ==========================================================================
-# 1. the analytic fixture -- every number computed by hand IN THIS FILE
+# 1. the analytic fixture -- every number computed by hand in this file
 # ==========================================================================
 #
 #     idx   p      y      answered  site   bin
@@ -90,9 +89,9 @@ def _calibrated_draw(n, seed, temperature=1.0):
 #     12    0.90   True   no        4      6
 #     13    0.90   True   no        4      6
 #
-# Five sites is BELOW MIN_SITES_FOR_CI = 10, so all 18 intervals are suppressed
-# with n_attempts == 0: ZERO bootstrap cost, and this one fixture covers all six
-# statistics arithmetically.
+# Five sites is below MIN_SITES_FOR_CI = 10, so all 18 intervals are suppressed
+# with n_attempts == 0. That costs no bootstrap work, and one fixture still
+# covers all six statistics arithmetically.
 
 A_P = np.array([0.01, 0.01, 0.01, 0.01, 0.30, 0.30, 0.60, 0.60, 0.80, 1.00,
                 0.10, 0.10, 0.90, 0.90])
@@ -111,9 +110,7 @@ def analytic():
 
 
 def test_analytic_fixture_every_number_by_hand(analytic):
-    """Counts, both reliability curves, both ECEs, the Brier, all three skill
-    triples, both contrasts and the three-way composition -- each asserted
-    against arithmetic written out beside it."""
+    """Every emitted statistic, checked against arithmetic written here."""
     c = analytic["counts"]
     assert c["n_records"] == 14 and c["n_sites"] == 5
     assert c["n_answered"] == 10 and c["n_declined"] == 4
@@ -180,12 +177,12 @@ def test_analytic_fixture_every_number_by_hand(analytic):
 
     # -- item 5, the skill triples ------------------------------------------
     # answered: yhat = p >= 0.5 -> [F,F,F,F,F,F,T,T,T,T]; y = [T,F,F,F,T,F,T,T,T,F]
-    # disagreements at 0, 4, 9 -> 3/10; positives 0,4,6,7,8 -> 5/10, an EXACT tie
+    # disagreements at 0, 4, 9 -> 3/10; positives 0,4,6,7,8 -> 5/10, an exact tie
     s = analytic["skill"]["answered"]
     assert s["n"] == 10 and s["n_positive"] == 5
     assert s["positive_rate"] == pytest.approx(0.5, abs=TOL)
     assert s["model_error_rate"] == pytest.approx(0.3, abs=TOL)
-    assert s["constant_predictor_class"] is False   # STRICT >: a 0.5 tie is NEGATIVE
+    assert s["constant_predictor_class"] is False   # strict >: a 0.5 tie is negative
     assert s["constant_predictor_error_rate"] == pytest.approx(0.5, abs=TOL)
     assert s["skill_margin"] == pytest.approx(0.2, abs=TOL)      # 0.5 - 0.3
     # declined: yhat = [F,F,T,T] == y -> no disagreement
@@ -201,7 +198,7 @@ def test_analytic_fixture_every_number_by_hand(analytic):
     con = analytic["skill"]["contrast"]
     assert con["answered_minus_all"] == pytest.approx(-0.085714, abs=TOL)
     assert con["answered_minus_declined"] == pytest.approx(-0.3, abs=TOL)
-    assert "n_sites_carrying" not in con      # THE ONLY block without that key
+    assert "n_sites_carrying" not in con      # the only block without that key
 
     # -- item 6, composition ------------------------------------------------
     ca = analytic["composition"]["answered"]
@@ -223,8 +220,7 @@ def test_analytic_fixture_every_number_by_hand(analytic):
 
 
 def test_analytic_fixture_suppresses_all_eighteen_intervals_before_any_work(analytic):
-    """Five sites is below the cluster floor: every interval is suppressed and
-    NO resampling work was done (n_attempts == 0 everywhere)."""
+    """Below the cluster floor: all 18 intervals suppressed, no work done."""
     suppressed = 0
     for scope in ("answered", "declined"):
         for record in analytic["reliability"][scope]:
@@ -251,7 +247,7 @@ def test_analytic_reference_block_on_the_same_records():
     ref[4] = 0.50   # y True -> 0.25             ; primary (0.30-1)^2 = 0.49
     ref[6] = 0.90   # y True -> 0.01             ; primary (0.60-1)^2 = 0.16
     ref[8] = 0.70   # y True -> 0.09             ; primary (0.80-1)^2 = 0.04
-    ref[12] = 0.50  # DECLINED -- must be ignored entirely
+    ref[12] = 0.50  # declined -- must be ignored entirely
 
     panel = rp.selective_reliability_panel(A_P, A_ANSWERED, A_SITE, A_Y, ref,
                                            n_boot=16, timestamp=FIXED_TIMESTAMP)
@@ -265,7 +261,7 @@ def test_analytic_reference_block_on_the_same_records():
         (0.9801 + 0.49 + 0.16 + 0.04) / 4.0, abs=TOL)
     assert block["brier_primary_matched"] == pytest.approx(0.417525, abs=TOL)
     assert block["brier_difference"] == pytest.approx(0.2475 - 0.417525, abs=TOL)
-    # the UNMATCHED primary keeps the WIDER denominator and is a different number
+    # the unmatched primary keeps the wider denominator, a different number
     assert panel["brier"]["primary_answered"]["value"] == pytest.approx(
         0.29204, abs=TOL)
     assert panel["counts"]["reference_supplied"] is True
@@ -278,25 +274,27 @@ def test_analytic_reference_block_on_the_same_records():
 
 def test_bin_assignment_and_the_1_01_sentinel():
     edges = rp.DEFAULT_BIN_EDGES
-    # p == 1.0 lands in the LAST bin -- the sentinel's whole purpose
+    # p == 1.0 lands in the last bin -- the sentinel's whole purpose
     assert int(rp.assign_bins(np.array([1.0]), edges)[0]) == len(edges) - 2
-    # bin_bounds clamps the EMITTED hi, so the last bin READS [0.55, 1.0]
+    # bin_bounds clamps the emitted hi, so the last bin reads [0.55, 1.0]
     assert rp.bin_bounds(edges)[-1] == (0.55, 1.0)
     # per-bin counts sum to the subset size for an arbitrary p
     p = np.linspace(0.0, 1.0, 501)
     bins = rp.assign_bins(p, edges)
     assert int(np.bincount(bins, minlength=len(edges) - 1).sum()) == p.size
     assert not bool((bins < 0).any())
-    # replacing 1.01 with 1.0 would silently DROP every p == 1.0 record
+    # replacing 1.01 with 1.0 would silently drop every p == 1.0 record
     assert int(rp.assign_bins(np.array([1.0]), (0.0, 0.5, 1.0))[0]) == -1
     # outside the span -> -1 (lower-closed / upper-open)
     assert rp.assign_bins(np.array([-0.1, 2.0]), edges).tolist() == [-1, -1]
 
 
 def test_an_unbinned_record_is_a_loud_error_not_a_silent_drop():
-    """Dropping changes the denominator; folding into a neighbour corrupts the
-    flattened (site, bin) index arithmetic. Both consumers raise, naming the
-    FIRST offending index and value."""
+    """Both consumers raise, naming the first offending index and value.
+
+    Dropping the record would change the denominator. Folding it into a
+    neighbouring bin would corrupt the flattened (site, bin) index arithmetic.
+    """
     p = np.array([0.1, 0.9, 0.4])
     y = np.array([True, False, True])
     sid = np.zeros(3, dtype=np.int64)
@@ -310,31 +308,30 @@ def test_an_unbinned_record_is_a_loud_error_not_a_silent_drop():
 
 
 def test_dashboard_bin_edges_match(tmp_path):
-    """The panel and the explain dashboard must bin the same probabilities the
-    same way.
+    """The panel and the explain dashboard must bin the same way.
 
-    The dashboard now IMPORTS ``DEFAULT_BIN_EDGES`` instead of restating it, so
-    the tuples are identical by construction. That alone is NOT what this test
-    checks: a shared constant does not make two instruments bin the same way,
-    and an identity assertion on the alias would pass for a dashboard that
-    imported the tuple and then binned a different quantity, a different scope,
-    or a shifted boundary. This asserts the EMITTED BINS AGREE, on real
-    payloads, which is the drift that matters and which neither the old
-    source-parsing pin nor a bare identity check covered.
+    The dashboard imports DEFAULT_BIN_EDGES rather than restating it, so the
+    two tuples are identical by construction. That alone is not the point: an
+    identity check would still pass for a dashboard that binned a different
+    quantity, a different scope, or a shifted boundary.
 
-    Measured discriminating power on this fixture: binning ``score`` instead of
-    ``predict_proba`` -> [0]*6 + [497] vs [275, 115, 64, 34, 0, 0, 9]; binning
-    all records instead of the answered ones -> the last three bins fill;
-    moving one boundary 0.02 -> 0.03 -> the first two bins move. It does NOT
-    catch replacing the 1.01 sentinel with 1.0, because that only shows up on a
-    record at exactly ``p == 1.0`` and this fixture has none -- that one is
-    pinned directly by ``test_bin_assignment_and_the_1_01_sentinel`` here and
-    by ``test_panel_bin_edges`` in tests/test_constants.py.
+    So this asserts the emitted bins agree, on real payloads. Measured
+    discriminating power on this fixture:
+
+      - score instead of predict_proba -> [0]*6 + [497] vs
+        [275, 115, 64, 34, 0, 0, 9]
+      - all records instead of the answered ones -> the last three bins fill
+      - one boundary moved 0.02 -> 0.03 -> the first two bins move
+
+    It misses one case: swapping the 1.01 sentinel for 1.0 shows up only on a
+    record at exactly p == 1.0, and this fixture has none. That case is pinned
+    by test_bin_assignment_and_the_1_01_sentinel here and by
+    test_panel_bin_edges in tests/test_constants.py.
     """
     from examples import explain_dashboard as dash
 
-    # cheap belt: the literal must not come back (the import is what makes the
-    # two tuples one object; this catches a revert to a second literal)
+    # cheap belt: the literal must not come back. The import is what makes the
+    # two tuples one object, so this catches a revert to a second literal.
     src = (REPO / "examples" / "explain_dashboard.py").read_text(encoding="utf-8")
     literals = [node for node in ast.walk(ast.parse(src))
                 if isinstance(node, ast.Assign)
@@ -356,8 +353,8 @@ def test_dashboard_bin_edges_match(tmp_path):
     out = tmp_path / "explain_dashboard.html"
     dash.build_dashboard(head, cal.x, tau, str(out), oracle_y=cal.y,
                          site_ids=[cal.site_labels[i] for i in cal.site_id])
-    # json.dumps emits the payload on ONE line, so no multi-line parse is
-    # needed (and a non-greedy regex would stop at a `};` inside a string)
+    # json.dumps emits the payload on one line, so no multi-line parse is
+    # needed. A non-greedy regex would stop at the first `};` inside a string.
     prefix = "const DATA = "
     line = next(l for l in out.read_text(encoding="utf-8").splitlines()
                 if l.startswith(prefix))
@@ -371,17 +368,17 @@ def test_dashboard_bin_edges_match(tmp_path):
     assert [(b["lo"], b["hi"]) for b in panel["reliability"]["answered"]] == \
         list(rp.bin_bounds(rp.DEFAULT_BIN_EDGES))
 
-    # 2. same MEMBERSHIP: the dashboard bins the answered records, so its
+    # 2. same membership: the dashboard bins the answered records, so its
     #    per-bin n must equal the panel's answered per-bin n, bin for bin.
-    #    This is what catches a `>` for a `>=`, a dropped sentinel, or a
-    #    shifted boundary -- none of which the shared constant prevents.
+    #    This catches a `>` for a `>=`, a dropped sentinel or a shifted
+    #    boundary -- none of which the shared constant prevents.
     assert [b["n"] for b in payload["reliability"]] == \
         [b["n"] for b in panel["reliability"]["answered"]]
     assert sum(b["n"] for b in payload["reliability"]) == \
         panel["counts"]["n_answered"]
 
-    # 3. and the same binned QUANTITY (predict_proba, never score): a dashboard
-    #    binning `score` would put every record in the top three bins.
+    # 3. and the same binned quantity, predict_proba and never score: a
+    #    dashboard binning score would put every record in the top three bins.
     for d_bin, p_bin in zip(payload["reliability"],
                             panel["reliability"]["answered"]):
         if d_bin["n"]:
@@ -390,7 +387,7 @@ def test_dashboard_bin_edges_match(tmp_path):
 
 
 # ==========================================================================
-# 3. THE conflation trap: the binned quantity is predict_proba, never score
+# 3. the conflation trap: the binned quantity is predict_proba, never score
 # ==========================================================================
 
 
@@ -407,12 +404,12 @@ def head_cohort():
 
 
 def test_the_binned_quantity_is_predict_proba_not_score(head_cohort):
-    """THE mutation-killer for the known trap.
+    """The mutation-killer for the conflation trap.
 
-    ``score(x) = max(p1, 1-p1)`` lives in [0.5, 1], so a panel built on it has
-    ZERO occupancy in every bin below 0.5 and an inverted calibration slope --
-    yet it passes ``validate_inputs`` silently, because it is finite and in
-    [0, 1]. Only this test catches the substitution.
+    score(x) = max(p1, 1-p1) lives in [0.5, 1]. A panel built on it has no
+    occupancy in any bin below 0.5 and an inverted calibration slope. It still
+    passes validate_inputs, because it is finite and in [0, 1], so only this
+    test catches the substitution.
     """
     head, tgt = head_cohort
     p1 = np.asarray(head.predict_proba(tgt.x), dtype=np.float64)
@@ -474,19 +471,20 @@ def test_panel_from_head_cross_checks_the_deployed_mask(head_cohort):
     assert c["skill"]["contrast"]["answered_minus_all"] is None
     json.dumps(c, allow_nan=False)
 
-    # tau_star None AND no mask is refused: the panel will not invent a gate
+    # tau_star None and no mask is refused: the panel will not invent a gate
     with pytest.raises(PanelError) as excinfo:
         rp.panel_from_head(head, tgt.x, tgt.y, tgt.site_id, None, **fast())
     assert "no-gate-supplied" in str(excinfo.value)
 
 
 def test_a_rounded_tau_is_what_deployed_mask_mismatch_catches(head_cohort):
-    """A mask re-derived from a tau ROUNDED to 6 dp disagrees with the deployed
-    one at the boundary, and that disagreement is the whole point of the
-    cross-check. Constructed exactly, not by luck: pick a score whose 6-dp
-    rounding moves it UP, deploy at that RAW score as tau (so the record is
-    answered), then re-derive the mask from the rounded tau -- the record falls
-    out and the panel must refuse."""
+    """A tau rounded to 6 dp yields a mask that disagrees at the boundary.
+
+    That disagreement is the whole point of the cross-check. It is constructed,
+    not lucky: deploy at a raw score whose 6-dp rounding moves it up, then
+    re-derive the mask from the rounded tau. The record falls out, and the
+    panel must refuse.
+    """
     head, tgt = head_cohort
     conf = np.asarray(head.score(tgt.x), dtype=np.float64)
     rounds_up = np.flatnonzero(np.array([round(float(s), 6) > float(s)
@@ -497,7 +495,7 @@ def test_a_rounded_tau_is_what_deployed_mask_mismatch_catches(head_cohort):
     assert rounded > raw_tau
     stale = conf >= rounded                     # the mask a rounded tau produces
     deployed = conf >= raw_tau
-    assert not np.array_equal(stale, deployed)  # they differ AT THE BOUNDARY
+    assert not np.array_equal(stale, deployed)  # they differ at the boundary
 
     # the deployed mask at the raw tau is accepted
     rp.panel_from_head(head, tgt.x, tgt.y, tgt.site_id, raw_tau,
@@ -524,9 +522,7 @@ def _rate_closure(y, order, starts):
 
 
 def test_bootstrap_replay_matches_an_independent_rng():
-    """The strictest reading of the contract, replayed line by line: the draw is
-    ``rng.integers(0, n_sites, n_sites)`` from the FULL population, and the
-    quantile is ONE np.quantile(..., method='linear') call."""
+    """Replay the contract line by line against an independent generator."""
     n_sites, per_site, n_boot = 30, 20, FAST_N_BOOT
     rng_data = np.random.default_rng(7)
     site_rate = rng_data.random(n_sites)
@@ -565,13 +561,14 @@ def test_a_site_drawn_twice_doubles_both_numerator_and_denominator():
 
 
 def test_site_bootstrap_is_wider_than_a_record_bootstrap():
-    """RP-2. Half the sites sit at rate 0.9, half at 0.1.
+    """Half the sites sit at rate 0.9, half at 0.1.
 
-    A record bootstrap sees 2000 near-independent Bernoulli draws around 0.5 and
-    produces a narrow interval; a site bootstrap sees 40 exchangeable site means
-    and produces a much wider one. A record bootstrap HERE would reintroduce,
-    inside the diagnostic layer, exactly the record-as-unit failure E7 exists to
-    demonstrate.
+    A record bootstrap sees 2000 near-independent Bernoulli draws around 0.5
+    and produces a narrow interval. A site bootstrap sees 40 exchangeable site
+    means and produces a much wider one. A record bootstrap here would
+    reintroduce the record-as-unit failure E7 exists to demonstrate.
+
+    Refs: audit RP-2.
     """
     n_sites, per_site, n_boot = 40, 50, 400
     rng_data = np.random.default_rng(99)
@@ -586,7 +583,7 @@ def test_site_bootstrap_is_wider_than_a_record_bootstrap():
     assert out["ci_status"] == "ok"
     site_width = out["ci"]["rate"]["hi"] - out["ci"]["rate"]["lo"]
 
-    # the record-level comparator is computed HERE and nowhere in the module
+    # the record-level comparator is computed here, and nowhere in the module
     rec_rng = np.random.default_rng(12345)
     rec = np.array([y[rec_rng.integers(0, y.size, y.size)].mean()
                     for _ in range(n_boot)])
@@ -640,10 +637,10 @@ def test_top_up_or_decline_attempt_arithmetic():
     assert out["ci"] is None
     assert out["ci_status"] == "degenerate-resamples"
     assert out["n_attempts"] == 200
-    assert out["n_boot_valid"] == 80         # honest count, reported NOT quantiled
+    assert out["n_boot_valid"] == 80         # honest count, reported not quantiled
 
-    # the enforced budget is the RELATION 2 * n_boot, resolved at runtime -- not
-    # the frozen BOOT_MAX_ATTEMPTS, which is never read
+    # the enforced budget is the relation 2 * n_boot, resolved at runtime. The
+    # frozen BOOT_MAX_ATTEMPTS is never read.
     out = rp.site_bootstrap_ci(lambda idx: None, ("x",), 20, 20,
                                rng=rp.derive_rng(DIGEST, "budget"), n_boot=73)
     assert out["ci_status"] == "degenerate-resamples"
@@ -676,15 +673,15 @@ def test_cluster_floor_suppresses_before_any_work():
     assert out["n_sites_carrying"] == rp.MIN_SITES_FOR_CI - 1
     assert set(out) == set(rp.null_ci("too-few-sites"))
 
-    # exactly at the floor the interval IS produced
+    # exactly at the floor the interval is produced
     at = rp.site_bootstrap_ci(lambda idx: (float(idx.sum()),), ("x",), 40,
                               rp.MIN_SITES_FOR_CI,
                               rng=rp.derive_rng(DIGEST, "atfloor"), n_boot=32)
     assert at["ci_status"] == "ok"
 
-    # the DRAW population stays the full n_sites while the FLOOR is checked
-    # against carrying -- passing carrying as n_sites would redefine the
-    # population per bin and the bins would stop averaging over the same thing
+    # the draw population stays the full n_sites; only the floor is checked
+    # against carrying. Passing carrying as n_sites would redefine the
+    # population per bin, so the bins would stop averaging the same thing.
     seen = []
     rp.site_bootstrap_ci(lambda idx: (float(seen.append(int(idx.max())) or 1.0),),
                          ("x",), 30, 12, rng=rp.derive_rng(DIGEST, "population"),
@@ -693,8 +690,10 @@ def test_cluster_floor_suppresses_before_any_work():
 
 
 def test_a_multi_name_statistic_shares_one_stream():
-    """Exact relations between names survive because all names are quantiled
-    from the SAME valid draws. Each interval is still MARGINAL."""
+    """Exact relations survive because all names share one set of draws.
+
+    Each interval is still marginal.
+    """
     out = rp.site_bootstrap_ci(
         lambda idx: (float(idx.sum()), 2.0 * float(idx.sum()), float(idx.sum()) - 3.0),
         ("a", "b", "c"), 20, 20, rng=rp.derive_rng(DIGEST, "triple"), n_boot=64)
@@ -709,9 +708,11 @@ def test_a_multi_name_statistic_shares_one_stream():
 
 
 def test_calibration_fit_status_coverage():
-    """By construction, no mocking, point fits only (no bootstrap, so fast).
-    All eight FIT_STATUSES are reachable and 'separable' and
-    'coef-out-of-range' are DISTINCT claims."""
+    """All eight FIT_STATUSES are reachable, by construction and without mocks.
+
+    Point fits only, so no bootstrap runs and the test stays fast. 'separable'
+    and 'coef-out-of-range' are distinct claims, asserted as such.
+    """
     seen = set()
 
     ok1 = rp.fit_calibration_line(*_calibrated_draw(20000, 101, 1.0))
@@ -724,22 +725,22 @@ def test_calibration_fit_status_coverage():
     assert over["slope"] == pytest.approx(0.5, abs=0.12)     # over-dispersed
     under = rp.fit_calibration_line(*_calibrated_draw(20000, 103, 2.0))
     assert under["slope"] == pytest.approx(2.0, abs=0.40)    # under-dispersed
-    assert under["slope"] - over["slope"] > 1.0              # NO shrinkage
+    assert under["slope"] - over["slope"] > 1.0              # no shrinkage
 
-    # the step-halving boundary: slope ~25 is UNDER the 30.0 bound -> 'ok'
+    # the step-halving boundary: slope ~25 is under the 30.0 bound -> 'ok'
     big = rp.fit_calibration_line(*_calibrated_draw(20000, 211, 25.0))
     assert big["status"] == "ok"
     assert big["slope"] == pytest.approx(25.0, rel=0.15)
     assert abs(big["slope"]) < rp.IRLS_MAX_ABS_COEF
 
-    # the MLE exists and is finite but lies OUTSIDE the reporting range
+    # the MLE exists and is finite, but lies outside the reporting range
     out_of_range = rp.fit_calibration_line(*_calibrated_draw(20000, 210, 35.0))
     assert out_of_range["status"] == "coef-out-of-range"
     assert out_of_range["slope"] is None
     assert out_of_range["iterations"] > 0        # it iterated; not the pre-loop test
     seen.add(out_of_range["status"])
 
-    # the MLE does NOT exist: decided BEFORE iterating
+    # no MLE exists here, and that is decided before iterating
     n = 200
     y_sep = np.arange(n) % 2 == 0
     sep = rp.fit_calibration_line(np.where(y_sep, 0.501, 0.499), y_sep)
@@ -778,9 +779,9 @@ def test_calibration_fit_status_coverage():
                                    np.zeros(60, dtype=bool))["status"] == "single-class"
     seen.add(one["status"])
 
-    # 'singular' guards LinAlgError and non-finite steps; it has no deterministic
-    # constructor that an earlier branch does not already catch, so the
-    # vocabulary and the never-raises property are pinned instead
+    # 'singular' guards LinAlgError and non-finite steps. It has no
+    # deterministic constructor an earlier branch does not already catch, so
+    # only the vocabulary and the never-raises property are pinned.
     seen.add("singular")
     assert seen == set(rp.FIT_STATUSES)
 
@@ -793,20 +794,20 @@ def test_calibration_fit_status_coverage():
 
 
 def test_calibration_fit_matches_the_sklearn_reference_implementation():
-    """The IRLS fit is hand-rolled because `reliability.py` is a numpy-only DAG
-    leaf -- its import guard is an EXACT equality, so sklearn can never be
-    imported there. The reference therefore lives here, in the tests.
+    """Cross-check the hand-rolled IRLS fit against scikit-learn.
 
-    Both solve the same unpenalised two-parameter logistic MLE, so they agree to
-    solver tolerance, not to machine precision. ``C=np.inf`` is essential:
-    scikit-learn regularises by default (C=1.0), which would bias the slope
-    towards zero and make this comparison meaningless. (``penalty=None`` says
-    the same thing but is deprecated as of scikit-learn 1.8.)
+    The fit is hand-rolled because reliability.py is a numpy-only DAG leaf: its
+    import guard is an exact equality, so sklearn can never be imported there.
+
+    Both solve the same unpenalised two-parameter logistic MLE, so they agree
+    to solver tolerance, not machine precision. C=np.inf is essential:
+    scikit-learn regularises at C=1.0 by default, which would bias the slope
+    towards zero. (penalty=None says the same thing but is deprecated as of
+    scikit-learn 1.8.)
 
     Well-conditioned draws only. The separation, coefficient-range and
-    convergence gates are deliberately out of scope -- those branches are
-    covered by ``test_calibration_fit_status_coverage``, and scikit-learn does
-    not share their vocabulary.
+    convergence gates are out of scope: test_calibration_fit_status_coverage
+    covers those branches, and scikit-learn does not share their vocabulary.
     """
     from sklearn.linear_model import LogisticRegression
     for seed, temperature in ((101, 1.0), (102, 0.5), (103, 2.0)):
@@ -822,11 +823,13 @@ def test_calibration_fit_matches_the_sklearn_reference_implementation():
 
 
 def test_irls_termination_order_is_load_bearing():
-    """The |beta| range check must run BEFORE the convergence check in the same
-    iteration. Constructed exactly: a tolerance so loose the convergence test
-    would fire on the FIRST full Newton step, and a coefficient bound the same
-    step already exceeds. Range-first -> 'coef-out-of-range'; swap the two lines
-    and the identical fit reports 'ok' with a slope beyond the bound."""
+    """The |beta| range check must run before the convergence check.
+
+    Constructed exactly: a tolerance so loose the convergence test would fire
+    on the first full Newton step, and a coefficient bound that same step
+    already exceeds. Range-first gives 'coef-out-of-range'; swap the two lines
+    and the identical fit reports 'ok' with a slope beyond the bound.
+    """
     p, y = _calibrated_draw(4000, 301, 2.0)
     fit = rp.fit_calibration_line(p, y, tol=1e9, max_abs_coef=0.1)
     assert fit["status"] == "coef-out-of-range"
@@ -837,9 +840,12 @@ def test_irls_termination_order_is_load_bearing():
 
 
 def test_truncated_resamples_suppresses_both_intervals():
-    """RP-4: a VALUE-dependent rejection must not be topped up into a quantile
-    that has deleted its own tail. Point MLE ~27, under the 30.0 bound; the
-    resample distribution crosses it."""
+    """A value-dependent rejection must never be topped up (audit RP-4).
+
+    Doing so would quantile a distribution that has deleted its own tail. The
+    point MLE here is about 27, under the 30.0 bound, and the resample
+    distribution crosses it.
+    """
     rng = np.random.default_rng(212)
     n_sites, per_site = 30, 20
     site_effect = rng.normal(0.0, 0.8, size=n_sites)
@@ -855,10 +861,10 @@ def test_truncated_resamples_suppresses_both_intervals():
     block = rp.calibration_pair(p, y, site_id, n_sites, digest=DIGEST,
                                 scope="answered", n_boot=FAST_N_BOOT)
     assert block["status"] == "ok"
-    assert block["slope"] is not None             # the POINT estimate still stands
+    assert block["slope"] is not None             # the point estimate still stands
     assert block["ci"] is None
     assert block["ci_status"] == "truncated-resamples"
-    # the attempt counts are carried through UNCHANGED and stay honest
+    # the attempt counts pass through unchanged and stay honest
     assert block["n_attempts"] > 0
     assert block["n_sites_carrying"] == n_sites
 
@@ -887,7 +893,7 @@ def test_reference_brier_is_denominator_matched():
 
     block = rp.brier_block(p, y, site_id, n_sites, p_ref, digest=DIGEST,
                            n_boot=FAST_N_BOOT)["reference"]
-    # one paired statistic from one stream: the identity is EXACT
+    # one paired statistic from one stream, so the identity is exact
     assert block["brier_difference"] == pytest.approx(
         block["brier_reference"] - block["brier_primary_matched"], abs=1e-12)
     assert block["available_share"] == pytest.approx(
@@ -895,12 +901,12 @@ def test_reference_brier_is_denominator_matched():
     assert set(block["ci"]) == {"brier_reference", "brier_primary_matched",
                                 "brier_difference"}
 
-    # p_ref None -> an explicit null VALUE, never a missing key
+    # p_ref None -> an explicit null value, never a missing key
     none_ref = rp.brier_block(p, y, site_id, n_sites, None, digest=DIGEST,
                               n_boot=FAST_N_BOOT)
     assert "reference" in none_ref and none_ref["reference"] is None
 
-    # an ALL-NaN p_ref -> a fully null reference block, never an empty-slice mean
+    # an all-NaN p_ref -> a fully null reference block, never an empty-slice mean
     allnan = rp.brier_block(p, y, site_id, n_sites, np.full(p.size, np.nan),
                             digest=DIGEST, n_boot=FAST_N_BOOT)["reference"]
     assert allnan["n_available"] == 0
@@ -912,8 +918,10 @@ def test_reference_brier_is_denominator_matched():
 
 
 def test_the_reference_can_be_floor_suppressed_while_the_primary_is_not():
-    """n_sites_carrying for the reference section is taken on the AVAILABILITY
-    mask, so a reference present at only a few sites is suppressed on its own."""
+    """The reference can be floor-suppressed while the primary is not.
+
+    Its n_sites_carrying is taken on the availability mask.
+    """
     n_sites, per_site = 20, 20
     p, y, site_id = _clustered(n_sites, per_site, seed=32, spread=0.4)
     p_ref = np.full(p.size, np.nan)
@@ -936,7 +944,7 @@ def test_the_prohibition_on_the_wider_denominator_is_emitted_verbatim():
 
 
 # ==========================================================================
-# 7. THE headline: selected vs accurate
+# 7. the headline: selected vs accurate
 # ==========================================================================
 
 
@@ -947,7 +955,7 @@ def _headline_skeleton(n_sites=24, per_site=100, answered_per_site=60):
 
 
 def _build_selected(seed=202607):
-    """The GATE did the work: answered scores are noise, all below the cut."""
+    """The gate did the work: answered scores are noise, all below the cut."""
     rng = np.random.default_rng(seed)
     site_id, answered = _headline_skeleton()
     n = site_id.shape[0]
@@ -963,7 +971,7 @@ def _build_selected(seed=202607):
 
 
 def _build_accurate(seed=202608):
-    """The SCORER did the work: same answered positive rate, same low error."""
+    """The scorer did the work: same answered positive rate, same low error."""
     rng = np.random.default_rng(seed)
     site_id, answered = _headline_skeleton()
     n = site_id.shape[0]
@@ -980,9 +988,11 @@ def _build_accurate(seed=202608):
 
 
 def test_headline_selected_vs_accurate():
-    """THE regression on the abstention-quality claim, and the reason the panel
-    exists. Two constructions with INDISTINGUISHABLE answered error rates and
-    OPPOSITE skill margins."""
+    """The regression on the abstention-quality claim -- why the panel exists.
+
+    Two constructions with indistinguishable answered error rates and opposite
+    skill margins.
+    """
     selected = rp.selective_reliability_panel(*_build_selected(), **fast())
     accurate = rp.selective_reliability_panel(*_build_accurate(), **fast())
 
@@ -992,14 +1002,14 @@ def test_headline_selected_vs_accurate():
     assert s["model_error_rate"] < 0.05 and a["model_error_rate"] < 0.05
     assert abs(a["model_error_rate"] - s["model_error_rate"]) < 0.03
 
-    # SELECTED: every answered score is below the cut, so the predicted class IS
-    # the constant-negative baseline and the margin is identically zero
+    # selected: every answered score is below the cut, so the predicted class
+    # is the constant-negative baseline and the margin is identically zero
     assert s["model_error_rate"] == pytest.approx(
         s["constant_predictor_error_rate"], abs=1e-12)
     assert s["skill_margin"] == pytest.approx(0.0, abs=1e-12)
     assert s["constant_predictor_class"] is False
-    # ACCURATE: the model error rate is zero against a baseline of the positive
-    # rate, so the margin IS the positive rate -- small, but strictly positive
+    # accurate: the model error rate is zero against a baseline of the positive
+    # rate, so the margin is the positive rate -- small, but strictly positive
     assert a["model_error_rate"] == pytest.approx(0.0, abs=1e-12)
     assert a["skill_margin"] == pytest.approx(a["positive_rate"], abs=1e-12)
     assert s["skill_margin"] <= 0.0 < a["skill_margin"]
@@ -1009,7 +1019,7 @@ def test_headline_selected_vs_accurate():
     ct = selected["composition"]["all"]
     assert ca["observed_positive_fraction"] < 0.25 * ct["observed_positive_fraction"]
     assert ca["predicted_positive_fraction"] == pytest.approx(0.0, abs=1e-12)
-    # the scorer is not useless -- it is useless ON WHAT THE GATE ANSWERED
+    # the scorer is not useless -- it is useless on what the gate answered
     assert selected["skill"]["all"]["skill_margin"] > 0.05
     con = selected["skill"]["contrast"]
     assert con["answered_minus_all"] < -0.05
@@ -1054,7 +1064,7 @@ def _adversarial(name):
         for s in range(n_sites):
             for j in range(per_site):
                 site_id.append(s)
-                if j < 4:                       # answered, ALWAYS negative
+                if j < 4:                       # answered, always negative
                     answered.append(True)
                     p.append(0.01 + 0.01 * j)
                     y.append(False)
@@ -1105,7 +1115,7 @@ def test_no_nan_and_round_once(shape):
 
     for path, value in _walk({k: v for k, v in panel.items() if k != "settings"}):
         if isinstance(value, float):
-            assert value == round(value, rp.ROUND_DP), path      # rounded ONCE
+            assert value == round(value, rp.ROUND_DP), path      # rounded once
             assert math.isfinite(value), path
         if path and path[-1] == "ci_status":
             assert value in rp.CI_STATUSES, path
@@ -1114,7 +1124,7 @@ def test_no_nan_and_round_once(shape):
         if path and path[-1] in _RATE_KEYS and value is not None:
             assert 0.0 <= float(value) <= 1.0, (path, value)
 
-    # a null interval always carries its reason; None is NOT 0.0
+    # a null interval always carries its reason; None is not 0.0
     for scope in ("answered", "declined"):
         for record in panel["reliability"][scope]:
             if record["ci"] is None:
@@ -1130,7 +1140,7 @@ def test_no_nan_and_round_once(shape):
         cls = panel["skill"][scope]["constant_predictor_class"]
         assert cls is None or isinstance(cls, bool)
 
-    # settings is EXEMPT from the round -- both of these collapse to 0.0 at 6 dp
+    # settings is exempt from the round: both of these collapse to 0.0 at 6 dp
     assert panel["settings"]["logit_eps"] == 1e-6
     assert panel["settings"]["irls"]["tol"] == 1e-8
     assert panel["settings"]["boot_max_attempts"] == 2 * FAST_N_BOOT
@@ -1138,8 +1148,7 @@ def test_no_nan_and_round_once(shape):
 
 
 def test_settings_boot_max_attempts_echoes_the_relation_not_the_constant():
-    """At a NON-default n_boot, echoing BOOT_MAX_ATTEMPTS would be a FALSE
-    provenance statement."""
+    """At a non-default n_boot, BOOT_MAX_ATTEMPTS is the wrong number."""
     panel = rp.selective_reliability_panel(A_P, A_ANSWERED, A_SITE, A_Y,
                                            n_boot=37, timestamp=FIXED_TIMESTAMP)
     assert panel["settings"]["n_boot"] == 37
@@ -1148,14 +1157,13 @@ def test_settings_boot_max_attempts_echoes_the_relation_not_the_constant():
 
 
 def test_stream_count_is_the_documented_ceiling(monkeypatch):
-    """SPEC and ``derive_rng``'s docstring state ``2 * n_bins + 13`` streams --
-    27 at the default 7-bin edges. Both said 17 until 2026-08-01, a figure
-    carried across from an earlier sandbox scope layout and true of neither.
+    """SPEC and derive_rng's docstring both state 2 * n_bins + 13 streams.
 
-    It is a CEILING, not a count: an empty bin and an undefined-point block are
-    decided BEFORE any generator is constructed and open none. Both halves are
-    asserted, because a doc that promises an exact number goes stale the first
-    time a gate answers only low-probability records.
+    That is 27 at the default 7-bin edges, and it is a ceiling rather than a
+    count: an empty bin and an undefined-point block are decided before any
+    generator is constructed and open none. Both halves are asserted, because
+    a doc promising an exact number goes stale the first time a gate answers
+    only low-probability records.
     """
     seen = []
     original = rp.derive_rng
@@ -1166,7 +1174,7 @@ def test_stream_count_is_the_documented_ceiling(monkeypatch):
     ceiling = 2 * n_bins + 13
     assert ceiling == 27
 
-    # every bin occupied in BOTH scopes, with a reference scorer: the ceiling
+    # every bin occupied in both scopes, with a reference scorer: the ceiling
     rng = np.random.default_rng(4)
     n = 2400
     p = rng.uniform(0.0, 1.0, n)
@@ -1198,8 +1206,8 @@ def test_determinism_and_digest_sensitivity():
     assert a == b
     assert json.dumps(a, sort_keys=True) == json.dumps(b, sort_keys=True)
 
-    # generated_utc is the ONLY free field; the default is None, so NO WALL
-    # CLOCK enters any emitted artifact
+    # generated_utc is the only free field. Its default is None, so no wall
+    # clock enters any emitted artifact.
     default = rp.selective_reliability_panel(*args, n_boot=FAST_N_BOOT)
     assert default["generated_utc"] is None
     assert {k: v for k, v in default.items() if k != "generated_utc"} == \
@@ -1220,13 +1228,13 @@ def test_determinism_and_digest_sensitivity():
             fields["p_ref"], decision_threshold=fields["decision_threshold"],
             bin_edges=fields["bin_edges"]))
 
-    # INVARIANT to identity, copy and a strided view (content, not layout)
+    # invariant to identity, copy and a strided view (content, not layout)
     assert digest_of() == base
     assert digest_of(p=kw["p"].copy()) == base
     strided = np.repeat(kw["p"], 2)[::2]
     assert digest_of(p=strided) == base
 
-    # MOVES on a single ULP, a flipped label, a flipped gate bit, a site
+    # moves on a single ULP, a flipped label, a flipped gate bit, a site
     # reassignment, an int32-vs-int64 site index, the threshold, the edges, and
     # None-vs-all-NaN p_ref
     bumped = kw["p"].copy()
@@ -1247,19 +1255,21 @@ def test_determinism_and_digest_sensitivity():
     assert digest_of(p_ref=None) != base
     assert digest_of(p_ref=np.full(kw["p"].size, np.nan)) != base
 
-    # the WHOLE stat_key is hashed, never a prefix
+    # the whole stat_key is hashed, never a prefix
     assert (rp.derive_rng(base, "bin1").integers(0, 2**31, 4).tolist() !=
             rp.derive_rng(base, "bin11").integers(0, 2**31, 4).tolist())
 
 
 def test_point_estimates_are_order_invariant_but_the_digest_is_not():
-    """Byte identity is promised only for byte-identical inputs: the digest is
-    content-addressed over raw bytes, so a record permutation legitimately moves
-    every resample stream. The POINT estimates must not move."""
+    """Byte identity is promised only for byte-identical inputs.
+
+    The digest is content-addressed over raw bytes, so a record permutation
+    legitimately moves every resample stream. The point estimates must not.
+    """
     kw = _adversarial("well_calibrated")
     n = kw["p"].size
 
-    # a WITHIN-SITE permutation
+    # a within-site permutation
     order = np.lexsort((np.arange(n) % 7, kw["site_id"]))
     a = rp.selective_reliability_panel(kw["p"], kw["answered"], kw["site_id"],
                                        kw["y"], **fast())
@@ -1272,7 +1282,7 @@ def test_point_estimates_are_order_invariant_but_the_digest_is_not():
     assert b["ece"]["answered"]["ece"] == \
         pytest.approx(a["ece"]["answered"]["ece"], abs=1e-9)
 
-    # a whole-site RELABEL (a permutation of the site index) moves no point
+    # a whole-site relabel (a permutation of the site index) moves no point
     perm = np.random.default_rng(3).permutation(int(kw["site_id"].max()) + 1)
     relabelled = perm[kw["site_id"]].astype(np.int64)
     c = rp.selective_reliability_panel(kw["p"], kw["answered"], relabelled,
@@ -1283,27 +1293,27 @@ def test_point_estimates_are_order_invariant_but_the_digest_is_not():
 
 
 # ==========================================================================
-# 10. THE numerical-equivalence lock
+# 10. the numerical-equivalence lock
 # ==========================================================================
 #
-# The sandbox: C:/Users/tonyt/OneDrive/Documents/Claude/Projects/
-# selective-reliability-panel (package ``srp``, 581 tests green). It is neither
-# installed nor in requirements.txt and must NEVER be imported here, so this
-# pinned sha256 -- produced by running the SANDBOX implementation on the frozen
-# fixture below during Build, and verified equal to this module's output on that
-# fixture AND on the analytic fixture AND on a 24-site clustered pool -- is the
-# only thing that carries the byte-exact equivalence forward. Same idiom as
-# tests/test_constants.py's sha256 pin over EICU_MOCK_SIGNAL_LOAD.
+# The sandbox lives at C:/Users/tonyt/OneDrive/Documents/Claude/Projects/
+# selective-reliability-panel (package srp, 581 tests green). It is neither
+# installed nor in requirements.txt and must never be imported here, so the
+# pinned sha256 below is the only thing carrying byte-exact equivalence
+# forward. Same idiom as test_constants.py's pin over EICU_MOCK_SIGNAL_LOAD.
 #
-# A red pin here is a DESIGN CHANGE, not a nuisance: it means a key was renamed,
-# a constant moved, the digest prefix changed, or the seeding was re-pointed.
+# The pin was produced by running the sandbox implementation on the frozen
+# fixture during Build, then verified equal to this module's output on that
+# fixture, on the analytic fixture, and on a 24-site clustered pool.
+#
+# A red pin here is a design change, not a nuisance: a key was renamed, a
+# constant moved, the digest prefix changed, or the seeding was re-pointed.
 
 PANEL_DICT_SHA256 = "ad54a42342b708f9ce84bef053807dbca9974ee20f081522ff2590eb828bc6f5"
 
 
 def _frozen_fixture():
-    """180 records over 12 sites, built by pure arithmetic -- no RNG anywhere,
-    so the fixture cannot move with a numpy generator change."""
+    """180 records over 12 sites, built by pure arithmetic and no RNG."""
     n_sites, per_site = 12, 15
     n = n_sites * per_site
     i = np.arange(n)
@@ -1325,8 +1335,8 @@ def test_panel_dict_digest_pinned():
                       allow_nan=False)
     assert hashlib.sha256(blob.encode("utf-8")).hexdigest() == PANEL_DICT_SHA256
     # the fixture exercises the paths that matter: a converged fit, a produced
-    # interval and a live reference block -- a pin over an all-suppressed panel
-    # would lock almost nothing
+    # interval and a live reference block. A pin over an all-suppressed panel
+    # would lock almost nothing.
     assert panel["calibration"]["answered"]["status"] == "ok"
     assert panel["calibration"]["answered"]["ci_status"] == "ok"
     assert panel["brier"]["reference"]["ci_status"] == "ok"
@@ -1339,10 +1349,13 @@ def test_panel_dict_digest_pinned():
 
 
 def test_reliability_module_is_numpy_only_and_top_level():
-    """Enclave/reproducibility (audit F16): no import inside any function or
-    class, third-party imports subset of {numpy}, and NO ``from certgate ...``
-    import of any kind -- the module never sees a Head, a Cohort or
-    constants.SEED."""
+    """The module is a numpy-only DAG leaf with every import at top level.
+
+    No import sits inside a function or class, third-party imports are a subset
+    of {numpy}, and there is no `from certgate` import of any kind.
+
+    Refs: audit F16.
+    """
     src = pathlib.Path(rp.__file__).read_text(encoding="utf-8")
     tree = ast.parse(src)
 
@@ -1355,7 +1368,7 @@ def test_reliability_module_is_numpy_only_and_top_level():
     assert not nested, f"imports nested inside {sorted(nested)}"
 
     stdlib = {"hashlib", "math", "dataclasses", "typing", "collections", "json"}
-    # ast.walk over the WHOLE tree, not tree.body: an import wrapped in a
+    # ast.walk over the whole tree, not tree.body: an import wrapped in a
     # module-level `try:` or `if:` is a child of that statement and invisible
     # to a top-level scan, so a conditional third-party import would pass.
     roots = set()
@@ -1386,7 +1399,7 @@ def test_panel_rows_and_headline_shapes(head_cohort):
     for row in rows:
         assert row["ci_status"] in rp.CI_STATUSES
         if row["ci_lo"] is None:
-            assert row["ci_status"] != "ok"     # None -> a BLANK cell, not a 0
+            assert row["ci_status"] != "ok"     # None -> a blank cell, not a 0
 
     hl = rp.panel_headline(panel)
     assert set(hl) == {"ece_answered", "ece_declined",
@@ -1400,15 +1413,17 @@ def test_panel_rows_and_headline_shapes(head_cohort):
             continue
         assert value is None or isinstance(value, float)
         if isinstance(value, float):
-            # ALREADY rounded at emit time; a second pass here would make the
+            # already rounded at emit time; a second pass here would make the
             # last decimal irreproducible
             assert value == round(value, rp.ROUND_DP)
 
 
 def test_the_panel_and_explain_composition_publish_one_number(head_cohort):
-    """One quantity, one number. ``explain.composition`` is UNCHANGED
-    (report.py depends on it) and the panel's answered predicted-positive
-    fraction must agree with it exactly."""
+    """One quantity, one number.
+
+    explain.composition is unchanged, because report.py depends on it. The
+    panel's answered predicted-positive fraction must agree with it exactly.
+    """
     head, tgt = head_cohort
     tau = 0.8
     answered = np.asarray(head.score(tgt.x), dtype=np.float64) >= tau
@@ -1417,9 +1432,9 @@ def test_the_panel_and_explain_composition_publish_one_number(head_cohort):
     comp = composition(head, tgt.x, answered)
     panel_value = panel["composition"]["answered"]["predicted_positive_fraction"]
     exact = float(comp["predicted_class"]["positive_fraction"])
-    # the panel value is the SAME number, rounded ONCE at emit time -- so the
-    # agreement is exact against the rounded quantity, and within half a unit in
-    # the last emitted place against the raw one
+    # the panel value is the same number, rounded once at emit time. So the
+    # agreement is exact against the rounded quantity, and within half a unit
+    # in the last emitted place against the raw one.
     assert panel_value == round(exact, rp.ROUND_DP)
     assert abs(panel_value - exact) <= 0.5 * 10 ** -rp.ROUND_DP
     assert panel["composition"]["answered"]["n_predicted_positive"] == \
@@ -1429,9 +1444,11 @@ def test_the_panel_and_explain_composition_publish_one_number(head_cohort):
 
 
 def test_the_answered_model_error_rate_is_certgates_answered_error_rate(head_cohort):
-    """DECISION_THRESHOLD = 0.5 coincides with Head.predict's rule, which is
-    what makes skill.<scope>.model_error_rate a free cross-consistency check
-    against certgate's own answered error rate -- not a second estimand."""
+    """DECISION_THRESHOLD = 0.5 coincides with Head.predict's rule.
+
+    That makes skill.<scope>.model_error_rate a free cross-consistency check
+    against certgate's own answered error rate, not a second estimand.
+    """
     head, tgt = head_cohort
     tau = 0.8
     answered = np.asarray(head.score(tgt.x), dtype=np.float64) >= tau
@@ -1444,10 +1461,12 @@ def test_the_answered_model_error_rate_is_certgates_answered_error_rate(head_coh
 
 
 def test_the_e6_summary_keys_survive_a_partial_rerun(tmp_path, head_cohort):
-    """The three POST-HOC headline keys E6 adds are plain scalars and the
-    summary merge is BLOCK-granular (``^## (E\\d)`` captures the whole fenced
-    block and never inspects the JSON's keys), so adding them cannot break a
-    partial ``--only`` rerun."""
+    """The three post-hoc headline keys E6 adds cannot break a partial rerun.
+
+    They are plain scalars, and the summary merge is block-granular: the
+    `^## (E\\d)` regex captures the whole fenced block and never inspects the
+    JSON's keys.
+    """
     from experiments.run_synthetic import (_existing_summary_blocks,
                                            _write_summary)
 
@@ -1473,9 +1492,11 @@ def test_the_e6_summary_keys_survive_a_partial_rerun(tmp_path, head_cohort):
 
 
 def test_panel_payload_passes_the_eicu_compliance_gate():
-    """The panel is aggregate-only BY CONSTRUCTION, but that does not exempt the
-    writer from the gate. The second half is what stops a future key addition
-    from silently reintroducing 'site_id' or 'answered_mask'."""
+    """Aggregate-only by construction is not an exemption from the gate.
+
+    The second half is what stops a future key addition from silently
+    reintroducing 'site_id' or 'answered_mask'.
+    """
     from experiments.run_eicu import (EICU_FORBIDDEN_OUT_KEYS,
                                       EICU_MAX_OUTPUT_LEN, _json_ready,
                                       assert_aggregate_only)

@@ -1,8 +1,12 @@
 """SPEC "Experiments" companion tests: experiments/comparators.py (E8 arm A).
 
-Pins: the moved-verbatim MP-EB arithmetic (byte-compatible with the old
-test-local reference), one-sided validity-side sanity for every bound, RP-2
-site-resampling determinism for the bootstrap, and inf-never-certifies edges.
+What gets pinned:
+  - the MP-EB arithmetic, byte-compatible with the old test-local reference
+  - one-sided validity-side sanity for every bound
+  - site-resampling determinism for the bootstrap
+  - the inf-never-certifies edges
+
+Refs: RP-2 (resamples sites, not records).
 """
 import numpy as np
 
@@ -11,8 +15,8 @@ from experiments.comparators import (hoeffding_ucb, mpeb_ucb,
 
 
 def test_mpeb_verbatim_regression():
-    # Literal pin of the moved arithmetic on a fixed vector: any drift in the
-    # constants (log(2/delta), 7/3 tail term) fails here.
+    # Literal pin of the arithmetic on a fixed vector. Any drift in the
+    # constants -- log(2/delta), the 7/3 tail term -- fails here.
     z = np.linspace(0.0, 1.0, 11)
     assert np.isclose(mpeb_ucb(z, 0.05), 1.6323588424413757)
     z2 = np.full(9, 0.04)
@@ -43,5 +47,5 @@ def test_bootstrap_resamples_sites_deterministically():
     c = site_bootstrap_ucb(z, 0.05, 500, np.random.default_rng(43))
     assert a == b
     assert a != c
-    # percentile of resampled MEANS stays inside the atom range
+    # percentile of resampled means stays inside the atom range
     assert 0.0 <= a <= 0.3 + 1e-12

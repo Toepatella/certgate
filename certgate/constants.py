@@ -1,9 +1,12 @@
-"""Frozen constants (SPEC section "Frozen constants").
+"""Frozen constants.
 
-Every value here is pinned literally by ``tests/test_constants.py`` so any
-drift fails CI -- a lightweight, verifiable stand-in for pre-registration
-(audit F13). These constants are the a-priori surface of the certified-gate
-protocol; nothing downstream may redefine them.
+Every value here is pinned literally by tests/test_constants.py, so any drift
+fails CI. That is our lightweight, verifiable stand-in for pre-registration.
+
+These are the a-priori surface of the certified-gate protocol. Nothing
+downstream may redefine them.
+
+Refs: SPEC "Frozen constants"; audit F13.
 """
 
 import numpy as np

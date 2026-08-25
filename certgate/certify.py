@@ -1,17 +1,19 @@
-"""Certified-gate statistical core (SPEC section "certify.py", METHODS 3-4).
+"""The statistical core of the certified gate.
 
-The math is ported verbatim from the audited v1 reference
-(``../xAI-projtect-v1/testbed/certify.py``, which survived adversarial review); the SPEC's
-constants and the loud-rejection hardening (isfinite guards on scores and
-weights, sha256-only seed rule) override v1 where they differ.
+The math is ported verbatim from the audited v1 reference at
+../xAI-projtect-v1/testbed/certify.py, which survived adversarial review.
+Where v1 and the SPEC disagree, the SPEC wins: its constants, its isfinite
+guards on scores and weights, and its sha256-only seed rule.
 
-Contents:
-  - influence_atoms   linearized per-site atoms Z_c in [0, 1] (METHODS 3)
-  - wsr_reject        one-sided Waudby-Smith-Ramdas betting test (METHODS 4)
-  - margin_floor      information-theoretic feasibility floor
-  - walk_order        S_aux-ordered fixed sequence (most conservative first)
+What lives here:
+  - influence_atoms       per-site atoms Z_c in [0, 1]
+  - wsr_reject            one-sided Waudby-Smith-Ramdas betting test
+  - margin_floor          information-theoretic feasibility floor
+  - walk_order            S_aux-ordered fixed sequence, most conservative first
   - fixed_sequence_walk   learn-then-test threshold walk at full delta
-  - certification_rng deterministic, unchoosable permutation stream
+  - certification_rng     deterministic, unchoosable permutation stream
+
+Refs: SPEC "certify.py"; METHODS 3 (atoms), METHODS 4 (the rest).
 """
 
 import hashlib
@@ -24,21 +26,26 @@ from .constants import (SEED, ALPHA_LADDER, WSR_LAMBDA_CAP, WSR_VAR_FLOOR,
 
 def influence_atoms(score, err, site_id, n_sites, tau_grid, alpha, M,
                     weights=None, wmax=1.0):
-    """Per-site atoms ``Z_c`` in [0, 1], shape ``(n_tau, n_sites)`` (METHODS 3).
+    """Per-site atoms Z_c in [0, 1], shape (n_tau, n_sites).
 
-    ``Z_c = (g_c / (M*n_c)) * sum_{i in c} ans_i*(err_i - alpha) + alpha`` with
-    the data-independent influence weight ``g_c = min(n_c, M)``; ``E[Z] <= alpha
-    <=> R_M <= alpha``. Sites with zero answered-eligible records enter as
-    NEUTRAL atoms ``Z_c = alpha`` (never dropped -- dropping would redefine the
-    cluster population post hoc; a neutral atom dilutes power, never validity).
+        Z_c = (g_c / (M*n_c)) * sum_{i in c} ans_i*(err_i - alpha) + alpha
 
-    Weighted mode (label-shift correction): per-record contributions scale by
-    ``w_i / wmax`` with ``w_i`` in ``[0, wmax]``; the certified statistic is
-    scale-invariant in ``w`` so the normalization only keeps atoms in range.
+    with the data-independent influence weight g_c = min(n_c, M). The whole
+    point of that construction: E[Z] <= alpha exactly when R_M <= alpha.
 
-    Hardening (SPEC): non-finite scores raise loudly (audit F36); the NaN-bypass
-    on weights is closed -- weights must be finite and within ``[0, wmax]``
-    (audit F08).
+    A site with no answered-eligible records enters as a neutral atom,
+    Z_c = alpha. It is never dropped -- dropping would redefine the cluster
+    population after the fact. A neutral atom costs power, never validity.
+
+    Weighted mode (label-shift correction) scales each record's contribution by
+    w_i / wmax, with w_i in [0, wmax]. The certified statistic is
+    scale-invariant in w, so the normalization exists only to keep atoms in
+    range.
+
+    Raises on non-finite scores, and on weights that are non-finite or outside
+    [0, wmax].
+
+    Refs: METHODS 3; SPEC "certify.py" hardening; audits F36, F08.
     """
     score = np.asarray(score, dtype=float)
     if not np.isfinite(score).all():
@@ -67,14 +74,21 @@ def influence_atoms(score, err, site_id, n_sites, tau_grid, alpha, M,
 
 
 def wsr_reject(z, alpha, delta, rng=None):
-    """One-sided WSR betting test of ``H0: E[Z] >= alpha`` (METHODS 4).
+    """One-sided WSR betting test of H0: E[Z] >= alpha.
 
-    CERTIFY (return True) iff the wealth process ``K_t = prod (1 + lam_s
-    (alpha - Z_s))`` sup-crosses ``1/delta`` -- Ville's inequality gives
-    finite-sample level ``delta``. ``lam_t`` is predictable and variance
-    adaptive with the audited cap ``WSR_LAMBDA_CAP/(1-alpha)``, variance floor
-    ``WSR_VAR_FLOOR``, running ``(mu, s2)`` initialized ``(WSR_MU0, WSR_S2_0)``.
-    ``rng`` supplies the prespecified permutation (SPEC seed rule).
+    Returns True (certify) when the wealth process
+
+        K_t = prod (1 + lam_s (alpha - Z_s))
+
+    sup-crosses 1/delta. Ville's inequality is what makes that a finite-sample
+    level-delta test.
+
+    lam_t is predictable and variance-adaptive: capped at
+    WSR_LAMBDA_CAP/(1-alpha), variance floored at WSR_VAR_FLOOR, with the
+    running (mu, s2) starting from (WSR_MU0, WSR_S2_0). rng supplies the
+    prespecified permutation.
+
+    Refs: METHODS 4; SPEC seed rule.
     """
     z = np.asarray(z, dtype=float)
     if rng is not None:
@@ -97,24 +111,32 @@ def wsr_reject(z, alpha, delta, rng=None):
 
 
 def margin_floor(n, delta, alpha):
-    """Information-theoretic feasibility floor (METHODS 4): no valid level-delta
-    test of a [0,1]-bounded mean certifies with margin below
-    ``ln(1/delta) * (1 - alpha) / n``. Reported as a diagnostic, never a gate."""
+    """Smallest margin any valid level-delta test could certify (METHODS 4).
+
+    No test of a [0,1]-bounded mean beats ln(1/delta) * (1 - alpha) / n. We
+    report it as a diagnostic, never as a gate.
+    """
     return np.log(1.0 / delta) * (1.0 - alpha) / n
 
 
 def walk_order(atoms_aux):
-    """Fixed-sequence order from S_aux atoms (METHODS 4): ascending mean atom,
-    i.e. most-conservative (largest estimated certification margin) first.
-    Data-independent of S_cal, so it spends no multiplicity budget."""
+    """Order the thresholds for the fixed-sequence walk, using S_aux only.
+
+    Ascending mean atom, so the most conservative threshold -- largest
+    estimated margin -- is tried first. The order never looks at S_cal, which
+    is why it costs no multiplicity budget. (METHODS 4)
+    """
     return np.argsort(atoms_aux.mean(axis=1))
 
 
 def fixed_sequence_walk(atoms, order, alpha, delta, tau_grid, rng=None):
-    """Learn-then-test threshold walk (METHODS 4). Tests thresholds in the
-    prespecified ``order`` at full ``delta``, stopping at the first failure;
-    returns ``(certified tau-index list, deployed index or None)`` with
-    deployed = maximum-coverage (lowest tau) in the certified prefix."""
+    """Learn-then-test threshold walk (METHODS 4).
+
+    Tests thresholds in the prespecified order at full delta and stops at the
+    first failure. Returns (certified tau-indices, deployed index or None),
+    where deployed is the lowest tau in the certified prefix -- the one that
+    answers the most cases.
+    """
     certified = []
     for t in order:
         if wsr_reject(atoms[t], alpha, delta, rng=rng):
@@ -128,20 +150,23 @@ def fixed_sequence_walk(atoms, order, alpha, delta, tau_grid, rng=None):
 
 
 def certification_rng(alpha, mode_idx, stream=""):
-    """Prespecified, unchoosable permutation stream (SPEC seed rule; METHODS 4).
+    """A prespecified permutation stream nobody can choose after the fact.
 
-    sha256-ONLY (audit B-10): the stream discriminator is hashed and its first
-    eight bytes spread across two 32-bit SeedSequence entries. There is no
-    ``int()`` fast path, so no numeric aliasing and no ``OverflowError`` on odd
-    inputs (audit F43/F57). Deterministic in the frozen inputs and run identity.
+    The stream discriminator is hashed with sha256, and its first eight bytes
+    are spread across two 32-bit SeedSequence entries. There is no int() fast
+    path, so nothing aliases numerically and odd inputs cannot raise
+    OverflowError. Deterministic in the frozen inputs and the run identity.
 
-    The TARGET LABEL is deliberately NOT part of the seed (audit V3): baseline
-    atoms are target-independent, so a label-seeded permutation gave every
-    target a separately randomized test of identical calibration data -- the
-    deployed threshold moved with the spelling of a free-text identifier and
-    the shared-1-delta-event clause printed on the certificate was false.
-    ``stream`` distinguishes only the BBSE endpoint walks (``"lo"`` / ``"hi"``);
-    the baseline walk passes the default ``""``.
+    The target label is deliberately NOT part of the seed. Baseline atoms do
+    not depend on the target, so seeding with the label gave every target a
+    separately randomized test of the same calibration data. Two things broke:
+    the deployed threshold moved with the spelling of a free-text identifier,
+    and the shared-1-delta-event clause printed on the certificate was false.
+
+    stream distinguishes only the BBSE endpoint walks ("lo" / "hi"). The
+    baseline walk passes the default "".
+
+    Refs: SPEC seed rule; METHODS 4; audits B-10, F43, F57, V3.
     """
     h = hashlib.sha256(str(stream).encode()).digest()
     return np.random.default_rng(np.random.SeedSequence(

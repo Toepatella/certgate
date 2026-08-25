@@ -1,9 +1,12 @@
 """SPEC "Tests" for the certified-gate core.
 
-The two non-negotiables (both were live findings in v1): the WSR boundary
-type-I level, and the M-cap counterexample regression -- a 17.5%-true-risk
-configuration that a truncated-contribution reading falsely certifies and the
-influence-weighting path must refuse forever (audit Hole-1).
+Two non-negotiables, both live findings in v1:
+  - the WSR boundary type-I level
+  - the M-cap counterexample regression: a 17.5%-true-risk configuration that
+    a truncated-contribution reading falsely certifies, and that the
+    influence-weighting path must refuse forever
+
+Refs: audit Hole-1.
 """
 import numpy as np
 import pytest
@@ -16,10 +19,10 @@ from certgate.constants import TAU_GRID
 ALPHA, DELTA = 0.05, 0.05
 
 
-# The Maurer-Pontil reference arithmetic moved verbatim to
-# experiments/comparators.py (revision-2, E8 arm A) so the truncation negative
-# control below and the comparator bound can never drift; still never in the
-# certgate/ library.
+# The Maurer-Pontil reference arithmetic lives verbatim in
+# experiments/comparators.py, so the truncation negative control below and the
+# comparator bound can never drift. It stays out of the certgate/ library.
+# Ref: revision-2, E8 arm A.
 from experiments.comparators import mpeb_ucb as _mpeb_ucb  # noqa: E402
 
 
@@ -41,9 +44,12 @@ def test_atom_range_and_empty_site_neutral():
 
 
 def test_mcap_counterexample_regression():
-    """140 clean (n=20, 0 err) + 10 heavy (n=2000, 20% err): true
-    record-weighted selective risk 17.5%. A truncated-contribution reading
-    certifies (INVALID); influence weighting must refuse."""
+    """A configuration that influence weighting must refuse.
+
+    140 clean sites (n=20, 0 errors) plus 10 heavy ones (n=2000, 20% errors)
+    give a true record-weighted selective risk of 17.5%. A
+    truncated-contribution reading certifies it, which is invalid.
+    """
     sizes = np.array([20] * 140 + [2000] * 10)
     errs = np.array([0] * 140 + [400] * 10)
     T = errs * (1 - ALPHA) - (sizes - errs) * ALPHA
@@ -66,7 +72,10 @@ def test_mcap_counterexample_regression():
 
 def test_wsr_boundary_type_I_at_n80():
     """Boundary null Bernoulli(alpha) at n=80, 800 reps, fixed seed.
-    Level 5%; empirical rate must stay <= 0.08 (documented tolerance)."""
+
+    The test is level 5%. The empirical rate must stay at or below the
+    documented tolerance, 0.08.
+    """
     rng = np.random.default_rng(1)
     rej = sum(wsr_reject(rng.random(80) < ALPHA, ALPHA, DELTA)
               for _ in range(800))
@@ -74,8 +83,10 @@ def test_wsr_boundary_type_I_at_n80():
 
 
 def test_wsr_power_under_clear_margin():
-    """A clear margin below alpha (mean 0.0, tiny variance) at n=80: power
-    must exceed 0.9."""
+    """Power must exceed 0.9 on a clear margin below alpha.
+
+    The atoms have mean 0.0 and tiny variance, at n=80.
+    """
     rng = np.random.default_rng(2)
     hits = sum(
         wsr_reject(np.clip(rng.normal(0.0, 0.01, 80), 0.0, 1.0), ALPHA, DELTA)
@@ -113,8 +124,10 @@ def test_nan_weight_raises():
 
 
 def test_certification_rng_streams():
-    """audit V3: the permutation stream depends on (alpha, mode, endpoint
-    stream) and on NOTHING else -- in particular, no target identifier."""
+    """The stream depends on alpha, mode and endpoint only (audit V3).
+
+    In particular, no target identifier may enter it.
+    """
     a = certification_rng(0.05, 0).standard_normal(6)
     c = certification_rng(0.05, 0).standard_normal(6)
     assert np.allclose(a, c)                               # identical repeats
@@ -126,7 +139,7 @@ def test_certification_rng_streams():
     assert not np.allclose(a, b_mode)                      # distinct per mode
     assert not np.allclose(a, b_lo)                        # distinct endpoint
     assert not np.allclose(b_lo, b_hi)                     # lo != hi
-    # the default stream IS the baseline stream: no identifier can perturb it
+    # the default stream is the baseline stream: no identifier can perturb it
     assert np.allclose(a, certification_rng(0.05, 0, "").standard_normal(6))
     # weird stream values do not crash (no int() fast path)
     certification_rng(0.10, 1, "inf")
@@ -135,11 +148,14 @@ def test_certification_rng_streams():
 
 
 def test_mcap_supplies_ville_boundedness():
-    """audit V6 #1: the M-cap is what keeps atoms in [0,1] -- the boundedness
-    Ville's inequality REQUIRES. With site sizes spanning 20..3000 against
-    M=100, removing ``np.minimum(sizes, M)`` drives atoms outside [0,1]
-    (an error-heavy 3000-record site contributes ~3.05 uncapped) and this
-    test fails; the shipped cap keeps every atom in range."""
+    """The M-cap is what keeps atoms in [0,1], the boundedness Ville requires.
+
+    Site sizes here span 20..3000 against M=100. Remove np.minimum(sizes, M)
+    and atoms leave [0,1]: an error-heavy 3000-record site contributes ~3.05
+    uncapped. The shipped cap keeps every atom in range.
+
+    Refs: audit V6 #1.
+    """
     sizes = np.array([20] * 40 + [3000] * 10)
     site_id = np.repeat(np.arange(50), sizes)
     n = int(sizes.sum())
@@ -158,10 +174,14 @@ def test_mcap_supplies_ville_boundedness():
 
 
 def test_threshold_tie_is_answered_in_atoms():
-    """audit V6 #11 killer: the certified statistic and the deployed answered
-    mask share the ``score >= tau`` convention. A record scoring EXACTLY tau is
-    answered; a mutation to strict ``>`` silently drops boundary records from
-    the statistic while the deploy mask keeps them, and fails here."""
+    """The statistic and the deploy mask share the score >= tau convention.
+
+    A record scoring exactly tau is answered. A mutation to strict > silently
+    drops boundary records from the statistic while the deploy mask keeps
+    them, and fails here.
+
+    Refs: audit V6 #11.
+    """
     score = np.array([0.6])
     err = np.array([True])
     site_id = np.array([0])

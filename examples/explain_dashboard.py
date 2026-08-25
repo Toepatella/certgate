@@ -1,62 +1,59 @@
 """Self-contained interactive HTML dashboard for the explanation layer.
 
-Renders, for a scored cohort at one operating threshold, what a reader sees
-per case — and lets them interrogate it live. Two audiences, one toggle, two
-genuinely different UIs:
+For a scored cohort at one operating threshold, this renders what a reader sees
+per case, and lets them interrogate it live. One toggle switches between two
+genuinely different UIs.
 
-PLAIN LANGUAGE (default) — an airy clinician view with no jargon: verdicts in
-everyday words, percentages instead of logits, a "how to read this page"
+Plain language (the default) is an airy clinician view with no jargon: verdicts
+in everyday words, percentages instead of logits, a "how to read this page"
 walkthrough, live what-if controls, one-click smallest-change flips, and a
 printable case summary.
 
-ADVANCED — an analyst workbench: a tabbed detail panel (Decision / Waterfall /
-Response / Numbers / Hospitals / Calibration), a live status bar carrying the
-raw quantities, a waterfall of the logit build-up, exact per-feature response
-curves with the counterfactual crossings marked, a full-precision numbers
-table, per-hospital coverage and answered-error (the site is the unit the
-guarantee is stated over), a retrospective reliability curve, CSV/JSON export,
-a click-to-filter cohort histogram, the full-cohort abstention profile, and
-keyboard shortcuts with a help overlay. Both modes get dark mode and print
-styling.
+Advanced is an analyst workbench: a tabbed detail panel (Decision / Waterfall /
+Response / Numbers / Hospitals / Calibration), a status bar of raw quantities,
+a waterfall of the logit build-up, exact per-feature response curves with the
+counterfactual crossings marked, a full-precision numbers table, per-hospital
+coverage and answered error, a reliability curve, CSV/JSON export, a
+click-to-filter histogram, the cohort abstention profile, and keyboard
+shortcuts. Both modes get dark mode and print styling.
 
-REAL-FEATURE STRUCTURE (2026-07-31, after the first eICU run). A real matrix is
-not 161 free-moving numbers: 64 of them are ONE-HOT levels of 6 categoricals
-and 47 are MISSINGNESS flags paired to a parent value. A slider on either is
-not just useless, it builds an input vector no patient could have — two
-genders at once, or a "measured" value whose own flag says it was never
-recorded. So the page now:
+A real feature matrix is not a set of free-moving numbers. Of the eICU
+extract's 161 columns, 64 are one-hot levels of 6 categoricals and 47 are
+missingness flags paired to a parent value. A slider on either builds an input
+vector no patient could have -- two genders at once, or a "measured" value
+whose own flag says it was never recorded. So the page:
 
-  * renders each one-hot group as a single DROPDOWN, setting the chosen level
+  * renders each one-hot group as a single dropdown, setting the chosen level
     to 1 and its siblings to 0, so every what-if is a legal vector;
-  * pairs each parent with its flag: a not-recorded parent is shown greyed
-    with a "not recorded" chip (its number is the imputation placeholder, not
-    a measurement), and toggling the flag says so;
-  * tags each counterfactual by what KIND of change it asks for — physiology,
-    category, or a pure recording artifact, which is not a clinical change at
-    all;
-  * formats deltas to significant figures, because on a near-threshold real
-    case every row rounded to "+0.000" at three decimals.
+  * greys a not-recorded parent and chips it "not recorded", because the number
+    beside it is the imputation placeholder, not a measurement;
+  * tags each counterfactual by the kind of change it asks for: physiology,
+    category, or a pure recording artifact, which is no clinical change at all;
+  * formats deltas to significant figures, since on a near-threshold real case
+    every row rounded to "+0.000" at three decimals.
 
-The output is ONE .html file with no external assets or network access. The
-embedded data is record-level BY DESIGN (the page recomputes the head's own
-arithmetic offline), which is harmless for the synthetic demo and is a DUA
+The output is one .html file with no external assets or network access. Its
+embedded data is record-level by design, because the page recomputes the head's
+own arithmetic offline. That is harmless for the synthetic demo and a DUA
 matter for anything built from a restricted extract: those builds are
-gitignored (`explain_dashboard_eicu*.html`) and stay on the analyst's machine.
-Per-case OUTCOMES are additionally opt-in (`include_outcomes=True`) and always
-labelled retrospective. Nothing here touches the certified path and this
-script never writes into ``experiments/out``.
+gitignored (explain_dashboard_eicu*.html) and stay on the analyst's machine.
+Per-case outcomes are additionally opt-in (include_outcomes=True) and always
+labelled retrospective. Nothing here touches the certified path, and this
+script never writes into experiments/out.
 
-Honesty constraints carried into the page itself (SPEC explain.py):
-  * counterfactuals, what-ifs and curves are SCORE-SPACE questions to the gate
+Honesty constraints carried into the page itself:
+  * counterfactuals, what-ifs and curves are score-space questions to the gate
     ("what would the gate need"), never causal or clinical advice;
   * the minimal flip clears the bar by the documented 1e-9 logit headroom, so
-    it is the WEAKEST answerable answer;
-  * the certificate is a site-population-average guarantee — no single record
-    carries a certified property, and an UNCERTIFIED build says so loudly;
+    it is the weakest answerable answer;
+  * the certificate is a site-population-average guarantee, so no single
+    record carries a certified property, and an uncertified build says so;
   * the threshold explorer is fenced as intuition-only;
-  * the abstention panel states the replicated E5 null (abstention is
-    cancellation; no stable single-feature driver);
-  * every display cap is disclosed on the page — never a silent truncation.
+  * the abstention panel states the replicated E5 null: abstention is
+    cancellation, with no stable single-feature driver;
+  * every display cap is disclosed on the page, never silently truncated.
+
+Refs: SPEC "explain.py".
 
 Run:  python -m examples.explain_dashboard   (writes examples/explain_dashboard.html)
 """
@@ -77,19 +74,20 @@ _MAX_ANSWERED_SHOWN = 60
 _MAX_DECLINED_SHOWN = 500
 _MISSING_SUFFIXES = ("__missing", " (not recorded)")
 
-# The nine APACHE flags whose MEASUREMENT TIMING could not be verified from the
-# source documentation (EICU-PROTOCOL amendment A3, §5.4a). They are settled
-# from data by `outcome_screen`, not from DDL comments -- and the glossary says
-# so rather than inventing a confident definition.
+# The nine APACHE flags whose measurement timing could not be verified from the
+# source documentation. They are settled from data by `outcome_screen`, not
+# from DDL comments, and the glossary says so rather than inventing a confident
+# definition.
+# Ref: EICU-PROTOCOL amendment A3, §5.4a.
 _TIMING_UNVERIFIED = {
     "activetx", "thrombolytics", "graftcount", "electivesurgery", "ventday1",
     "oobventday1", "oobintubday1", "ima", "midur",
 }
 
-# Plain-English meanings. `d` is what a clinician-facing reader sees; `t` adds
-# units / normal ranges for the analyst view. Entries are keyed by the RAW stem
-# (block prefix and missingness suffix stripped). Anything not listed simply
-# shows no tooltip -- an absent gloss is better than a guessed one.
+# Plain-English meanings. The first string is what a clinician-facing reader
+# sees; the second adds units and normal ranges for the analyst view. Keys are
+# the raw stem, with block prefix and missingness suffix stripped. Anything not
+# listed shows no tooltip -- an absent gloss beats a guessed one.
 _GLOSSARY = {
     # ---- admission / demographics ----
     "age": ("Age in years at ICU admission.",
@@ -202,11 +200,9 @@ def _stem(name):
 def _deprefix(name):
     """Strip the `aps_` / `apv_` block prefix, returning the bare stem.
 
-    NOT ``str.lstrip("aps_apv_")``: that takes a character SET, so it eats any
-    leading run of {a, p, s, v, _} and turns "vent" into "ent" and "aps_ph"
-    into "h". The bug was inert here — mangled stems simply failed the
-    `demo` membership test and fell through to the same group they belong in —
-    but it reads as correct and is not.
+    Not str.lstrip("aps_apv_"). That takes a character SET, so it eats any
+    leading run of {a, p, s, v, _}, turning "vent" into "ent" and "aps_ph" into
+    "h". It reads as correct and is not.
     """
     for pre in ("aps_", "apv_"):
         if name.startswith(pre):
@@ -281,26 +277,26 @@ def build_dashboard(head, x, tau_star, out_path, feature_names=None,
                     oracle_y=None, cohort_label="synthetic demonstration cohort",
                     certificate=None, site_ids=None, include_outcomes=False,
                     provenance=None):
-    """Write a self-contained interactive explanation dashboard for ``x``.
+    """Write a self-contained interactive explanation dashboard for x.
 
-    ``feature_names`` are RAW model names (``aps_ph``, ``gender=Male``,
-    ``aps_ph__missing``); display names and the one-hot / missingness
-    structure are derived from them. ``certificate`` renders the deployment's
-    certificate banner — pass ``None`` and the page shows an explicit
-    UNCERTIFIED DEMONSTRATION banner instead. ``site_ids`` adds the hospital
-    each case came from (the unit the guarantee is stated over) and enables
-    the per-hospital panel. ``oracle_y`` enables the AGGREGATE retrospective
-    panels (composition, reliability); per-case outcome reveal additionally
-    requires ``include_outcomes=True`` and is always labelled retrospective.
+    The arguments that change what the page shows:
 
-    ``provenance`` answers the first question a reader asks — *why are there
-    only N cases when the dataset has far more?* — by stating where this pool
-    sits in the site-level split, e.g. ``dict(pool="24 held-out hospitals",
-    cohort_total=164322, cohort_sites=207,
-    splits="73 train / 36 aux / 74 calibration", replicate=0)``. Omitted, the
-    page says nothing rather than guessing.
+      - feature_names: raw model names (aps_ph, gender=Male, aps_ph__missing).
+        Display names and the one-hot / missingness structure derive from them.
+      - certificate: the deployment's certificate banner. Pass None and the page
+        shows an explicit uncertified-demonstration banner instead.
+      - site_ids: the hospital each case came from, which is the unit the
+        guarantee is stated over. Enables the per-hospital panel.
+      - oracle_y: enables the aggregate retrospective panels, composition and
+        reliability. Per-case outcomes also need include_outcomes=True, and are
+        always labelled retrospective.
+      - provenance: where this pool sits in the site-level split, e.g.
+        dict(pool="24 held-out hospitals", cohort_total=164322,
+        cohort_sites=207, splits="73 train / 36 aux / 74 calibration",
+        replicate=0). It answers the reader's first question -- why only N cases
+        when the dataset has far more? Omitted, the page says nothing.
 
-    Display caps are disclosed on the page, never silent. Returns ``out_path``.
+    Display caps are disclosed on the page, never silent. Returns out_path.
     """
     x = np.asarray(x, dtype=np.float64)
     n, d = x.shape
@@ -352,13 +348,13 @@ def build_dashboard(head, x, tau_star, out_path, feature_names=None,
     answered_idx = np.flatnonzero(answered)
 
     def _spread(pool, cap):
-        """Cap the browsable set, round-robin ACROSS HOSPITALS.
+        """Cap the browsable set, round-robin across hospitals.
 
-        Taking the first N clusters by row order, which on a site-sorted
-        extract means a handful of hospitals -- and the site is the unit the
-        guarantee is stated over, so a browser that shows 4 of 24 hospitals
-        misrepresents the deployment. Deterministic: hospitals in sorted
-        order, cases within a hospital in index order.
+        Taking the first N by row order would, on a site-sorted extract, show a
+        handful of hospitals. The site is the unit the guarantee is stated over,
+        so a browser showing 4 of 24 hospitals misrepresents the deployment.
+
+        Order is deterministic: hospitals sorted, cases by index.
         """
         if sites is None or len(pool) <= cap:
             return pool[:cap]
@@ -415,13 +411,12 @@ def build_dashboard(head, x, tau_star, out_path, feature_names=None,
 
     reliability = None
     if oracle is not None:
-        # IMPORTED, not restated: this page and certgate/reliability.py's panel
-        # are two instruments reading the same probabilities, and they must bin
-        # them identically. A literal here made that a claim a test had to
-        # verify by PARSING this file's source; importing the tuple makes it
-        # true by construction. The 1.01 top edge is a SENTINEL, never a bound
-        # -- it is what lets p == 1.0 land in the last bin under the strict `<`
-        # test below, and `min(hi, 1.0)` clamps it back for display.
+        # Imported, not restated. This page and certgate/reliability.py's panel
+        # are two instruments reading the same probabilities, so they must bin
+        # them identically; importing the tuple makes that true by
+        # construction. The 1.01 top edge is a SENTINEL, never a bound: it lets
+        # p == 1.0 land in the last bin under the strict `<` test below, and
+        # `min(hi, 1.0)` clamps it back for display.
         edges = rp.DEFAULT_BIN_EDGES
         reliability = []
         for lo, hi in zip(edges[:-1], edges[1:]):

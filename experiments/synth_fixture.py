@@ -1,23 +1,20 @@
 #!/usr/bin/env python3
-"""
-Synthetic dataset generator (the hostile-extract FIXTURE — SPEC.md Tests:
-`test_fixture_integration.py`; consumed via `experiments/fixture_etl.py`).
+"""Synthetic dataset generator -- the hostile-extract fixture.
 
 Produces a multi-table, domain-neutral relational dataset that mirrors the
-*structure* of a well-known public multi-site longitudinal research corpus:
-a root entity table, two high-volume irregular time-series tables, a
-measurement/result table, and several sparse event-log tables, all keyed on a
-single session identifier.
+structure of a well-known public multi-site longitudinal research corpus: a
+root entity table, two high-volume irregular time-series tables, a measurement
+table, and several sparse event-log tables, all keyed on one session id.
 
-The point is fidelity of SHAPE, not of content. Every awkward property that
+The point is fidelity of shape, not of content. Every awkward property that
 tends to break real pipelines is reproduced deliberately:
 
-  * time is stored as SIGNED INTEGER MINUTES relative to each session's start,
-    never as an absolute timestamp -- and offsets go negative for events that
-    precede the session, and can exceed the session's own close offset
+  * time is signed integer minutes from each session's start, never an
+    absolute timestamp; offsets go negative for events that precede the
+    session, and can exceed the session's own close offset
   * wall-clock-of-day is a VARCHAR(8) "HH:MM:SS" string, decoupled from offsets
-  * one ordinal attribute is stored as TEXT with a non-numeric ceiling token
-    ("> 89"), so naive int() casts blow up
+  * one ordinal attribute is TEXT with a non-numeric ceiling token ("> 89"),
+    so naive int() casts blow up
   * booleans are text ("True"/"False"/"Yes"/"No"/""), inconsistently per column
   * an entire table stores numeric-looking values as VARCHAR, including junk
   * NOT NULL columns still contain empty strings
@@ -26,7 +23,7 @@ tends to break real pipelines is reproduced deliberately:
   * hierarchical taxonomy strings are pipe-delimited paths of varying depth
   * row counts per session are heavy-tailed (log-normal), so a handful of
     sessions carry a disproportionate share of all rows
-  * sessions per SITE are heavy-tailed too (log-normal site weights,
+  * sessions per site are heavy-tailed too (log-normal site weights,
     --site-size-sigma, default 1.1 -- the source corpus's hospital sizes span
     tens to thousands of stays; 0 restores the old uniform assignment exactly)
   * duplicate and near-duplicate rows exist (near-duplicates differ only in
@@ -36,31 +33,34 @@ tends to break real pipelines is reproduced deliberately:
 Output: one gzipped CSV per table, plus a manifest and optional SQL DDL.
 
 Loading note: NOT NULL text columns deliberately contain empty strings, and
-csv.QUOTE_MINIMAL emits an empty field UNQUOTED -- which PostgreSQL's
+csv.QUOTE_MINIMAL emits an empty field unquoted -- which PostgreSQL's
 COPY ... (FORMAT csv) reads as NULL. Loading into the emitted DDL therefore
 needs FORCE_NOT_NULL on ledger.node_value_text, flow.item_name and
 tag.tag_path. That is the wart working as intended, not a bug.
 
-Usage
------
+Usage:
+
     python generate_synthetic_dataset.py --sessions 500 --out ./data
     python generate_synthetic_dataset.py --sessions 20000 --seed 7 --emit-ddl
     python generate_synthetic_dataset.py --sessions 100 --tables entity_session,measurement
 
-Stdlib only. Memory is flat regardless of scale: rows stream to disk per
-session rather than accumulating in lists. Every table draws from its own
+Stdlib only. Memory stays flat at any scale: rows stream to disk per session
+rather than accumulating in lists. Every table draws from its own
 (seed, table, session)-derived RNG stream, so a --tables subset run is a
-byte-identical projection of the full run at the same seed, and the gzip
-header carries mtime=0 so identical runs are byte-identical on disk.
+byte-identical projection of the full run at the same seed. The gzip header
+carries mtime=0, so identical runs are byte-identical on disk.
 
---signal (default OFF)
-plants a LATENT SEVERITY FACTOR: each session draws a hidden z ~ N(0,1); the
-entry metrics, the attr_band ordinal and the measurement values become noisy
-views of z, and close_state becomes a real outcome ('state_a' = event) drawn
-from P(event) = sigmoid(SIGNAL_INTERCEPT + SIGNAL_B*z + u_site) with a
-per-site random effect u_site ~ N(0, SIGNAL_U_SD^2). Prevalence lands near
-10% with between-site heterogeneity -- the regime a multi-site clinical
-corpus actually presents -- while every structural wart stays in place.
+--signal (default off) plants a latent severity factor. Each session draws a
+hidden z ~ N(0,1), and the entry metrics, the attr_band ordinal and the
+measurement values become noisy views of z. close_state becomes a real outcome
+('state_a' = event) drawn from P(event) = sigmoid(SIGNAL_INTERCEPT +
+SIGNAL_B*z + u_site), with a per-site random effect u_site ~ N(0,
+SIGNAL_U_SD^2). Prevalence lands near 10% with between-site heterogeneity --
+the regime a multi-site clinical corpus actually presents -- while every
+structural wart stays in place.
+
+Refs: SPEC.md Tests "test_fixture_integration.py"; consumed via
+experiments/fixture_etl.py.
 """
 
 from __future__ import annotations
@@ -233,7 +233,7 @@ TABLE_ORDER = list(SCHEMA.keys())
 
 # Approximate rows-per-session for the event tables, loosely proportioned after
 # the source corpus. Tune freely -- these are means of a heavy-tailed draw, not
-# fixed counts. signal_periodic is NOT listed: it derives from session duration.
+# fixed counts. signal_periodic is absent: it derives from session duration.
 EVENT_RATES: dict[str, float] = {
     "signal_aperiodic": 125.0,
     "measurement": 195.0,
@@ -337,12 +337,14 @@ def hhmmss(rng: random.Random) -> str:
 
 
 def ordinal_band(rng: random.Random, shift: float = 0.0) -> str:
-    """
-    Ordinal attribute stored as TEXT. Roughly 6% of rows carry the ceiling
-    token '> 89' and ~1% are blank, so int(row['attr_band']) raises on real
-    data. This is the single most common parsing trap in the source corpus.
-    ``shift`` moves the numeric branch's mean (used by --signal); 0.0 leaves
-    the draw byte-identical to the unshifted form.
+    """Ordinal attribute stored as text.
+
+    Roughly 6% of rows carry the ceiling token '> 89' and ~1% are blank, so
+    int(row['attr_band']) raises on real data. This is the single most common
+    parsing trap in the source corpus.
+
+    shift moves the numeric branch's mean and is used by --signal. A shift of
+    0.0 leaves the draw byte-identical to the unshifted form.
     """
     r = rng.random()
     if r < 0.01:
@@ -368,10 +370,10 @@ def dirty_text(rng: random.Random, clean: str, cfg: Config) -> str:
 
 
 def numeric_looking_text(rng: random.Random) -> str:
-    """
-    The `flow` table stores every numeric-looking value as free text, and the
-    real column contents are a mess: plain numbers, numbers with units,
-    ranges, comparators, and outright junk. Reproduced faithfully.
+    """Free-text stand-in for a number, as the `flow` table stores them.
+
+    The real column contents are a mess: plain numbers, numbers with units,
+    ranges, comparators, and outright junk. All reproduced faithfully.
     """
     r = rng.random()
     if r < 0.55:
@@ -394,9 +396,10 @@ def numeric_looking_text(rng: random.Random) -> str:
 
 
 def heavy_tail_count(rng: random.Random, mean: float) -> int:
-    """
-    Log-normal draw with the requested arithmetic mean. Produces the long right
-    tail the source corpus has -- most sessions are small, a few are enormous.
+    """Log-normal draw with the requested arithmetic mean.
+
+    Produces the long right tail the source corpus has: most sessions are
+    small, a few are enormous.
     """
     if mean <= 0:
         return 0
@@ -416,11 +419,11 @@ class TableWriter:
         self.path = path
         self.columns = columns
         self.rows = 0
-        # mtime=0 and no embedded filename: the gzip HEADER is constant, so
-        # "same seed + same args = byte-identical output" holds for the .gz
-        # files themselves, not just their decompressed content. (gzip.open
-        # stamps wall-clock mtime into header bytes 4:8, which silently broke
-        # byte-level reproducibility checks.)
+        # mtime=0 and no embedded filename keep the gzip header constant. That
+        # makes "same seed + same args = byte-identical output" hold for the
+        # .gz files themselves, not just their decompressed content. gzip.open
+        # would stamp wall-clock mtime into header bytes 4:8 instead, which
+        # silently breaks byte-level reproducibility checks.
         self._raw = open(path, "wb")
         gz = gzip.GzipFile(filename="", mode="wb", fileobj=self._raw,
                            compresslevel=compresslevel, mtime=0)
@@ -507,18 +510,18 @@ def build_session_row(rng: random.Random, cfg: Config, s: dict) -> list:
         s["subject_key"],
     ]
     if sig is not None:
-        # close_state becomes the OUTCOME: 'state_a' = event. The random
-        # draw above is kept so the rng stream is position-identical; only
-        # the emitted value is overridden.
+        # close_state becomes the outcome: 'state_a' = event. The random draw
+        # above is kept so the rng stream stays position-identical -- only the
+        # emitted value is overridden.
         row[_CLOSE_STATE_IDX] = "state_a" if sig["y"] else "state_b"
     return row
 
 
 def build_signal_periodic(rng: random.Random, cfg: Config, s: dict, next_id):
-    """
-    Regularly sampled wide table: one row per sample_interval minutes, but each
-    row populates only a few of its sixteen channels. This is where most of the
-    volume lives -- and where sparse-wide handling gets tested.
+    """Regularly sampled wide table: one row per sample_interval minutes.
+
+    Each row populates only a few of its sixteen channels. This is where most
+    of the volume lives, and where sparse-wide handling gets tested.
     """
     duration = s["duration"]
     n = max(1, duration // cfg.sample_interval)
@@ -670,10 +673,11 @@ def build_ledger(rng: random.Random, cfg: Config, s: dict, count, next_id):
 
 
 def event_offset(rng: random.Random, s: dict) -> int:
-    """
-    Event time in signed minutes from session start. ~4% land before the
-    session opens and ~2% after it closes, which is what the real corpus does
-    and what naive `0 <= offset <= duration` filters silently drop.
+    """Event time in signed minutes from session start.
+
+    About 4% land before the session opens and ~2% after it closes. The real
+    corpus does the same, and a naive `0 <= offset <= duration` filter silently
+    drops them.
     """
     r = rng.random()
     if r < 0.04:
@@ -699,11 +703,10 @@ BUILDERS = {
 # --------------------------------------------------------------------------
 
 def plan_sessions(rng: random.Random, cfg: Config, n_sites: int):
-    """
-    Build the entity hierarchy: subject -> account -> session.
+    """Build the entity hierarchy: subject -> account -> session.
 
     Mirrors the source corpus's three-level identity structure, where roughly
-    1.44 sessions exist per subject. Yields session dicts lazily so memory
+    1.44 sessions exist per subject. Yields session dicts lazily, so memory
     stays flat at any scale.
     """
     session_id = 141_168      # ids start in a plausible band, not at 1
@@ -711,9 +714,9 @@ def plan_sessions(rng: random.Random, cfg: Config, n_sites: int):
     subject_ordinal = 0
     emitted = 0
 
-    # Heavy-tailed site sizes (--site-size-sigma > 0): each site gets a
-    # lognormal weight from a DEDICATED stream, and subjects pick a site with
-    # probability proportional to it -- hospital totals then span tens to
+    # Heavy-tailed site sizes, when --site-size-sigma > 0. Each site gets a
+    # lognormal weight from its own dedicated stream, and subjects pick a site
+    # with probability proportional to it. Hospital totals then span tens to
     # thousands of sessions, like the source corpus. sigma == 0 keeps the old
     # uniform randint path byte-for-byte.
     site_cum, site_tot = None, 0.0
@@ -753,8 +756,8 @@ def plan_sessions(rng: random.Random, cfg: Config, n_sites: int):
                 sig = None
                 if cfg.signal:
                     # Dedicated streams: the latent draw never perturbs the
-                    # plan stream, so --signal changes VALUES, not structure
-                    # (same sessions, sites, durations as the unsignalled run).
+                    # plan stream. So --signal changes values, not structure --
+                    # same sessions, sites and durations as an unsignalled run.
                     srng = random.Random(f"{cfg.seed}:signal:{session_id}")
                     u_c = random.Random(
                         f"{cfg.seed}:signal-site:{site_id}").gauss(0.0, SIGNAL_U_SD)
@@ -788,21 +791,20 @@ def make_counter(start: int = 1):
 
 
 def table_rng(seed: int, table: str, session_id) -> random.Random:
-    """Deterministic, INDEPENDENT stream per (table, session).
+    """Deterministic, independent stream per (table, session).
 
     Every table's per-session content is a function of (seed, table,
-    session_id) alone, so excluding tables via --tables can no longer shift
-    any other table's draws: a subset run is a byte-identical projection of
-    the full run at the same seed. (Previously one shared stream meant a
-    --tables run produced entirely different data than the full run.)
+    session_id) alone. Excluding tables via --tables therefore cannot shift any
+    other table's draws: a subset run is a byte-identical projection of the
+    full run at the same seed.
     """
     return random.Random(f"{seed}:{table}:{session_id}")
 
 
 def generate(cfg: Config) -> dict:
     # Separate streams for the plan and the site table; per-(table, session)
-    # streams for everything else (see table_rng) -- the plan always runs in
-    # full, so which tables are selected can never change what the plan draws.
+    # streams for everything else (see table_rng). The plan always runs in
+    # full, so table selection can never change what the plan draws.
     rng_plan = random.Random(f"{cfg.seed}:plan")
     os.makedirs(cfg.out, exist_ok=True)
 

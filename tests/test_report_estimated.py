@@ -1,8 +1,12 @@
-"""verification N1: the V21/V16 fixes need tests that would go red on revert.
+"""The V21/V16 fixes need tests that would go red on revert.
 
-``_bootstrap_estimate``'s top-up-or-decline discipline, the NaN-not-0.0 empty
-answered set, ``_feasibility``'s None-not-inf sentinels, and ``render_text``'s
-n_boot surfacing were all silently revertible at 110/110 green.
+Four things were silently revertible at 110/110 green:
+  - _bootstrap_estimate's top-up-or-decline discipline
+  - the NaN-not-0.0 empty answered set
+  - _feasibility's None-not-inf sentinels
+  - render_text's n_boot surfacing
+
+Refs: verification N1.
 """
 import json
 
@@ -23,9 +27,11 @@ def _head_cal():
 
 
 def test_bootstrap_estimate_tops_up_to_full_count():
-    """Resamples with zero answered mass are topped up, never dropped: with a
-    reachable tau the draw count must be EXACTLY n_boot (a drop-only loop
-    yields fewer whenever any resample has zero answered mass)."""
+    """Resamples with zero answered mass are topped up, never dropped.
+
+    With a reachable tau the draw count must be exactly n_boot. A drop-only
+    loop yields fewer whenever any resample has zero answered mass.
+    """
     head, cal = _head_cal()
     est = _bootstrap_estimate(head, cal, 0.55, n_boot=200)
     assert est["n_boot"] == 200
@@ -35,12 +41,17 @@ def test_bootstrap_estimate_tops_up_to_full_count():
 
 
 def test_bootstrap_estimate_declines_on_topup_shortfall():
-    """The top-up-or-decline discipline itself (audit V21 / verification N1):
-    when fewer than n_boot valid resamples arrive within the attempt budget,
-    the CI must be NaN -- never a quantile over the reduced count. Budget
-    pinched via the max_attempts parameter so the shortfall regime is
-    deterministically reachable; a revert to 'quantile whatever arrived'
-    produces a finite CI here and fails."""
+    """The top-up-or-decline discipline itself.
+
+    When fewer than n_boot valid resamples arrive within the attempt budget,
+    the CI must be NaN, never a quantile over the reduced count.
+
+    max_attempts pinches the budget so the shortfall regime is
+    deterministically reachable. A revert to 'quantile whatever arrived'
+    produces a finite CI here and fails.
+
+    Refs: audit V21; verification N1.
+    """
     head, cal = _head_cal()
     est = _bootstrap_estimate(head, cal, 0.55, n_boot=200, max_attempts=10)
     assert 0 < est["n_boot"] < 200                 # some arrived, not enough
@@ -49,8 +60,10 @@ def test_bootstrap_estimate_declines_on_topup_shortfall():
 
 
 def test_bootstrap_estimate_empty_answered_set_is_nan_not_zero():
-    """audit V21: a tau answering nothing must yield NaN, never 0.0 -- zero
-    risk and no evidence are different claims."""
+    """A tau answering nothing yields NaN, never 0.0 (audit V21).
+
+    Zero risk and no evidence are different claims.
+    """
     head, cal = _head_cal()
     est = _bootstrap_estimate(head, cal, 1.01)     # nothing answers
     assert np.isnan(est["point"])
@@ -59,9 +72,11 @@ def test_bootstrap_estimate_empty_answered_set_is_nan_not_zero():
 
 
 def test_feasibility_reports_none_not_inf_when_no_coverage():
-    """audit V16: a head answering nothing at any tau must report margin/ratio
-    as None (JSON null), never -inf (invalid strict JSON, reads as a very bad
-    but real margin)."""
+    """A head answering nothing reports margin and ratio as None (audit V16).
+
+    None serializes as JSON null. -inf is invalid strict JSON, and reads as a
+    very bad but real margin.
+    """
     _, cal = _head_cal()
     flat = Head(coef=np.zeros(cal.d), intercept=0.0, mu=np.zeros(cal.d),
                 sd=np.ones(cal.d))                 # score == 0.5 < every tau
@@ -71,8 +86,10 @@ def test_feasibility_reports_none_not_inf_when_no_coverage():
 
 
 def test_render_text_surfaces_n_boot_and_handles_gated_reports():
-    """render_text must show the estimated tier's n_boot (audit V21) and must
-    not crash on a gated report (audit V25)."""
+    """render_text shows the estimated tier's n_boot (audit V21).
+
+    It must also not crash on a gated report (audit V25).
+    """
     cfg = SimConfig()
     rng = np.random.default_rng(20260721)
     coh = draw_cohort(cfg, 208, rng)
@@ -81,8 +98,8 @@ def test_render_text_surfaces_n_boot_and_handles_gated_reports():
     rep = run_certgate(train, aux, cal, tgt.x, target_label="render")
     text = render_text(rep)
     assert "n_boot=" in text
-    # fixture audit 2026-07-25: the partition line includes the ANSWERED
-    # count, so its label must not read as a decline count
+    # the partition line includes the answered count, so its label must not
+    # read as a decline count (fixture audit 2026-07-25)
     assert "[partition]" in text
     assert "[declines]" not in text
     gated = run_certgate(train, aux, cal, tgt.x[:5], target_label="gated")

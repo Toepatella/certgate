@@ -1,15 +1,18 @@
 """SPEC "Tests" for the explainability layer.
 
-The additive attributions are exact (``sum(phi) + base == logit``); the
-abstention margin is ``> 0`` exactly for declined cases; the composition object
-reports the three tagged views (audit F25).
+Three contracts:
+  - the additive attributions are exact: sum(phi) + base == logit
+  - the abstention margin is > 0 exactly for declined cases
+  - the composition object reports the three tagged views
+
+Refs: audit F25.
 """
 import numpy as np
 
 from certgate.data import SimConfig, draw_cohort, split_sites
 from certgate.model import fit_head
 from certgate.explain import (local_attribution, abstention_explanation,
-                              composition)
+                              composition, gaussian_conditional_shapley_matrix)
 
 
 def _head_and_pool():
@@ -29,6 +32,74 @@ def test_additive_attribution_is_exact():
         assert abs(attr["base"] + float(attr["phi"].sum())
                    - attr["logit"]) < 1e-10
         assert abs(attr["logit"] - float(head.logit(pool.x[i]))) < 1e-9
+
+
+def _shapley_by_enumeration(value, k):
+    """Exact Shapley values over k players, by enumerating all 2^k coalitions.
+
+    This is the reference, not the implementation under test.
+    """
+    from itertools import combinations
+    from math import factorial
+    phi = np.zeros(k)
+    for j in range(k):
+        others = [i for i in range(k) if i != j]
+        for r in range(k):
+            for s in combinations(others, r):
+                wt = factorial(r) * factorial(k - r - 1) / factorial(k)
+                phi[j] += wt * (value(set(s) | {j}) - value(set(s)))
+    return phi
+
+
+def test_linear_attribution_equals_exhaustive_interventional_shapley():
+    """phi_j = coef_j * z_j is the interventional Shapley value.
+
+    The baseline is the S_train feature mean. Verified against exhaustive
+    enumeration of all 2^8 coalitions on the 8-feature head, rather than
+    asserted from the literature.
+    """
+    head, pool = _head_and_pool()
+    k = head.coef.shape[0]
+    assert k == 8
+    for i in (0, 5, 17):
+        z = (pool.x[i] - head.mu) / head.sd
+        # interventional value function: absent features sit at the S_train
+        # mean (z = 0), so v(S) = intercept + sum_{j in S} coef_j z_j
+        def value(s, z=z):
+            return float(head.intercept + sum(head.coef[j] * z[j] for j in s))
+        phi_ref = _shapley_by_enumeration(value, k)
+        assert np.allclose(phi_ref, local_attribution(head, pool.x[i])["phi"],
+                           atol=1e-12)
+
+
+def test_gaussian_conditional_shapley_matrix_pins():
+    """Three pins on the matrix B (SPEC explain.py, 2026-08-21).
+
+      - B == diag(w) under independence
+      - columns sum to w, the efficiency identity
+      - z @ B.T matches exhaustive enumeration of the Gaussian conditional
+        value function on a correlated 6-feature block
+    """
+    rng = np.random.default_rng(3)
+    w = rng.standard_normal(6)
+    assert np.allclose(gaussian_conditional_shapley_matrix(w, np.eye(6)),
+                       np.diag(w))
+    a = rng.standard_normal((6, 6))
+    cov = a @ a.T + 0.25 * np.eye(6)
+    b = gaussian_conditional_shapley_matrix(w, cov)
+    assert np.allclose(b.sum(axis=0), w)
+    assert not np.allclose(b, np.diag(w))      # correlation moves the values
+    z = rng.standard_normal(6)
+
+    def value(s, z=z):
+        s = sorted(s)
+        sb = [i for i in range(6) if i not in s]
+        if not s:
+            return 0.0
+        a_s = w[s] + (np.linalg.pinv(cov[np.ix_(s, s)])
+                      @ (cov[np.ix_(s, sb)] @ w[sb]) if sb else 0.0)
+        return float(a_s @ z[s])
+    assert np.allclose(_shapley_by_enumeration(value, 6), b @ z, atol=1e-10)
 
 
 def test_abstention_margin_positive_iff_declined():
@@ -64,9 +135,13 @@ def test_composition_omits_untagged_views_when_inputs_absent():
 
 
 def test_empty_population_gap_ranking_is_empty():
-    """audit V22: with every case answered (or every case declined) the gap is
-    all-NaN and argsort of it returns the identity permutation -- which
-    fabricated feature 0 as top abstention driver. The ranking must be EMPTY."""
+    """An empty answered or declined population gives an empty ranking.
+
+    The gap is all-NaN there. Argsort of it returns the identity permutation,
+    which fabricates feature 0 as the top abstention driver.
+
+    Refs: audit V22.
+    """
     from certgate.explain import cohort_abstention_profile
     head, pool = _head_and_pool()
     all_answered = np.ones(pool.n, dtype=bool)
@@ -83,12 +158,17 @@ def test_empty_population_gap_ranking_is_empty():
 
 
 def test_counterfactual_min_l2_flips_deployed_rule_and_is_minimal():
-    """SPEC explain.py counterfactual_to_answer: the minimal-L2 delta flips the
-    case under the DEPLOYED rule ``head.score(x_cf) >= tau`` (no tolerance),
-    (1 - 1e-4) of it still declines under the same rule, and no standardized
-    move of norm below the reported exact minimum flips in ANY direction
-    (Cauchy-Schwarz, spot-checked over random directions). The returned delta
-    exceeds the reported exact minimum by exactly the documented headroom."""
+    """The minimal-L2 delta flips the case under the deployed rule.
+
+    That rule is head.score(x_cf) >= tau, with no tolerance. Shortening the
+    delta to (1 - 1e-4) of it still declines.
+
+    No standardized move of norm below the reported exact minimum flips in any
+    direction, by Cauchy-Schwarz, spot-checked over random directions. The
+    returned delta exceeds that minimum by exactly the documented headroom.
+
+    Refs: SPEC "explain.py" counterfactual_to_answer.
+    """
     from certgate.explain import _EPS_ANSWER_LOGIT, counterfactual_to_answer
     head, pool = _head_and_pool()
     tau_star = 0.8
@@ -100,7 +180,7 @@ def test_counterfactual_min_l2_flips_deployed_rule_and_is_minimal():
     for i in declined_idx[:5]:
         cf = counterfactual_to_answer(head, pool.x[i], tau_star)
         assert cf["declined"] and cf["flip_verified"]
-        # the DEPLOYED rule answers the flipped point -- no tolerance
+        # the deployed rule answers the flipped point -- no tolerance
         x_cf = (pool.x[i] + cf["delta_x_min_l2"]).reshape(1, -1)
         assert float(head.score(x_cf)[0]) >= tau_star
         # flip outcome: current side's class, weakest answerable confidence
@@ -110,8 +190,8 @@ def test_counterfactual_min_l2_flips_deployed_rule_and_is_minimal():
         x_short = (pool.x[i]
                    + (1 - 1e-4) * cf["delta_x_min_l2"]).reshape(1, -1)
         assert float(head.score(x_short)[0]) < tau_star
-        # reported distance is the EXACT minimum m/||coef||; the delta carries
-        # exactly the documented headroom on top of it
+        # the reported distance is the exact minimum m/||coef||, and the delta
+        # carries exactly the documented headroom on top of it
         assert abs(cf["l2_distance_z"]
                    - cf["margin_to_answer"] / coef_norm) < 1e-12
         headroom = np.linalg.norm(cf["delta_z_min_l2"]) - cf["l2_distance_z"]
@@ -124,19 +204,23 @@ def test_counterfactual_min_l2_flips_deployed_rule_and_is_minimal():
             x_alt = (pool.x[i] + head.sd * d).reshape(1, -1)
             assert float(head.score(x_alt)[0]) < tau_star
         # the same-side minimum is visibly the minimum, and the opposite-side
-        # FORMULA is pinned, not just the ordering
+        # formula is pinned, not just the ordering
         assert cf["opposite_side_distance_z"] >= cf["l2_distance_z"]
         assert abs(cf["opposite_side_distance_z"]
                    - (cf["L_star"] + abs(cf["logit"])) / coef_norm) < 1e-12
 
 
 def test_counterfactual_flips_at_float_hostile_thresholds():
-    """Regression for the 2026-07-31 boundary finding: at 6 of the 23 frozen
-    grid thresholds ``sigmoid(L*) < tau`` in float64, so a delta landing
-    EXACTLY on the bar is still declined by the deployed rule -- 18.2% of the
-    fixture head's declines got a non-flipping "counterfactual" while the old
-    tolerance-based flip_verified reported True. The headroom must clear every
-    declined case at the two worst thresholds."""
+    """The headroom must clear every declined case at the two worst thresholds.
+
+    At 6 of the 23 frozen grid thresholds sigmoid(L*) < tau in float64, so a
+    delta landing exactly on the bar is still declined by the deployed rule.
+
+    That gave 18.2% of the fixture head's declines a non-flipping
+    "counterfactual" while the old tolerance-based flip_verified said True.
+
+    Refs: boundary finding 2026-07-31.
+    """
     from certgate.explain import counterfactual_to_answer
     head, pool = _head_and_pool()
     for tau_star in (0.63, 0.93):
@@ -152,9 +236,11 @@ def test_counterfactual_flips_at_float_hostile_thresholds():
 
 
 def test_counterfactual_single_feature_flips_and_shorter_fails():
-    """The top-ranked single-feature delta flips the case under the deployed
-    rule; (1 - 1e-4) of it still declines. Ranking is ascending |delta_z| over
-    finite entries."""
+    """The top-ranked single-feature delta flips the case.
+
+    It flips under the deployed rule, and (1 - 1e-4) of it still declines.
+    The ranking is ascending in |delta_z| over the finite entries.
+    """
     from certgate.explain import counterfactual_to_answer
     head, pool = _head_and_pool()
     tau_star = 0.8
@@ -186,17 +272,20 @@ def test_counterfactual_answered_case_returns_zero_deltas():
     assert cf["l2_distance_z"] == 0.0
     assert np.all(cf["delta_z_min_l2"] == 0.0)
     assert np.all(cf["single_feature_delta_z"] == 0.0)
-    # EMPTY ranking -- never the identity permutation over degenerate zeros
-    # (audit V22 pattern) -- and no fabricated flip fields
+    # empty ranking, never the identity permutation over degenerate zeros,
+    # and no fabricated flip fields (audit V22 pattern)
     assert cf["single_feature_ranking"].size == 0
     assert cf["confidence_at_flip"] is None
     assert cf["answered_class_on_flip"] is None
 
 
 def test_counterfactual_dead_and_degenerate_heads():
-    """coef_j == 0 -> inf single-feature delta, excluded from the ranking; the
-    all-zero head cannot flip a declined case: distance inf, flip_verified
-    False -- never a fabricated zero-cost flip."""
+    """Degenerate coefficients never produce a fabricated zero-cost flip.
+
+    coef_j == 0 gives an infinite single-feature delta, excluded from the
+    ranking. The all-zero head cannot flip a declined case at all: distance
+    inf, flip_verified False.
+    """
     from certgate.model import Head
     from certgate.explain import counterfactual_to_answer
     head = Head(coef=np.array([0.0, 2.0, -1.0]), intercept=0.1,

@@ -1,36 +1,41 @@
-"""Read-only analysis behind draft.md Tables 6 and 7 (panel items S2-13, S2-28).
+"""Read-only analysis behind draft.md Tables 6 and 7.
 
-Two things the main grid does not emit:
+Two things the main grid does not emit.
 
-  * **Table 6 — influence-cap sensitivity.** Replays E1's ``s_u=0.5`` arm in
-    baseline mode at each candidate ``M``, re-deriving BOTH the ``S_aux`` walk
-    order and the calibration walk, and rescores each certificate against
-    ``R_M`` AT THAT SAME ``M`` on the same fresh 200-site evaluation pool. Each
-    M certifies its own estimand, so the table compares procedures, not one
-    quantity. Self-checks against the recorded ``E1_validity.csv``: at M=100 the
-    replay must reproduce every baseline-deploying draw's tau exactly.
+Table 6, influence-cap sensitivity. Replays E1's s_u=0.5 arm in baseline mode
+at each candidate M, re-deriving both the S_aux walk order and the calibration
+walk. Each certificate is then rescored against R_M at that same M, on one
+fresh 200-site evaluation pool. Every M certifies its own estimand, so the
+table compares procedures, not one quantity.
 
-  * **Table 7 — answered/declined operating characteristics.** Confusion counts,
-    sensitivity, specificity, PPV and NPV for the answered and declined sets of
-    E1 (pooled over its 200 fresh evaluation pools) and E6 (its single 40-site
-    deployment), plus the always-negative comparator error rate that Section 3.1
-    and Section 4.2 weigh alpha against.
+The Table 6 self-check: at M=100 the replay must reproduce every
+baseline-deploying draw's tau in the recorded E1_validity.csv exactly.
 
-Also emitted: the Section 3.3 cap facts (share of sites above M, share of
-records above their site's cap, min g_c/n_c), the record-level-vs-R_M gap for
-E1 and E6, and the record-carrying-but-silent (neutral atom) counts.
+Table 7, answered/declined operating characteristics. Confusion counts,
+sensitivity, specificity, PPV and NPV for the answered and declined sets of E1
+(pooled over its 200 fresh evaluation pools) and E6 (its single 40-site
+deployment). Plus the always-negative comparator error rate that Sections 3.1
+and 4.2 weigh alpha against.
 
-Determinism: every draw is reseeded from ``constants.SEED`` through the same
-rule ``run_synthetic._rng`` uses, so this file reproduces the grid's cohorts
-without re-running it. It reads ``experiments/out/E1_validity.csv`` and WRITES
-NOTHING -- results go to stdout as JSON.
+Also emitted:
+  - the Section 3.3 cap facts: share of sites above M, share of records above
+    their site's cap, min g_c/n_c
+  - the record-level-vs-R_M gap for E1 and E6
+  - the record-carrying-but-silent (neutral atom) counts
 
-Run: ``python -m experiments.panel_s2_tables [R]``   (default R = 200)
+Determinism: every draw is reseeded from constants.SEED through the same rule
+run_synthetic._rng uses, so this file reproduces the grid's cohorts without
+re-running it. It reads experiments/out/E1_validity.csv and writes nothing --
+results go to stdout as JSON.
 
-NOTE (open item): these numbers are not yet folded into ``run_synthetic.py``'s
-CSV/summary writers, so ``python -m experiments.run_synthetic`` alone does not
+Run: python -m experiments.panel_s2_tables [R]   (default R = 200)
+
+Open item: these numbers are not yet folded into run_synthetic.py's CSV and
+summary writers, so python -m experiments.run_synthetic alone does not
 regenerate Tables 6 and 7. Appendix A.3's one-command claim covers Tables 1-4
 and Figures 1-7 only until that wiring lands.
+
+Refs: panel items S2-13, S2-28.
 """
 
 import csv
@@ -51,14 +56,14 @@ from certgate.pipeline import run_certgate
 OUT = os.path.join(os.path.dirname(__file__), "out")
 ANCHOR_SITES = 208
 E1_EVAL_SITES = 200
-# 5000 is the generator's upper size clip: g_c = n_c for EVERY site, i.e. the
-# record-proportional estimand. M is also the atom normaliser, so raising it
-# shrinks every atom toward alpha -- which is why the certificate dies there.
+# 5000 is the generator's upper size clip, so g_c = n_c at every site -- the
+# record-proportional estimand. M also normalises the atoms, so raising it
+# shrinks every atom toward alpha, which is why the certificate dies there.
 M_SWEEP = (25, 50, 100, 200, 500, 1000, 5000)
 
 
 def _rng(*parts):
-    """Same seeding rule as ``run_synthetic._rng``."""
+    """Same seeding rule as run_synthetic._rng."""
     return np.random.default_rng(np.random.SeedSequence([SEED, *parts]))
 
 
@@ -82,11 +87,11 @@ def _op_chars(c):
 
 
 def _always_negative_error(*sets):
-    """Error rate of a constant always-negative rule, which answers EVERYTHING.
+    """Error rate of a constant always-negative rule, which answers everything.
 
-    The comparator alpha is weighed against (Sections 3.1, 4.2), so it must be
-    taken over the WHOLE pool -- answered plus declined -- not over the answered
-    subset, whose prevalence the gate has already altered.
+    Sections 3.1 and 4.2 weigh alpha against this comparator. It must therefore
+    be taken over the whole pool, answered plus declined. The answered subset
+    will not do: the gate has already altered its prevalence.
     """
     pos = sum(s["tp"] + s["fn"] for s in sets)
     n = sum(s["records"] for s in sets)
@@ -94,7 +99,7 @@ def _always_negative_error(*sets):
 
 
 def _rm(head, pool, tau, M):
-    """Influence-weighted answered risk at cap ``M`` (Section 3.3)."""
+    """Influence-weighted answered risk at cap M (Section 3.3)."""
     ans = head.score(pool.x) >= tau
     err = head.predict(pool.x) != pool.y
     sizes = pool.site_sizes.astype(float)
@@ -165,13 +170,13 @@ def e1_arm(R):
                 k["exceed"] += int(rm > alpha)
                 if M == 100 and alpha == 0.10 and r in recorded:
                     # the OR-combination deploys max tau across modes, so only
-                    # baseline-deploying draws are comparable to a baseline replay
+                    # baseline-deploying draws match a baseline-only replay
                     if recorded[r]["deploy_mode"] == "baseline":
                         check["compared"] += 1
                         check["tau_mismatches"] += int(
                             abs(tau - float(recorded[r]["tau"])) > 1e-9)
 
-        # Table 7 + Section 3.3/4.2 diagnostics at the DEPLOYED (recorded) tau
+        # Table 7 + Section 3.3/4.2 diagnostics at the deployed (recorded) tau
         if r in recorded:
             tau = float(recorded[r]["tau"])
             s_ev, yh = head.score(ev.x), head.predict(ev.x)
@@ -199,9 +204,9 @@ def e1_arm(R):
                     mean_rm=round(float(np.mean(k["rm"])), 4),
                     rm_exceed_rate=round(k["exceed"] / k["n"], 4))
 
-    # HARD self-check, not a printed diagnostic: if the replay does not
-    # reproduce the released artifact's certified thresholds, nothing below is
-    # trustworthy and no table should be emitted.
+    # Hard self-check, not a printed diagnostic. If the replay does not
+    # reproduce the released artifact's certified thresholds, nothing below
+    # is trustworthy and no table should be emitted.
     if check["compared"] == 0 or check["tau_mismatches"]:
         raise AssertionError(
             f"panel_s2_tables: replay does not reproduce E1_validity.csv -- "

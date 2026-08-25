@@ -1,8 +1,12 @@
 """SPEC "Tests": every loud rejection in the Cohort input contract.
 
-NaN x; float y; ``{1,2}`` labels; NaN raw labels; gappy site ids +
-``densify_sites`` round-trip; length mismatch; the disjointness assertion; and
-the ``site_sizes == bincount`` invariant (audit F38).
+What it covers:
+  - NaN x, float y, {1,2} labels, NaN raw labels
+  - gappy site ids and the densify_sites round-trip
+  - length mismatch and the disjointness assertion
+  - the site_sizes == bincount invariant
+
+Refs: audit F38.
 """
 import numpy as np
 import pytest
@@ -101,9 +105,12 @@ def test_both_classes_required():
 
 
 def test_target_pool_exempt_from_both_classes():
-    """An all-negative TARGET pool is a legitimate deployment scenario at ~9.5%
-    prevalence (small single-site batches): require_both_classes=False must
-    admit it, while the strict default (fitting cohorts) still rejects."""
+    """An all-negative target pool is legitimate at ~9.5% prevalence.
+
+    Small single-site batches produce it routinely, so
+    require_both_classes=False must admit it. The strict default, which
+    fitting cohorts use, still rejects.
+    """
     kw = _ok_kwargs()
     kw["y"] = np.zeros(6, dtype=bool)            # all-negative pool
     with pytest.raises(CohortError, match="both classes"):
@@ -123,10 +130,14 @@ def test_target_pool_exempt_from_both_classes():
 # ---- audit V4/V10: site-identity canonicalization and loud dirt rejection --
 
 def test_dirty_site_ids_whitespace_merges_to_one_site():
-    """'H1' vs 'H1 ' is one hospital with a dirty column, not two independent
-    clusters -- the cluster count feeds MIN_CAL_CLUSTERS and the betting
-    test's effective n (audit V4). Surrounding whitespace is unambiguous dirt:
-    canonicalization strips it, so the two spellings MERGE into one site."""
+    """'H1' and 'H1 ' are one hospital with a dirty column, not two clusters.
+
+    The cluster count feeds MIN_CAL_CLUSTERS and the betting test's effective
+    n, so a spurious split is costly. Surrounding whitespace is unambiguous
+    dirt: canonicalization strips it and the two spellings merge.
+
+    Refs: audit V4.
+    """
     dense, labels = densify_sites(np.array(["H1", "H1 ", "H2"], dtype=object))
     assert labels == ("H1", "H2")
     assert dense.tolist() == [0, 0, 1]
@@ -138,23 +149,29 @@ def test_dirty_site_ids_case_collision_raises():
 
 
 def test_dirty_site_ids_string_numeric_spelling_raises():
-    """String '1' vs '1.0' (two CSV exports of one float column) must not
-    become two clusters."""
+    """String '1' and '1.0' must not become two clusters.
+
+    They are two CSV exports of one float column.
+    """
     with pytest.raises(CohortError, match="cosmetic"):
         densify_sites(np.array(["1", "1.0", "2"], dtype=object))
 
 
 def test_numeric_int_float_ids_merge_to_one_site():
-    """Actual numerics 1 and 1.0 are unambiguously the same id (the pandas
-    float-dtype column case): merged, not split, not raised."""
+    """Actual numerics 1 and 1.0 are unambiguously the same id.
+
+    This is the pandas float-dtype column case: merged, not split, not raised.
+    """
     dense, labels = densify_sites(np.array([1, 1.0, 2, 2.0], dtype=object))
     assert labels == ("1", "2")
     assert dense.tolist() == [0, 0, 1, 1]
 
 
 def test_missing_site_ids_rejected():
-    """None / NaN / empty site ids must never become a bona fide pseudo-site
-    (audit V10) -- mirroring coerce_labels' treatment of the label column."""
+    """None, NaN and empty site ids never become a pseudo-site (audit V10).
+
+    This mirrors how coerce_labels treats the label column.
+    """
     with pytest.raises(CohortError, match="None"):
         densify_sites(np.array(["A", None], dtype=object))
     with pytest.raises(CohortError, match="NaN"):
@@ -174,8 +191,11 @@ def test_duplicate_site_labels_rejected_by_make_cohort():
 # ---- audit V17: shape discipline at the boundary ---------------------------
 
 def test_column_shaped_arrays_rejected():
-    """(n,1) bool y broadcasts predict(x) != y into an (n,n) matrix deep in
-    the pipeline -- must be a typed CohortError at the boundary."""
+    """A column-shaped array is a typed CohortError at the boundary.
+
+    An (n,1) bool y would otherwise broadcast predict(x) != y into an (n,n)
+    matrix deep inside the pipeline.
+    """
     for field in ("y", "site_id"):
         kw = _ok_kwargs()
         kw[field] = kw[field].reshape(-1, 1)
@@ -183,7 +203,7 @@ def test_column_shaped_arrays_rejected():
             make_cohort(**kw)
 
 
-# ---- audit V15: the contract holds on DIRECT Cohort construction ----------
+# ---- audit V15: the contract holds on direct Cohort construction ----------
 
 def test_cohort_post_init_enforces_contract():
     kw = _ok_kwargs()
@@ -204,12 +224,12 @@ def test_cohort_post_init_enforces_contract():
     with pytest.raises(CohortError, match="site_id"):
         Cohort(x=coh.x, y=coh.y, site_id=bad_sid,
                site_labels=coh.site_labels)
-    # duplicate site_labels on DIRECT construction (audit V5's second check)
+    # duplicate site_labels on direct construction (audit V5's second check)
     with pytest.raises(CohortError, match="unique"):
         Cohort(x=coh.x, y=coh.y, site_id=coh.site_id,
                site_labels=("H-A", "H-A", "H-B"))
-    # a trailing EMPTY site remains a legitimate direct construction (the
-    # record-carrying cluster gate's fixture pattern -- audit V12)
+    # a trailing empty site remains a legitimate direct construction: the
+    # record-carrying cluster gate's fixture pattern (audit V12)
     ok = Cohort(x=coh.x, y=coh.y, site_id=coh.site_id,
                 site_labels=coh.site_labels + ("empty-extra",))
     assert ok.site_sizes.tolist()[-1] == 0
@@ -218,9 +238,11 @@ def test_cohort_post_init_enforces_contract():
 # ---- verification F1/F3/N4: Unicode + precision hardening ------------------
 
 def test_invisible_and_nfd_spellings_merge_to_one_site():
-    """verification F1: NFD-vs-NFC spellings and invisible format characters
-    (ZWSP/BOM/soft hyphen) are one hospital -- canonicalization must fold
-    them, not silently split the site."""
+    """Unicode variants of one label are one hospital (verification F1).
+
+    NFD-vs-NFC spellings and invisible format characters (ZWSP, BOM, soft
+    hyphen) must fold together, never silently split the site.
+    """
     import unicodedata
     nfc = unicodedata.normalize("NFC", "H\u00f4pital-01")
     nfd = unicodedata.normalize("NFD", "H\u00f4pital-01")
@@ -236,9 +258,13 @@ def test_invisible_and_nfd_spellings_merge_to_one_site():
 
 
 def test_huge_integer_string_ids_stay_distinct():
-    """verification N4: 18+-digit surrogate keys (Epic CSN scale) differing in
-    the last digit are DISTINCT sites; float64 round-tripping falsely collided
-    them. Exact integer arithmetic must keep them apart."""
+    """18+-digit keys differing in the last digit stay distinct.
+
+    These are Epic CSN scale surrogate keys. float64 round-tripping falsely
+    collided them, so the comparison must be exact integer arithmetic.
+
+    Refs: verification N4.
+    """
     a, b = "725100000000000123", "725100000000000124"
     dense, labels = densify_sites(np.array([a, b], dtype=object))
     assert len(labels) == 2
@@ -246,9 +272,11 @@ def test_huge_integer_string_ids_stay_distinct():
 
 
 def test_float_ids_beyond_2_53_rejected():
-    """verification F3: a float64 site id at or beyond 2**53 has lost integer
-    resolution -- emitting a lossy label could silently merge distinct
-    hospitals, so it must be a loud typed rejection."""
+    """A float64 site id at or beyond 2**53 is rejected (verification F3).
+
+    It has lost integer resolution, and emitting a lossy label could silently
+    merge distinct hospitals.
+    """
     with pytest.raises(CohortError, match=r"2\*\*53"):
         densify_sites(np.array([float(2**53), float(2**53 + 2)], dtype=object))
 
@@ -256,10 +284,13 @@ def test_float_ids_beyond_2_53_rejected():
 # ---- verification F2: cross-cohort identity uses the same normal form ------
 
 def test_disjointness_catches_case_variant_overlap():
-    """verification F2: 'h1' vs 'H1' raises INSIDE a cohort (collision check);
-    it must equally raise BETWEEN cohorts -- raw string comparison let a
-    case-variant respelling of S_cal pass as S_aux, voiding the walk order's
-    S_cal-independence."""
+    """'h1' vs 'H1' must raise between cohorts, not only inside one.
+
+    Raw string comparison let a case-variant respelling of S_cal pass as
+    S_aux, which voids the walk order's S_cal-independence.
+
+    Refs: verification F2.
+    """
     kw = _ok_kwargs()
     base = make_cohort(**kw)
     a = Cohort(x=base.x, y=base.y, site_id=base.site_id,

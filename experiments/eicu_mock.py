@@ -1,109 +1,108 @@
 #!/usr/bin/env python3
-"""SPEC section "Real-data protocol (eICU-CRD v2.0)": the schema-faithful MOCK
-corpus (EICU-PROTOCOL.md; risk register T-2/T-3/T-6/T-8/T-10/T-11).
+"""A schema-faithful MOCK of the eICU-CRD v2.0 corpus.
 
-Emits five gzipped CSVs -- `patient`, `hospital`, `apacheApsVar`,
-`apachePredVar`, `apachePatientResult` -- carrying the REAL eICU-CRD v2.0
-column names in the REAL DDL column order (surrogate id FIRST, as
-MIT-LCP's positional `\\copy` load requires and as the eicu.mit.edu doc pages
-do NOT show). Nothing here is derived from the licensed extract: every
-distribution is a declared generator parameter, so this file is redistributable
-and the real data never has to be.
+Emits five gzipped CSVs -- patient, hospital, apacheApsVar, apachePredVar,
+apachePatientResult -- carrying the real eICU-CRD v2.0 column names in the real
+DDL column order. The surrogate id comes first, as MIT-LCP's positional
+`\\copy` load requires and as the eicu.mit.edu doc pages do not show.
 
-Its job is to be HOSTILE in exactly the ways eICU is hostile, so that
-`experiments/eicu_etl.py` is exercised against the traps before the credentialed
-download exists. Each planted wart is a named, testable contract (W1-W16 below);
-`tests/test_eicu_path.py` asserts them one by one.
+Nothing here comes from the licensed extract. Every distribution is a declared
+generator parameter, so this file ships freely and the extract never has to.
 
-  W1  `age` is VARCHAR with the literal ceiling token '> 89' (note the space)
-      and blanks -- a naive int(age) raises. Kept, not dropped (protocol A.5.1).
-  W2  `hospitaldischargestatus` in {'Alive','Expired',''} and nothing else;
-      the blanks are stays with NO usable outcome.
-  W3  the UNDOCUMENTED `-1` sentinel across every apacheApsVar / apachePredVar
-      numeric, at a per-SITE-modulated rate (T-2, T-3).
-  W4  `''` in the same columns -- the documented SQL NULL (`NULL ''` in the
-      MIT-LCP loader) and a SECOND, independent missing channel. Handling only
-      one of W3/W4 poisons the matrix with a finite -1.
-  W5  `apachePatientResult` carries BOTH an 'IV' and an 'IVa' row for most
-      stays (a minority single-version), and `predictedhospitalmortality` is a
-      STRING holding a probability, with '-1' for unavailable (T-8, T-9).
-  W6  APACHE coverage is SITE-CORRELATED (EICU_MOCK_APS_SITE_BANDS, after the
-      data paper's Table 8), and whole hospitals carry ZERO
-      `apachePatientResult` rows (EICU_MOCK_RESULT_ZERO_SITE_SHARE) -- the
-      site-selection trap that keeps that table out of the feature allowlist.
-  W7  several unit stays per `patienthealthsystemstayid`, with NEGATIVE
-      `hospitaladmitoffset` where the EARLIEST stay has the HIGHEST (least
-      negative) offset, and `unitvisitnumber` occasionally not starting at 1.
-      The FIRST multi-stay admission emitted additionally carries the planted
-      pair `hospitaladmitoffset` (-14, -22) at EQUAL `unitvisitnumber`, so the
-      first-stay tie-break is exercised by a known pair.
+Its job is to be hostile in exactly the ways eICU is hostile, so that
+experiments/eicu_etl.py meets the traps before the credentialed download
+exists. Each planted wart is a named, testable contract (W1-W16 below), and
+tests/test_eicu_path.py asserts them one by one.
+
+  W1  age is VARCHAR with the literal ceiling token '> 89' (note the space)
+      and blanks; a naive int(age) raises. Kept, not dropped (protocol A.5.1).
+  W2  hospitaldischargestatus in {'Alive','Expired',''} and nothing else. The
+      blanks are stays with no usable outcome.
+  W3  the undocumented -1 sentinel across every apacheApsVar / apachePredVar
+      numeric, at a rate that varies by site (T-2, T-3).
+  W4  '' in the same columns -- the documented SQL NULL (NULL '' in the
+      MIT-LCP loader) and a second, independent missing channel. Handle only
+      one of W3/W4 and a finite -1 poisons the matrix.
+  W5  apachePatientResult carries both an 'IV' and an 'IVa' row for most stays,
+      a minority only one. predictedhospitalmortality is a string holding a
+      probability, with '-1' for unavailable (T-8, T-9).
+  W6  APACHE coverage is site-correlated (EICU_MOCK_APS_SITE_BANDS, after the
+      data paper's Table 8), and whole hospitals carry zero
+      apachePatientResult rows (EICU_MOCK_RESULT_ZERO_SITE_SHARE). That
+      site-selection trap is why the table stays out of the feature allowlist.
+  W7  several unit stays per patienthealthsystemstayid, with negative
+      hospitaladmitoffset where the earliest stay has the highest (least
+      negative) offset, and unitvisitnumber sometimes not starting at 1. The
+      first multi-stay admission emitted also carries the planted pair
+      hospitaladmitoffset (-14, -22) at equal unitvisitnumber, so a known pair
+      exercises the first-stay tie-break.
   W8  commas, quotes, embedded newlines and CRLF inside quoted
-      `apacheadmissiondx`, `hospitaldischargelocation`, `physicianspeciality`.
+      apacheadmissiondx, hospitaldischargelocation, physicianspeciality.
   W9  heavy-tailed stays per hospital (lognormal site weights,
       --site-sigma) with an EICU_MOCK_MIN_STAYS_PER_SITE floor.
-  W10 decimal-point entry errors in `admissionweight` / `admissionheight`
-      (544.00 kg, 612.6 cm) and `0` -- not -1 -- as their missing encoding.
-  W11 `fio2` in BOTH conventions (0.21-1.0 and 21-100) and `temperature` with
+  W10 decimal-point entry errors in admissionweight / admissionheight
+      (544.00 kg, 612.6 cm), and 0 -- not -1 -- as their missing encoding.
+  W11 fio2 in both conventions (0.21-1.0 and 21-100) and temperature with
       Fahrenheit contamination, plus values outside both windows (T-10).
-  W12 duplicate `patientunitstayid` rows in apacheApsVar / apachePredVar.
-  W13 `hospital` with blank `numbedscategory`/`region`, `teachingstatus` in
-      BOTH renderings ('True'/'False' and 't'/'f'), and both bed-band
-      spellings ('250-499'/'>=500' and '250-500'/'>500') mixed across rows.
-  W14 a `uniquepid` appearing at TWO `hospitalid`s -- correlated records that
-      `assert_site_disjoint` (which compares site LABELS) cannot see (T-5).
-  W15 a UTF-8 BOM on `patient.csv.gz`.
-  W16 unlisted categorical levels BELOW EICU_MAX_OTHER_SHARE, so the frozen
-      tuples' OTHER bucket is exercised without tripping the drift gate;
-      `--drift` pushes `gender` OVER the cap, for the drift-gate test (T-7).
+  W12 duplicate patientunitstayid rows in apacheApsVar / apachePredVar.
+  W13 hospital with blank numbedscategory/region, teachingstatus in both
+      renderings ('True'/'False' and 't'/'f'), and both bed-band spellings
+      ('250-499'/'>=500' and '250-500'/'>500') mixed across rows.
+  W14 a uniquepid appearing at two hospitalids -- correlated records that
+      assert_site_disjoint, which compares site labels, cannot see (T-5).
+  W15 a UTF-8 BOM on patient.csv.gz.
+  W16 unlisted categorical levels below EICU_MAX_OTHER_SHARE, so the frozen
+      tuples' OTHER bucket is exercised without tripping the drift gate.
+      --drift pushes gender over the cap, for the drift-gate test (T-7).
 
-Two rows are planted verbatim for the sentinel tests: the FIRST apacheApsVar
-row written has EVERY numeric at '-1', the SECOND has every numeric at ''.
-Both must reach the feature matrix as `aps_*__missing == 1.0`, never as a
-finite -1.
+Two rows are planted verbatim for the sentinel tests. The first apacheApsVar
+row written has every numeric at '-1', the second every numeric at ''. Both
+must reach the feature matrix as aps_*__missing == 1.0, never as a finite -1.
 
---signal (DEFAULT ON, unlike `synth_fixture`: a mortality corpus without an
-outcome has no use here) plants a LATENT SEVERITY z ~ N(0,1) per stay. Every
-ALLOWED feature -- age, the 24 apacheApsVar physiology columns, the 19
-apachePredVar comorbidity flags -- is a noisy view of z, and the outcome is
-drawn from P(death) = sigmoid(a + EICU_MOCK_SIGNAL_B*z + u_site) with a
-per-site random effect u_site ~ N(0, EICU_MOCK_SITE_SIGMA_U^2) and `a` solved
-from EICU_MOCK_BASE_RATE. Prevalence lands on 9.5% with real between-site
-heterogeneity, and mortality is genuinely predictable from the allowed
-features: head AUC 0.69 held out at full scale against a ceiling of
-Phi(B/sqrt(2)) = 0.73.
+--signal is on by default, unlike synth_fixture: a mortality corpus with no
+outcome has no use here. It plants a latent severity z ~ N(0,1) per stay, and
+every allowed feature is a noisy view of z -- age, the 24 apacheApsVar
+physiology columns, the 19 apachePredVar comorbidity flags.
 
-That ceiling is also a LIMIT, and it is stated here rather than discovered
-later: at the frozen EICU_MOCK_SIGNAL_B = 0.85, `run_certgate` DECLINES every
-rung on this corpus by arithmetic, at any size -- see the CALIBRATION NOTE on
-EICU_MOCK_SIGNAL_LOAD for the margin-versus-floor numbers and the one-constant
-change that would make the certified branch reachable. The contracted test
-asserts an honest outcome and never asserts certification, so a decline is
-conformant; it does mean the suite exercises the decline branch only.
+The outcome is drawn from P(death) = sigmoid(a + EICU_MOCK_SIGNAL_B*z + u_site)
+with a per-site random effect u_site ~ N(0, EICU_MOCK_SITE_SIGMA_U^2) and `a`
+solved from EICU_MOCK_BASE_RATE. Prevalence lands on 9.5% with real
+between-site heterogeneity, and mortality is genuinely predictable: head AUC
+0.69 held out at full scale, against a ceiling of Phi(B/sqrt(2)) = 0.73.
 
-The LEAK columns (`diedinhospital`,
-`actualhospitalmortality`, `unitdischargestatus`, the discharge offsets, the
-APACHE-IVa predictions, ...) are emitted and CORRECTLY correlated with the
-outcome ON PURPOSE -- that is what lets `assert_no_leak_columns` prove the ETL
-excludes them.
+That ceiling is also a limit, stated here rather than discovered later. At the
+frozen EICU_MOCK_SIGNAL_B = 0.85, run_certgate declines every rung at both
+frozen corpus sizes; the calibration note on EICU_MOCK_SIGNAL_LOAD carries the
+margin-versus-floor numbers. The contracted test asserts an honest outcome, not
+certification, so a decline is conformant -- and only that branch is exercised.
 
-Byte-determinism (identical contract to `synth_fixture.TableWriter`): the gzip
-header is frozen with `filename="" , mtime=0`, `io.TextIOWrapper(newline="")`
-lets `csv.writer` own the line endings, every stream is a `random.Random`
-seeded from an f-string, and surrogate-id counters are PER TABLE -- so a
-`--tables` subset is a byte-identical projection of the full run. The plan
-always runs in full regardless of `--tables`, and the signal draws live in
-dedicated `signal:` / `signal-site:` streams, so `--no-signal` restores the
-label-free draw without shifting any stream and `--site-sigma 0` restores
+The leak columns -- diedinhospital, actualhospitalmortality,
+unitdischargestatus, the discharge offsets, the APACHE-IVa predictions and the
+rest -- are emitted and correctly correlated with the outcome on purpose. That
+is what lets assert_no_leak_columns prove the ETL excludes them.
+
+Byte-determinism, an identical contract to synth_fixture.TableWriter:
+  - the gzip header is frozen with filename="", mtime=0
+  - io.TextIOWrapper(newline="") lets csv.writer own the line endings
+  - every stream is a random.Random seeded from an f-string
+  - surrogate-id counters are per table, so a --tables subset is a
+    byte-identical projection of the full run
+
+The plan always runs in full regardless of --tables. The signal draws live in
+dedicated `signal:` / `signal-site:` streams, so --no-signal restores the
+label-free draw without shifting any stream, and --site-sigma 0 restores
 uniform site assignment.
 
-Usage
------
+Usage:
     python -m experiments.eicu_mock --out ./eicu-mock
     python -m experiments.eicu_mock --stays 200859 --sites 208 --out ./eicu-full
     python -m experiments.eicu_mock --tables patient,hospital --out ./eicu-two
     python -m experiments.eicu_mock --drift --out ./eicu-drift
 
 Stdlib only.
+
+Refs: SPEC "Real-data protocol (eICU-CRD v2.0)"; EICU-PROTOCOL.md; risk
+register T-2, T-3, T-6, T-8, T-10, T-11.
 """
 
 from __future__ import annotations
@@ -120,9 +119,10 @@ import sys
 from dataclasses import dataclass, field
 
 # ---------------------------------------------------------------------------
-# Generator parameters (audit V7: generator parameters live at the module top
-# of the generator, protocol constants at the module top of eicu_etl.py).
+# Generator parameters. These live at the top of the generator; protocol
+# constants live at the top of eicu_etl.py.
 # Pinned literally by tests/test_constants.py::test_eicu_mock_constants_pinned.
+# Ref: audit V7.
 # ---------------------------------------------------------------------------
 
 EICU_MOCK_SEED = 20260801
@@ -143,9 +143,9 @@ EICU_MOCK_APS_SITE_BANDS = ((0.0048, 0.10), (0.0673, 0.40),
                             (0.1490, 0.70), (0.7788, 0.92))
                             # (share of sites, that band's per-stay coverage)
                             # -- the data paper's Table 8
-EICU_MOCK_RESULT_ZERO_SITE_SHARE = 0.0865  # hospitals with ZERO apachePatientResult rows
+EICU_MOCK_RESULT_ZERO_SITE_SHARE = 0.0865  # hospitals with no apachePatientResult rows
 EICU_MOCK_SENTINEL_RATE = 0.18      # per-cell -1 rate, modulated per site
-EICU_MOCK_EMPTY_RATE = 0.04         # per-cell '' rate (the SECOND missing channel)
+EICU_MOCK_EMPTY_RATE = 0.04         # per-cell '' rate (2nd missing channel)
 EICU_MOCK_DUP_RATE = 0.002          # duplicate patientunitstayid in aps/predvar
 EICU_MOCK_CROSS_SITE_PID_RATE = 0.004    # uniquepid appearing at two hospitalids
 EICU_MOCK_DIRTY_RATE = 0.02         # text fields getting commas/quotes/newlines
@@ -159,10 +159,10 @@ EICU_MOCK_HEADER_CASES = ("camel", "lower")
 EICU_MOCK_MIN_TOTAL_SITES = 149
 
 # Secondary rates, all generator parameters (not protocol).
-EICU_MOCK_AGE_BLANK_RATE = 0.004    # '' age -- the OTHER int() trap
+EICU_MOCK_AGE_BLANK_RATE = 0.004    # '' age -- the other int() trap
 EICU_MOCK_PEDIATRIC_RATE = 0.012    # under-18 stays, so S3's adult gate has work
-EICU_MOCK_UNLISTED_RATE = 0.02      # W16: unlisted levels, BELOW the 0.05 cap
-EICU_MOCK_DRIFT_RATE = 0.09         # --drift: gender OVER the 0.05 cap
+EICU_MOCK_UNLISTED_RATE = 0.02      # W16: unlisted levels, below the 0.05 cap
+EICU_MOCK_DRIFT_RATE = 0.09         # --drift: gender over the 0.05 cap
 EICU_MOCK_ICU_DEATH_SHARE = 0.72    # share of hospital deaths that die in the ICU
 EICU_MOCK_RESULT_COVERAGE = (0.75, 0.98)   # per-site apachePatientResult coverage
 EICU_MOCK_SINGLE_VERSION_RATE = 0.11       # stays with only one apacheversion row
@@ -170,11 +170,12 @@ EICU_MOCK_PRED_UNAVAILABLE_RATE = 0.09     # predictedhospitalmortality == '-1'
 EICU_MOCK_RECENT_PID_POOL = 512            # bounded pool backing W14
 
 # --- categorical level tuples ---------------------------------------------
-# A DELIBERATE, TESTED duplication of eicu_etl's EICU_LEVELS_*: importing them
+# A deliberate, tested duplication of eicu_etl's EICU_LEVELS_*. Importing them
 # would pull numpy into this stdlib-only module, so
 # tests/test_eicu_path.py::test_mock_level_tuples_match_the_etl_tuples asserts
-# the two copies are equal. The terminal "OTHER" entry is the ETL's drift
-# BUCKET, never a raw value -- this generator never emits it.
+# the two copies are equal.
+# The terminal "OTHER" entry is the ETL's drift bucket, never a raw value --
+# this generator never emits it.
 
 EICU_MOCK_LEVELS_GENDER = ("Female", "Male", "Other", "Unknown", "", "OTHER")
 EICU_MOCK_LEVELS_ETHNICITY = ("African American", "Asian", "Caucasian", "Hispanic",
@@ -189,8 +190,8 @@ EICU_MOCK_LEVELS_UNITTYPE = ("CCU-CTICU", "CSICU", "CTICU", "Cardiac ICU", "MICU
 EICU_MOCK_LEVELS_UNITSTAYTYPE = ("admit", "readmit", "stepdown/other", "transfer",
                                  "", "OTHER")
 
-# Emission weights over the LISTED levels (the terminal "OTHER" is excluded --
-# it is the ETL's bucket, not a value). Lengths are asserted at import.
+# Emission weights over the listed levels; the terminal "OTHER" is excluded,
+# being the ETL's bucket rather than a value. Lengths are asserted at import.
 _W_GENDER = (0.462, 0.531, 0.003, 0.002, 0.002)
 _W_ETHNICITY = (0.108, 0.017, 0.774, 0.038, 0.007, 0.041, 0.015)
 _W_ADMITSOURCE = (0.061, 0.004, 0.079, 0.397, 0.121, 0.028, 0.004, 0.012,
@@ -198,7 +199,7 @@ _W_ADMITSOURCE = (0.061, 0.004, 0.079, 0.397, 0.121, 0.028, 0.004, 0.012,
 _W_UNITTYPE = (0.118, 0.041, 0.038, 0.086, 0.216, 0.351, 0.061, 0.086, 0.003)
 _W_UNITSTAYTYPE = (0.884, 0.041, 0.032, 0.036, 0.007)
 
-# W16 / --drift: values deliberately ABSENT from the frozen tuples.
+# W16 / --drift: values deliberately absent from the frozen tuples.
 _UNLISTED_GENDER = ("Not Specified",)
 _UNLISTED_ETHNICITY = ("Other",)
 _UNLISTED_ADMITSOURCE = ("Home", "Nursing Home")
@@ -207,63 +208,46 @@ _UNLISTED_UNITSTAYTYPE = ("stepdown",)
 _DRIFT_GENDER = ("F", "M")
 
 # --- latent-severity model --------------------------------------------------
-# The intercept is DERIVED from EICU_MOCK_BASE_RATE rather than pinned, so the
-# advertised prevalence and the emitted prevalence cannot drift apart. The
-# logistic-normal correction lambda = 1/sqrt(1 + pi*s^2/8) maps the marginal
-# mean back onto the logit scale for s^2 = B^2 + sigma_u^2.
+# The intercept is derived from EICU_MOCK_BASE_RATE rather than pinned, so the
+# advertised prevalence and the emitted prevalence cannot drift apart.
+# The logistic-normal correction lambda = 1/sqrt(1 + pi*s^2/8) maps the
+# marginal mean back onto the logit scale for s^2 = B^2 + sigma_u^2.
 _SIGNAL_SD = math.sqrt(EICU_MOCK_SIGNAL_B ** 2 + EICU_MOCK_SITE_SIGMA_U ** 2)
 _SIGNAL_LAMBDA = 1.0 / math.sqrt(1.0 + math.pi * _SIGNAL_SD ** 2 / 8.0)
 EICU_MOCK_SIGNAL_INTERCEPT = (
     math.log(EICU_MOCK_BASE_RATE / (1.0 - EICU_MOCK_BASE_RATE)) / _SIGNAL_LAMBDA)
 
-# How strongly each ALLOWED feature leaks z. Every one of these columns is on
-# the feature allowlist; not one leak column carries a loading (the leaks are
-# driven by the OUTCOME directly, which is the point).
+# How strongly each ALLOWED feature leaks z. No leak column carries a loading:
+# the leaks are driven by the outcome directly, which is the point.
 #
-# CALIBRATION NOTE (measured, not guessed -- and it carries a WARNING).
+# Calibration note (measured, not guessed). EICU_MOCK_SIGNAL_B alone fixes the
+# AUC ceiling -- a score that recovered z perfectly would reach
+# Phi(B/sqrt(2)) = 0.73 at B = 0.85. The loadings decide only how much of that
+# ceiling a head reaches, so severity sits in the drivers a clinician would
+# name (GCS motor, mean BP, BUN, creatinine, respiratory rate, urine output,
+# age) instead of spreading thin over twenty weak columns. Measured on the
+# small arm: single-column AUC 0.62-0.63; head AUC 0.59 held out at 9 000
+# stays, 0.66 once the split can fit 161 coefficients on more than ~270 events.
 #
-# The AUC CEILING is fixed by EICU_MOCK_SIGNAL_B alone: for a rare outcome a
-# score that recovers z PERFECTLY reaches AUC ~= Phi(B/sqrt(2)) = 0.73 at
-# B = 0.85, and no loading below can exceed it. What these loadings control is
-# only how much of that ceiling a head can actually reach, so severity is
-# concentrated in the drivers a clinician would name (GCS motor, mean BP, BUN,
-# creatinine, respiratory rate, urine output, age) rather than spread thinly
-# over twenty weak columns where estimation error eats it. Measured on the
-# small arm: single-column AUC 0.62-0.63, head AUC 0.59 held out at 9 000
-# stays and 0.66 once the training split is large enough to estimate 161
-# coefficients from more than ~270 events.
+# Certification is not reachable at B = 0.85 at the two frozen corpus sizes.
+# The walk needs the best margin max_tau cov*(alpha - risk) to clear
+# certify.margin_floor(n_carrying, DELTA, alpha). An oracle ranking by true
+# risk -- which no head can beat -- gives 0.0354 at alpha = 0.10, against a
+# floor of 0.0428 at EICU_MOCK_SMALL_SITES = 180 (63 calibration clusters) and
+# 0.0359 at EICU_MOCK_FULL_SITES = 208 (75). Both frozen arms therefore
+# decline, and the default suite exercises the decline branch.
 #
-# WARNING -- CERTIFICATION IS NOT REACHABLE AT B = 0.85 *AT THE TWO FROZEN
-# CORPUS SIZES*, and the scope of that claim matters. The baseline walk
-# certifies only when the best achievable margin max_tau cov*(alpha - risk)
-# clears certify.margin_floor(n_carrying, DELTA, alpha). Ranking by the TRUE
-# risk -- an oracle no head can beat -- gives a best margin of 0.0354 at
-# alpha = 0.10 under this outcome model, while the floor is 0.0428 at
-# EICU_MOCK_SMALL_SITES = 180 (63 calibration clusters) and 0.0359 at
-# EICU_MOCK_FULL_SITES = 208 (75). So run_certgate declines every rung on both
-# frozen arms, and the default suite exercises the decline branch.
-#
-# CORRECTED 2026-07-31 (audit E-20): this comment previously read "at any
-# corpus size", and that claim was propagated into SPEC.md, EICU-PROTOCOL.md
-# (twice, including the operator checklist's "EXPECT A DECLINE, NOT A
-# CERTIFICATE"), CLAUDE.md and the comment on the frozen pin in
-# tests/test_constants.py. It is FALSE. margin_floor scales as 1/n_carrying,
-# so the 0.0005-wide gap the argument rests on vanishes one cluster past the
-# 208-hospital arm: the floor first drops below 0.0354 at n_carrying = 77
-# (~217 hospitals), and a mock generated at 900 or 1500 hospitals CERTIFIES
-# alpha = 0.10 with this constant untouched. An operator who runs a larger
-# mock, sees a certificate and concludes the pipeline is broken has been
-# misled by the documentation, not by the code.
-#
-# The certified branch is therefore exercised by
+# Those two sizes are the whole of that claim. margin_floor scales as
+# 1/n_carrying, so the floor drops below 0.0354 at n_carrying = 77
+# (~217 hospitals), and a 900- or 1500-hospital mock certifies alpha = 0.10
+# with this constant untouched -- which is what
 # tests/test_eicu_path.py::test_large_mock_reaches_the_certified_branch
-# (CERTGATE_EICU_LARGE=1, 900 hospitals), which asserts the same HONESTY
-# contract and never asserts certification. Raising EICU_MOCK_SIGNAL_B to 2.0
-# (the value synth_fixture.SIGNAL_B already uses, matching certgate
-# SimConfig.sep = 2.2) lifts the oracle margin to 0.0585 and would make the
-# certified branch reachable at the frozen sizes too -- one option, not the
-# only one, and either way a SPEC + test_constants change rather than a change
-# this generator may make on its own.
+# (CERTGATE_EICU_LARGE=1, 900 hospitals) exercises. Raising EICU_MOCK_SIGNAL_B
+# to 2.0 (synth_fixture.SIGNAL_B, matching certgate SimConfig.sep = 2.2) lifts
+# the oracle margin to 0.0585 and would reach the certified branch at the
+# frozen sizes too, but that is a SPEC + test_constants change.
+#
+# Ref: audit E-20 (2026-07-31).
 EICU_MOCK_SIGNAL_LOAD = {
     "age": 15.0,                # years, on gauss(63, 16), clamped to [18, 89]
     "aps_urine": -1250.0,
@@ -287,18 +271,18 @@ EICU_MOCK_SIGNAL_LOAD = {
     "aps_flag": 1.30,           # logit shift: intubated / vent / dialysis / meds
     "apv_flag": 0.90,           # logit shift: comorbidity + treatment flags
     "apv_ejectfx": -11.0,
-    "comparator": 0.90,         # the APACHE-IVa prediction (a DENYLISTED column)
+    "comparator": 0.90,         # the APACHE-IVa prediction (a denylisted column)
 }
 
 
 # ---------------------------------------------------------------------------
-# Schema -- VERBATIM DDL column names in VERBATIM DDL column order
+# Schema -- verbatim DDL column names in verbatim DDL column order
 # ---------------------------------------------------------------------------
-# Source: MIT-LCP/eicu-code build-db/postgres/postgres_create_tables.sql. The
-# surrogate id comes FIRST in apacheapsvar / apachepredvar /
-# apachepatientresult; the eicu.mit.edu doc pages list a DIFFERENT order, and
-# the MIT-LCP \copy load is POSITIONAL against the DDL. Addressing columns by
-# position against the doc pages is the silent way to load the wrong data.
+# Source: MIT-LCP/eicu-code build-db/postgres/postgres_create_tables.sql.
+# The surrogate id comes first in apacheapsvar / apachepredvar /
+# apachepatientresult, and the eicu.mit.edu doc pages list a different order.
+# The MIT-LCP \copy load is positional against the DDL, so addressing columns
+# by position against the doc pages silently loads the wrong data.
 
 EICU_MOCK_SCHEMA: dict[str, tuple[tuple[str, str], ...]] = {
     "patient": (
@@ -460,12 +444,12 @@ _APV_ALLOWED = ("graftcount", "thrombolytics", "aids", "hepaticfailure",
 # ---------------------------------------------------------------------------
 # Header rendering: camelCase from a frozen token vocabulary
 # ---------------------------------------------------------------------------
-# The released CSVs carry lowercase headers; a re-export may not. `read_table`
-# lowercases whatever it reads, so both renderings must parse identically --
-# --header-case is the wart that proves it. The camel spelling is DERIVED from
-# a frozen token list (longest-match from the left) and every schema column is
-# checked at import: an unsplittable name is a defect in this vocabulary and
-# raises here, not silently three tables later.
+# The released CSVs carry lowercase headers; a re-export may not. read_table
+# lowercases whatever it reads, so both renderings must parse identically, and
+# --header-case is the wart that proves it.
+# The camel spelling is derived from a frozen token list, longest match from
+# the left, and every schema column is checked at import. An unsplittable name
+# is a defect in this vocabulary and raises here, not three tables later.
 
 _CAMEL_TOKENS = (
     "acute", "active", "actual", "admission", "admit", "age", "aids", "albumin",
@@ -505,8 +489,10 @@ def _split_tokens(name: str):
 
 
 def _camel(name: str) -> str:
-    """DDL column name -> its camelCase rendering ('patientunitstayid' ->
-    'patientUnitStayId'). Raises on an unsplittable name."""
+    """DDL column name -> its camelCase rendering; raises if unsplittable.
+
+    'patientunitstayid' -> 'patientUnitStayId'.
+    """
     toks = _split_tokens(name)
     if toks is None:
         raise ValueError(
@@ -561,7 +547,7 @@ PHYSICIAN_SPECIALITY = (
 )
 PHYSICIAN_INTERVENTION = ("No Intervention", "Critical Care", "Monitoring",
                           "Complex Care", "")
-# W13: BOTH bed-band spellings, mixed across rows.
+# W13: both bed-band spellings, mixed across rows.
 BED_BANDS_A = ("<100", "100 - 249", "250 - 499", ">= 500", "")
 BED_BANDS_B = ("<100", "100 - 249", "250-500", ">500", "")
 REGIONS = ("Midwest", "Northeast", "South", "West", "")
@@ -587,7 +573,7 @@ class MockConfig:
     compresslevel: int = 6
     header_case: str = "camel"          # in EICU_MOCK_HEADER_CASES
     tables: list[str] = field(default_factory=lambda: list(EICU_MOCK_TABLES))
-    signal: bool = True                 # DEFAULT ON (see the module docstring)
+    signal: bool = True                 # on by default (see module docstring)
     warts: bool = True
     site_sigma: float = EICU_MOCK_SITE_SIGMA
     drift: bool = False                 # push one categorical past the cap
@@ -622,7 +608,7 @@ def _hhmmss(rng: random.Random) -> str:
 
 
 def _weighted(rng: random.Random, values, weights):
-    """Deterministic weighted choice consuming exactly ONE draw."""
+    """Deterministic weighted choice, consuming exactly one draw."""
     r = rng.random() * sum(weights)
     acc = 0.0
     for v, w in zip(values, weights):
@@ -637,8 +623,8 @@ def _level(rng: random.Random, cfg: MockConfig, levels, weights,
     """One categorical value.
 
     Always draws exactly three numbers, so --no-warts and --drift change the
-    VALUE, never the stream position. `levels` excludes the terminal "OTHER"
-    bucket, which is the ETL's, not a datum.
+    value, never the stream position. levels excludes the terminal "OTHER"
+    bucket, which belongs to the ETL and is not a datum.
     """
     r_un = rng.random()
     pick_un = rng.randrange(0, 64)
@@ -682,13 +668,14 @@ def make_counter(start: int = 1):
 # ---------------------------------------------------------------------------
 
 class TableWriter:
-    """Streaming gzip CSV writer for one table. Counts rows as it goes.
+    """Streaming gzip CSV writer for one table, counting rows as it goes.
 
-    ``mtime=0`` and ``filename=""`` freeze the gzip HEADER, so "same seed +
-    same args = byte-identical output" holds for the .csv.gz bytes themselves,
-    not merely their decompressed content (``gzip.open`` stamps wall-clock
-    mtime into header bytes 4:8 and silently breaks byte-level reproducibility).
-    ``newline=""`` lets ``csv.writer`` own the line endings.
+    mtime=0 and filename="" freeze the gzip header, so "same seed + same args =
+    byte-identical output" holds for the .csv.gz bytes themselves, not just
+    their decompressed content. gzip.open would stamp wall-clock mtime into
+    header bytes 4:8 and silently break that.
+
+    newline="" lets csv.writer own the line endings.
     """
 
     def __init__(self, path: str, columns: list[str], compresslevel: int,
@@ -713,8 +700,7 @@ class TableWriter:
 
 
 class NullWriter:
-    """Stands in for a table the caller excluded via --tables, so the
-    orchestration loop never branches."""
+    """Stands in for a table --tables excluded, so the loop never branches."""
 
     rows = 0
 
@@ -730,9 +716,10 @@ class NullWriter:
 # ---------------------------------------------------------------------------
 
 def _hospital_ids(rng: random.Random, n_sites: int) -> list[int]:
-    """Strictly increasing, NON-CONTIGUOUS hospitalids (eICU's are sparse:
-    59, 73, 110, ...). The ETL's `hosp-{int(hospitalid)}` canonicalisation is
-    what makes the gaps harmless."""
+    """Strictly increasing, non-contiguous hospitalids, as in eICU (59, 73...).
+
+    The ETL's hosp-{int(hospitalid)} canonicalisation makes the gaps harmless.
+    """
     ids, hid = [], 0
     for _ in range(n_sites):
         hid += rng.randrange(1, 6)
@@ -741,8 +728,10 @@ def _hospital_ids(rng: random.Random, n_sites: int) -> list[int]:
 
 
 def _site_weights(seed: int, n_sites: int, sigma: float) -> list[float]:
-    """W9: lognormal site weights from a DEDICATED stream. sigma == 0 restores
-    uniform site sizes exactly."""
+    """W9: lognormal site weights, drawn from a dedicated stream.
+
+    sigma == 0 restores uniform site sizes exactly.
+    """
     if sigma <= 0.0:
         return [1.0] * n_sites
     wrng = random.Random(f"{seed}:site-weights")
@@ -750,12 +739,12 @@ def _site_weights(seed: int, n_sites: int, sigma: float) -> list[float]:
 
 
 def _site_quotas(weights: list[float], total: int, floor_: int) -> list[int]:
-    """Per-site stay quotas: a hard floor plus a weight-proportional remainder,
-    with the leftover assigned by largest fractional part (deterministic).
+    """Per-site stay quotas: a hard floor plus a weight-proportional remainder.
 
-    The floor is what makes `EICU_MOCK_SMALL_SITES = 180` yield 63 RECORD-CARRYING
-    calibration clusters deterministically -- `MIN_CAL_CLUSTERS = 50` counts
-    carrying clusters, and an empty hospital is not one.
+    The leftover goes to the largest fractional parts, deterministically. That
+    floor makes EICU_MOCK_SMALL_SITES = 180 yield 63 record-carrying
+    calibration clusters every time. MIN_CAL_CLUSTERS = 50 counts carrying
+    clusters, and an empty hospital is not one.
     """
     n = len(weights)
     base = floor_ * n
@@ -775,14 +764,16 @@ def _site_quotas(weights: list[float], total: int, floor_: int) -> list[int]:
 
 
 def _site_apache(seed: int, n_sites: int) -> list[dict]:
-    """W6 / T-3: per-site APACHE coverage band, zero-result flag and sentinel
-    modulation, all from the dedicated `apache-coverage` stream.
+    """W6 / T-3: the per-site APACHE coverage plan.
 
-    Site-correlated ABSENCE is the dataset authors' own finding ("reliability
-    and completion of data elements varies on a hospital and/or ICU level") and
-    a genuine covariate-shift channel that CertGate v2 scope-cut. The mock
-    plants it so `preflight` can MEASURE it (`sentinel_site_dispersion`,
-    `apache_coverage_by_site`) instead of the pipeline imputing it away.
+    Coverage band, zero-result flag and sentinel modulation, all drawn from the
+    dedicated apache-coverage stream. Site-correlated absence is the dataset
+    authors' own finding ("reliability and completion of data elements varies
+    on a hospital and/or ICU level"), and a real covariate-shift channel that
+    CertGate v2 scope-cut.
+
+    The mock plants it so preflight can measure it -- sentinel_site_dispersion,
+    apache_coverage_by_site -- instead of the pipeline imputing it away.
     """
     rng = random.Random(f"{seed}:apache-coverage")
     cum, acc = [], 0.0
@@ -816,12 +807,12 @@ def plan_stays(rng: random.Random, cfg: MockConfig, hospitals: list[int],
                quotas: list[int], site_apache: list[dict], u_site: dict):
     """Yield one dict per unit stay, lazily, so memory stays flat at any scale.
 
-    The signal draws come from the DEDICATED `signal:` / `signal-site:` streams
-    and never touch this one, so `--no-signal` changes emitted VALUES and not a
-    single stream position (the `synth_fixture` contract). Every structural
-    decision -- site, admission, visit number, offsets, APACHE presence -- is
-    made here, because the plan always runs in FULL regardless of `--tables`;
-    that is what makes a `--tables` subset a byte-identical projection.
+    Signal draws use the dedicated `signal:` / `signal-site:` streams, so
+    --no-signal changes values, never stream positions (synth_fixture's rule).
+
+    Every structural decision is made here: site, admission, visit number,
+    offsets, APACHE presence. The plan always runs in full regardless of
+    --tables, which is what makes a --tables subset an identical projection.
     """
     stayid = 141_168            # ids start in a plausible band, not at 1
     hsid = 200_000
@@ -838,9 +829,9 @@ def plan_stays(rng: random.Random, cfg: MockConfig, hospitals: list[int],
             own_pid = f"{(pid_ord // 100000) % 1000:03d}-{pid_ord % 100000:05d}"
             r_cross = rng.random()
             pick = rng.randrange(0, 4096)
-            # W14: a uniquepid that already appeared at ANOTHER hospitalid.
-            # assert_site_disjoint compares site LABELS and cannot see this;
-            # the preflight measures it and the protocol DISCLOSES it (T-5).
+            # W14: a uniquepid that already appeared at another hospitalid.
+            # assert_site_disjoint compares site labels and cannot see this.
+            # The preflight measures it and the protocol discloses it (T-5).
             if recent_pids and r_cross < EICU_MOCK_CROSS_SITE_PID_RATE:
                 pid = recent_pids[pick % len(recent_pids)]
             else:
@@ -861,9 +852,9 @@ def plan_stays(rng: random.Random, cfg: MockConfig, hospitals: list[int],
                 # W7: unitvisitnumber does not always start at 1.
                 visit0 = 1 if rng.random() < 0.97 else rng.randrange(2, 4)
                 # Pre-ICU minutes: the gap between hospital and unit admission.
-                # A direct ICU admission gives offset EXACTLY 0, and a long ward
-                # stay before the ICU pushes it past EICU_WINDOW_PRE_ICU_HRS --
-                # both edges of the ETL's plausibility window must be populated
+                # A direct ICU admission gives offset exactly 0; a long ward
+                # stay before the ICU pushes it past EICU_WINDOW_PRE_ICU_HRS.
+                # Both edges of the ETL's plausibility window must be populated
                 # or the window branch is never exercised.
                 r_gap = rng.random()
                 gap0 = int(_heavy_tail(rng, 340.0, 1.25))
@@ -883,7 +874,7 @@ def plan_stays(rng: random.Random, cfg: MockConfig, hospitals: list[int],
                         break
                     stayid += rng.randrange(1, 30)
                     # 335 units across 208 hospitals: ~1.6 wards per hospital.
-                    # wardid is DENYLISTED as a feature -- it is the same site
+                    # wardid is denylisted as a feature: it is the same site
                     # identity one level down (protocol A.4).
                     ward = hid * 100 + rng.randrange(1, 3)
                     los = int(_heavy_tail(rng, 2100.0, 0.95))     # unit LOS, minutes
@@ -906,17 +897,17 @@ def plan_stays(rng: random.Random, cfg: MockConfig, hospitals: list[int],
                         y = srng.random() < EICU_MOCK_BASE_RATE
 
                     aps_present = r_aps < cov["aps_coverage"]
-                    # apachePredVar tracks apacheApsVar almost exactly (the data
-                    # paper reports 0.00% of hospitals lacking either), with a
-                    # thin disagreement so BOTH presence flags carry signal.
+                    # apachePredVar tracks apacheApsVar almost exactly -- the
+                    # data paper reports 0.00% of hospitals lacking either.
+                    # A thin disagreement keeps both presence flags useful.
                     apv_present = aps_present if r_flip > 0.03 else not aps_present
                     result_present = r_result < cov["result_coverage"]
 
                     visit = visit0 + k
                     stay_offset = offset
                     if plant and k < 2:
-                        # W7 (planted): EQUAL unitvisitnumber, offsets -14 / -22.
-                        # argmin(unitvisitnumber) TIES, so the max-offset
+                        # W7 (planted): equal unitvisitnumber, offsets -14/-22.
+                        # argmin(unitvisitnumber) ties, so the max-offset
                         # tie-break decides -- and must pick -14.
                         visit = visit0
                         stay_offset = -14 if k == 0 else -22
@@ -939,10 +930,12 @@ def plan_stays(rng: random.Random, cfg: MockConfig, hospitals: list[int],
 # ---------------------------------------------------------------------------
 
 def build_hospital_row(rng: random.Random, cfg: MockConfig, hid: int) -> list:
-    """W13: blank bands/regions, teachingstatus in BOTH renderings, and both
-    bed-band spellings mixed across rows. `preflight` READS these literals
-    rather than hard-coding them, which is the only way a vocabulary nobody has
-    seen can be reported honestly."""
+    """W13: blank bands and regions, and two spellings of everything else.
+
+    teachingstatus appears in both renderings, and both bed-band spellings are
+    mixed across rows. preflight reads these literals rather than hard-coding
+    them -- the only honest way to report a vocabulary nobody has seen yet.
+    """
     band_a = rng.choice(BED_BANDS_A)
     band_b = rng.choice(BED_BANDS_B)
     r_spell = rng.random()
@@ -961,15 +954,15 @@ def build_hospital_row(rng: random.Random, cfg: MockConfig, hid: int) -> list:
 def build_patient_row(rng: random.Random, cfg: MockConfig, s: dict) -> list:
     """The cohort spine, the label, the site key and the admission-time features.
 
-    Every ALLOWED feature here is a noisy view of the latent severity z; every
-    LEAK column (`hospitaldischargelocation`, `unitdischargestatus`, the two
-    discharge offsets, `dischargeweight`) is driven by the OUTCOME on purpose,
-    so `assert_no_leak_columns` has something real to exclude.
+    Every allowed feature here is a noisy view of the latent severity z. Every
+    leak column -- hospitaldischargelocation, unitdischargestatus, the two
+    discharge offsets, dischargeweight -- is driven by the outcome on purpose,
+    so assert_no_leak_columns has something real to exclude.
     """
     z = s["z"]
     y = s["y"]
 
-    # --- age (W1): '> 89' is KEPT by the protocol, not dropped -------------
+    # --- age (W1): '> 89' is kept by the protocol, not dropped -------------
     r_age = rng.random()
     age_num = rng.gauss(63.0 + EICU_MOCK_SIGNAL_LOAD["age"] * z, 16.0)
     ped_age = rng.randrange(15, 18)
@@ -996,7 +989,7 @@ def build_patient_row(rng: random.Random, cfg: MockConfig, s: dict) -> list:
     staytype = _level(rng, cfg, EICU_MOCK_LEVELS_UNITSTAYTYPE, _W_UNITSTAYTYPE,
                       _UNLISTED_UNITSTAYTYPE, False)
 
-    # --- height / weight (W10): 0 is the missing encoding here, NOT -1 ------
+    # --- height / weight (W10): the missing encoding here is 0, NOT -1 ------
     h_raw = rng.gauss(169.0, 11.0)
     w_raw = max(30.0, rng.gauss(84.0 - 1.5 * z, 26.0))
     r_h, r_w = rng.random(), rng.random()
@@ -1017,12 +1010,12 @@ def build_patient_row(rng: random.Random, cfg: MockConfig, s: dict) -> list:
     # --- the outcome (W2) --------------------------------------------------
     r_status = rng.random()
     if r_status < EICU_MOCK_STATUS_MISSING_RATE:
-        status = ""                              # NO usable outcome: S2 drops it
+        status = ""                              # no usable outcome: S2 drops it
     else:
         status = "Expired" if y else "Alive"
     icu_death = y and rng.random() < EICU_MOCK_ICU_DEATH_SHARE
 
-    # --- LEAK columns, correlated with the outcome ON PURPOSE --------------
+    # --- leak columns, correlated with the outcome on purpose --------------
     unit_los = max(30, int(s["los"] * (0.62 if y else 1.0)))
     hosp_los = unit_los + max(0, int(s["ward_extra"] * (0.45 if y else 1.0)))
     disch_loc = (DEATH_LOCATION if (y and status == "Expired")
@@ -1037,18 +1030,18 @@ def build_patient_row(rng: random.Random, cfg: MockConfig, s: dict) -> list:
         gender,
         age,
         ethnicity,
-        s["hid"],                                        # SITE -- denylisted as a feature
+        s["hid"],                                        # site -- denylisted as a feature
         s["ward"],                                       # denylisted as a feature
         _dirty(rng, cfg, rng.choice(ADMIT_DX)),          # W8
         height,
         _hhmmss(rng),
-        s["admit_offset"],                               # W7: NEGATIVE minutes
+        s["admit_offset"],                               # W7: negative minutes
         hadmitsrc,
         rng.choice((2014, 2015)),
         _hhmmss(rng),
         hosp_los,                                        # LEAK: post-hoc LOS
         _dirty(rng, cfg, disch_loc),                     # LEAK: 'Death'
-        status,                                          # THE LABEL
+        status,                                          # the label
         unittype,
         _hhmmss(rng),
         uadmitsrc,
@@ -1065,8 +1058,8 @@ def build_patient_row(rng: random.Random, cfg: MockConfig, s: dict) -> list:
 
 
 # --- apacheApsVar -----------------------------------------------------------
-# (mean, sd, load-key, floor) for the plain gaussian columns; the ordinal,
-# binary and unit-ambiguous columns are handled by name.
+# (mean, sd, load-key, floor, decimals) for the plain gaussian columns. The
+# ordinal, binary and unit-ambiguous columns are handled by name instead.
 _APS_GAUSS = {
     "urine": (2600.0, 900.0, "aps_urine", 0.0, 0),
     "wbc": (11.2, 5.5, "aps_wbc", 0.1, 1),
@@ -1093,15 +1086,15 @@ _APS_BINARY = {"intubated": -1.75, "vent": -1.35, "dialysis": -3.1, "meds": -2.4
 
 
 def _aps_value(rng: random.Random, col: str, z: float, warts: bool) -> str:
-    """One apacheApsVar cell BEFORE the sentinel/empty injection.
+    """One apacheApsVar cell, before the sentinel/empty injection.
 
-    Every allowlisted column has NON-NEGATIVE physiological support: the ETL
-    treats any negative that is not exactly -1.0 as an UNRECOGNISED sentinel
-    and aborts (reason=unexpected-negative-sentinel, T-2). This generator must
-    therefore never emit a negative that is not the sentinel itself.
+    Every allowlisted column has non-negative physiological support. The ETL
+    treats any negative other than exactly -1.0 as an unrecognised sentinel and
+    aborts (reason=unexpected-negative-sentinel, T-2). So this generator must
+    never emit a negative that is not the sentinel itself.
 
-    Draws are position-identical whether or not `warts` is set: W11's unit
-    conventions change the emitted VALUE, never the stream.
+    Draws are position-identical whether or not warts is set: W11's unit
+    conventions change the emitted value, never the stream.
     """
     if col in _APS_BINARY:
         p = _sigmoid(_APS_BINARY[col] + EICU_MOCK_SIGNAL_LOAD["aps_flag"] * z)
@@ -1125,7 +1118,7 @@ def _aps_value(rng: random.Random, col: str, z: float, warts: bool) -> str:
         r = rng.random()
         if warts and r < 0.42:           # W11: the percent convention
             return _num(v * 100.0, 1)
-        if warts and r < 0.45:           # outside BOTH windows -> missing
+        if warts and r < 0.45:           # outside both windows -> missing
             return _num(v * 0.35, 2)
         return _num(v, 2)
     mean, sd, key, floor_, dp = _APS_GAUSS[col]
@@ -1135,9 +1128,12 @@ def _aps_value(rng: random.Random, col: str, z: float, warts: bool) -> str:
 
 def build_aps_row(rng: random.Random, cfg: MockConfig, s: dict, next_id,
                   sentinel_rate: float, plant: int) -> list:
-    """One apacheApsVar row. `plant` is 0 for the all-'-1' row, 1 for the
-    all-'' row (tests 8 and 9), -1 otherwise -- drawn first, then overridden,
-    so the plants cost no stream position."""
+    """One apacheApsVar row.
+
+    plant is 0 for the all-'-1' row, 1 for the all-'' row (tests 8 and 9), -1
+    otherwise. Cells are drawn first and then overridden, so plants cost no
+    stream position.
+    """
     cells = []
     for col in _APS_NUMERIC:
         raw = _aps_value(rng, col, s["z"], cfg.warts)
@@ -1147,7 +1143,7 @@ def build_aps_row(rng: random.Random, cfg: MockConfig, s: dict, next_id,
         elif plant == 1:
             cells.append("")                         # W4, planted
         elif r < sentinel_rate:
-            cells.append("-1")                       # W3: the UNDOCUMENTED sentinel
+            cells.append("-1")                       # W3: the undocumented sentinel
         elif r < sentinel_rate + EICU_MOCK_EMPTY_RATE:
             cells.append("")                         # W4: the documented SQL NULL
         else:
@@ -1165,13 +1161,15 @@ _APV_BINARY = {
     "ventday1": -1.9, "oobventday1": -2.1, "oobintubday1": -2.3,
     "diabetes": -1.3,
 }
-# Flags whose direction is PROTECTIVE (elective surgery, an arterial graft).
+# Flags whose direction is protective (elective surgery, an arterial graft).
 _APV_PROTECTIVE = ("electivesurgery", "ima")
 
 
 def _apv_allowed_value(rng: random.Random, col: str, z: float) -> str:
-    """One ALLOWLISTED apachePredVar cell before sentinel injection.
-    Non-negative support, same reason as _aps_value."""
+    """One allowlisted apachePredVar cell, before sentinel injection.
+
+    Non-negative support, for the same reason as _aps_value.
+    """
     if col == "graftcount":
         return str(0 if rng.random() < 0.94 else rng.randrange(1, 6))
     if col == "ejectfx":
@@ -1188,13 +1186,14 @@ def build_apv_row(rng: random.Random, cfg: MockConfig, s: dict, next_id,
                   sentinel_rate: float) -> list:
     """One apachePredVar row.
 
-    The columns the protocol EXCLUDES are emitted with their documented content:
-    the "set to default value" / "Not used" / `XXX` constants really are
-    constant (sicuday, saps3*, teachtype, region, bedcount, managementsystem,
-    var03hspxlos), and gender/age/verbal/motor/eyes/meds/creatinine/pao2/fio2
-    really are duplicates of `patient` / `apacheApsVar`. `diedinhospital` is the
-    OUTCOME as an integer -- the single most dangerous leak in the corpus, and
-    the reason `assert_no_leak_columns` is a test rather than a comment.
+    The columns the protocol excludes are emitted with their documented
+    content. The "set to default value" / "Not used" / XXX constants really are
+    constant: sicuday, saps3*, teachtype, region, bedcount, managementsystem,
+    var03hspxlos. gender, age, verbal, motor, eyes, meds, creatinine, pao2 and
+    fio2 really are duplicates of patient / apacheApsVar.
+
+    diedinhospital is the outcome as an integer -- the corpus's most dangerous
+    leak, and why assert_no_leak_columns is a test rather than a comment.
     """
     z, y = s["z"], s["y"]
     cells: dict[str, str] = {}
@@ -1218,7 +1217,7 @@ def build_apv_row(rng: random.Random, cfg: MockConfig, s: dict, next_id,
         elif col == "var03hspxlos":
             cells[col] = "-1"                       # "Not used"
         elif col == "diedinhospital":
-            cells[col] = "1" if y else "0"          # THE LEAK
+            cells[col] = "1" if y else "0"          # LEAK: the outcome
         elif col == "dischargelocation":
             cells[col] = "2" if y else str(rng.randrange(1, 8))   # LEAK
         elif col == "gender":
@@ -1254,13 +1253,13 @@ def build_apv_row(rng: random.Random, cfg: MockConfig, s: dict, next_id,
 # --- apachePatientResult ----------------------------------------------------
 
 def build_result_rows(rng: random.Random, cfg: MockConfig, s: dict, next_id):
-    """W5 / T-8 / T-9: one row per apacheversion, most stays carrying BOTH
-    'IV' and 'IVa'.
+    """W5 / T-8 / T-9: one row per apacheversion, usually 'IV' and 'IVa' both.
 
-    `predictedhospitalmortality` is VARCHAR(50) holding a probability, with
-    '-1' for unavailable -- comparing it as a STRING ('-1' > '0' lexically) is
-    the silent way to get the comparator wrong, so the ETL must float() FIRST.
-    Nothing in this table may become a feature: 8.65% of hospitals have ZERO
+    predictedhospitalmortality is VARCHAR(50) holding a probability, with '-1'
+    for unavailable. Comparing it as a string ('-1' > '0' lexically) is the
+    silent way to get the comparator wrong, so the ETL must float() first.
+
+    Nothing in this table may become a feature. 8.65% of hospitals have zero
     rows here, so any feature drawn from it is either a site-restricted cohort
     or a perfect site indicator (protocol A.6).
     """
@@ -1290,11 +1289,11 @@ def build_result_rows(rng: random.Random, cfg: MockConfig, s: dict, next_id):
             aps_score,                                   # APACHE-III APS, denylisted
             aps_score + bump + rng.randrange(0, 30),     # APACHE-III score, denylisted
             ver,
-            "-1" if unavailable else repr(p_i),          # STRING probability
+            "-1" if unavailable else repr(p_i),          # string probability
             "EXPIRED" if icu_death else "ALIVE",         # LEAK
             _num(max(0.2, rng.gauss(3.1, 1.4)), 4),
             _num(icu_los, 4),                            # LEAK: post-hoc
-            "-1" if unavailable else repr(p_h),          # the COMPARATOR, denylisted
+            "-1" if unavailable else repr(p_h),          # the comparator, denylisted
             "EXPIRED" if y else "ALIVE",                 # LEAK: the outcome as text
             _num(max(0.5, rng.gauss(6.4, 3.0)), 4),
             _num(hosp_los, 4),                           # LEAK: post-hoc
@@ -1314,7 +1313,7 @@ def build_result_rows(rng: random.Random, cfg: MockConfig, s: dict, next_id):
 # ---------------------------------------------------------------------------
 
 def generate(cfg: MockConfig) -> dict:
-    """Write `<out>/<Table>.csv.gz` plus `<out>/manifest.json`; return the manifest.
+    """Write the table CSVs and manifest.json into <out>; return the manifest.
 
     Streams to disk per stay, so memory is flat at 9 000 stays and at 200 859.
     """
@@ -1342,9 +1341,9 @@ def generate(cfg: MockConfig) -> dict:
     weights = _site_weights(cfg.seed, cfg.sites, cfg.site_sigma)
     quotas = _site_quotas(weights, cfg.stays, EICU_MOCK_MIN_STAYS_PER_SITE)
     site_apache = _site_apache(cfg.seed, cfg.sites)
-    # The per-site random effect is a VALUE, cached per site: random.Random.gauss
-    # keeps a second cached normal, so re-seeding and taking the first draw is
-    # the only way "same site -> same u" holds.
+    # The per-site random effect is a value, cached per site. random.Random
+    # caches a second normal inside gauss, so re-seeding and taking the first
+    # draw is the only way "same site -> same u" holds.
     u_site = {hid: random.Random(f"{cfg.seed}:signal-site:{hid}").gauss(
         0.0, EICU_MOCK_SITE_SIGMA_U) for hid in hospitals}
 
@@ -1388,9 +1387,9 @@ def generate(cfg: MockConfig) -> dict:
                                     sentinel_rate, plant)
                 writers["apacheApsVar"].write(row)
                 aps_rows += 1
-                # W12: a duplicate patientunitstayid with a FRESH surrogate id
-                # -- none of these tables declares the stay id unique, and a
-                # naive join silently inflates the cluster sizes feeding the
+                # W12: a duplicate patientunitstayid with a fresh surrogate id.
+                # None of these tables declares the stay id unique, so a naive
+                # join silently inflates the cluster sizes feeding the
                 # influence cap (T-8).
                 if cfg.warts and rt.random() < EICU_MOCK_DUP_RATE:
                     writers["apacheApsVar"].write(

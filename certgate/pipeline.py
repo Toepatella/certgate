@@ -1,18 +1,19 @@
-"""SPEC section "pipeline.py": ``run_certgate`` orchestration (METHODS 1-7).
+"""run_certgate orchestration (SPEC "pipeline.py"; METHODS 1-7).
 
-Wires the data-discipline assertions, the frozen head, the S_aux ordering and
-feasibility diagnostics, the per-alpha baseline / BBSE certification walks, the
-OR-combination, and the tiered report into one entry point. S_cal enters the
-CERTIFIED path only through the certification walks; the estimated and
-diagnostic tiers read it downstream, without feedback (METHODS 2).
+One entry point wires together the data-discipline assertions, the frozen head,
+the S_aux ordering and feasibility diagnostics, the per-alpha baseline and BBSE
+certification walks, the OR-combination, and the tiered report.
 
-Order of loud gates matches the SPEC exactly:
+S_cal reaches the certified path only through the certification walks. The
+estimated and diagnostic tiers read it downstream without feedback (METHODS 2).
+
+The order of the loud gates matches the SPEC exactly:
   1.  site-disjointness of (train, aux, cal)                       (audit F03)
   2.  finite target features                                       (audit F36)
   2b. feature-column alignment: target_x 2-D & width == train.d    (real-data)
   3.  record-carrying calibration-cluster floor                    (audit B-5)
   4.  registered target-pool floor                                 (audit B-6)
-Only after those does anything get fitted.
+Nothing is fitted until all of them pass.
 """
 
 import hashlib
@@ -33,20 +34,23 @@ from certgate.report import build_report, provenance
 
 
 def _feasibility(head, aux, alpha, n_carrying) -> dict:
-    """Feasibility diagnostic for one alpha (SPEC pipeline step 5; METHODS 4).
+    """Feasibility diagnostic for one alpha. Never a gate.
 
-    ``margin`` is the best record-weighted certification margin achievable on
-    S_aux (``cov*(alpha-risk)*E[g/M]``); ``floor`` is the information floor at
-    the TRUE record-carrying calibration count (audit F51); ``ratio`` is their
-    quotient. Diagnostic only -- never a gate.
+      - margin: the best record-weighted certification margin achievable on
+        S_aux, cov*(alpha-risk)*E[g/M]
+      - floor: the information floor at the true record-carrying calibration
+        count
+      - ratio: their quotient
+
+    Refs: SPEC pipeline step 5; METHODS 4; audit F51.
     """
     score = head.score(aux.x)
     err = head.predict(aux.x) != aux.y
     sizes = aux.site_sizes.astype(np.float64)
     e_g_over_m = float(np.mean(np.minimum(sizes, M_INFLUENCE) / M_INFLUENCE))
-    # best is None (JSON null) until some threshold attains coverage -- never
-    # a -inf sentinel, which is not strict-JSON serialisable and reads as a
-    # very bad but real margin (audit V16).
+    # best stays None (JSON null) until some threshold attains coverage. A -inf
+    # sentinel is not strict-JSON serialisable and reads as a very bad but real
+    # margin (audit V16).
     best = None
     for tau in TAU_GRID:
         ans = score >= tau
@@ -67,10 +71,10 @@ def _feasibility(head, aux, alpha, n_carrying) -> dict:
 def _baseline_walk(head, cal, order, alpha) -> dict:
     """Baseline (exchangeable) certification walk for one alpha at full DELTA.
 
-    The permutation stream is target-label-free (audit V3): baseline atoms are
-    target-independent, so one calibration draw yields ONE certificate shared
-    by every target pool it is applied to -- the shared-1-delta-event clause
-    in the guarantee text is true because of this line.
+    The permutation stream is target-label-free (audit V3). Baseline atoms are
+    target-independent, so one calibration draw yields one certificate shared
+    by every target pool it is applied to. That is what makes the
+    shared-1-delta-event clause in the guarantee text true.
     """
     score = head.score(cal.x)
     err = head.predict(cal.x) != cal.y
@@ -86,14 +90,17 @@ def _baseline_walk(head, cal, order, alpha) -> dict:
 
 
 def _bbse_seed_rng(target_x, dense_target_sites=None):
-    """Deterministic Generator for the BBSE cluster bootstrap (SPEC determinism).
+    """Deterministic Generator for the BBSE cluster bootstrap.
 
-    sha256 of the TARGET DATA -- dtype, shape, and bytes of ``target_x``, plus
-    the dense target site partition when supplied -- spread across the
-    SeedSequence. NEVER the free-text target label (verification G-2:
-    label-seeding moved the deployed threshold and the answered set under a
-    cosmetic respelling of byte-identical data). Byte-identical pools get
-    byte-identical fits; distinct pools get distinct bootstrap draws.
+    Seeded from a sha256 of the target data -- dtype, shape and bytes of
+    target_x, plus the dense target site partition when supplied. Distinct
+    pools get distinct draws; byte-identical pools get byte-identical fits.
+
+    Never the free-text target label. Label-seeding moved the deployed
+    threshold and the answered set under a cosmetic respelling of the same
+    bytes.
+
+    Refs: SPEC determinism; verification G-2.
     """
     h = hashlib.sha256()
     arr = np.ascontiguousarray(target_x)
@@ -114,15 +121,16 @@ def _bbse_seed_rng(target_x, dense_target_sites=None):
 def run_certgate(train, aux, cal, target_x, *, target_label="target",
                  target_site_id=None, alphas=ALPHA_LADDER,
                  oracle_target_y=None, modes=("baseline", "bbse")) -> dict:
-    """Certify a target pool end to end and return the tiered report (SPEC pipeline).
+    """Certify a target pool end to end and return the tiered report (SPEC).
 
-    ``modes`` selects the assumption modes to run; both are OR-combined per
-    alpha. ``target_site_id`` (optional, per-record raw site identifiers for a
-    MULTI-site target pool) feeds the BBSE q_t interval and the target
-    disjointness assertion; ``None`` declares the pool is a single site.
-    ``oracle_target_y`` (harness only) feeds the diagnostic composition.
-    Gated exits (``insufficient-clusters``, ``pool-too-small``) still return a
-    full report object carrying the reason and an all-declined partition.
+      - modes: the assumption modes to run, OR-combined per alpha
+      - target_site_id: per-record raw site labels for a multi-site pool,
+        feeding the BBSE q_t interval and the disjointness assertion. None
+        declares a single-site pool
+      - oracle_target_y: harness only, feeds the diagnostic composition
+
+    A gated exit -- insufficient-clusters or pool-too-small -- still returns a
+    full report carrying the reason and an all-declined partition.
     """
     modes = tuple(modes)
     alphas = tuple(alphas)
@@ -131,7 +139,7 @@ def run_certgate(train, aux, cal, target_x, *, target_label="target",
         raise ValueError(
             f"run_certgate: alphas must be a non-empty subset of the frozen "
             f"ladder {ALPHA_LADDER}, got {alphas} (reason=alpha-not-in-ladder)")
-    # 0. loud boundary validation (audit V18/V19/V23).
+    # 0. loud boundary validation (audits V18, V19, V23).
     bad_modes = [m for m in modes if m not in ("baseline", "bbse")]
     if bad_modes or not modes:
         raise ValueError(
@@ -146,9 +154,9 @@ def run_certgate(train, aux, cal, target_x, *, target_label="target",
                 f"class -- the require_both_classes=False relaxation is "
                 f"sanctioned for TARGET pools only (reason=single-class-"
                 f"fitting-cohort)")
-    # target_x must be a feature MATRIX, not a Cohort — the natural mistake,
-    # since the other three positional arguments ARE Cohorts (fixture audit
-    # 2026-07-25): a typed error naming target.x, never a raw numpy TypeError.
+    # target_x must be a feature matrix, not a Cohort -- the natural mistake,
+    # since the other three arguments are Cohorts. Raise a typed error naming
+    # target.x, not a raw numpy TypeError (fixture audit 2026-07-25).
     if isinstance(target_x, Cohort):
         raise ValueError(
             "run_certgate: target_x must be the raw feature matrix, not a "
@@ -175,14 +183,16 @@ def run_certgate(train, aux, cal, target_x, *, target_label="target",
     # 1. data discipline: S_train / S_aux / S_cal must be site-disjoint.
     assert_site_disjoint(train=train, aux=aux, cal=cal)
 
-    # 1b. TARGET disjointness (audit V9; hardened per verification F2/F4/N3):
-    #     comparisons run under the SAME canonical+normalized form
-    #     densify_sites uses (raw equality let 's-0000 ' and case variants
-    #     slip), and target_site_id is length-checked HERE, at the boundary,
-    #     not only inside fit_bbse on the BBSE path. A target whose own
-    #     records sit in S_cal gets a threshold selected partly on itself --
-    #     the exact leak F03 exists to prevent, on the one split F03 did not
-    #     cover.
+    # 1b. target disjointness. Two rules make it hold:
+    #     - comparisons run under the same canonical, normalized form
+    #       densify_sites uses; raw equality let 's-0000 ' and case variants
+    #       slip through
+    #     - target_site_id is length-checked here at the boundary, not only
+    #       inside fit_bbse on the BBSE path
+    #     A target whose own records sit in S_cal gets a threshold selected
+    #     partly on itself. That is the leak F03 exists to prevent, on the one
+    #     split F03 did not cover.
+    #     Ref: audit V9; verification F2, F4, N3.
     norm_cohort_labels = {normalized_label(s): s
                           for s in (set(train.site_labels)
                                     | set(aux.site_labels)
@@ -223,10 +233,10 @@ def run_certgate(train, aux, cal, target_x, *, target_label="target",
             "run_certgate: target_x contains non-finite values "
             "(reason=nonfinite-features)")
 
-    # 2b. feature-column alignment (real-data column discipline). The head is fit
-    #     on train and then scores aux, cal, AND target_x; a width mismatch would
-    #     otherwise surface deep inside head.score as an opaque numpy broadcast
-    #     error. Gate it loudly here, at the boundary, against train.d.
+    # 2b. feature-column alignment (real-data column discipline). The head is
+    #     fit on train and then scores aux, cal and target_x. A width mismatch
+    #     would otherwise surface deep inside head.score as an opaque numpy
+    #     broadcast error, so gate it loudly here against train.d.
     d_train = train.d
     if target_x.ndim != 2 or target_x.shape[1] != d_train:
         raise ValueError(
@@ -239,9 +249,9 @@ def run_certgate(train, aux, cal, target_x, *, target_label="target",
             f"got aux.d={aux.d}, cal.d={cal.d} "
             "(reason=feature-width-mismatch)")
 
-    # provenance binds EVERY array the certificate depends on -- x, y AND the
-    # site partition of all three cohorts, plus the target (audit V11: flipping
-    # one calibration label must change the recorded hashes).
+    # provenance binds every array the certificate depends on: x, y and the
+    # site partition of all three cohorts, plus the target. Flipping one
+    # calibration label must change the recorded hashes (audit V11).
     prov_arrays = dict(
         train_x=np.asarray(train.x), train_y=np.asarray(train.y),
         train_site_id=np.asarray(train.site_id),
@@ -252,27 +262,27 @@ def run_certgate(train, aux, cal, target_x, *, target_label="target",
         target_x=target_x)
     if dense_target_sites is not None:
         prov_arrays["target_site_id"] = dense_target_sites
-        # two different labelings share the same dense array -- bind the
+        # two different labelings share the same dense array, so bind the
         # canonical labels too (verification F4)
         prov_arrays["target_site_labels"] = np.frombuffer(
             "\x00".join(target_site_labels).encode(), dtype=np.uint8)
-    # run configuration binds too (verification N8): two runs whose certified
-    # tiers differ must never share a byte-identical reproducibility record.
+    # the run configuration binds too, so two runs with different certified
+    # tiers never share a byte-identical record (verification N8)
     prov = provenance(target_label=str(target_label),
                       modes=list(modes), alphas=[float(a) for a in alphas],
                       **prov_arrays)
 
     n_carrying = int((cal.site_sizes > 0).sum())
-    # not-run placeholder carries the SAME stable diagnostics key set as a
-    # real fit (all None), so diagnostic['bbse'] is uniformly indexable
-    # whatever modes ran (fixture audit 2026-07-25). GATED exits are the one
-    # sanctioned exception: they emit diagnostic['bbse'] = None wholesale,
-    # per audit V25's None-for-uncomputable rule.
+    # the not-run placeholder carries the same diagnostics key set as a real
+    # fit, all None, so diagnostic['bbse'] indexes uniformly whatever modes
+    # ran. Gated exits are the one exception: they emit diagnostic['bbse'] =
+    # None wholesale, per audit V25's None-for-uncomputable rule.
+    # Ref: fixture audit 2026-07-25.
     empty_bbse = BBSEFit(True, "not-run", float("nan"), float("nan"),
                          float("nan"), bbse_diagnostics(), {})
 
-    # 3. record-carrying calibration-cluster floor (audit B-5): count only
-    #    sites that actually carry records.
+    # 3. record-carrying calibration-cluster floor: count only sites that
+    #    actually carry records (audit B-5).
     if n_carrying < MIN_CAL_CLUSTERS:
         return build_report(target_label=target_label, head=None, cal=cal,
                             target_x=target_x, mode_results={},
@@ -301,7 +311,7 @@ def run_certgate(train, aux, cal, target_x, *, target_label="target",
         atoms_aux = influence_atoms(score_aux, err_aux, aux.site_id,
                                     aux.n_sites, TAU_GRID, alpha, M_INFLUENCE)
         walk_orders[alpha] = walk_order(atoms_aux)
-        # str(alpha) keys ("0.05"/"0.1"): a saved report JSON-round-trips
+        # str(alpha) keys, "0.05" and "0.1", so a saved report JSON-round-trips
         # without json.dump silently stringifying float keys (fixture audit
         # 2026-07-25)
         feasibility[str(alpha)] = _feasibility(head, aux, alpha, n_carrying)

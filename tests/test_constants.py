@@ -1,6 +1,6 @@
-"""SPEC "Tests": literal equality for EVERY frozen constant (audit F13).
+"""Literal equality for every frozen constant (SPEC "Tests"; audit F13).
 
-Any drift in ``constants.py`` fails here -- the lightweight, verifiable
+Any drift in constants.py fails here. It is the lightweight, checkable
 stand-in for pre-registration.
 """
 import ast
@@ -40,8 +40,8 @@ def test_bbse_delta_shares_sum_to_delta():
 
 
 def test_bbse_bonferroni():
-    # audit V2: the box covers FOUR estimated parameters
-    # (c0, c1, pi_source, q_target)
+    # the box covers four estimated parameters: c0, c1, pi_source, q_target
+    # (audit V2)
     assert C.BBSE_BONFERRONI == 4
 
 
@@ -75,9 +75,9 @@ def test_bbse_gap_floor():
 
 
 def test_bbse_min_target_sites():
-    # verification F1: the q cluster-bootstrap floor -- 2..9 declared target
-    # sites decline "bbse-target-clustering" rather than run a bootstrap that
-    # cannot approach nominal coverage
+    # The floor on the q cluster bootstrap. With 2 to 9 declared target sites
+    # the fit declines "bbse-target-clustering" instead of running a bootstrap
+    # that cannot approach nominal coverage (verification F1).
     assert C.BBSE_MIN_TARGET_SITES == 10
 
 
@@ -103,8 +103,8 @@ def test_mode_indices():
     assert (C.MODE_BASELINE, C.MODE_BBSE) == (0, 1)
 
 
-# ---- experiment-grid constants (audit V7: an undeclared generator parameter
-# ---- made two headline numbers non-reproducible from the stated setup) ----
+# ---- experiment-grid constants. An undeclared generator parameter once made
+# ---- two headline numbers non-reproducible from the stated setup (audit V7).
 
 def test_experiment_grid_constants_pinned():
     from experiments import run_synthetic as rs
@@ -123,16 +123,14 @@ def test_experiment_grid_constants_pinned():
 
 
 def test_no_experiment_local_separation_override():
-    """audit V7: E2/E3 ran at an undeclared sep=1.8 against a documented 2.2.
-    Every experiment now runs the documented SimConfig generator; no
-    experiment-local separation constant may exist."""
+    """No experiment may carry its own separation constant: E2/E3 once ran at
+    an undeclared sep=1.8 against a documented 2.2 (audit V7)."""
     from experiments import run_synthetic as rs
     assert not hasattr(rs, "SHIFT_SEP")
 
 
 def test_simconfig_generator_defaults_pinned():
-    """The generator defaults are protocol constants too (audit V7): the paper
-    describes exactly these values."""
+    """Generator defaults are protocol constants too (audit V7)."""
     from certgate.data import SimConfig
     cfg = SimConfig()
     assert cfg.d == 8
@@ -144,9 +142,8 @@ def test_simconfig_generator_defaults_pinned():
 
 
 def test_e8_constants_pinned():
-    """Revision-2 E8 arms (SPEC "E8"; design record
-    paper/review/revision2/PHASE0-PROBES.md). Appended function: every
-    pre-existing pin above stays byte-untouched."""
+    """The revision-2 E8 arms, appended so earlier pins stay byte-untouched
+    (SPEC "E8"; design record paper/review/revision2/PHASE0-PROBES.md)."""
     from experiments import run_synthetic as rs
     assert rs.E8_COMPARATORS == ("wsr", "hoeffding", "mpeb", "t", "site_boot")
     assert rs.E8_BOOT == 1000
@@ -158,8 +155,8 @@ def test_e8_constants_pinned():
 
 
 def test_e9_constants_pinned():
-    """Revision-2 E9 arms (SPEC "E9" + "Outcome-weighted atoms"; frozen from
-    the P0.2/P0.3 pilots in paper/review/revision2/PHASE0-PROBES.md)."""
+    """The revision-2 E9 arms, frozen from the P0.2/P0.3 pilots (SPEC "E9",
+    "Outcome-weighted atoms"; paper/review/revision2/PHASE0-PROBES.md)."""
     from experiments import run_synthetic as rs
     assert rs.E9_SOURCE_SWEEP == (208, 600, 900, 1200)
     assert rs.E9_TARGET_MODES == ("single-site-cp", "k40-boot")
@@ -171,21 +168,22 @@ def test_e9_constants_pinned():
 
 
 def test_experiment_registration_consistent():
-    """EXPERIMENTS and _RUNNERS must agree (the --only validator checks one,
-    the dispatch loop iterates the other -- registering in only one is a
-    silent drop or a KeyError), and every name must stay single-digit: the
-    summary-writer regex ``^## (E\\d)`` would silently alias an E10 block
-    into E1's (CLAUDE.md gotcha, now pinned)."""
+    """EXPERIMENTS and _RUNNERS must agree, and every name stays single-digit.
+
+    Registering in only one list is a silent drop or a KeyError: the --only
+    validator checks one, the dispatch loop iterates the other. Two digits
+    would break the summary writer, whose regex ^## (E\\d) aliases E10 into E1.
+    """
     import re
     from experiments import run_synthetic as rs
     assert set(rs.EXPERIMENTS) == set(rs._RUNNERS)
     assert all(re.fullmatch(r"E\d", n) for n in rs.EXPERIMENTS)
 
 
-# ---- eICU real-data protocol constants (SPEC "Real-data protocol"). These are
-# ---- PRE-REGISTRATION constants: they were frozen before a single eICU byte
-# ---- was read, and pinning them literally is what makes that claim checkable.
-# ---- A red assertion here is a protocol change and belongs in SPEC.md first.
+# ---- eICU real-data protocol constants (SPEC "Real-data protocol"). These
+# ---- were frozen before a single eICU byte was read; pinning them literally
+# ---- is what makes that pre-registration claim checkable. A red assertion
+# ---- here is a protocol change and belongs in SPEC.md first.
 
 def test_eicu_protocol_constants_pinned():
     from experiments import eicu_etl as etl
@@ -198,35 +196,35 @@ def test_eicu_protocol_constants_pinned():
     assert etl.EICU_POSITIVE_LABEL == "Expired"
     assert etl.EICU_NEGATIVE_LABEL == "Alive"
     assert etl.EICU_POOLED_TARGET_LABEL == "eicu-target-pool"
-    # `apache-linked` (2026-07-31 audit, E-9) restricts to stays whose day-1
-    # APACHE window is COMPLETE, so the presence flags become constant and
-    # information-free. It is the declared, immortal-time-selected escape from
-    # the outcome-informative-missingness abort -- never the headline.
+    # `apache-linked` keeps only stays whose day-1 APACHE window is complete,
+    # so the presence flags become constant and information-free. It is the
+    # declared, immortal-time-selected escape from the outcome-informative-
+    # missingness abort -- a secondary arm, never the headline (audit E-9).
     assert etl.EICU_ARMS == ("primary", "apache-linked", "apache-complete")
 
     # --- the outcome-informative-missingness gates (E-9) -------------------
-    # APACHE day-1 rows do not exist for a stay that ends BECAUSE THE PATIENT
-    # DIED before the window closes, so aps_present/apv_present and the 43
-    # __missing siblings are a partial OUTCOME proxy with no column name --
-    # invisible to a name denylist. Measured on the mock: clean corpus 1.11;
-    # outcome-correlated absence planted at p=0.20 gives 2.66, p=0.30 gives
-    # 3.86, p=0.75 gives 14.51. Widening this cap is how the leak gets in.
+    # A stay that ends because the patient died before the day-1 window closes
+    # has no APACHE row. So aps_present/apv_present and the 43 __missing
+    # siblings are a partial outcome proxy with no column name, invisible to a
+    # name denylist. Measured on the mock: 1.11 on a clean corpus, then 2.66,
+    # 3.86 and 14.51 with outcome-correlated absence planted at p=0.20, 0.30
+    # and 0.75. Widening this cap is how the leak gets in.
     assert etl.EICU_MAX_OUTCOME_PREVALENCE_RATIO == 2.0
     assert etl.EICU_MIN_OUTCOME_STRATUM == 100
     assert etl.EICU_FEATURE_AUC_REVIEW == 0.75
-    # E-15: the opposite direction of the -1 gate. A Postgres text-format
-    # re-export writes '\N', which parses as `unparseable` and turns all 43
+    # E-15 guards the opposite direction of the -1 gate. A Postgres text-format
+    # re-export writes '\N', which parses as `unparseable`. That turns all 43
     # allowlisted APACHE numerics into 100% missing while build_raw succeeds.
     assert etl.EICU_MAX_UNPARSEABLE_SHARE == 0.01
 
     # --- cohort predicates -------------------------------------------------
     assert etl.EICU_MIN_AGE == 18
-    # the HIPAA ceiling token, kept (not dropped): its share varies BY HOSPITAL,
-    # so dropping it is a site-correlated exclusion
+    # the HIPAA ceiling token, kept rather than dropped: its share varies by
+    # hospital, so dropping it would be a site-correlated exclusion
     assert etl.EICU_AGE_MASK_TOKEN == "> 89"
     assert etl.EICU_AGE_MASK_VALUE == 90.0
 
-    # --- the UNDOCUMENTED APACHE sentinel and the imputation fallback ------
+    # --- the undocumented APACHE sentinel and the imputation fallback ------
     assert etl.EICU_SENTINEL_MISSING == -1.0
     assert etl.EICU_IMPUTE_FALLBACK == 0.0
     assert etl.EICU_APACHE_VERSION_PREFERENCE == ("IVa", "IV")
@@ -242,12 +240,12 @@ def test_eicu_protocol_constants_pinned():
     assert etl.EICU_MIN_TOTAL_SITES == 149
     assert etl.EICU_N_TARGET_SITES >= 2 * C.BBSE_MIN_TARGET_SITES
 
-    # EICU_MIN_TOTAL_SITES is a SUFFICIENT floor, not the tight one. The
-    # int() truncation in the 40/20/40 split makes the calibration count
-    # non-monotone in the total (148 sites yields 51 calibration clusters,
-    # 149 yields 50), so the checkable property is: at and above the floor the
-    # projection ALWAYS clears MIN_CAL_CLUSTERS, and some total below it does
-    # not. The tight breakpoint is 146; the constant keeps three sites of slack.
+    # EICU_MIN_TOTAL_SITES is a sufficient floor, not the tight one. The int()
+    # truncation in the 40/20/40 split makes the calibration count non-monotone
+    # in the total: 148 sites yields 51 calibration clusters, 149 yields 50.
+    # So the checkable property is that every total at or above the floor
+    # clears MIN_CAL_CLUSTERS, and some total below it does not. The tight
+    # breakpoint is 146; the constant keeps three sites of slack.
     def _n_cal(total):
         rest = total - etl.EICU_N_TARGET_SITES
         return (rest - int(rest * C.SPLIT_FRACTIONS[0])
@@ -266,7 +264,7 @@ def test_eicu_protocol_constants_pinned():
             int(rest * C.SPLIT_FRACTIONS[1])) == (73, 36)
     assert rest - 73 - 36 == 75
 
-    # --- feature width: names and columns are built from ONE source --------
+    # --- feature width: names and columns are built from one source --------
     assert etl.EICU_N_FEATURES == 161
     assert len(etl.FEATURE_NAMES) == etl.EICU_N_FEATURES
     assert etl.EICU_PATIENT_NUMERIC == ("age", "admissionheight",
@@ -305,7 +303,7 @@ def test_eicu_protocol_constants_pinned():
         "Neuro ICU", "SICU", "", "OTHER")
     assert etl.EICU_LEVELS_UNITSTAYTYPE == (
         "admit", "readmit", "stepdown/other", "transfer", "", "OTHER")
-    # every tuple ends in the ETL's drift BUCKET, which is never a raw value
+    # every tuple ends in the ETL's drift bucket, which is never a raw value
     for _col, levels in etl.EICU_CATEGORICALS:
         assert levels[-1] == "OTHER" and levels[-2] == ""
     assert [c for c, _ in etl.EICU_CATEGORICALS] == [
@@ -320,23 +318,23 @@ def test_eicu_protocol_constants_pinned():
     assert etl.EICU_WINDOW_FIO2_PCT == (21.0, 100.0)
     assert etl.EICU_WINDOW_TEMP_C == (25.0, 45.0)
     assert etl.EICU_WINDOW_TEMP_F == (77.0, 113.0)
-    # NON-OVERLAPPING by construction, so the convention mapping is unambiguous
+    # non-overlapping by construction, so the convention mapping is unambiguous
     assert etl.EICU_WINDOW_FIO2_FRAC[1] <= etl.EICU_WINDOW_FIO2_PCT[0]
     assert etl.EICU_WINDOW_TEMP_C[1] <= etl.EICU_WINDOW_TEMP_F[0]
-    # E-18: the fio2 windows are applied LOWER-CLOSED. fio2 == 0.21 (== 21) is
-    # ROOM AIR -- a valid, modal observation on a ventilation-linked column,
-    # and ventilation status is site-correlated, so discarding it would
-    # manufacture the informative-missingness channel this protocol guards.
-    # The temperature windows stay lower-OPEN: no convention value sits at
-    # either endpoint, only implausible physiology.
+    # E-18: the fio2 windows are applied lower-CLOSED. fio2 == 0.21 (== 21) is
+    # room air, a valid and modal observation on a ventilation-linked column.
+    # Ventilation status is site-correlated, so discarding it would manufacture
+    # the informative-missingness channel this protocol guards. The temperature
+    # windows stay lower-open: no convention value sits at either endpoint,
+    # only implausible physiology.
     assert etl.EICU_ORDINAL_COLUMNS == ("intubated", "vent", "dialysis", "eyes",
                                         "motor", "verbal", "meds")
     assert etl.EICU_ORDINAL_RANGES == {
         "intubated": (0, 1), "vent": (0, 1), "dialysis": (0, 1),
         "eyes": (1, 4), "motor": (1, 6), "verbal": (1, 5), "meds": (0, 1)}
 
-    # --- attrition ledger: frozen ORDER, and the three APACHE steps are the
-    # --- site-selection diagnostic the primary arm measures but never applies
+    # --- attrition ledger: the order is frozen, and the three APACHE steps
+    # --- are a site-selection diagnostic the primary arm measures, not applies
     assert etl.EICU_ATTRITION_STEPS == (
         "raw-unit-stays", "site-parseable", "outcome-known", "adult",
         "first-stay", "primary-cohort", "apache-aps-linked",
@@ -363,37 +361,34 @@ def test_eicu_protocol_constants_pinned():
         "stay_id", "patient_id", "admission_id", "site_raw", "y_raw",
         "answered_mask", "x", "site_id", "comparator_predicted_mortality",
         "split_idx")
-    # PIN AMENDMENT 2026-08-01 -- the ONE pre-existing pinned literal the
-    # post-hoc reliability-panel work changes, recorded here so a later
-    # `git log -p tests/test_constants.py` reads it as a dated design decision
-    # rather than drift. It is written up in SPEC.md, "Real-data protocol",
-    # under the heading "PIN AMENDMENT (2026-08-01)"; that paragraph is the
-    # binding record, in the register the eICU protocol amendments A1-A6 use.
-    # Ordering was SPEC first, then run_eicu.py, then this line -- never the
+    # This tuple is APPEND-ONLY. A new section goes last so that no section
+    # written before it moves, which is what keeps every EICU-SUMMARY.md
+    # already on disk -- experiments/out/ and out-sens/ included -- parseable
+    # and preserved. All three entries added since the original 5-tuple went
+    # on the end for that reason.
+    #
+    # Each is an engineering pin, not a protocol amendment: EICU-PROTOCOL.md
+    # SS2-13 are untouched and its A1-A6 log correctly does not mention them.
+    # Ordering is SPEC first, then run_eicu.py, then this line -- never the
     # reverse, which would be editing a pin to match new code.
     #
-    # Was a 5-tuple; "EICU-RELIABILITY" is APPENDED, never inserted or
-    # re-ordered, so every EICU-SUMMARY.md written before that date --
-    # experiments/out/ and out-sens/ included -- still parses and preserves.
-    # This is an ENGINEERING pin, not a protocol amendment: EICU-PROTOCOL.md
-    # SS2-13 are untouched and its A1-A6 log correctly does not mention it.
-    # PIN AMENDMENT 2026-08-20 (SPEC first): "EICU-SUBGROUPS" APPENDED as the
-    # seventh entry for the revision-2 post-hoc subgroup descriptives --
-    # append-only, so every EICU-SUMMARY.md written under the 6-tuple still
-    # parses and preserves.
+    # Ref: SPEC "Real-data protocol", PIN AMENDMENT 2026-08-01
+    # (EICU-RELIABILITY), 2026-08-20 (EICU-SUBGROUPS), 2026-08-21
+    # (EICU-FAITHFULNESS).
     assert run_eicu.EICU_SUMMARY_SECTIONS == (
         "EICU-PREFLIGHT", "EICU-PREDICTIONS", "EICU-POOLED", "EICU-PERSITE",
-        "EICU-COMPARATOR", "EICU-RELIABILITY", "EICU-SUBGROUPS")
+        "EICU-COMPARATOR", "EICU-RELIABILITY", "EICU-SUBGROUPS",
+        "EICU-FAITHFULNESS")
     # the pre-declared failure criteria are literals in code, not prose
     assert run_eicu.EICU_FB_MIN_COVERAGE == 0.20
     assert run_eicu.EICU_FD_COVERAGE_ALARM == 0.90
     assert run_eicu.EICU_FD_RM_ALARM == 0.01
     assert run_eicu.EICU_FE_MIN_SITES == 200
 
-    # E-10: F-D's two alpha- and coverage-INDEPENDENT legs. The old single-leg
-    # form (alpha == 0.05 AND coverage > 0.90 AND R_M < 0.01) was demonstrated
-    # to pass underneath an outcome-correlated-missingness leak that certified
-    # alpha = 0.10 at coverage 0.86. Relaxing either literal below reopens it.
+    # E-10: F-D's two legs, independent of alpha and of coverage. The old
+    # single-leg form (alpha == 0.05 and coverage > 0.90 and R_M < 0.01) passed
+    # underneath an outcome-correlated-missingness leak that certified
+    # alpha = 0.10 at coverage 0.86. Relaxing either literal reopens it.
     assert run_eicu.EICU_LEAK_AUC_CEILING == 0.90
     assert run_eicu.EICU_LEAK_ABLATION_MAX_DROP == 0.05
     assert run_eicu.EICU_TIMING_UNVERIFIED == (
@@ -404,16 +399,15 @@ def test_eicu_protocol_constants_pinned():
 
 
 def test_eicu_no_protocol_constant_leaked_into_the_core_package():
-    """SPEC "Real-data protocol" B.0: the eICU path is an EXPERIMENT. No eICU
-    constant may enter ``certgate/constants.py`` -- the core package must stay
-    dataset-agnostic, exactly as it is for the synthetic grid."""
+    """No eICU constant may enter certgate/constants.py -- the eICU path is an
+    experiment and the core package stays dataset-agnostic (SPEC "Real-data
+    protocol" B.0)."""
     assert not [n for n in dir(C) if n.startswith("EICU")]
 
 
 def test_eicu_mock_constants_pinned():
-    """Generator parameters, pinned for the same reason as SimConfig's (audit
-    V7): an undeclared generator parameter made two headline numbers
-    non-reproducible from the stated setup."""
+    """Generator parameters, pinned for the same reason as SimConfig's: an
+    undeclared one once made two headline numbers non-reproducible (audit V7)."""
     from experiments import eicu_mock as mock
     from experiments import eicu_etl as etl
 
@@ -427,20 +421,20 @@ def test_eicu_mock_constants_pinned():
     assert mock.EICU_MOCK_SITE_SIGMA_U == 0.5
 
     # The latent-severity slope. Its Bayes-optimal AUC is Phi(B/sqrt(2)) = 0.73
-    # and the fitted head reaches ~0.60 out of sample. At the FROZEN corpus
+    # and the fitted head reaches ~0.60 out of sample. At the two frozen corpus
     # sizes -- EICU_MOCK_SMALL_SITES = 180 (63 calibration clusters) and
-    # EICU_MOCK_FULL_SITES = 208 (75) -- an ORACLE ranking's best margin 0.0354
+    # EICU_MOCK_FULL_SITES = 208 (75) -- an oracle ranking's best margin 0.0354
     # sits below certify.margin_floor (0.0428 and 0.0359), so run_certgate
     # declines every rung and the default suite exercises the decline branch.
     #
-    # SCOPE (2026-07-31 audit, E-20): margin_floor scales as 1/n_carrying, so
-    # this comparison does NOT generalise to "any corpus size" -- the floor
-    # first drops below 0.0354 at n_carrying = 77 (~217 hospitals), and a mock
-    # at 900 or 1500 hospitals CERTIFIES alpha = 0.10 with this constant
-    # untouched. `test_large_mock_reaches_the_certified_branch`
-    # (CERTGATE_EICU_LARGE=1) exercises that branch. Raising this toward
-    # synth_fixture's 2.0 is one option, not the only one, and either way it is
-    # a SPEC + test_constants change, not one the generator may make on its own.
+    # Those two sizes are the whole of that claim. margin_floor scales as
+    # 1/n_carrying, so the floor drops below 0.0354 at n_carrying = 77
+    # (~217 hospitals), and a 900- or 1500-hospital mock certifies alpha = 0.10
+    # with this constant untouched -- the branch
+    # test_large_mock_reaches_the_certified_branch (CERTGATE_EICU_LARGE=1)
+    # exercises. Raising this toward synth_fixture's 2.0 is one option among
+    # several, and either way it is a SPEC + test_constants change.
+    # Ref: audit E-20 (2026-07-31).
     assert mock.EICU_MOCK_SIGNAL_B == 0.85
     assert mock.EICU_MOCK_BASE_RATE == 0.095       # == SimConfig().base_rate
     _floor = __import__("certgate.certify", fromlist=["x"]).margin_floor
@@ -450,12 +444,12 @@ def test_eicu_mock_constants_pinned():
     assert min(n for n in range(50, 400)
                if _floor(n, C.DELTA, 0.10) < 0.0354) == 77
 
-    # E-12/V7: EICU_MOCK_SIGNAL_LOAD is the per-feature loading dict that,
-    # jointly with EICU_MOCK_SIGNAL_B, sets the mock's head AUC -- i.e. BOTH
-    # headline numbers the comment above quotes. Leaving it unpinned let every
-    # value be rewritten to 0.0 (head AUC 0.60 -> 0.48, a pure-noise outcome
-    # model) with the whole suite still green: exactly the failure V7 was
-    # raised about. Pinned as a digest plus the invariants that matter.
+    # EICU_MOCK_SIGNAL_LOAD is the per-feature loading dict. Together with
+    # EICU_MOCK_SIGNAL_B it sets the mock's head AUC, so both numbers quoted
+    # above depend on it. Unpinned, every value could be rewritten to 0.0 --
+    # head AUC 0.60 -> 0.48, a pure-noise outcome model -- with the suite still
+    # green. Pinned as a digest plus the invariants that matter.
+    # Ref: audits E-12, V7.
     _load = mock.EICU_MOCK_SIGNAL_LOAD
     assert isinstance(_load, dict) and len(_load) == 23
     assert set(_load) == {
@@ -468,9 +462,9 @@ def test_eicu_mock_constants_pinned():
         json.dumps(sorted(_load.items()), separators=(",", ":"))
         .encode("ascii")).hexdigest() == (
         "c4610827e7c3b56f417a8d2900e50d1b8bb1f990de52d909bf0109fc2b38a3cb")
-    # every keyed feature is either an ALLOWLISTED column or one of the three
-    # named aggregates; not one leak column carries a loading (the leaks are
-    # driven by the outcome directly, which is the point)
+    # Every keyed feature is an allowlisted column or one of the three named
+    # aggregates. No leak column carries a loading -- the leaks are driven by
+    # the outcome directly, which is the point.
     _allow = ({f"aps_{c}" for c in etl.EICU_APS_NUMERIC}
               | {f"apv_{c}" for c in etl.EICU_APV_NUMERIC}
               | set(etl.EICU_PATIENT_NUMERIC)
@@ -498,8 +492,8 @@ def test_eicu_mock_constants_pinned():
     # secondary generator rates
     assert mock.EICU_MOCK_AGE_BLANK_RATE == 0.004
     assert mock.EICU_MOCK_PEDIATRIC_RATE == 0.012
-    assert mock.EICU_MOCK_UNLISTED_RATE == 0.02    # BELOW EICU_MAX_OTHER_SHARE
-    assert mock.EICU_MOCK_DRIFT_RATE == 0.09       # --drift: ABOVE it
+    assert mock.EICU_MOCK_UNLISTED_RATE == 0.02    # below EICU_MAX_OTHER_SHARE
+    assert mock.EICU_MOCK_DRIFT_RATE == 0.09       # --drift: above it
     assert mock.EICU_MOCK_ICU_DEATH_SHARE == 0.72
     assert mock.EICU_MOCK_RESULT_COVERAGE == (0.75, 0.98)
     assert mock.EICU_MOCK_SINGLE_VERSION_RATE == 0.11
@@ -522,7 +516,7 @@ def test_eicu_mock_constants_pinned():
     assert (n_tr, n_aux, rest - n_tr - n_aux) == (62, 31, 63)
     assert rest - n_tr - n_aux >= C.MIN_CAL_CLUSTERS
 
-    # the DDL schema: real column names, real DDL order, surrogate id FIRST
+    # the DDL schema: real column names, real DDL order, surrogate id first
     assert tuple(mock.EICU_MOCK_SCHEMA) == mock.EICU_MOCK_TABLES
     assert {t: len(cols) for t, cols in mock.EICU_MOCK_SCHEMA.items()} == {
         "patient": 29, "hospital": 4, "apacheApsVar": 26,
@@ -533,8 +527,8 @@ def test_eicu_mock_constants_pinned():
         assert mock.EICU_MOCK_SCHEMA[table][0][0] == first
         assert mock.EICU_MOCK_SCHEMA[table][1][0] == "patientunitstayid"
 
-    # the intercept is DERIVED from the base rate, never pinned independently,
-    # so the advertised prevalence and the emitted prevalence cannot drift apart
+    # the intercept is derived from the base rate, never pinned on its own, so
+    # the advertised prevalence and the emitted prevalence cannot drift apart
     assert not hasattr(mock, "EICU_MOCK_SIGNAL_INTERCEPT_LITERAL")
     assert mock.EICU_MOCK_SIGNAL_INTERCEPT == pytest.approx(-2.649740738, rel=1e-9)
 
@@ -543,21 +537,20 @@ def test_eicu_mock_constants_pinned():
 # POST-HOC selective reliability panel (SPEC "reliability.py", added 2026-08-01)
 #
 # Eighteen constants ported byte-exactly from the verified
-# ``selective-reliability-panel/srp`` sandbox. They are pinned here for the same
-# reason every other constant is -- a red pin is a design change, not a nuisance
-# -- but they carry NO pre-registration claim: they were frozen AFTER the
-# eICU-CRD v2.0 extract had been seen. That is exactly why they live in
-# ``certgate/reliability.py`` and not in ``certgate/constants.py``.
+# selective-reliability-panel/srp sandbox. They are pinned like every other
+# constant here: a red pin is a design change, not a nuisance. But they carry
+# no pre-registration claim -- frozen after the eICU-CRD v2.0 extract had been
+# seen -- which is why they live in certgate/reliability.py.
 # ---------------------------------------------------------------------------
 
 
 def test_panel_schema_and_seed():
-    # SCHEMA_VERSION is emitted verbatim AND hashed as the first bytes of
-    # input_digest, which seeds every stream: renaming it (say to
-    # "certgate/srp/1") moves EVERY confidence interval in the panel.
+    # SCHEMA_VERSION is emitted verbatim and hashed as the first bytes of
+    # input_digest, which seeds every stream. Renaming it -- say to
+    # "certgate/srp/1" -- moves every confidence interval in the panel.
     assert RP.SCHEMA_VERSION == "srp/1"
-    # srp's OWN root seed, RENAMED (never re-pointed) so it cannot be confused
-    # with constants.SEED at an import site. Re-pointing it at C.SEED would
+    # srp's own root seed, renamed so it cannot be confused with constants.SEED
+    # at an import site. It is never re-pointed: aiming it at C.SEED would
     # discard the byte-exact equivalence with the verified reference
     # implementation, which is the whole reason to port rather than re-derive.
     assert RP.PANEL_SEED == 20260731
@@ -565,9 +558,11 @@ def test_panel_schema_and_seed():
 
 
 def test_panel_module_is_a_dag_leaf():
-    """SPEC "reliability.py": the panel never sees a Head, a Cohort, or
-    constants.SEED. NO ``from certgate ...`` import of any kind -- checked over
-    the AST, not the text, because the module docstring says the words."""
+    """The panel never sees a Head, a Cohort, or constants.SEED.
+
+    No `from certgate ...` import of any kind (SPEC "reliability.py"). Checked
+    over the AST, not the text, since the module docstring says those words.
+    """
     src = pathlib.Path(RP.__file__).read_text(encoding="utf-8")
     tree = ast.parse(src)
     for node in ast.walk(tree):
@@ -579,30 +574,30 @@ def test_panel_module_is_a_dag_leaf():
 
 
 def test_panel_bin_edges():
-    # 7 bins. 1.01 is a SENTINEL above 1.0, never a bound: it is what lets
-    # p == 1.0 land in the last bin under the strict `<` test (bin_bounds
-    # clamps the EMITTED hi to 1.0). Replacing it with 1.0 silently drops every
-    # p == 1.0 record and breaks "per-bin counts sum to n".
+    # 7 bins. The 1.01 top edge is a sentinel, not a bound: bins are
+    # upper-open, so a 1.0 edge would drop every p == 1.0 record and break
+    # "per-bin counts sum to n". bin_bounds clamps the emitted hi back to 1.0,
+    # so the last bin still reads [0.55, 1.0].
     assert RP.DEFAULT_BIN_EDGES == (0.0, 0.02, 0.05, 0.10, 0.20, 0.35, 0.55,
                                     1.01)
     edges = RP.DEFAULT_BIN_EDGES
     assert len(edges) == 8
     assert all(b > a for a, b in zip(edges[:-1], edges[1:]))
     assert edges[0] <= 0.0 and edges[-1] > 1.0
-    # examples/explain_dashboard.py IMPORTS this tuple rather than restating
-    # it; tests/test_reliability_panel.py::test_dashboard_bin_edges_match pins
-    # that the dashboard and the panel actually BIN alike, not just that they
-    # share a constant
+    # examples/explain_dashboard.py imports this tuple rather than restating
+    # it, and test_dashboard_bin_edges_match pins that the dashboard and the
+    # panel actually bin alike, not just that they share a constant
 
 
 def test_panel_curve_scopes():
-    """The scopes the reliability CURVE is drawn for. `all` is deliberately
-    absent -- reliability/ece/calibration are answered+declined only.
+    """The scopes the reliability curve is drawn for.
 
-    Pinned because both consumers (`run_synthetic._e6_reliability_figure`,
-    `run_eicu._reliability_figure`) `zip()` it against a fixed 2-element colour
-    tuple: appending a third scope here would SILENTLY drop it from every
-    figure rather than fail, since zip stops at the shorter operand.
+    `all` is deliberately absent: reliability, ECE and calibration are
+    answered-plus-declined only.
+
+    Both consumers zip() this against a fixed 2-element colour tuple, so a
+    third scope would silently vanish from every figure rather than fail. They
+    are run_synthetic._e6_reliability_figure and run_eicu._reliability_figure.
     """
     assert RP.PANEL_CURVE_SCOPES == ("answered", "declined")
     # and it names real emitted blocks, in emitted order
@@ -611,50 +606,50 @@ def test_panel_curve_scopes():
 
 
 def test_panel_decision_threshold():
-    # yhat = (p >= this). It coincides with Head.predict's rule (p1 >= 0.5),
-    # which is what makes skill.<scope>.model_error_rate the certgate answered
-    # error rate on that scope -- a free cross-consistency check. It is
-    # UNRELATED to the caller's gate tau and must not be confused with it.
+    # yhat = (p >= this), the same rule Head.predict uses (p1 >= 0.5). That is
+    # what makes skill.<scope>.model_error_rate the certgate answered error
+    # rate on that scope -- a free cross-consistency check. It is unrelated to
+    # the caller's gate tau and must not be confused with it.
     assert RP.DECISION_THRESHOLD == 0.5
 
 
 def test_panel_irls_constants():
-    # |logit(eps)| <= 13.815510557964274, so p == 0.0 and p == 1.0 remain
-    # usable regression inputs. LOGIT_EPS and IRLS_TOL are also why `settings`
-    # is EXEMPT from the emit-time round: both collapse to 0.0 at 6 dp.
+    # |logit(eps)| <= 13.815510557964274, so p == 0.0 and p == 1.0 stay usable
+    # regression inputs. LOGIT_EPS and IRLS_TOL are also why `settings` is
+    # exempt from the emit-time round: both collapse to 0.0 at 6 dp.
     assert RP.LOGIT_EPS == 1e-6
     assert abs(math.log(1e-6 / (1 - 1e-6))) < 13.815510557964275
     assert RP.IRLS_MAX_ITER == 100          # -> 'not-converged', never a number
-    assert RP.IRLS_TOL == 1e-8              # on the FULL Newton step
-    # the REPORTING RANGE. |beta| past it is 'coef-out-of-range' (the MLE
-    # exists but lies outside the range); 'separable' (the MLE does not exist)
-    # is a DIFFERENT status decided before iterating. Collapsing the two claims
-    # the wrong thing and implies the opposite operational action.
+    assert RP.IRLS_TOL == 1e-8              # on the full Newton step
+    # The reporting range on the coefficients. |beta| past it is
+    # 'coef-out-of-range': the MLE exists, it just sits outside the range.
+    # 'separable' means no MLE exists at all, a different status decided before
+    # iterating. Collapsing the two implies the opposite operational action.
     assert RP.IRLS_MAX_ABS_COEF == 30.0
-    assert RP.IRLS_MIN_WEIGHT == 1e-10      # invertible WITHOUT a ridge term
+    assert RP.IRLS_MIN_WEIGHT == 1e-10      # invertible without a ridge term
     assert RP.IRLS_MIN_RECORDS == 20
 
 
 def test_panel_bootstrap_constants():
-    assert RP.N_BOOT == 2000                # required VALID draws per statistic
+    assert RP.N_BOOT == 2000                # required valid draws per statistic
     assert RP.CI_LEVEL == 0.95
-    # the attempt budget at the production N_BOOT. BOOT_MAX_ATTEMPTS is NEVER
-    # read at runtime: the enforced budget is the RELATION 2 * n_boot resolved
-    # inside site_bootstrap_ci, so a lowered n_boot gets a proportionally
-    # lowered budget and settings.boot_max_attempts echoes 2*n_boot.
+    # The attempt budget at the production N_BOOT. This value is never read at
+    # runtime: site_bootstrap_ci enforces the relation 2 * n_boot instead, so a
+    # lowered n_boot gets a proportionally lowered budget and
+    # settings.boot_max_attempts echoes 2*n_boot.
     assert RP.BOOT_MAX_ATTEMPTS == 4000
     assert RP.BOOT_MAX_ATTEMPTS == 2 * RP.N_BOOT
-    # cluster floor, checked against n_sites_carrying BEFORE any resampling
-    # work (n_attempts == 0). Same measured lesson as BBSE_MIN_TARGET_SITES
-    # (rho-miss up to 46% at K=2 against a nominal 2.5%).
+    # Cluster floor, checked against n_sites_carrying before any resampling
+    # work (n_attempts == 0). Same measured lesson as BBSE_MIN_TARGET_SITES:
+    # rho-miss up to 46% at K=2 against a nominal 2.5%.
     assert RP.MIN_SITES_FOR_CI == 10
     assert RP.MIN_SITES_FOR_CI == C.BBSE_MIN_TARGET_SITES
 
 
 def test_panel_emit_constants():
-    assert RP.ROUND_DP == 6                 # applied ONCE, at emit time
+    assert RP.ROUND_DP == 6                 # applied once, at emit time
     assert RP.FIG_DPI == 110                # every existing experiment figure
-    # the two EXHAUSTIVE status vocabularies; membership across the whole
+    # the two exhaustive status vocabularies; membership across the whole
     # adversarial fixture family is asserted in test_reliability_panel.py
     assert RP.CI_STATUSES == ("ok", "empty-bin", "too-few-sites",
                               "degenerate-resamples", "undefined-point",
@@ -663,14 +658,13 @@ def test_panel_emit_constants():
                                "degenerate-design", "separable",
                                "coef-out-of-range", "not-converged",
                                "singular")
-    # 'separable' and 'coef-out-of-range' are DISTINCT claims
+    # 'separable' and 'coef-out-of-range' are distinct claims
     assert len(set(RP.FIT_STATUSES)) == len(RP.FIT_STATUSES) == 8
     assert len(set(RP.CI_STATUSES)) == len(RP.CI_STATUSES) == 6
-    # The released EICU_reliability.csv column ORDER. Pinned literally
-    # (2026-08-10) because every prior assertion was self-referential -- a
-    # set-compare here and a `list(rp.PANEL_RELIABILITY_FIELDS)` header
-    # assert in test_eicu_path.py -- so a reorder shipped a silently
-    # rearranged published CSV with the suite fully green.
+    # The released EICU_reliability.csv column order, pinned literally. Every
+    # prior assertion was self-referential -- a set-compare here and a
+    # list(rp.PANEL_RELIABILITY_FIELDS) header assert in test_eicu_path.py --
+    # so a reorder could ship a rearranged published CSV with the suite green.
     assert RP.PANEL_RELIABILITY_FIELDS == (
         "scope", "index", "lo", "hi", "n", "n_sites_carrying",
         "mean_predicted", "observed", "ci_lo", "ci_hi",
@@ -678,9 +672,9 @@ def test_panel_emit_constants():
 
 
 def test_panel_post_hoc_label():
-    """A6 register. The SUBSTANCE is pinned, the prose is not: wording may be
-    improved without a false red, but the three load-bearing claims may not
-    quietly leave."""
+    """The substance is pinned, the prose is not: wording may improve without
+    a false red, but the three load-bearing claims may not quietly leave (A6
+    register)."""
     label = RP.POST_HOC_LABEL
     assert isinstance(label, str)
     assert "POST-HOC" in label
@@ -692,12 +686,9 @@ def test_panel_post_hoc_label():
 
 
 def test_no_panel_constant_leaked_into_the_core_package():
-    """SPEC "reliability.py": the ``constants.py`` block is the A-PRIORI
-    pre-extract surface of the certified protocol. These eighteen values were
-    frozen AFTER the extract was seen, so putting them there would place
-    post-hoc values under a pre-registration claim they do not carry.
-    ``harness.SIZE_BINS`` is the standing precedent for a module-local frozen
-    tuple inside the core package."""
+    """These eighteen post-hoc values may not enter constants.py, the a-priori
+    pre-extract surface. harness.SIZE_BINS is the standing precedent for a
+    module-local frozen tuple inside the core package (SPEC "reliability.py")."""
     assert not [n for n in dir(C)
                 if n.startswith("PANEL") or n in (
                     "SCHEMA_VERSION", "DEFAULT_BIN_EDGES", "DECISION_THRESHOLD",
@@ -709,9 +700,11 @@ def test_no_panel_constant_leaked_into_the_core_package():
 
 
 def test_no_panel_regularisation_constant_exists():
-    """The IRLS weight floor keeps the normal matrix invertible WITHOUT a ridge.
-    NO ridge, NO shrinkage, NO penalty, NO prior, NO smoothing anywhere -- a
-    fallback slope would report a number where the honest answer is a status."""
+    """The IRLS weight floor keeps the normal matrix invertible without a ridge.
+
+    No ridge, no shrinkage, no penalty, no prior, no smoothing anywhere. A
+    fallback slope would report a number where the honest answer is a status.
+    """
     banned = ("RIDGE", "SHRINK", "PENALT", "PRIOR", "SMOOTH", "LAMBDA_REG",
               "ALPHA_REG")
     assert not [n for n in dir(RP)
@@ -719,11 +712,13 @@ def test_no_panel_regularisation_constant_exists():
 
 
 def test_eicu_subgroup_posthoc_constants_pinned():
-    """Revision-2 item 3b (SPEC PIN AMENDMENT 2026-08-20). POST-HOC pins:
-    these constants carry NO pre-registration claim -- they were chosen after
-    the extract was read and exist to keep the descriptive layer stable, the
-    reliability-panel precedent. The cell floor deliberately REUSES the
-    frozen eicu_etl.EICU_MIN_OUTCOME_STRATUM (no new threshold constant)."""
+    """POST-HOC pins for the revision-2 subgroup descriptives (item 3b).
+
+    They carry no pre-registration claim: chosen after the extract was read,
+    to keep the descriptive layer stable, on the reliability-panel precedent.
+    The cell floor reuses eicu_etl.EICU_MIN_OUTCOME_STRATUM, adding no new
+    threshold constant (SPEC PIN AMENDMENT 2026-08-20).
+    """
     from experiments import run_eicu
     from experiments import eicu_etl as etl
     assert run_eicu.EICU_SUBGROUP_DIMS == (
@@ -733,3 +728,17 @@ def test_eicu_subgroup_posthoc_constants_pinned():
     assert "POST-HOC" in run_eicu.EICU_SUBGROUP_LABEL
     assert "certifies nothing" in run_eicu.EICU_SUBGROUP_LABEL
     assert etl.EICU_MIN_OUTCOME_STRATUM == 100
+
+
+def test_eicu_faithfulness_posthoc_constants_pinned():
+    """POST-HOC pins for the attribution value-function contrast.
+
+    No pre-registration claim: it was added after the extract was read, to keep
+    the descriptive layer stable, on the subgroups precedent. k = 10 keeps the
+    exact 2^k enumeration cheap (SPEC PIN AMENDMENT 2026-08-21, venue-fit pass).
+    """
+    from experiments import run_eicu
+    assert run_eicu.EICU_FAITHFULNESS_TOP_K == 10
+    assert "POST-HOC" in run_eicu.EICU_FAITHFULNESS_LABEL
+    assert "certifies nothing" in run_eicu.EICU_FAITHFULNESS_LABEL
+    assert "APPROXIMATION" in run_eicu.EICU_FAITHFULNESS_LABEL

@@ -1,22 +1,27 @@
 """Build the Discover Computing (Springer Nature) submission package.
 
-Reads the canonical manuscript source -- ``paper/draft.md`` (pandoc markdown,
-citations as ``[@key]``) and ``paper/references.bib`` -- and emits a complete
-sn-jnl LaTeX project under ``paper/build/out/sn/``, compiled to
-``paper/build/out/CertGate_DiscoverComputing.pdf`` plus a Snapp figures zip.
+Reads the canonical manuscript source: paper/draft.md (pandoc markdown, with
+citations as [@key]) and paper/references.bib. Emits a complete sn-jnl LaTeX
+project under paper/build/out/sn/, compiled to
+paper/build/out/CertGate_DiscoverComputing.pdf plus a Snapp figures zip.
 
-draft.md stays untouched: this script performs, mechanically, exactly the
-relocations the journal's format requires (figures and tables moved from
-their end-of-draft caption sections to their first in-text callout; manual
-heading numbers stripped so LaTeX renumbers identically; back-matter
-sections mapped to \\bmhead declarations; the References placeholder replaced
-by bibtex over sn-vancouver-num.bst).
+draft.md stays untouched. This script only performs, mechanically, the
+relocations the journal's format requires:
 
-Float numbering is forced to the draft's own figure/table numbers via
-\\setcounter before every caption, because the prose references those numbers
-textually ("Table 4", "Figure 2, centre"). Figure 1 is the pipeline schematic
-compiled from figures-src/pipeline.tex; the frozen-constants register lives
-in the Supplementary Information as Table S1.
+  - figures and tables move from their end-of-draft caption sections to
+    their first in-text callout
+  - manual heading numbers are stripped, so LaTeX renumbers identically
+  - back-matter sections become \\bmhead declarations
+  - the References placeholder is replaced by bibtex over
+    sn-vancouver-num.bst
+
+Float numbers are forced to the draft's own via \\setcounter before every
+caption. The prose cites those numbers textually ("Table 4", "Figure 2,
+centre"), so LaTeX must not renumber them.
+
+Figure 1 is the pipeline schematic, compiled from figures-src/pipeline.tex.
+The frozen-constants register lives in the Supplementary Information as
+Table S1.
 
 Requires pandoc and a MiKTeX/TeX Live pdflatex + bibtex on PATH.
 Usage: python paper/make_submission.py [--no-compile]
@@ -39,19 +44,20 @@ FIGSRC = ROOT / "experiments" / "out"
 PDF_NAME = "CertGate_DiscoverComputing.pdf"
 
 # The canonical figure -> artifact map (also documented in README.md).
-# Figure 1 is the pipeline schematic, compiled from figures-src/pipeline.tex;
-# Figures 2-9 are experiment artifacts. E6_reliability.png stays
-# supplementary-only with no number; the two eICU orphans are the
-# Supplementary Information figures S1/S2.
+# Figure 1 is the pipeline schematic, compiled from figures-src/pipeline.tex.
+# Figures 2-5 are experiment artifacts; 3 is derived read-only from the
+# released eICU diagnostics. E6_reliability.png stays supplementary-only with
+# no number, and the two eICU orphans are the SI figures S1/S2.
 FIGURE_MAP = {
     1: "pipeline.pdf",
     2: "EICU_pooled.png",
-    3: "E8_suite.png",
-    4: "E9_frontiers.png",
+    3: "EICU_abstention_drivers.png",   # rendered by experiments/fig_eicu_abstention_drivers.py
+    4: "E8_suite.png",
+    5: "E9_frontiers.png",
 }
-# print width per figure, in fractions of \textwidth (single-panel figures
-# do not earn a full page-width)
-FIG_WIDTHS = {1: 0.8, 2: 0.9, 3: 0.96, 4: 0.8}
+# Print width per figure, as a fraction of \textwidth. A single-panel figure
+# does not earn a full page width.
+FIG_WIDTHS = {1: 0.8, 2: 0.9, 3: 0.96, 4: 0.96, 5: 0.8}
 SI_FIGURE_MAP = {
     "S1": "EICU_reliability_panel.png",
     "S2": "EICU_per_site.png",
@@ -76,8 +82,8 @@ DECLARATIONS = [
     "Competing interests",
 ]
 
-# Data rows above which a table cannot float on one page and is emitted as a
-# page-breaking longtable instead (Table 5 is the case that needs this).
+# Above this many data rows a table will not float on one page, so it is
+# emitted as a page-breaking longtable instead. Table 5 is the case in point.
 LONGTABLE_ROWS = 18
 
 
@@ -88,16 +94,18 @@ def pandoc(md: str) -> str:
         input=md.encode("utf-8"), capture_output=True)
     if r.returncode:
         raise RuntimeError(f"pandoc failed:\n{r.stderr.decode('utf-8')}")
-    # pandoc on Windows emits CRLF; normalize or write_text doubles the CR
-    # into \r\r\n, which TeX reads as a phantom blank line (a \par) and
-    # chokes on inside table specs
+    # pandoc on Windows emits CRLF, which write_text would double into
+    # \r\r\n. TeX reads that as a phantom blank line (a \par) and chokes on
+    # it inside table specs, so normalize here.
     return r.stdout.decode("utf-8").replace("\r\n", "\n").strip()
 
 
 def strip_heading_numbers(md: str) -> str:
-    """'# 1 Introduction' -> '# Introduction'; '## A.1 X' -> '## X'.
-    LaTeX renumbers in the same order, so the prose's textual cross
-    references ('Section 3.3', 'Appendix A.1(iii)') stay correct."""
+    """Strip manual heading numbers: '# 1 Introduction' -> '# Introduction'.
+
+    Also '## A.1 X' -> '## X'. LaTeX renumbers in the same order, so textual
+    cross references ('Section 3.3', 'Appendix A.1(iii)') stay correct.
+    """
     out = []
     for line in md.splitlines():
         m = re.match(r"^(#{1,3})\s+(?:\d+(?:\.\d+)*|A\.\d+)\s+(.*)$", line)
@@ -120,9 +128,11 @@ def split_sections(draft: str):
 
 
 def parse_float_blocks(section_md: str, kind: str):
-    """Parse the end-of-draft '# Figures'/'# Tables' sections into
-    {number: block_markdown}; a block runs from one '**Kind N.' marker to
-    the next."""
+    """Parse the end-of-draft '# Figures' / '# Tables' sections.
+
+    Returns {number: block_markdown}. A block runs from one '**Kind N.'
+    marker to the next.
+    """
     blocks, num, buf = {}, None, []
     marker = re.compile(rf"^\*\*{kind} (\d+)\.")
     for para in section_md.split("\n\n"):
@@ -139,8 +149,10 @@ def parse_float_blocks(section_md: str, kind: str):
 
 
 def caption_latex(caption_md: str, kind: str, number: int) -> str:
-    """'**Table 5. Title.** Legend...' -> caption body LaTeX with the
-    'Table 5.' label dropped (LaTeX re-adds it via the forced counter)."""
+    """Turn '**Table 5. Title.** Legend...' into caption-body LaTeX.
+
+    The 'Table 5.' label is dropped. LaTeX re-adds it from the forced counter.
+    """
     m = re.match(rf"\*\*{kind} {number}\.\s*(.*?)\*\*\s*(.*)$",
                  caption_md, re.S)
     if not m:
@@ -150,8 +162,10 @@ def caption_latex(caption_md: str, kind: str, number: int) -> str:
 
 
 def extract_longtable(lt: str):
-    """The \\begin{longtable}...\\end{longtable} lines from pandoc output,
-    dropping the '{\\def\\LTcaptype{none}' wrapper pandoc 3.x adds."""
+    """The \\begin{longtable}...\\end{longtable} lines from pandoc output.
+
+    Drops the '{\\def\\LTcaptype{none}' wrapper pandoc 3.x adds.
+    """
     lines = lt.strip().splitlines()
     start = next(i for i, l in enumerate(lines)
                  if l.lstrip().startswith("\\begin{longtable}"))
@@ -161,8 +175,10 @@ def extract_longtable(lt: str):
 
 
 def split_longtable_head(lines):
-    """(colspec, body_start_index) for a pandoc longtable whose column spec
-    may span several source lines (pandoc 3.x wraps fixed-width specs)."""
+    """Return (colspec, body_start_index) for a pandoc longtable.
+
+    The column spec may span lines, since pandoc 3.x wraps fixed-width specs.
+    """
     joined = ""
     for i, line in enumerate(lines):
         joined += line.strip()
@@ -210,9 +226,9 @@ def table_float(number: int, block_md: str) -> str:
         else "\\footnotesize"
 
     if n_rows > LONGTABLE_ROWS:
-        # page-breaking form: caption inside the first longtable.
-        # \begingroup, not a bare '{': pandoc escapes a brace-opened line
-        # into literal \{ text, silently unbalancing the group
+        # Page-breaking form: the caption goes inside the first longtable.
+        # Use \begingroup, not a bare '{'. pandoc escapes a brace-opened line
+        # into literal \{ text, which silently unbalances the group.
         out = ["\\begingroup" + size,
                "\\setlength{\\LTcapwidth}{\\textwidth}",
                "\\setcounter{table}{%d}" % (number - 1)]
@@ -258,9 +274,11 @@ def figure_float(number: int, block_md: str) -> str:
 
 
 def anchor_paragraph(paras, kind: str, number: int, start: int) -> int:
-    """Index of the paragraph carrying the first strict '<Kind> N' callout
-    at or after ``start`` ('Figures 1--7'-style plural sweeps are ignored
-    on purpose -- they are reproducibility statements, not callouts)."""
+    """Index of the paragraph carrying the first strict '<Kind> N' callout.
+
+    Searches at or after start. Plural sweeps like 'Figures 1--7' are ignored
+    on purpose -- they are reproducibility statements, not callouts.
+    """
     pat = re.compile(rf"\b{kind} {number}\b")
     for i in range(start, len(paras)):
         if pat.search(paras[i]):
@@ -274,14 +292,14 @@ def build_body(body_md: str, fig_blocks, tab_blocks) -> str:
                       if re.match(r"^#\s+(?:4\s+)?Results", p))
     inserts = {}  # paragraph index -> [latex floats]
     for n in sorted(fig_blocks):
-        # Figure 1 (the pipeline) is called out in Methods; the data figures
-        # anchor in Results and later
+        # Figure 1 (the pipeline) is called out in Methods. The data figures
+        # anchor in Results and later.
         idx = anchor_paragraph(paras, "Figure", n,
                                0 if n == 1 else results_at)
         inserts.setdefault(idx, []).append(figure_float(n, fig_blocks[n]))
     for n in sorted(tab_blocks):
-        # every remaining main-text table anchors in Results or later (the
-        # frozen-constants register moved to the SI as Table S1)
+        # Every remaining main-text table anchors in Results or later. The
+        # frozen-constants register moved to the SI as Table S1.
         idx = anchor_paragraph(paras, "Table", n, results_at)
         inserts.setdefault(idx, []).append(table_float(n, tab_blocks[n]))
     out = []
@@ -371,7 +389,7 @@ MAIN_TEMPLATE = r"""%% Generated by paper/make_submission.py -- DO NOT EDIT BY H
 
 \bmhead{Supplementary information}
 
-The online version contains supplementary material: Supplementary Information A (deferred proofs; software and reproducibility details with the frozen-constants register, Table S1; the post-hoc reliability panel on eICU-CRD, Figures S1--S2; and extended results, Figures S3--S9 and Tables S2--S9).
+The online version contains supplementary material: Supplementary Information A (deferred proofs; software and reproducibility details with the frozen-constants register, Table S1; the post-hoc reliability panel on eICU-CRD, Figures S1--S2; and extended results, Figures S3--S9 and Tables S2--S10).
 
 <<ACKNOWLEDGEMENTS>>
 
@@ -409,7 +427,7 @@ SI_TEMPLATE = r"""%% Generated by paper/make_submission.py -- DO NOT EDIT BY HAN
 \author*[1]{<<AUTHOR>>}\email{<<EMAIL>>}
 \affil*[1]{<<AFFIL>>}
 
-\abstract{Supplementary Information A for the main article: deferred proofs (A.1, A.2), software and reproducibility details (A.3) with the frozen-constants register (Table S1), the post-hoc selective reliability panel on eICU-CRD v2.0 (A.4, Figures S1--S2), and extended results (A.5, Figures S3--S9 and Tables S2--S9). References of the form ``Section 3.x'' point into the main article.}
+\abstract{Supplementary Information A for the main article: deferred proofs (A.1, A.2), software and reproducibility details (A.3) with the frozen-constants register (Table S1), the post-hoc selective reliability panel on eICU-CRD v2.0 (A.4, Figures S1--S2), and extended results (A.5, Figures S3--S9 and Tables S2--S10). References of the form ``Section 3.x'' point into the main article.}
 
 \keywords{}
 
@@ -479,10 +497,10 @@ def main():
     body_latex = build_body(body_md, fig_blocks, tab_blocks)
 
     # ---- Supplementary Information document --------------------------------
-    # Heading numbers are NOT stripped here: the A.x labels are the SI's own
-    # numbering and the main text cites them literally ("Supplementary
+    # Heading numbers are NOT stripped here. The A.x labels are the SI's own
+    # numbering, and the main text cites them literally ("Supplementary
     # Information A.1(iii)"). Figure S-blocks become embedded floats with
-    # hand-set labels (never \caption, which would number them "Fig. 1").
+    # hand-set labels, never \caption -- that would number them "Fig. 1".
     si_title = si_name.split(":", 1)[1].strip()
     si_paras = []
     for para in sections[si_name].split("\n\n"):
@@ -501,8 +519,8 @@ def main():
             si_paras.append(para)
     si_body_latex = pandoc(f"# {si_title}\n\n" + "\n\n".join(si_paras))
     # pandoc wraps longtables in {\def\LTcaptype{none} ...}, which trips
-    # sn-jnl ("No counter 'none' defined"); the SI tables carry no \caption,
-    # so the guard protects nothing -- unwrap it
+    # sn-jnl with "No counter 'none' defined". The SI tables carry no
+    # \caption, so that guard protects nothing here -- unwrap it.
     si_body_latex = re.sub(r"\{\\def\\LTcaptype\{none\}[^\n]*\n", "",
                            si_body_latex)
     si_body_latex = si_body_latex.replace("\\end{longtable}\n}",
@@ -554,7 +572,7 @@ def main():
 
     if BUILD.exists():
         # ignore_errors: a shell sitting in the build dir must not kill the
-        # build -- contents are cleared, the locked root survives
+        # build. Contents are cleared and the locked root survives.
         shutil.rmtree(BUILD, ignore_errors=True)
     (BUILD / "figs").mkdir(parents=True, exist_ok=True)
     (BUILD / "main.tex").write_text(main_tex, encoding="utf-8", newline="\n")

@@ -1,49 +1,48 @@
-"""Post-hoc selective reliability panel (SPEC section "reliability.py").
+"""Post-hoc selective reliability panel.
 
-ADDED 2026-08-01, AFTER the eICU-CRD v2.0 extract was read. This module is a
-DESCRIPTIVE DIAGNOSTIC in the ``harness.py`` register: it measures, it never
-certifies. It is NOT part of the pre-extract protocol freeze (commit
-9f25b491b2554d0a4bd7aaaf44081c185d01715f), nothing in ``pipeline.py`` or
-``report.py`` imports it, and it settles none of ``EICU-PROTOCOL.md``'s frozen
-predictions P1-P7 or failure criteria F-A-F-E. Every number it produces from
-the real extract carries ``POST_HOC_LABEL`` (A6 discipline).
+Added 2026-08-01, after the eICU-CRD v2.0 extract was read. This module is a
+descriptive diagnostic in the harness.py register: it measures, it never
+certifies. It is not part of the pre-extract protocol freeze (commit
+9f25b491b2554d0a4bd7aaaf44081c185d01715f), nothing in pipeline.py or report.py
+imports it, and it settles none of the frozen predictions P1-P7 or failure
+criteria F-A-F-E. Every number it produces from the real extract carries
+POST_HOC_LABEL.
 
-PORTED, byte-exactly, from the verified reference implementation in
-``selective-reliability-panel/srp`` (581 tests green, deterministic): identical
-input arrays must give an identical panel dict, including every bootstrap
-endpoint. Three consequences are binding and are why the values below are what
-they are rather than what a fresh derivation would have chosen:
+The code is a byte-exact port of the verified selective-reliability-panel/srp
+reference (581 tests green). Identical input arrays must give an identical
+panel dict, down to every bootstrap endpoint. Three things follow, and they
+are why the values below are srp's rather than a fresh derivation's:
 
-  - the digest prefix stays the byte literal ``b"srp/1"`` and
-    ``SCHEMA_VERSION`` stays ``"srp/1"``. Renaming either moves EVERY interval
-    in the panel: the prefix is the first thing hashed into ``input_digest``
-    and the digest seeds every stream.
-  - the root seed stays ``PANEL_SEED = 20260731`` -- srp's own, NOT
-    ``constants.SEED = 20260721``. It is RENAMED, never RE-POINTED:
-    re-pointing it at ``constants.SEED`` would silently discard the external
-    verification that is the whole reason to port rather than re-derive.
-    Determinism is unaffected (identical inputs still give byte-identical
-    output; no wall clock enters any artifact) and no certified quantity
-    descends from it -- the panel is downstream of the certificate and feeds
-    nothing back.
-  - NO key of the emitted dict is renamed. ``tests/test_reliability_panel.py``
-    pins the sha256 of the emitted dict on a frozen fixture against a literal
-    produced by the sandbox implementation; a rename breaks that pin, which is
-    a design change, not a nuisance.
+  - The digest prefix stays the byte literal b"srp/1" and SCHEMA_VERSION stays
+    "srp/1". The prefix is the first thing hashed into input_digest and the
+    digest seeds every stream, so renaming either moves every interval.
+  - The root seed stays PANEL_SEED = 20260731, srp's own, not
+    constants.SEED = 20260721. It is renamed, never re-pointed. Re-pointing it
+    would silently discard the external verification that is the whole reason
+    to port rather than re-derive. Determinism is unaffected, and no certified
+    quantity descends from it.
+  - No key of the emitted dict is renamed. tests/test_reliability_panel.py
+    pins the sha256 of the emitted dict against a literal the sandbox
+    produced, so a rename breaks that pin.
 
-THE conflation trap, stated once. ``Head.predict_proba(x)`` returns
-``p1 = P(y=1|x)``; ``Head.score(x) = max(p1, 1-p1)`` in [0.5, 1] is the
-SELECTIVE-GATING confidence. The panel bins and regresses ``p1``; the answered
-mask is ``score >= tau_star``. Feeding ``score`` as ``p`` passes validation
-silently -- it is finite and in [0, 1] -- and yields a fully populated but
-meaningless panel. The guard is therefore structural at the boundary:
-``panel_from_head`` is the ONLY entry point the drivers use and it computes
-both quantities itself. A driver never constructs ``p``.
+The conflation trap, stated once. Head.predict_proba(x) returns p1 = P(y=1|x),
+and that is what the panel bins and regresses. Head.score(x) = max(p1, 1-p1)
+in [0.5, 1] is the gating confidence, used only for the answered mask.
 
-Third-party imports: numpy ONLY, at module top level (audit F16). NO
-``from certgate ...`` import of any kind -- the module is a DAG leaf and never
-sees a ``Head``, a ``Cohort``, or the certified path (``head`` is reached only
-by duck typing inside ``panel_from_head``).
+Feeding score as p would pass validation silently and yield a fully populated
+but meaningless panel. The guard is structural: panel_from_head computes both
+quantities itself, so a driver never constructs p.
+
+Imports are numpy only, at module top level. There is no `from certgate`
+import of any kind: the module is a DAG leaf and never sees a Head, a Cohort,
+or the certified path. It reaches head by duck typing inside panel_from_head.
+
+Note: the comments and docstrings in this file were rewritten for readability
+on 2026-08-24 and no longer match the sandbox text verbatim. The CODE is still
+the byte-exact port. A re-pipe-back from the sandbox would overwrite the prose.
+
+Refs: SPEC "reliability.py"; EICU-PROTOCOL.md (P1-P7, F-A-F-E, amendment A6);
+audit F16.
 """
 
 import hashlib
@@ -54,97 +53,89 @@ import numpy as np
 
 
 class PanelError(ValueError):
-    """The single exception type; every rejection is typed and reason-named,
-    in the ``certgate/validate.py`` register."""
+    """The one exception type; every rejection names its reason.
+
+    Same register as certgate/validate.py.
+    """
 
 
 # --- frozen panel constants (pinned literally by tests/test_constants.py) ----
-# NOT in constants.py, deliberately: that block is the A-PRIORI pre-extract
-# surface of the certified protocol and these values were frozen AFTER the
-# extract had been seen -- putting them there would place post-hoc values under
-# a pre-registration claim they do not carry. ``harness.SIZE_BINS`` is the
-# standing precedent for a module-local frozen tuple inside the core package.
+# These live here and not in constants.py, deliberately. That block is the
+# a-priori pre-extract surface of the certified protocol, and these values were
+# frozen after the extract had been seen. Putting them there would place
+# post-hoc values under a pre-registration claim they do not carry.
+# harness.SIZE_BINS is the standing precedent for a module-local frozen tuple.
 
-SCHEMA_VERSION = "srp/1"        # emitted verbatim AND hashed as the digest
-                                # prefix -- renaming it moves every interval
-PANEL_SEED = 20260731           # srp's own root seed; the first entropy word of
-                                # every SeedSequence in derive_rng. RENAMED
-                                # from srp's `SEED`, never re-pointed at
-                                # constants.SEED = 20260721
+SCHEMA_VERSION = "srp/1"        # emitted verbatim, and hashed as the digest
+                                # prefix. Renaming it moves every interval
+PANEL_SEED = 20260731           # srp's own root seed, and the first entropy
+                                # word of every SeedSequence in derive_rng.
+                                # Renamed from srp's `SEED`, never re-pointed
+                                # at constants.SEED = 20260721
 DEFAULT_BIN_EDGES = (0.0, 0.02, 0.05, 0.10, 0.20, 0.35, 0.55, 1.01)
-                                # 7 bins. 1.01 is a SENTINEL, never a bound: it
-                                # is what lets p == 1.0 land in the last bin
-                                # under the strict `<` test. bin_bounds clamps
-                                # the EMITTED hi with min(hi, 1.0) so the last
-                                # bin READS [0.55, 1.0]. Replacing 1.01 with
-                                # 1.0 silently drops every p == 1.0 record and
-                                # breaks "per-bin counts sum to n". IDENTICAL
-                                # to the explain dashboard's edges because
-                                # examples/explain_dashboard.py IMPORTS this
-                                # tuple rather than restating it, and
+                                # 7 bins. The 1.01 top edge is a sentinel, not
+                                # a bound: bins are upper-open, so a 1.0 edge
+                                # would drop every p == 1.0 record. bin_bounds
+                                # clamps the emitted hi back to 1.0, so the last
+                                # bin still reads [0.55, 1.0].
                                 # test_dashboard_bin_edges_match pins that the
-                                # two actually BIN alike (same boundaries, same
-                                # membership, same binned quantity) rather than
-                                # merely sharing a constant
-DECISION_THRESHOLD = 0.5        # yhat = (p >= this). Equals Head.predict's
-                                # rule, which is what makes
-                                # skill.<scope>.model_error_rate the certgate
-                                # answered error rate on that scope.
-                                # UNRELATED to the caller's gate tau
+                                # explain dashboard bins identically
+DECISION_THRESHOLD = 0.5        # yhat = (p >= this), the same rule that
+                                # Head.predict uses. That is what makes
+                                # skill.<scope>.model_error_rate certgate's
+                                # answered error rate on that scope. It is
+                                # unrelated to the caller's gate tau
 LOGIT_EPS = 1e-6                # |logit| <= 13.815510557964274, so p == 0.0
                                 # and p == 1.0 stay usable regression inputs
 IRLS_MAX_ITER = 100             # iteration cap; reaching it reports
                                 # 'not-converged', never a stopped number
-IRLS_TOL = 1e-8                 # converged when max(abs(FULL Newton step))
+IRLS_TOL = 1e-8                 # converged when max(abs(full Newton step))
                                 # falls below this
 IRLS_MAX_ABS_COEF = 30.0        # reporting range on the coefficients. |beta|
-                                # past this is 'coef-out-of-range' (the MLE
-                                # exists but lies outside the range);
-                                # 'separable' (the MLE does not exist) is a
-                                # DIFFERENT status decided BEFORE iterating,
-                                # and collapsing the two implies the opposite
-                                # operational action
+                                # past this is 'coef-out-of-range': the MLE
+                                # exists, it just sits outside the range.
+                                # 'separable' means no MLE exists at all, a
+                                # different status decided before iterating
 IRLS_MIN_WEIGHT = 1e-10         # floor on the working weight mu*(1-mu); keeps
-                                # the normal matrix invertible WITHOUT a ridge
+                                # the normal matrix invertible without a ridge
 IRLS_MIN_RECORDS = 20           # below this the two-parameter fit is not worth
                                 # reporting: 'too-few-records'
-N_BOOT = 2000                   # required VALID resample draws per statistic;
+N_BOOT = 2000                   # required valid resample draws per statistic;
                                 # same order as BBSE_BOOT, for the same reason
-BOOT_MAX_ATTEMPTS = 4000        # == 2 * N_BOOT. NEVER read at runtime: the
-                                # enforced budget is the RELATION 2 * n_boot
-                                # resolved inside site_bootstrap_ci, so a
-                                # lowered n_boot gets a proportionally lowered
-                                # budget and settings.boot_max_attempts
-                                # truthfully echoes 2*n_boot, not this constant
+BOOT_MAX_ATTEMPTS = 4000        # == 2 * N_BOOT, and never read at runtime.
+                                # site_bootstrap_ci enforces the relation
+                                # 2 * n_boot instead, so a lowered n_boot gets
+                                # a proportionally lowered budget
 CI_LEVEL = 0.95                 # two-sided percentile interval level
 MIN_SITES_FOR_CI = 10           # cluster floor, checked against
-                                # n_sites_carrying BEFORE any resampling work
-                                # (n_attempts == 0). Same measured lesson as
-                                # constants.BBSE_MIN_TARGET_SITES = 10: a
+                                # n_sites_carrying before any resampling work.
+                                # Same lesson as BBSE_MIN_TARGET_SITES = 10: a
                                 # percentile bootstrap over fewer carrying
                                 # sites cannot approach nominal coverage
-ROUND_DP = 6                    # decimal places, applied ONCE at emit time.
-                                # `settings` is EXEMPT and has to be: LOGIT_EPS
+ROUND_DP = 6                    # decimal places, applied once at emit time.
+                                # `settings` is exempt and has to be: LOGIT_EPS
                                 # and IRLS_TOL both collapse to 0.0 at 6 dp
 FIG_DPI = 110                   # matches every existing experiment figure
 CI_STATUSES = ("ok", "empty-bin", "too-few-sites", "degenerate-resamples",
                "undefined-point", "truncated-resamples")
-                                # the EXHAUSTIVE interval-status vocabulary;
-                                # 'truncated-resamples' = a resample refit was
-                                # rejected for its VALUE, so a quantile would
-                                # delete the tail rather than thin it
+                                # the complete interval-status vocabulary.
+                                # 'truncated-resamples' means a resample refit
+                                # was rejected for its value, so a quantile
+                                # would delete the tail rather than thin it
 FIT_STATUSES = ("ok", "too-few-records", "single-class", "degenerate-design",
                 "separable", "coef-out-of-range", "not-converged", "singular")
-                                # the EXHAUSTIVE calibration-fit vocabulary
+                                # the complete calibration-fit vocabulary
 
 # --- A6-register labels ------------------------------------------------------
-# The label is a hand-appended string in the same '[MEASURE]' register the ETL
-# uses for amendment A6: a panel artifact in a separate JSON file inherits
-# nothing, so the real-extract driver carries it in FIVE places (the run
-# warnings, the top of EICU_reliability_panel.json, the EICU-RELIABILITY
-# summary block, the face of EICU_reliability_panel.png, and a leading
-# post_hoc column on every EICU_reliability.csv row -- the artifact most
-# easily detached from its directory).
+# The label is a hand-appended string in the '[MEASURE]' register the ETL uses
+# for amendment A6. A panel artifact in its own JSON file inherits nothing, so
+# the real-extract driver carries the label in five places:
+#   - the run warnings
+#   - the top of EICU_reliability_panel.json
+#   - the EICU-RELIABILITY summary block
+#   - the face of EICU_reliability_panel.png
+#   - a leading post_hoc column on every EICU_reliability.csv row, the artifact
+#     most easily detached from its directory
 
 POST_HOC_LABEL = (
     "[MEASURE] POST-HOC (2026-08-01): the selective reliability panel is a "
@@ -157,18 +148,18 @@ POST_HOC_LABEL = (
     "carry NO pre-registration claim. Every figure and number derived from "
     "this panel must carry this label.")
 
-# The synthetic side has no data-seen problem -- only an added-after-publication
-# one -- so E6 gets a shorter sibling.
+# The synthetic side has no data-seen problem, only an added-after-publication
+# one, so E6 gets a shorter sibling.
 E6_POST_HOC_NOTE = (
     "[MEASURE] POST-HOC (2026-08-01): added after the E1-E7 grid was "
     "published. Descriptive only -- it alters no certified quantity and no "
     "number in E1-E7 moves because of it (the panel self-seeds from a digest "
     "of its own inputs and consumes no _rng(6) draw).")
 
-# The mandatory disclosures, emitted verbatim as ``notes``. Each names a way the
-# panel can be misread; dropping one is a contract change, not an editorial
-# decision. Note 2 is the estimand-honesty clause in certgate's own register:
-# every interval here is MARGINAL and there is no simultaneity claim.
+# The mandatory disclosures, emitted verbatim as `notes`. Each names a way the
+# panel can be misread. Dropping one is a contract change, not an editorial
+# decision. Note 2 is the estimand-honesty clause: every interval here is
+# marginal and there is no simultaneity claim.
 NOTES = (
     "Estimand: every reported quantity is a record-weighted ratio of sums over the fixed "
     "site population; a large site contributes proportionally more than a small one.",
@@ -200,56 +191,55 @@ _MAX_HALVINGS = 30      # the IRLS line search's own cap; 2**-30 of a step is no
 
 
 # ===========================================================================
-# boundary -- the ONLY place this module raises (certgate/validate.py idiom)
+# boundary -- the only place this module raises (certgate/validate.py idiom)
 # ===========================================================================
 #
-# Message shape everywhere:  "<function>: <what is wrong> -- <why it matters>",
-# with the offending value interpolated using !r and an ASCII "--". The message
-# names the FIX ("densify the site index"), never a guess at what was meant.
+# Message shape everywhere: "<function>: <what is wrong> -- <why it matters>",
+# with the offending value interpolated using !r. The message names the fix
+# ("densify the site index"), never a guess at what was meant.
 #
-# Check order is CONTRACT, not convenience:
+# The check order is contract, not convenience. Alignment goes first so that two
+# simultaneous defects report the structural one: a length mismatch makes every
+# value check meaningless.
 #   1. array-length alignment across every supplied array;
-#   2. p: 1-D, float64-convertible, all finite, all within [0, 1] (NO tolerance);
-#   3. answered: STRICTLY bool dtype, 1-D;
-#   4. y: STRICTLY bool dtype, 1-D;
-#   5. site_id: integer dtype, all >= 0, DENSE (bincount gap check);
+#   2. p: 1-D, float64-convertible, finite, within [0, 1] (no tolerance);
+#   3. answered: strictly bool dtype, 1-D;
+#   4. y: strictly bool dtype, 1-D;
+#   5. site_id: integer dtype, all >= 0, dense (bincount gap check);
 #   6. n >= 1;
-#   7. decision_threshold: finite, in the OPEN interval (0, 1);
-#   8. bin_edges: len >= 2, strictly increasing, edges[0] <= 0.0, edges[-1] > 1.0;
-#   9. p_ref (when supplied): 1-D, no +/-Inf, every finite entry in [0, 1].
-#      NaN is accepted here and NOWHERE else -- it is the ONE missing marker.
+#   7. decision_threshold: finite, in the open interval (0, 1);
+#   8. bin_edges: len >= 2, increasing, edges[0] <= 0.0, edges[-1] > 1.0;
+#   9. p_ref (when supplied): 1-D, no +/-Inf, finite entries in [0, 1].
+#      NaN is accepted here and nowhere else -- the one missing marker.
 #
-# Alignment is first so that two simultaneous defects report the STRUCTURAL one:
-# a length mismatch makes every value check meaningless.
-#
-# NOTHING is coerced. An int8 0/1 vector is not a mask, an (n, 1) column is not a
-# vector (it would broadcast a later comparison into an (n, n) matrix), and a
-# sparse site index is not remapped -- a silent remap changes WHICH RECORDS MOVE
-# TOGETHER under the cluster bootstrap, and every interval in the panel would
+# Nothing is coerced. An int8 0/1 vector is not a mask. An (n, 1) column is not
+# a vector: it would broadcast a later comparison into an (n, n) matrix. A
+# sparse site index is not remapped either -- a silent remap changes which
+# records move together under the cluster bootstrap, so every interval would
 # quietly describe a different clustering.
 
 
 @dataclass(frozen=True, eq=False)
 class PanelInputs:
-    """One validated, immutable bundle. Everything downstream reads this only.
+    """One validated, immutable bundle; everything downstream reads this only.
 
     Attributes
     ----------
     p
-        ``(n,)`` float64, finite, within [0, 1]. The predicted probability of the
-        POSITIVE class -- ``Head.predict_proba``, NEVER the max-class confidence
-        transform ``Head.score``.
+        (n,) float64, finite, within [0, 1]. The predicted probability of the
+        positive class -- Head.predict_proba, never the max-class confidence
+        transform Head.score.
     answered
-        ``(n,)`` strict ``bool``. The caller's gate decision per record.
+        (n,) strict bool. The caller's gate decision per record.
     site_id
-        ``(n,)`` integer, dense ``0 .. n_sites-1``. The dtype is preserved exactly
-        as supplied, because the content digest is taken over raw bytes.
+        (n,) integer, dense 0 .. n_sites-1. The dtype is preserved exactly as
+        supplied, because the content digest is taken over raw bytes.
     y
-        ``(n,)`` strict ``bool``. The true label per record.
+        (n,) strict bool. The true label per record.
     p_ref
-        ``(n,)`` float64 or ``None``. ``NaN`` marks a record with no reference.
+        (n,) float64 or None. NaN marks a record with no reference.
     decision_threshold
-        Float in the OPEN interval (0, 1).
+        Float in the open interval (0, 1).
     bin_edges
         Strictly increasing tuple of floats, first <= 0.0, last > 1.0.
     """
@@ -269,7 +259,7 @@ class PanelInputs:
 
     @property
     def n_sites(self) -> int:
-        """Size of the FIXED site population. Denseness is already enforced."""
+        """Size of the fixed site population; denseness is already enforced."""
         return int(self.site_id.max()) + 1
 
     @property
@@ -283,7 +273,7 @@ def _fail(message: str) -> None:
 
 
 def _as_array(name: str, value):
-    """``np.asarray`` with a typed failure for anything not array-shaped."""
+    """np.asarray with a typed failure for anything not array-shaped."""
     try:
         arr = np.asarray(value)
     except (TypeError, ValueError) as exc:      # pragma: no cover - numpy is permissive
@@ -325,8 +315,8 @@ def validate_inputs(p, answered, site_id, y, p_ref=None, *,
     Raises
     ------
     PanelError
-        On the FIRST failure, naming the check, the offending value and why the
-        check exists.
+        On the first failure, naming the check, the offending value and why
+        the check exists.
     """
     # --- 1. array-length alignment -----------------------------------------
     supplied = {
@@ -508,17 +498,17 @@ def validate_inputs(p, answered, site_id, y, p_ref=None, *,
 
 
 # ===========================================================================
-# determinism -- the ONLY place a numpy Generator is constructed
+# determinism -- the only place a numpy Generator is constructed
 # ===========================================================================
 
 
 def _feed(hasher, array) -> None:
     """Absorb one array as (dtype string, shape repr, contiguous bytes).
 
-    A contiguous copy is taken first, so a strided VIEW of the same values hashes
-    the same as the values themselves -- the digest is about content, not layout.
-    The dtype string IS content: an int32 and an int64 site index carry the same
-    values but different bytes, and they are different inputs.
+    A contiguous copy is taken first, so a strided view of the same values
+    hashes the same as the values themselves: the digest is about content, not
+    layout. The dtype string is content too -- an int32 and an int64 site index
+    carry the same values but different bytes, so they are different inputs.
     """
     contiguous = np.ascontiguousarray(array)
     hasher.update(contiguous.dtype.str.encode("ascii"))
@@ -527,12 +517,16 @@ def _feed(hasher, array) -> None:
 
 
 def input_digest(inputs: PanelInputs) -> str:
-    """64-character lowercase sha256 hex over the validated inputs' CONTENT.
+    """64-character lowercase sha256 hex over the validated inputs' content.
 
-    Free-text labels are DELIBERATELY excluded, the same rule
-    ``certify.certification_rng`` follows (audit V3): a cosmetic rename must
-    never be able to move a reported number. The digest seeds every stream, so
-    the prefix ``b"srp/1"`` is load-bearing -- see the module docstring.
+    Free-text labels are deliberately excluded, the same rule
+    certify.certification_rng follows: a cosmetic rename must never be able to
+    move a reported number.
+
+    The digest seeds every stream, so the prefix b"srp/1" is load-bearing --
+    see the module docstring.
+
+    Refs: audit V3.
     """
     hasher = hashlib.sha256()
     hasher.update(b"srp/1")
@@ -542,7 +536,7 @@ def input_digest(inputs: PanelInputs) -> str:
     _feed(hasher, inputs.site_id)
     _feed(hasher, inputs.y)
     if inputs.p_ref is None:
-        # An ABSENT reference scorer and an ALL-MISSING one are different inputs.
+        # An absent reference scorer and an all-missing one are different inputs.
         hasher.update(b"|noref")
     else:
         _feed(hasher, inputs.p_ref)
@@ -553,18 +547,18 @@ def input_digest(inputs: PanelInputs) -> str:
 
 
 def derive_rng(digest: str, stat_key: str) -> np.random.Generator:
-    """An independent, reproducible generator for ONE statistic.
+    """An independent, reproducible generator for one statistic.
 
-    ``stat_key`` is a fixed ``'<scope>/<statistic>'`` string. The WHOLE key is
-    hashed, never a prefix, so ``bin1`` and ``bin11`` cannot collide.
+    stat_key is a fixed '<scope>/<statistic>' string. The whole key is hashed,
+    never a prefix, so bin1 and bin11 cannot collide.
 
-    A full panel opens AT MOST ``2 * n_bins + 13`` streams -- 27 at the default
-    7-bin edges: ``2 * n_bins`` reliability bins, 2 ece, 2 calibration, 2 brier,
-    3 skill scopes, 1 skill contrast and 3 composition scopes. That is a
-    CEILING, not a count. An empty bin and an undefined-point block are decided
-    BEFORE any generator is constructed and open none, so the realised number is
-    data-dependent and is often lower (a gate that answers only low-probability
-    records leaves most declined bins empty).
+    A full panel opens at most 2 * n_bins + 13 streams -- 27 at the default
+    7-bin edges. That is 2 * n_bins reliability bins, 2 ece, 2 calibration,
+    2 brier, 3 skill scopes, 1 skill contrast and 3 composition scopes.
+
+    That number is a ceiling, not a count. Empty bins and undefined-point
+    blocks are decided before any generator is constructed and open none, so
+    the realised number is data-dependent and often lower.
     """
     material = hashlib.sha256(
         digest.encode("ascii") + b"|" + stat_key.encode("utf-8")
@@ -583,26 +577,27 @@ def derive_rng(digest: str, stat_key: str) -> np.random.Generator:
 # binning + CSR site grouping (pure index arithmetic)
 # ===========================================================================
 #
-# Membership is LOWER-CLOSED / UPPER-OPEN: bin b holds edges[b] <= p < edges[b+1].
-# Bins are cut on p and on nothing else -- NEVER on a confidence transform such
-# as max(p, 1-p), which lives in [0.5, 1.0], is a different quantity on a
+# Membership is lower-closed, upper-open: bin b holds edges[b] <= p < edges[b+1].
+# Bins are cut on p and on nothing else, never on a confidence transform such as
+# max(p, 1-p). That transform lives in [0.5, 1.0], is a different quantity on a
 # different domain, and silently relabels every bin.
-# Edges are frozen a priori and are NEVER recomputed inside a resample: quantile
-# edges per draw would make the bins a random object and the interval would no
+#
+# Edges are frozen a priori and are never recomputed inside a resample. Quantile
+# edges per draw would make the bins a random object, and the interval would no
 # longer refer to a fixed estimand.
 
 
 def assign_bins(p, bin_edges) -> np.ndarray:
-    """Bin index per record, or ``-1`` outside ``[edges[0], edges[-1])``.
+    """Bin index per record, or -1 outside [edges[0], edges[-1]).
 
-    Validation guarantees ``p`` lies in [0, 1] and the edge contract guarantees
-    the span covers it, so on validated input the ``-1`` flag never fires; it
-    exists so this function is total and testable in isolation.
+    Validation guarantees p lies in [0, 1] and the edge contract guarantees the
+    span covers it, so on validated input the -1 flag never fires. It exists so
+    this function is total and testable in isolation.
     """
     edges = np.asarray(tuple(float(e) for e in bin_edges), dtype=np.float64)
     values = np.ascontiguousarray(p, dtype=np.float64)
 
-    # side='right' puts an exact interior edge in the bin ABOVE it: lower-closed.
+    # side='right' puts an exact interior edge in the bin above it: lower-closed.
     index = np.searchsorted(edges, values, side="right").astype(np.int64) - 1
     outside = (values < edges[0]) | (values >= edges[-1])
     index[outside] = -1
@@ -610,10 +605,10 @@ def assign_bins(p, bin_edges) -> np.ndarray:
 
 
 def bin_bounds(bin_edges) -> list:
-    """The ``(lo, hi)`` pairs AS EMITTED, one per bin.
+    """The (lo, hi) pairs as emitted, one per bin.
 
-    ``hi`` is ``min(edges[b+1], 1.0)``, so the 1.01 sentinel top edge is clamped
-    for display while the membership test above still accepts ``p == 1.0``.
+    hi is min(edges[b+1], 1.0), so the 1.01 sentinel top edge is clamped for
+    display while the membership test above still accepts p == 1.0.
     """
     edges = tuple(float(e) for e in bin_edges)
     return [(edges[b], min(edges[b + 1], 1.0)) for b in range(len(edges) - 1)]
@@ -625,13 +620,12 @@ def group_by_site(site_id, n_sites: int) -> tuple:
     Returns
     -------
     order
-        ``(n,)`` int64 record indices sorted by site with a STABLE sort, so
-        records keep their input order within a site and the grouping is
-        platform independent (byte-identical output depends on it).
+        (n,) int64 record indices sorted by site with a stable sort, so records
+        keep their input order within a site. Byte-identical output depends on
+        that, and it makes the grouping platform independent.
     starts
-        ``(n_sites + 1,)`` int64 offsets. Site ``s`` owns
-        ``order[starts[s]:starts[s+1]]``; a site carrying no record is an EMPTY
-        SPAN, never a missing one.
+        (n_sites + 1,) int64 offsets. Site s owns order[starts[s]:starts[s+1]].
+        A site carrying no record is an empty span, never a missing one.
     """
     sid = np.ascontiguousarray(site_id, dtype=np.int64)
     order = np.argsort(sid, kind="stable").astype(np.int64, copy=False)
@@ -642,7 +636,7 @@ def group_by_site(site_id, n_sites: int) -> tuple:
 
 
 def gather_sites(order, starts, idx) -> np.ndarray:
-    """Record indices for the drawn sites, in draw order, WHOLE BLOCKS at a time.
+    """Record indices for the drawn sites, in draw order, whole blocks at a time.
 
     A site drawn twice contributes its block twice. The result may be empty
     (every drawn site carried no record, or no site was drawn at all).
@@ -664,41 +658,43 @@ def gather_sites(order, starts, idx) -> np.ndarray:
 
 
 # ===========================================================================
-# the ONE resampling primitive
+# the one resampling primitive
 # ===========================================================================
 #
-# * The unit is the SITE, always, ONE STAGE. A draw is
-#   ``idx = rng.integers(0, n_sites, n_sites)``: n_sites indices drawn WITH
-#   replacement from the FULL site population. Whole record blocks move together
-#   and a site drawn twice contributes its records twice to BOTH numerator and
-#   denominator. Two-stage resampling (sites, then records within drawn sites) is
-#   FORBIDDEN -- it injects within-site sampling variance the site-superpopulation
-#   estimand does not contain, and it would reintroduce inside this diagnostic
-#   layer exactly the record-as-unit failure E7 exists to demonstrate.
-# * The site POPULATION is fixed. Sites carrying no record in the current scope
-#   or bin remain in the draw; ``n_sites_carrying`` is a REPORTED count only.
-#   Passing carrying as ``n_sites`` would redefine the population per bin and the
+# * The unit is the site, always, in one stage. A draw is
+#   idx = rng.integers(0, n_sites, n_sites): n_sites indices drawn with
+#   replacement from the full site population, so whole record blocks move
+#   together and a site drawn twice counts twice in both numerator and
+#   denominator. Two-stage resampling -- sites, then records within drawn
+#   sites -- is FORBIDDEN. It injects within-site sampling variance the
+#   site-superpopulation estimand does not contain, and it would reintroduce
+#   here the record-as-unit failure E7 exists to demonstrate.
+# * The site population is fixed. Sites carrying no record in the current scope
+#   or bin stay in the draw, and n_sites_carrying is a reported count only.
+#   Passing carrying as n_sites would redefine the population per bin, and the
 #   bins would stop being averages over the same thing.
-# * Cluster floor: below ``min_sites`` carrying sites the interval is suppressed
-#   BEFORE any resampling work (n_attempts == 0).
-# * Top-up or decline (audit F40/B-8, V21): an invalid draw is discarded and
-#   redrawn against the attempt budget; a reduced draw count is NEVER quantiled.
-# * Percentile convention: ONE ``np.quantile(draws, [a, 1-a], axis=0,
-#   method='linear')`` call over the whole (n_boot, n_names) matrix. No BCa, no
+# * Cluster floor: below min_sites carrying sites the interval is suppressed
+#   before any resampling work (n_attempts == 0).
+# * Top-up or decline: an invalid draw is discarded and redrawn against the
+#   attempt budget. A reduced draw count is never quantiled.
+# * Percentile convention: one np.quantile(draws, [a, 1-a], axis=0,
+#   method='linear') call over the whole (n_boot, n_names) matrix. No BCa, no
 #   studentisation, no bias correction.
 #
-# Every interval this module emits is MARGINAL. Two endpoints from different
-# blocks -- or two names inside one block -- carry NO simultaneous-coverage
-# claim and must never be differenced; differences that matter are their own
-# statistic inside a shared resample.
+# Every interval this module emits is marginal. Endpoints from different blocks,
+# or two names inside one block, carry no simultaneous-coverage claim and must
+# never be differenced. A difference that matters is its own statistic inside a
+# shared resample.
+#
+# Ref: audits F40, B-8, V21 (top-up or decline).
 
 
 def null_ci(status: str, n_sites_carrying: int = 0) -> dict:
     """The canonical suppressed-interval record.
 
     Keeps every emitted block the same shape whether or not an interval exists,
-    so a reader never has to distinguish "absent" from "undefined" by probing for
-    a ``KeyError``.
+    so a reader never has to tell "absent" from "undefined" by probing for a
+    KeyError.
     """
     return {
         "ci": None,
@@ -710,7 +706,7 @@ def null_ci(status: str, n_sites_carrying: int = 0) -> dict:
 
 
 def _usable(values, n_names: int) -> bool:
-    """A draw is usable only if it returned one FINITE float per name."""
+    """A draw is usable only if it returned one finite float per name."""
     if values is None:
         return False
     if len(values) != n_names:
@@ -725,30 +721,29 @@ def site_bootstrap_ci(statistic, names: tuple, n_sites: int, n_sites_carrying: i
                       *, rng: np.random.Generator, n_boot: int = N_BOOT,
                       max_attempts=None, ci_level: float = CI_LEVEL,
                       min_sites: int = MIN_SITES_FOR_CI) -> dict:
-    """One-stage SITE bootstrap around a caller-supplied statistic.
+    """One-stage site bootstrap around a caller-supplied statistic.
 
     Parameters
     ----------
     statistic
-        ``Callable[[np.ndarray], tuple[float, ...] | None]``. It receives the
-        drawn site indices and returns one float per entry of ``names``, or
-        ``None`` to declare the draw INVALID (its own validity predicate).
-        Each statistic's predicate is stated at its definition and differs by
-        estimand -- choosing the wrong one biases the interval.
+        Callable[[np.ndarray], tuple[float, ...] | None]. It receives the drawn
+        site indices and returns one float per entry of names, or None to
+        declare the draw invalid. Each statistic states its own validity
+        predicate at its definition; the right one differs by estimand, and the
+        wrong one biases the interval.
     names
-        Output names, in order. Every name is quantiled from the SAME valid
-        draws, so exact relations between names survive; the intervals are still
-        MARGINAL and carry no joint claim.
+        Output names, in order. Every name is quantiled from the same valid
+        draws, so exact relations survive; the intervals are still marginal.
     max_attempts
-        ``None`` (what every panel statistic uses) resolves to the RELATION
-        ``2 * n_boot``, so a caller that lowers ``n_boot`` gets a proportionally
-        lowered budget. ``BOOT_MAX_ATTEMPTS`` is never read here.
+        None -- what every panel statistic passes -- resolves to the relation
+        2 * n_boot, so a caller that lowers n_boot gets a proportionally lowered
+        budget. BOOT_MAX_ATTEMPTS is never read here.
 
     Returns
     -------
     dict
-        ``{'ci': {name: {'lo': float, 'hi': float}} | None, 'ci_status': str,
-        'n_boot_valid': int, 'n_attempts': int, 'n_sites_carrying': int}``.
+        {'ci': {name: {'lo': float, 'hi': float}} | None, 'ci_status': str,
+        'n_boot_valid': int, 'n_attempts': int, 'n_sites_carrying': int}.
     """
     n_sites = int(n_sites)
     carrying = int(n_sites_carrying)
@@ -773,9 +768,9 @@ def site_bootstrap_ci(statistic, names: tuple, n_sites: int, n_sites_carrying: i
         collected += 1
 
     if collected < required:
-        # NEVER quantile a reduced draw count: keeping only the well-populated
+        # Never quantile a reduced draw count. Keeping only the well-populated
         # resamples biases the interval in favour of the easy draws, which is
-        # precisely the failure this panel exists to expose.
+        # the failure this panel exists to expose.
         return {
             "ci": None,
             "ci_status": "degenerate-resamples",
@@ -804,16 +799,17 @@ def site_bootstrap_ci(statistic, names: tuple, n_sites: int, n_sites_carrying: i
 
 
 def _require_every_record_binned(function_name, bins, p, bin_edges):
-    """Reject the ``-1`` ``assign_bins`` returns outside the edge span.
+    """Reject the -1 assign_bins returns outside the edge span.
 
-    Both consumers take ``bin_edges`` as a parameter and are exported for direct
-    use, so a caller can pass edges that do not bracket its ``p`` even though
-    ``selective_reliability_panel``'s validation makes this unreachable through
-    the entry point. An unbinned record must NOT be silently dropped (the two
-    functions would then disagree about the denominator) and must NOT fold into a
-    neighbouring (site, bin) slot (the flattened index arithmetic in
-    ``expected_calibration_error`` would corrupt the per-site sums the bootstrap
-    indexes). It is a boundary error, and it is loud.
+    Both consumers take bin_edges as a parameter and are exported for direct
+    use, so a caller can pass edges that do not bracket its p. Going through
+    selective_reliability_panel makes that unreachable, but a direct caller is
+    real.
+
+    An unbinned record is never silently dropped -- the two functions would then
+    disagree about the denominator -- and never folds into a neighbouring
+    (site, bin) slot, which would corrupt the per-site sums the bootstrap
+    indexes. It is a loud boundary error.
     """
     if bool((bins < 0).any()):
         i = int(np.flatnonzero(bins < 0)[0])
@@ -833,12 +829,12 @@ def _site_index(site_id):
 def _n_carrying(site_id, n_sites) -> int:
     """Distinct sites contributing at least one record to the given selection.
 
-    THE one from-scratch derivation, and the quantity the ``min_sites`` cluster
-    floor is checked against. A block that has ALREADY built its per-site count
-    vector for its own statistic reads ``np.count_nonzero`` off that local
-    instead of calling this; what must never regrow is a second definition of
-    the derivation itself, which could then drift from this one and suppress
-    intervals in some blocks and not others.
+    This is the one from-scratch derivation, and the quantity the min_sites
+    cluster floor is checked against. A block that has already built its own
+    per-site count vector reads np.count_nonzero off that local instead.
+
+    What must never regrow is a second definition of the derivation. It could
+    drift from this one and suppress intervals in some blocks but not others.
     """
     site_id = np.asarray(site_id, dtype=np.int64)
     if site_id.size == 0:
@@ -861,22 +857,20 @@ def reliability_curve(p, y, site_id, n_sites, *, digest, scope,
     """Per-bin reliability records for one scope.
 
     Estimand (bin b, scope S)
-        ``E[y | record falls in bin b, record in scope S]``, estimated as the
-        RECORD-WEIGHTED ratio of sums over the fixed site population:
-        (sum over sites of positives in bin b) / (sum over sites of records in
-        bin b). A large site contributes proportionally more than a small one;
-        this is NOT a per-site average.
+        E[y | record falls in bin b, record in scope S], estimated as the
+        record-weighted ratio of sums over the fixed site population:
+        (positives in bin b) / (records in bin b), each summed over sites. A
+        large site contributes proportionally more than a small one, so this is
+        not a per-site average.
 
-    ``p``, ``y`` and ``site_id`` are ALREADY restricted to the scope by the
-    caller; ``n_sites`` is the FULL site count so the population resampled is
-    identical across scopes and across bins.
+    p, y and site_id arrive already restricted to the scope. n_sites is the full
+    site count, so the population resampled is identical across scopes and bins.
 
-    Returns exactly ``len(bin_edges) - 1`` records in ascending bin order. Empty
-    bins are emitted with ``n = 0`` and null statistics -- never dropped, because
-    a missing bin and a bin the scope never reaches are different facts.
+    Returns exactly len(bin_edges) - 1 records in ascending bin order. Empty
+    bins are emitted with n = 0 and null statistics, never dropped: a missing
+    bin and a bin the scope never reaches are different facts.
 
-    Each per-bin interval is MARGINAL: the seven bins carry no simultaneous
-    coverage claim and their endpoints must not be differenced.
+    Each per-bin interval is marginal: the bins carry no joint coverage claim.
     """
     p = np.ascontiguousarray(p, dtype=np.float64)
     yf = np.ascontiguousarray(y).astype(np.float64)
@@ -891,8 +885,8 @@ def reliability_curve(p, y, site_id, n_sites, *, digest, scope,
         mask = bins == b
         n_b = int(np.count_nonzero(mask))
 
-        # Per-site record and positive counts INSIDE this bin, length n_sites, so
-        # a site with no record here contributes a hard zero to both the
+        # Per-site record and positive counts inside this bin, length n_sites,
+        # so a site with no record here contributes a hard zero to both the
         # numerator and the denominator of every resample.
         denom = np.bincount(sid[mask], minlength=n_sites).astype(np.float64)
         numer = np.bincount(sid[mask], weights=yf[mask], minlength=n_sites)
@@ -943,16 +937,16 @@ def expected_calibration_error(p, y, site_id, n_sites, *, digest, scope,
     """Count-weighted mean absolute calibration gap for one scope.
 
     Estimand (scope S)
-        ``sum over NON-EMPTY bins of (n_b / n_total) * |mean_predicted_b -
-        observed_b|`` with ``n_total`` the number of records in the scope, so the
-        weights sum to 1 exactly. Empty bins are EXCLUDED, not folded in as a
+        sum over non-empty bins of (n_b / n_total) * |mean_predicted_b -
+        observed_b|, with n_total the number of records in the scope, so the
+        weights sum to 1 exactly. Empty bins are excluded, not folded in as a
         zero gap.
 
-    This is a PLUG-IN estimate: it is positively biased (finite per-bin counts
-    inflate the mean absolute gap) and the bias grows as per-bin counts shrink. A
-    percentile interval does not correct bias, so the emitted MARGINAL interval
-    covers the biased plug-in estimand, NOT true calibration error. That
-    disclosure is ``notes[2]`` and must travel with the number.
+    This is a plug-in estimate, positively biased because finite per-bin counts
+    inflate the mean absolute gap, and worse as those counts shrink. A
+    percentile interval does not correct bias, so the emitted interval covers
+    the biased plug-in estimand, not true calibration error. That disclosure is
+    `notes[2]` and must travel with the number.
 
     Validity predicate for a resample: it carries at least one record.
     """
@@ -968,7 +962,7 @@ def expected_calibration_error(p, y, site_id, n_sites, *, digest, scope,
 
     # (n_sites, n_bins) sufficient statistics: record count, sum of predicted
     # probability, sum of label. Everything either statistic needs is a linear
-    # sum over sites, so a resample is a fancy-indexed row sum -- NO rebinning.
+    # sum over sites, so a resample is a fancy-indexed row sum, no rebinning.
     flat = sid * n_bins + bins
     size = n_sites * n_bins
     cnt = np.bincount(flat, minlength=size).astype(np.float64).reshape(n_sites, n_bins)
@@ -1023,32 +1017,33 @@ def expected_calibration_error(p, y, site_id, n_sites, *, digest, scope,
 #
 # Estimand: the maximum-likelihood one-covariate logistic regression
 #     P(y = 1 | p) = sigmoid(intercept + slope * logit(p))
-# on the records of one scope, logit clipped at LOGIT_EPS so p == 0 / 1 stay
-# usable. slope == 1 and intercept == 0 is the classical WEAK-calibration
-# summary: implied by calibration, not implying it, which is why the reliability
-# curve and the ECE are reported alongside rather than replaced by it.
+# on the records of one scope, with the logit clipped at LOGIT_EPS so p == 0
+# and p == 1 stay usable. slope == 1 with intercept == 0 is the classical
+# weak-calibration summary: implied by calibration, but not implying it. That is
+# why the reliability curve and the ECE are reported alongside it rather than
+# replaced by it.
 #
-# NO ridge, NO shrinkage, NO fallback slope anywhere: a regularised fit would
+# No ridge, no shrinkage, no fallback slope anywhere. A regularised fit would
 # quietly change the estimand and report a plausible number where the data
 # support none.
 
 
 def clipped_logit(p, eps=LOGIT_EPS) -> np.ndarray:
-    """``log(pc / (1 - pc))`` with ``pc = clip(p, eps, 1 - eps)``.
+    """log(pc / (1 - pc)) with pc = clip(p, eps, 1 - eps).
 
-    Clipping is what makes ``p == 0.0`` and ``p == 1.0`` usable regression inputs
-    at all. At eps = 1e-6 the transform saturates at +/-13.815510557964274, so a
-    handful of saturated records cannot drag the fit to infinity on their own.
+    Clipping is what makes p == 0.0 and p == 1.0 usable regression inputs at
+    all. At eps = 1e-6 the transform saturates at +/-13.815510557964274, so a
+    handful of saturated records cannot drag the fit to infinity.
     """
     pc = np.clip(np.ascontiguousarray(p, dtype=np.float64), eps, 1.0 - eps)
     return np.log(pc / (1.0 - pc))
 
 
 def _sigmoid(t):
-    """Overflow-free logistic; ``exp()`` only ever sees non-positive input.
+    """Overflow-free logistic; exp() only ever sees non-positive input.
 
-    The naive ``1/(1+exp(-t))`` raises an overflow warning for t << 0, and the
-    suite runs warnings-as-errors, so a fit on well-separated scores would ABORT
+    The naive 1/(1+exp(-t)) raises an overflow warning for t << 0, and the suite
+    runs warnings-as-errors. A fit on well-separated scores would then abort
     instead of reporting 'separable'.
     """
     out = np.empty_like(t)
@@ -1063,13 +1058,14 @@ def _sigmoid(t):
 def _is_separated(z, yf) -> bool:
     """True when the two classes do not overlap along the single covariate.
 
-    Albert-Anderson: for a logistic model the MLE EXISTS iff the classes overlap.
-    With one covariate that reduces to an interval test. Checked BEFORE iterating
-    because the mandated weight floor keeps the normal matrix invertible, so
-    Newton does not blow the coefficients past ``max_abs_coef`` on separated
-    data -- it crawls and would hit the cap and report 'not-converged', naming
-    the wrong defect (the fit did not run out of iterations; the estimate does
-    not exist). This pre-loop test is the ONLY source of the 'separable' status.
+    Albert-Anderson: for a logistic model the MLE exists exactly when the
+    classes overlap. With one covariate that reduces to an interval test.
+
+    The test runs before iterating. The mandated weight floor keeps the normal
+    matrix invertible, so on separated data Newton crawls rather than blowing
+    past max_abs_coef; it would hit the iteration cap and report
+    'not-converged', naming the wrong defect. This pre-loop test is the only
+    source of the 'separable' status.
     """
     pos = yf > 0.0
     z_pos = z[pos]
@@ -1078,7 +1074,7 @@ def _is_separated(z, yf) -> bool:
 
 
 def _deviance(yf, t) -> float:
-    """Binomial deviance at linear predictor ``t``, overflow-free via logaddexp."""
+    """Binomial deviance at linear predictor t, overflow-free via logaddexp."""
     return -2.0 * (float(yf @ t) - float(np.logaddexp(0.0, t).sum()))
 
 
@@ -1097,25 +1093,24 @@ def fit_calibration_line(p, y, *, eps=LOGIT_EPS, max_iter=IRLS_MAX_ITER,
                          tol=IRLS_TOL, max_abs_coef=IRLS_MAX_ABS_COEF,
                          min_weight=IRLS_MIN_WEIGHT,
                          min_records=IRLS_MIN_RECORDS) -> dict:
-    """Point fit only -- no resampling, no IO, NEVER raises.
+    """Point fit only -- no resampling, no IO, and it never raises.
 
-    Returns ``{'slope', 'intercept', 'status', 'iterations', 'n', 'n_positive'}``
-    with ``slope`` and ``intercept`` ``None`` unless ``status == 'ok'``. An
-    unconverged number is never emitted and no inf or NaN ever leaves here.
+    Returns {'slope', 'intercept', 'status', 'iterations', 'n', 'n_positive'},
+    with slope and intercept None unless status == 'ok'. An unconverged number
+    is never emitted, and no inf or NaN ever leaves here.
 
-    Degenerate branches, all returning ``None`` with a status:
+    Degenerate branches, all returning None with a status:
 
         too-few-records    n < min_records
         single-class       0 or n positives -- the slope is unidentified
         degenerate-design  the clipped logit has zero variance
-        separable          the classes do not overlap (Albert-Anderson, decided
-                           BEFORE iterating); the MLE does NOT exist
+        separable          the classes do not overlap, so no MLE exists
+                           (Albert-Anderson, decided before iterating)
         coef-out-of-range  some |coefficient| exceeded max_abs_coef while
-                           iterating. DISTINCT IN KIND from 'separable': the
-                           classes overlap and the MLE exists and is finite, it
-                           simply lies outside the reporting range. Collapsing
-                           the two claims the wrong thing and leads to the
-                           opposite operational action
+                           iterating. Different in kind from 'separable': the
+                           classes overlap, the MLE exists and is finite, it
+                           just lies outside the reporting range. Collapsing
+                           the two leads to the opposite operational action
         not-converged      the iteration cap was reached with the step >= tol
         singular           the normal matrix was not solvable, or the step was
                            non-finite, or no scale of a descent direction helped
@@ -1157,14 +1152,14 @@ def fit_calibration_line(p, y, *, eps=LOGIT_EPS, max_iter=IRLS_MAX_ITER,
             return _fit_result(None, None, "singular", iterations, n, n_positive)
 
         # Step-halving on the deviance: accept the largest of step, step/2,
-        # step/4, ... that does not increase it. The Hessian is positive definite
-        # under the weight floor, so the Newton direction is a descent direction
-        # and a small enough scale always qualifies; the 1e-12 slack absorbs
-        # float noise at the optimum. A full step that already decreases the
-        # deviance -- the ordinary case -- is accepted unchanged, so a
-        # well-behaved fit follows the plain-Newton trajectory exactly. This is
-        # what lets a finite-but-large MLE be converged TO instead of overshot
-        # into the coefficient bound.
+        # step/4, ... that does not increase it. Under the weight floor the
+        # Hessian is positive definite, so the Newton direction descends and a
+        # small enough scale always qualifies; the 1e-12 slack absorbs float
+        # noise at the optimum. The ordinary case -- a full step that already
+        # decreases the deviance -- is accepted unchanged, so a well-behaved fit
+        # follows the plain-Newton trajectory exactly. That is what lets a
+        # finite-but-large MLE be converged to rather than overshot into the
+        # coefficient bound.
         scale = 1.0
         for _halving in range(_MAX_HALVINGS):
             candidate_linear = X @ (beta + scale * step)
@@ -1183,9 +1178,9 @@ def fit_calibration_line(p, y, *, eps=LOGIT_EPS, max_iter=IRLS_MAX_ITER,
         deviance = candidate_deviance
         iterations += 1
 
-        # TERMINATION ORDER IS LOAD-BEARING. The range check runs BEFORE the
-        # convergence check in the same iteration: swapping the two lines lets a
-        # |beta| just over the bound report 'ok'.
+        # Termination order is load-bearing. The range check runs before the
+        # convergence check in the same iteration; swapping the two lines lets
+        # a |beta| just over the bound report 'ok'.
         if np.any(np.abs(beta) > max_abs_coef):
             # The iterate left the reporting range. With step-halving in force
             # this is not a transient overshoot: the MLE itself sits beyond the
@@ -1193,8 +1188,8 @@ def fit_calibration_line(p, y, *, eps=LOGIT_EPS, max_iter=IRLS_MAX_ITER,
             return _fit_result(None, None, "coef-out-of-range", iterations, n,
                                n_positive)
         if float(np.max(np.abs(step))) < tol:
-            # Convergence is judged on the FULL Newton step: at the optimum it is
-            # tiny regardless of any halving, and a halved step must never
+            # Convergence is judged on the full Newton step. At the optimum it
+            # is tiny regardless of any halving, and a halved step must never
             # satisfy a tolerance the full step would have failed.
             return _fit_result(float(beta[1]), float(beta[0]), "ok", iterations,
                                n, n_positive)
@@ -1204,29 +1199,31 @@ def fit_calibration_line(p, y, *, eps=LOGIT_EPS, max_iter=IRLS_MAX_ITER,
 
 def calibration_pair(p, y, site_id, n_sites, *, digest, scope, n_boot=N_BOOT,
                      ci_level=CI_LEVEL, min_sites=MIN_SITES_FOR_CI) -> dict:
-    """Point fit plus cluster-robust MARGINAL intervals on both coefficients.
+    """Point fit plus cluster-robust marginal intervals on both coefficients.
 
-    ``p``, ``y`` and ``site_id`` are ALREADY restricted to the scope; ``n_sites``
-    is the FULL site population, so sites carrying no record in this scope remain
-    in the draw and contribute an empty block.
+    p, y and site_id arrive already restricted to the scope. n_sites is the full
+    site population, so sites carrying no record in this scope stay in the draw
+    and contribute an empty block.
 
-    This is the ONLY statistic whose resample MATERIALISES the drawn record
-    blocks (``gather_sites``) and refits from scratch; every other statistic
-    indexes precomputed per-site sums.
+    This is the only statistic whose resample materialises the drawn record
+    blocks (gather_sites) and refits from scratch. Every other statistic indexes
+    precomputed per-site sums.
 
     Suppression:
-      * point status != 'ok' -> ``null_ci('undefined-point')``, no resampling at
+      * point status != 'ok' -> null_ci('undefined-point'), no resampling at
         all: there is no point estimate for an interval to be around.
-      * a refit returning 'coef-out-of-range' is a VALUE-dependent rejection
-        (RP-4). The driver tops it up and a closure counter records it; the block
-        is then OVERWRITTEN with ``ci=None, ci_status='truncated-resamples'``,
-        carrying ``n_boot_valid`` / ``n_attempts`` / ``n_sites_carrying`` through
-        UNCHANGED so the attempt counts stay honest. A quantile over the retained
-        draws would DELETE the tail of the resampling distribution, not thin it.
+      * a refit returning 'coef-out-of-range' is a value-dependent rejection.
+        The driver tops it up, a closure counter records it, and the block is
+        then overwritten with ci=None, ci_status='truncated-resamples' --
+        n_boot_valid, n_attempts and n_sites_carrying pass through unchanged so
+        the attempt counts stay honest. A quantile over the retained draws would
+        delete the tail of the resampling distribution, not thin it.
 
-    Both coefficients come from the SAME valid draws, so the pair is at least
-    mutually consistent -- but each is still a MARGINAL percentile interval and
-    the two endpoints must not be differenced or read as a joint region.
+    Both coefficients come from the same valid draws, so the pair is at least
+    mutually consistent. Each is still a marginal percentile interval, and the
+    two endpoints must not be differenced or read as a joint region.
+
+    Refs: audit RP-4.
     """
     p = np.ascontiguousarray(p, dtype=np.float64)
     yb = np.ascontiguousarray(y)
@@ -1248,8 +1245,8 @@ def calibration_pair(p, y, site_id, n_sites, *, digest, scope, n_boot=N_BOOT,
                 return None
             fit = fit_calibration_line(p[rec], yb[rec])
             if fit["status"] == "coef-out-of-range":
-                # Rejected for the statistic's VALUE, not for being undefined.
-                # Counted so the whole interval can be refused below -- letting
+                # Rejected for the statistic's value, not for being undefined.
+                # Counted so the whole interval can be refused below. Letting
                 # the driver top this up would delete the tail of the resampling
                 # distribution and quantile only the middle.
                 truncated["count"] += 1
@@ -1308,29 +1305,27 @@ def brier_block(p, y, site_id, n_sites, p_ref, *, digest, n_boot=N_BOOT,
     """Squared-error block for the answered subset.
 
     Estimands
-        ``primary_answered.value`` = ``mean((p - y)**2)`` over ALL answered
-        records, as a record-weighted ratio of sums over the fixed site
-        population.
+        primary_answered.value = mean((p - y)**2) over all answered records, as
+        a record-weighted ratio of sums over the fixed site population.
 
-        ``reference.*`` (only with a reference scorer) is DENOMINATOR-MATCHED.
-        The availability mask is ``isfinite(p_ref)`` on the answered records and
-        yields three numbers on that ONE mask: ``brier_reference`` (the reference
-        scorer), ``brier_primary_matched`` (the PRIMARY scorer on the IDENTICAL
-        subset), and ``brier_difference`` = reference - matched.
+        reference.* appears only with a reference scorer, and is
+        denominator-matched. The availability mask is isfinite(p_ref) on the
+        answered records, and yields three numbers on that one mask:
+        brier_reference, brier_primary_matched (the primary scorer on the
+        identical subset), and brier_difference = reference - matched.
 
-    ``brier_primary_matched`` is the ONLY fair comparison for the reference
-    score. The unmatched ``primary_answered.value`` keeps the WIDER answered
-    denominator and must NEVER be differenced against the reference;
-    ``available_share`` exposes the size of that gap so the prohibition is
-    checkable rather than merely stated (``notes[4]``).
+    brier_primary_matched is the only fair comparison for the reference score.
+    The unmatched primary_answered.value keeps the wider answered denominator
+    and must never be differenced against the reference. available_share exposes
+    the size of that gap, so the prohibition is checkable (`notes[4]`).
 
-    ``brier_difference`` is a SINGLE statistic per resample -- the third element
-    of a 3-tuple from ONE stream -- never a subtraction of two independently
+    brier_difference is a single statistic per resample, the third element of a
+    3-tuple from one stream. It is never a subtraction of two independently
     bootstrapped endpoints, which is strictly wider and has no coverage claim.
 
-    ``p``, ``y``, ``site_id`` and ``p_ref`` are ALREADY restricted to the
-    answered subset; ``n_sites`` is the FULL site count. Validity predicate for
-    both streams: the resample carries at least one record in the relevant mask.
+    p, y, site_id and p_ref arrive already restricted to the answered subset;
+    n_sites is the full site count. Validity predicate for both streams: the
+    resample carries at least one record in the relevant mask.
     """
     n_sites = int(n_sites)
     p_arr = np.ascontiguousarray(p, dtype=np.float64)
@@ -1375,7 +1370,7 @@ def brier_block(p, y, site_id, n_sites, p_ref, *, digest, n_boot=N_BOOT,
     }
 
     if p_ref is None:
-        # An explicit null VALUE, not a missing key.
+        # An explicit null value, not a missing key.
         return {"primary_answered": primary, "reference": None}
 
     # ---- reference, on the availability mask -------------------------------
@@ -1386,8 +1381,8 @@ def brier_block(p, y, site_id, n_sites, p_ref, *, digest, n_boot=N_BOOT,
 
     mask = available.astype(np.float64)
     counts_ref = _site_sums(mask, sid, n_sites)
-    # n_sites_carrying for THIS section is taken on the AVAILABILITY mask, so the
-    # reference can be floor-suppressed while the primary is not.
+    # n_sites_carrying for this section is taken on the availability mask, so
+    # the reference can be floor-suppressed while the primary is not.
     carrying_ref = int(np.count_nonzero(counts_ref))
 
     if n_available == 0:
@@ -1450,25 +1445,26 @@ def brier_block(p, y, site_id, n_sites, p_ref, *, digest, n_boot=N_BOOT,
 # items 5 and 6 -- the cherry-picking decomposition and the composition block
 # ===========================================================================
 #
-# Item 5 answers the only question this panel exists to answer: is the low error
-# rate on the answered subset evidence that the scorer is ACCURATE ON WHAT IT
-# ANSWERS, or evidence that the gate simply REMOVED THE HARD RECORDS? At
-# single-digit prevalence an alpha near the prevalence is close to what a
+# Item 5 answers the one question this panel exists for. Is the low error rate
+# on the answered subset evidence that the scorer is accurate on what it
+# answers, or evidence that the gate simply removed the hard records?
+#
+# At single-digit prevalence an alpha near the prevalence is close to what a
 # constant always-negative rule achieves (METHODS "Loss"), so meeting the budget
 # is not by itself evidence the gate is doing anything.
 
 
 def _site_counts(site_id, n_sites) -> np.ndarray:
-    """Records per site, length ``n_sites``, float64 so ratios never int-divide."""
+    """Records per site, length n_sites, float64 so ratios never int-divide."""
     return np.bincount(np.asarray(site_id, dtype=np.int64),
                        minlength=n_sites).astype(np.float64)
 
 
 def _margin_from_totals(total, positives, errors) -> tuple:
-    """``(model_error_rate, constant_predictor_error_rate, skill_margin)``.
+    """(model_error_rate, constant_predictor_error_rate, skill_margin).
 
-    ``total`` must already be known positive; the caller owns the validity
-    predicate so an invalid resample is discarded rather than divided by zero.
+    total must already be known positive. The caller owns the validity
+    predicate, so an invalid resample is discarded rather than divided by zero.
     """
     model_error_rate = errors / total
     positive_rate = positives / total
@@ -1482,32 +1478,32 @@ def skill_decomposition(p, y, site_id, n_sites, *, digest, scope,
                         ci_level=CI_LEVEL, min_sites=MIN_SITES_FOR_CI) -> dict:
     """Realized error, constant-predictor error and their margin, for one scope.
 
-    Arithmetic, per scope S::
+    Arithmetic, per scope S:
 
         yhat                          = (p >= decision_threshold)
         model_error_rate              = mean(yhat != y)
         positive_rate                 = mean(y)
-        constant_predictor_class      = bool(positive_rate > 0.5)  # STRICT: a
-                                        # 0.5 tie predicts NEGATIVE
+        constant_predictor_class      = bool(positive_rate > 0.5)  # strict: a
+                                        # 0.5 tie predicts negative
         constant_predictor_error_rate = min(positive_rate, 1 - positive_rate)
         skill_margin                  = constant_predictor_error_rate
                                         - model_error_rate
 
-    ``skill_margin`` is BASELINE MINUS MODEL, so positive means the scorer beats
-    the trivial in-scope rule. A margin at or below zero on the answered subset
-    while the raw answered error rate looks small is exactly the cherry-picking
-    signature this panel exists to expose.
+    skill_margin is baseline minus model, so a positive value means the scorer
+    beats the trivial in-scope rule. A margin at or below zero on the answered
+    subset, while the raw answered error rate looks small, is exactly the
+    cherry-picking signature this panel exists to expose.
 
-    Because ``DECISION_THRESHOLD = 0.5`` coincides with ``Head.predict``'s rule,
-    ``model_error_rate`` IS certgate's answered error rate on that scope -- a
-    free cross-consistency check, not a second estimand.
+    Because DECISION_THRESHOLD = 0.5 coincides with Head.predict's rule,
+    model_error_rate is certgate's answered error rate on that scope -- a free
+    cross-consistency check, not a second estimand.
 
-    The baseline is RECOMPUTED inside every resample and its class may FLIP
-    between draws; that variation belongs to the statistic, and freezing the
-    class from the point estimate would remove real variation from the interval.
+    The baseline is recomputed inside every resample, and its class may flip
+    between draws. That variation belongs to the statistic; freezing the class
+    from the point estimate would remove real variation from the interval.
 
-    One shared stream (``'<scope>/skill'``) returns the triple, so the three
-    MARGINAL intervals refer to the same draws. Validity predicate: the resample
+    One shared stream ('<scope>/skill') returns the triple, so the three
+    marginal intervals refer to the same draws. Validity predicate: the resample
     carries at least one record.
     """
     p = np.asarray(p)
@@ -1572,28 +1568,29 @@ def skill_decomposition(p, y, site_id, n_sites, *, digest, scope,
 def skill_contrast(p, y, answered, site_id, n_sites, *, digest,
                    decision_threshold=DECISION_THRESHOLD, n_boot=N_BOOT,
                    ci_level=CI_LEVEL, min_sites=MIN_SITES_FOR_CI) -> dict:
-    """THE HEADLINE STATISTIC: how much of the answered margin is the gate's doing.
+    """The headline statistic: how much of the answered margin is the gate's.
 
-    FULL arrays in, NOT scope-restricted. Computes, inside ONE shared resample
-    (``'contrast/skill'``), the pair::
+    Full arrays in, not scope-restricted. Inside one shared resample
+    ('contrast/skill') it computes the pair:
 
         answered_minus_all      = skill_margin(answered) - skill_margin(all)
         answered_minus_declined = skill_margin(answered) - skill_margin(declined)
 
-    Each is a SINGLE statistic per draw, never a subtraction of two independently
-    bootstrapped endpoints. A strongly negative ``answered_minus_all`` says the
-    answered subset is where the scorer has the LEAST skill relative to a
-    constant predictor -- the low answered error rate came from the gate's
+    Each is a single statistic per draw, never a subtraction of two
+    independently bootstrapped endpoints. A strongly negative answered_minus_all
+    says the answered subset is where the scorer has the least skill relative to
+    a constant predictor: the low answered error rate came from the gate's
     selection, not from the scorer.
 
-    The point estimate is ``_margins(np.arange(n_sites))`` -- each site once.
-    Validity predicate: the resample carries at least one answered record AND (if
-    anything is declined) at least one declined record. With no declined records
-    at all, ``answered_minus_declined`` is a null POINT (not zero) and only the
-    first name is resampled. The cluster floor uses ``min(carrying_a,
-    carrying_d)``, or ``carrying_a`` alone when nothing is declined.
+    The point estimate is _margins(np.arange(n_sites)) -- each site once.
+    Validity predicate: the resample carries at least one answered record, and
+    at least one declined record if anything is declined.
 
-    THE ONLY block that does not emit ``n_sites_carrying``.
+    With nothing declined, answered_minus_declined is a null point rather than
+    zero, and only the first name is resampled. The cluster floor then uses
+    carrying_a alone, otherwise min(carrying_a, carrying_d).
+
+    This is the only block that does not emit n_sites_carrying.
     """
     p = np.asarray(p)
     y = np.asarray(y)
@@ -1703,16 +1700,16 @@ def composition_block(p, y, site_id, n_sites, *, digest, scope,
         predicted_positive_fraction = mean(p >= decision_threshold)
         observed_positive_fraction  = mean(y)
 
-    Both come from ONE stream (``'<scope>/composition'``), so the two MARGINAL
+    Both come from one stream ('<scope>/composition'), so the two marginal
     intervals refer to the same draws. Validity predicate: the resample carries
     at least one record.
 
-    This is the CI-bearing, three-SCOPE sibling of ``explain.composition``'s
-    answered-only point estimate. ``explain.composition`` is UNCHANGED
-    (``report.py`` depends on it) and the two must agree on the answered
-    predicted-positive fraction -- pinned by test.
+    This is the CI-bearing, three-scope sibling of explain.composition's
+    answered-only point estimate. explain.composition is unchanged because
+    report.py depends on it, and a test pins that the two agree on the answered
+    predicted-positive fraction.
 
-    Read the three scopes together: a gate that answers where the positive rate
+    Read the three scopes together. A gate that answers where the positive rate
     is low has shifted the composition of the answered subset away from the full
     record set, and that shift -- not scorer accuracy -- can be the whole reason
     the answered error rate looks small.
@@ -1772,16 +1769,16 @@ def composition_block(p, y, site_id, n_sites, *, digest, scope,
 
 
 # ===========================================================================
-# the orchestrator -- the ONLY assembler of the emitted dict
+# the orchestrator -- the only assembler of the emitted dict
 # ===========================================================================
 
 
 def _emit(node, round_dp: int):
     """One recursive pass: plain Python types, rounded floats, non-finite -> None.
 
-    BRANCH ORDER IS LOAD-BEARING: ``bool`` is tested BEFORE ``int`` because
-    Python's bool is an int subclass -- reversing the two lines turns
-    ``constant_predictor_class`` and ``reference_supplied`` into 0/1.
+    Branch order is load-bearing. bool is tested before int because Python's
+    bool is an int subclass; reversing the two lines turns
+    constant_predictor_class and reference_supplied into 0/1.
     """
     if node is None or isinstance(node, str):
         return node
@@ -1805,32 +1802,32 @@ def selective_reliability_panel(p, answered, site_id, y, p_ref=None, *,
                                 n_boot: int = N_BOOT, ci_level: float = CI_LEVEL,
                                 min_sites: int = MIN_SITES_FOR_CI,
                                 round_dp: int = ROUND_DP, timestamp=None) -> dict:
-    """Build the complete selective reliability panel. Descriptive; certifies nothing.
+    """Build the complete selective reliability panel.
 
-    Arrays in, plain JSON-serializable dict out; nothing is read from or written
-    to disk. ``timestamp=None`` emits ``generated_utc: None`` so the default
-    output is byte-identical for identical inputs and NO WALL CLOCK enters any
-    emitted artifact.
+    Descriptive: it certifies nothing. Arrays in, plain JSON-serializable dict
+    out, with nothing read from or written to disk. timestamp=None emits
+    generated_utc: None, so the default output is byte-identical for identical
+    inputs and no wall clock enters any emitted artifact.
 
-    TWELVE top-level keys, ALWAYS all present: ``schema_version``,
-    ``generated_utc``, ``input_digest``, ``settings``, ``counts``,
-    ``reliability``, ``calibration``, ``ece``, ``brier``, ``skill``,
-    ``composition``, ``notes``. Optional content degrades to an explicit null
-    VALUE, never by key omission -- a reader must never have to tell "absent"
-    from "undefined" by probing for a ``KeyError``.
+    Twelve top-level keys, always all present: schema_version, generated_utc,
+    input_digest, settings, counts, reliability, calibration, ece, brier, skill,
+    composition, notes. Optional content degrades to an explicit null value,
+    never by key omission, so a reader never has to tell "absent" from
+    "undefined" by probing for a KeyError.
 
-    SCOPES DIFFER BY ITEM, deliberately: reliability / calibration / ece are
-    answered+declined only; skill / composition carry all three plus
-    ``skill.contrast``; brier is answered-only.
+    Scopes differ by item, deliberately:
+      - reliability, calibration and ece are answered+declined only;
+      - skill and composition carry all three scopes plus skill.contrast;
+      - brier is answered-only.
 
-    Rounding happens EXACTLY ONCE, here, at emit time; ``settings`` is EXEMPT and
-    has to be (``logit_eps`` and ``irls.tol`` both collapse to 0.0 at 6 dp). NaN
-    can never reach the emitted dict, so ``json.dumps(panel, allow_nan=False)``
-    succeeds on every legal input -- including all-answered, none-answered,
-    single-class and two-site pools.
+    Rounding happens exactly once, here, at emit time. settings is exempt and
+    has to be: logit_eps and irls.tol both collapse to 0.0 at 6 dp. NaN can
+    never reach the emitted dict, so json.dumps(panel, allow_nan=False) succeeds
+    on every legal input -- including all-answered, none-answered, single-class
+    and two-site pools.
 
-    Every interval in the result is MARGINAL. There is no simultaneity claim
-    anywhere in the panel (``notes[1]``).
+    Every interval in the result is marginal. There is no simultaneity claim
+    anywhere in the panel (`notes[1]`).
     """
     inputs = validate_inputs(p, answered, site_id, y, p_ref,
                              decision_threshold=decision_threshold,
@@ -1912,15 +1909,15 @@ def selective_reliability_panel(p, answered, site_id, y, p_ref=None, *,
         "reference_supplied": inputs.p_ref is not None,
     }
 
-    # Assembled AFTER the emit pass and deliberately EXEMPT from rounding.
+    # Assembled after the emit pass and deliberately exempt from rounding.
     settings = {
         "seed": PANEL_SEED,
         "decision_threshold": float(threshold),
         "bin_edges": [float(e) for e in edges],
         "n_bins": len(edges) - 1,
         "n_boot": int(n_boot),
-        # The budget actually enforced by every statistic in this panel: the
-        # RELATION 2 * n_boot, which equals the frozen BOOT_MAX_ATTEMPTS only at
+        # The budget every statistic in this panel actually enforces is the
+        # relation 2 * n_boot, which equals the frozen BOOT_MAX_ATTEMPTS only at
         # the production N_BOOT. Echoing the constant here at a non-default
         # n_boot would be a false statement in the provenance record.
         "boot_max_attempts": 2 * int(n_boot),
@@ -1965,38 +1962,39 @@ def selective_reliability_panel(p, answered, site_id, y, p_ref=None, *,
 
 def panel_from_head(head, x, y, site_id, tau_star, *, answered_mask=None,
                     p_ref=None, **panel_kwargs) -> dict:
-    """THE ONLY entry point the drivers use -- and the structural close of the
-    ``predict_proba`` / ``score`` conflation trap.
+    """The only entry point the drivers use.
 
-    ::
+    It is also the structural close of the predict_proba / score conflation
+    trap:
 
-        p        = head.predict_proba(x)          <- the BINNED quantity, P(y=1|x)
-        answered = head.score(x) >= tau_star      <- the GATE, max(p1, 1-p1)
+        p        = head.predict_proba(x)          <- the binned quantity, P(y=1|x)
+        answered = head.score(x) >= tau_star      <- the gate, max(p1, 1-p1)
 
-    The caller NEVER constructs ``p``. Feeding ``score`` as ``p`` passes
-    ``validate_inputs`` silently -- it is finite and in [0, 1] -- and produces a
-    fully populated but meaningless panel (the four bins below 0.5 are empty and
-    the calibration slope is inverted). There is no automatic guard inside the
-    statistics, so the guard is structural here.
+    The caller never constructs p. Feeding score as p passes validate_inputs
+    silently -- it is finite and in [0, 1] -- and produces a fully populated but
+    meaningless panel: the four bins below 0.5 are empty and the calibration
+    slope is inverted. Nothing inside the statistics catches that, so the guard
+    is structural here.
 
-    ``head`` is reached only by DUCK TYPING: this module has no certgate import
-    and never sees a ``Head`` type.
+    head is reached only by duck typing. This module has no certgate import and
+    never sees a Head type.
 
     Parameters
     ----------
     x
-        ``(n, d)`` float64 RAW features (the head standardizes internally).
+        (n, d) float64 raw features; the head standardizes internally.
     tau_star
-        The RAW operative tau, or ``None`` for the legal no-rung-certified case.
+        The raw operative tau, or None for the legal no-rung-certified case.
     answered_mask
-        The mask actually DEPLOYED, e.g. ``report["answered_mask"]``. When it is
-        supplied AND ``tau_star`` is not ``None`` the two are cross-checked with
-        ``np.array_equal``; a mismatch raises ``PanelError`` with
-        ``reason=deployed-mask-mismatch``. That is what catches a mask re-derived
-        from a tau ROUNDED to 6 dp: it disagrees with the deployed one at the
-        boundary. With ``tau_star=None`` the supplied mask is used as given, the
-        answered scope is empty, and every answered statistic emits ``None`` with
-        ``ci_status = 'undefined-point'``.
+        The mask actually deployed, e.g. report["answered_mask"]. When it is
+        supplied and tau_star is not None, the two are cross-checked with
+        np.array_equal, and a mismatch raises PanelError with
+        reason=deployed-mask-mismatch. That catches a mask re-derived from a tau
+        rounded to 6 dp: it disagrees with the deployed one at the boundary.
+
+        With tau_star=None the supplied mask is used as given, the answered
+        scope is empty, and every answered statistic emits None with
+        ci_status = 'undefined-point'.
     """
     x = np.asarray(x, dtype=np.float64)
     p = np.asarray(head.predict_proba(x), dtype=np.float64)
@@ -2040,11 +2038,10 @@ PANEL_RELIABILITY_FIELDS = ("scope", "index", "lo", "hi", "n", "n_sites_carrying
 
 
 def panel_reliability_rows(panel: dict) -> list:
-    """Flatten ``reliability.{answered, declined}`` to CSV rows.
+    """Flatten reliability.{answered, declined} to CSV rows.
 
-    ``ci`` becomes ``ci_lo`` / ``ci_hi``; a ``None`` stays ``None`` and the
-    drivers' ``_write_csv`` / ``_write_table`` projection turns it into a BLANK
-    CELL. Exactly ``2 * n_bins`` rows.
+    ci becomes ci_lo / ci_hi. A None stays None, and the drivers' _write_csv /
+    _write_table projection turns it into a blank cell. Exactly 2 * n_bins rows.
     """
     rows = []
     for scope in ("answered", "declined"):
@@ -2074,22 +2071,21 @@ PANEL_CURVE_SCOPES = ("answered", "declined")
 
 
 def panel_ci_halfwidths(point, ci, ci_status="ok") -> tuple:
-    """``(lo, hi)`` error-bar half-widths around ``point``, CLAMPED at ``0.0``.
+    """(lo, hi) error-bar half-widths around point, clamped at 0.0.
 
-    THE reason this is a named function and not two inline subtractions: a
-    percentile interval is NOT required to straddle its own point estimate.
-    ``site_bootstrap_ci`` quantiles the resampling distribution and makes no
-    such guarantee, and for a paired ratio-of-sums over a few dozen sites
-    (``brier.reference.brier_difference`` most of all) the point estimate can
-    fall outside its own interval. matplotlib RAISES
-    ``ValueError: 'yerr' must not contain negative values`` rather than
-    warning, so an unclamped half-width lets a DESCRIPTIVE figure abort a
-    certified run after every certification arm has already been paid for --
-    the exact failure mode RP-8's guard around the panel computation exists to
-    prevent, one layer further out.
+    This is a named function rather than two inline subtractions because a
+    percentile interval need not straddle its own point estimate.
+    site_bootstrap_ci quantiles the resampling distribution and makes no such
+    guarantee; over a few dozen sites a paired ratio-of-sums can land outside
+    its own interval, brier_difference most of all.
 
-    ``(0.0, 0.0)`` -- an interval-free marker, never a fabricated zero-width
-    interval -- whenever ``ci`` is absent or ``ci_status`` is not ``'ok'``.
+    matplotlib raises ValueError: 'yerr' must not contain negative values
+    rather than warning it. An unclamped half-width would then let a descriptive
+    figure abort a certified run after every certification arm had been paid for
+    -- and RP-8's guard prevents that same failure one layer further out.
+
+    Returns (0.0, 0.0) whenever ci is absent or ci_status is not 'ok' -- an
+    interval-free marker, never a fabricated zero-width interval.
     """
     if ci is None or ci_status != "ok" or point is None:
         return (0.0, 0.0)
@@ -2098,18 +2094,17 @@ def panel_ci_halfwidths(point, ci, ci_status="ok") -> tuple:
 
 
 def panel_reliability_series(panel: dict, scope: str) -> tuple:
-    """The plottable ``(xs, ys, lo, hi)`` series for one scope's curve.
+    """The plottable (xs, ys, lo, hi) series for one scope's curve.
 
-    ONE definition of the drawing contract, shared by every figure built from a
-    panel (``run_synthetic._e6_reliability_figure``,
-    ``run_eicu._reliability_figure``) so that a fix to one can no longer leave
-    the other behind:
+    One definition of the drawing contract, shared by every figure built from a
+    panel (run_synthetic._e6_reliability_figure, run_eicu._reliability_figure),
+    so a fix to one can no longer leave the other behind:
 
-      * an EMPTY bin is ABSENT from the series, never plotted as a zero -- a bin
-        the scope never reached and a bin whose observed rate is 0 are different
-        facts;
-      * an interval is drawn only when its ``ci_status`` is ``'ok'``;
-      * the half-widths go through ``panel_ci_halfwidths``, so they can never be
+      * an empty bin is absent from the series, never plotted as a zero -- a
+        bin the scope never reached and a bin whose observed rate is 0 are
+        different facts;
+      * an interval is drawn only when its ci_status is 'ok';
+      * the half-widths go through panel_ci_halfwidths, so they can never be
         negative.
 
     Returns four equal-length lists, all empty when the scope reaches no bin
@@ -2131,9 +2126,9 @@ def panel_reliability_series(panel: dict, scope: str) -> tuple:
 def panel_headline(panel: dict) -> dict:
     """The scalars a summary block carries.
 
-    Values are ALREADY rounded to ``ROUND_DP`` by the emit pass -- callers must
-    NOT round again (the round-once invariant; a second pass makes the last
-    decimal irreproducible).
+    Values are already rounded to ROUND_DP by the emit pass, so callers must not
+    round again. That is the round-once invariant: a second pass makes the last
+    decimal irreproducible.
     """
     reference = panel["brier"]["reference"]
     return {

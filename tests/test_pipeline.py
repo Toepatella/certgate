@@ -1,9 +1,13 @@
 """SPEC "Tests" for the end-to-end pipeline.
 
-In-distribution certification and coverage; the exact decline partition; the
-site-disjointness gate; run-to-run determinism of the certified tiers; the
-record-carrying cluster gate (empty sites do not count); the target-pool floor;
-and a complete provenance block.
+What it covers:
+  - in-distribution certification and coverage
+  - the exact decline partition
+  - the site-disjointness gate
+  - run-to-run determinism of the certified tiers
+  - the record-carrying cluster gate (empty sites do not count)
+  - the target-pool floor
+  - a complete provenance block
 """
 import json
 
@@ -57,8 +61,11 @@ def test_two_runs_byte_identical_certified_tiers(in_dist):
 
 
 def test_insufficient_clusters_counts_carrying_only(in_dist):
-    """45 record-carrying sites + 20 empty sites: the gate counts carrying
-    only, so 45 < MIN_CAL_CLUSTERS declines even though n_sites == 65."""
+    """Empty sites do not count toward the cluster gate.
+
+    45 record-carrying sites plus 20 empty ones: n_sites is 65, but the gate
+    sees 45, which is below MIN_CAL_CLUSTERS, so it declines.
+    """
     cfg = SimConfig()
     rng = np.random.default_rng(4)
     sub = draw_cohort(cfg, 45, rng, site_label_prefix="carry")
@@ -91,8 +98,8 @@ def test_provenance_block_present_with_all_keys(in_dist):
     assert set(prov) >= {"python", "packages", "seed", "input_hashes",
                          "meta", "timestamp_utc"}
     assert set(prov["packages"]) == {"numpy", "scipy", "scikit-learn"}
-    # audit V11: every array the certificate depends on is hashed -- x, y AND
-    # the site partition of all three cohorts, plus the target.
+    # Every array the certificate depends on is hashed: x, y and the site
+    # partition of all three cohorts, plus the target. Ref: audit V11.
     assert set(prov["input_hashes"]) == {
         "train_x", "train_y", "train_site_id",
         "aux_x", "aux_y", "aux_site_id",
@@ -101,10 +108,11 @@ def test_provenance_block_present_with_all_keys(in_dist):
 
 
 def test_provenance_binds_label_content_and_shape(in_dist):
-    """audit V11 / V6 #9: flipping one calibration label must change the
-    recorded hashes -- two runs that certify differently must never share a
-    provenance block. The digest also binds shape, so a reshaped matrix is
-    not provenance-identical."""
+    """Flipping one calibration label changes the hashes (audits V11, V6 #9).
+
+    Two runs that certify differently must never share a provenance block.
+    The digest binds shape too, so a reshaped matrix is not identical.
+    """
     tr, ax, ca, tg = (in_dist[k] for k in ("train", "aux", "cal", "tgt"))
     rep1 = run_certgate(tr, ax, ca, tg.x, target_label="bind",
                         modes=("baseline",))
@@ -127,10 +135,14 @@ def test_provenance_binds_label_content_and_shape(in_dist):
 
 
 def test_baseline_reports_are_target_label_invariant(in_dist):
-    """audit V3 / V6 #12-adjacent: baseline atoms are target-independent, so
-    the certified tier, operative rung and answered mask must be byte-identical
-    across spellings of the target label. Fails on the old label-seeded
-    permutation, under which the deployed threshold moved with a respelling."""
+    """Baseline atoms ignore the target, so its label cannot matter.
+
+    The certified tier, operative rung and answered mask must be byte-identical
+    across spellings of the target label. The old label-seeded permutation
+    moved the deployed threshold on a respelling, and fails here.
+
+    Refs: audits V3, V6 #12-adjacent.
+    """
     tr, ax, ca, tg = (in_dist[k] for k in ("train", "aux", "cal", "tgt"))
     reps = [run_certgate(tr, ax, ca, tg.x, target_label=lbl,
                          modes=("baseline",))
@@ -143,10 +155,12 @@ def test_baseline_reports_are_target_label_invariant(in_dist):
 
 
 def test_delta_accounting_spy(in_dist, monkeypatch):
-    """audit V6 #2/#3: record every delta actually handed to wsr_reject.
-    The baseline path must spend exactly {DELTA}; the BBSE walk exactly
-    {BBSE_DELTA_BET}. A mutation spending delta=0.5, or the full DELTA on the
-    BBSE bet, fails here."""
+    """Record every delta actually handed to wsr_reject (audit V6 #2/#3).
+
+    The baseline path must spend exactly DELTA, the BBSE walk exactly
+    BBSE_DELTA_BET. A mutation spending delta=0.5, or the full DELTA on the
+    BBSE bet, fails here.
+    """
     import certgate.certify as certify_mod
     import certgate.shift as shift_mod
     from certgate.model import Head
@@ -189,10 +203,11 @@ def test_delta_accounting_spy(in_dist, monkeypatch):
 
 
 def test_walk_order_is_aux_derived(in_dist, monkeypatch):
-    """audit V6 #5: the order handed to fixed_sequence_walk must equal the
-    S_aux-derived walk_order recomputed independently. A mutation deriving the
-    order from S_cal -- selection on the testing data, the reason S_aux
-    exists -- fails here."""
+    """The walk order must be the S_aux-derived one (audit V6 #5).
+
+    It is recomputed independently here and compared. Deriving it from S_cal
+    would be selection on the testing data, which is exactly why S_aux exists.
+    """
     import certgate.pipeline as pl
     from certgate.model import fit_head
     from certgate.certify import influence_atoms, walk_order
@@ -218,8 +233,10 @@ def test_walk_order_is_aux_derived(in_dist, monkeypatch):
 
 
 def test_unknown_or_empty_modes_raise(in_dist):
-    """audit V23: a misspelled mode must never yield an all-declined report
-    indistinguishable from a statistical decline."""
+    """A misspelled mode raises, never an all-declined report (audit V23).
+
+    Such a report would be indistinguishable from a statistical decline.
+    """
     tr, ax, ca, tg = (in_dist[k] for k in ("train", "aux", "cal", "tgt"))
     with pytest.raises(ValueError, match="unknown-mode"):
         run_certgate(tr, ax, ca, tg.x, modes=("bsse",))
@@ -228,9 +245,11 @@ def test_unknown_or_empty_modes_raise(in_dist):
 
 
 def test_single_class_fitting_cohort_raises(in_dist):
-    """audit V18: the require_both_classes=False relaxation is sanctioned for
-    TARGET pools only; an all-negative calibration cohort must be refused at
-    the boundary where roles are known."""
+    """An all-negative calibration cohort is refused (audit V18).
+
+    The require_both_classes=False relaxation is sanctioned for target pools
+    only, and the boundary is where the cohort roles are known.
+    """
     tr, ax, ca, tg = (in_dist[k] for k in ("train", "aux", "cal", "tgt"))
     ca_neg = Cohort(x=ca.x, y=np.zeros(ca.n, dtype=bool), site_id=ca.site_id,
                     site_labels=ca.site_labels)
@@ -239,9 +258,11 @@ def test_single_class_fitting_cohort_raises(in_dist):
 
 
 def test_malformed_oracle_labels_raise(in_dist):
-    """audit V19: oracle_target_y was the one input with no validation --
-    a length-1 array broadcast to a fabricated composition and a float
-    probability array coerced to all-True."""
+    """oracle_target_y is validated like every other input (audit V19).
+
+    Unvalidated, a length-1 array broadcast into a fabricated composition and
+    a float probability array was coerced to all-True.
+    """
     tr, ax, ca, tg = (in_dist[k] for k in ("train", "aux", "cal", "tgt"))
     with pytest.raises(ValueError, match="bad-oracle-labels"):
         run_certgate(tr, ax, ca, tg.x, oracle_target_y=np.array([True]))
@@ -251,8 +272,10 @@ def test_malformed_oracle_labels_raise(in_dist):
 
 
 def test_target_overlapping_calibration_raises(in_dist):
-    """audit V9: a target named as (or containing) a calibration site gets a
-    threshold selected partly on itself -- must be refused."""
+    """A target that names a calibration site must be refused (audit V9).
+
+    Otherwise its threshold is selected partly on itself.
+    """
     tr, ax, ca, tg = (in_dist[k] for k in ("train", "aux", "cal", "tgt"))
     with pytest.raises(CohortError, match="site-disjoint"):
         run_certgate(tr, ax, ca, tg.x, target_label=ca.site_labels[0])
@@ -263,8 +286,10 @@ def test_target_overlapping_calibration_raises(in_dist):
 
 
 def test_gated_report_has_stable_diagnostic_keys(in_dist):
-    """audit V25: gated exits must emit the same diagnostic key set as full
-    reports (None where uncomputable), so consumers never KeyError."""
+    """Gated exits carry the full diagnostic key set (audit V25).
+
+    Values are None where uncomputable, so a consumer never hits a KeyError.
+    """
     tr, ax, ca, tg = (in_dist[k] for k in ("train", "aux", "cal", "tgt"))
     rep = run_certgate(tr, ax, ca, tg.x[:5], target_label="gate-keys")
     d = rep["diagnostic"]
@@ -284,9 +309,11 @@ def test_nonfinite_target_raises(in_dist):
 
 
 def test_target_gates_use_canonical_normal_form(in_dist):
-    """verification F2: the V9 gates must compare identity under the same
-    normal form densify_sites uses -- 's-0000 ' (trailing space) and 'S-0000'
-    (case variant) name calibration sites and must be refused."""
+    """The V9 gates use densify_sites' normal form (verification F2).
+
+    's-0000 ' (trailing space) and 'S-0000' (case variant) both name
+    calibration sites, so both must be refused.
+    """
     tr, ax, ca, tg = (in_dist[k] for k in ("train", "aux", "cal", "tgt"))
     a_cal_site = ca.site_labels[0]
     for spelling in (a_cal_site + " ", a_cal_site.upper()):
@@ -295,9 +322,11 @@ def test_target_gates_use_canonical_normal_form(in_dist):
 
 
 def test_misaligned_target_site_id_raises_on_every_path(in_dist):
-    """verification N3/F4: a target_site_id shorter than the pool must be a
-    typed boundary error under BOTH mode sets -- previously silent on the
-    baseline path, where a partial column could satisfy the V9 gate."""
+    """A short target_site_id is a typed boundary error (verification N3/F4).
+
+    It must raise under every mode set. The baseline path was once silent
+    here, because a partial column could satisfy the V9 gate.
+    """
     tr, ax, ca, tg = (in_dist[k] for k in ("train", "aux", "cal", "tgt"))
     short = np.array(["z0", "z1"], dtype=object)
     for modes in (("baseline",), ("bbse",), ("baseline", "bbse")):
@@ -307,9 +336,11 @@ def test_misaligned_target_site_id_raises_on_every_path(in_dist):
 
 
 def test_bbse_fit_is_target_label_free_and_data_seeded():
-    """verification G-2: the BBSE bootstrap seed derives from the target DATA,
-    never the label -- byte-identical pools must get byte-identical fits under
-    any respelling, and a changed pool must change the stream."""
+    """The BBSE bootstrap seed comes from target data (verification G-2).
+
+    Never from the target label: byte-identical pools get byte-identical fits
+    under any respelling, and a changed pool changes the stream.
+    """
     from certgate.pipeline import _bbse_seed_rng
     x1 = np.arange(24, dtype=np.float64).reshape(6, 4)
     s1 = np.arange(6, dtype=np.int64) % 2
@@ -325,8 +356,11 @@ def test_bbse_fit_is_target_label_free_and_data_seeded():
 
 
 def test_provenance_binds_run_configuration(in_dist):
-    """verification N8: two runs whose certified tiers can differ (different
-    modes / alphas) must not share a byte-identical provenance record."""
+    """Different modes or alphas change provenance (verification N8).
+
+    Two runs whose certified tiers can differ must never share a
+    byte-identical provenance record.
+    """
     tr, ax, ca, tg = (in_dist[k] for k in ("train", "aux", "cal", "tgt"))
     r1 = run_certgate(tr, ax, ca, tg.x, target_label="cfg",
                       modes=("baseline",))
@@ -339,15 +373,17 @@ def test_provenance_binds_run_configuration(in_dist):
 
 
 def test_composition_three_way_whenever_bbse_fit_holds(in_dist):
-    """verification N5: the BBSE-implied composition view is an estimated
-    quantity, not part of the certificate -- it must appear whenever the fit
-    did not decline, even when baseline wins deployment."""
+    """The composition view is estimated, not certified (verification N5).
+
+    It must appear whenever the BBSE fit did not decline, even when baseline
+    wins deployment.
+    """
     tr, ax, ca, tg = (in_dist[k] for k in ("train", "aux", "cal", "tgt"))
     rep = run_certgate(tr, ax, ca, tg.x, target_label="3way",
                        oracle_target_y=tg.y)
     comp = rep["diagnostic"]["composition"]
     bbse_diag = rep["diagnostic"]["bbse"]
-    # stable-key diagnostics: rho_point is ALWAYS present now, None until the
+    # stable-key diagnostics: rho_point is always present, and None until the
     # fit reaches the rho stage (fixture audit 2026-07-25)
     if bbse_diag.get("rho_point") is not None:     # fit reached the rho stage
         assert "bbse_true_class" in comp
@@ -355,10 +391,14 @@ def test_composition_three_way_whenever_bbse_fit_holds(in_dist):
 
 
 def test_target_x_cohort_rejected(in_dist):
-    """fixture audit 2026-07-25: passing the target Cohort itself -- the
-    natural mistake, since the other three positional arguments ARE Cohorts --
-    must be a typed boundary error telling the caller to pass target.x, never
-    a raw numpy float()-conversion TypeError from deep inside asarray."""
+    """Passing the target Cohort instead of target.x is a typed error.
+
+    It is the natural mistake, since the other three positional arguments are
+    Cohorts. The message must name target.x rather than surface a numpy
+    float()-conversion TypeError from deep inside asarray.
+
+    Ref: fixture audit 2026-07-25.
+    """
     tr, ax, ca, tg = (in_dist[k] for k in ("train", "aux", "cal", "tgt"))
     with pytest.raises(ValueError, match="target-is-cohort"):
         run_certgate(tr, ax, ca, tg)
@@ -368,9 +408,11 @@ def test_target_x_cohort_rejected(in_dist):
 
 
 def test_feasibility_keys_are_strings_and_json_stable(in_dist):
-    """fixture audit 2026-07-25: feasibility is keyed by str(alpha), so a
-    saved report JSON-round-trips without json.dump silently stringifying
-    float keys out from under a consumer."""
+    """feasibility is keyed by str(alpha) (fixture audit 2026-07-25).
+
+    A saved report therefore round-trips, instead of json.dump silently
+    stringifying float keys out from under a consumer.
+    """
     tr, ax, ca, tg = (in_dist[k] for k in ("train", "aux", "cal", "tgt"))
     rep = run_certgate(tr, ax, ca, tg.x, target_label="feas")
     feas = rep["diagnostic"]["feasibility"]
@@ -379,9 +421,13 @@ def test_feasibility_keys_are_strings_and_json_stable(in_dist):
 
 
 def test_bbse_diagnostics_stable_keys_across_mode_sets(in_dist):
-    """fixture audit 2026-07-25: diagnostic['bbse'] carries the same stable
-    key set whether BBSE ran (full fit) or not (the not-run placeholder) --
-    a consumer indexing any key gets None, never KeyError."""
+    """diagnostic['bbse'] has one key set, whether BBSE ran or not.
+
+    A consumer indexing any key gets None from the not-run placeholder, never
+    a KeyError.
+
+    Ref: fixture audit 2026-07-25.
+    """
     from certgate.shift import bbse_diagnostics
     keys = set(bbse_diagnostics())
     tr, ax, ca, tg = (in_dist[k] for k in ("train", "aux", "cal", "tgt"))

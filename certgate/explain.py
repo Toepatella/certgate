@@ -1,18 +1,24 @@
-"""SPEC section "explain.py": attributions, abstention explanations, composition.
+"""Attributions, abstention explanations, and answered-set composition.
 
-For the linear head the additive attributions ``phi_j = coef_j * z_j`` (in
-standardized space) are exact INTERVENTIONAL Shapley values with the S_train
-feature-mean baseline (the Linear SHAP result) -- ``sum(phi) + intercept ==
-logit`` to machine precision, no sampling (METHODS section 6). The value
-function must be named (audit V20): under correlated features the CONDITIONAL
-Shapley values differ from these, and the efficiency identity does not
-distinguish the two (both decompositions satisfy it). Abstentions are explained
-against the answering bar ``L* = log(tau*/(1-tau*))``: answering requires
-``|logit| >= L*``, so the margin-to-answer is ``L* - |logit|`` and is ``> 0``
-exactly for declined cases. Declined cases additionally carry an exact
-contrastive artifact (``counterfactual_to_answer``): the closed-form minimal
-move -- whole-vector or single-feature -- that would make the case answerable,
-a score-space recourse statement, never a clinical recommendation.
+For the linear head the additive attributions phi_j = coef_j * z_j, in
+standardized space, are exact interventional Shapley values against the S_train
+feature-mean baseline -- the Linear SHAP result. No sampling is involved, and
+sum(phi) + intercept == logit to machine precision.
+
+Naming the value function is load-bearing. Under correlated features the
+conditional Shapley values differ from these, and the efficiency identity does
+not tell the two apart, since both decompositions satisfy it.
+
+Abstentions are explained against the answering bar L* = log(tau*/(1-tau*)).
+Answering requires |logit| >= L*, so the margin-to-answer is L* - |logit| and
+is positive exactly for declined cases.
+
+Declined cases also carry an exact contrastive artifact,
+counterfactual_to_answer: the closed-form minimal move, whole-vector or
+single-feature, that would make the case answerable. It is a score-space
+recourse statement, never a clinical recommendation.
+
+Refs: SPEC "explain.py"; METHODS 6; audit V20.
 """
 from __future__ import annotations
 
@@ -37,10 +43,12 @@ def _standardize(head: "Head", x_row) -> np.ndarray:
 
 
 def global_importance(head: "Head") -> np.ndarray:
-    """Standardized-space coefficients -- direction and strength per feature (SPEC explain.py).
+    """Standardized-space coefficients: direction and strength per feature.
 
-    The head's ``coef`` already lives in standardized space, so it IS the global
-    importance vector (METHODS section 6, "standardized coefficients").
+    The head's coef already lives in standardized space, so it is the global
+    importance vector.
+
+    Refs: SPEC "explain.py"; METHODS 6 ("standardized coefficients").
     """
     return np.asarray(head.coef, dtype=np.float64)
 
@@ -48,12 +56,15 @@ def global_importance(head: "Head") -> np.ndarray:
 def local_attribution(head: "Head", x_row) -> dict:
     """Exact additive attributions for one case (SPEC explain.py).
 
-    Returns ``base`` (intercept), ``phi`` (``coef_j * z_j``), ``logit`` and
-    ``p1``, with ``sum(phi) + base == logit`` exact by construction.
-    ``phi`` are the INTERVENTIONAL Shapley values of the linear logit with the
-    S_train feature-mean baseline (Linear SHAP; audit V20) -- exact for that
-    value function, and distinct from conditional Shapley values whenever
+    Returns base (the intercept), phi (coef_j * z_j), logit and p1. By
+    construction sum(phi) + base == logit exactly.
+
+    phi are the interventional Shapley values of the linear logit against the
+    S_train feature-mean baseline, i.e. Linear SHAP. They are exact for that
+    value function, and differ from conditional Shapley values whenever
     features are correlated.
+
+    Refs: audit V20.
     """
     z = _standardize(head, x_row)
     phi = head.coef * z
@@ -63,11 +74,16 @@ def local_attribution(head: "Head", x_row) -> dict:
 
 
 def abstention_explanation(head: "Head", x_row, tau_star) -> dict:
-    """Explain why a case is answered or declined at threshold ``tau_star`` (SPEC explain.py).
+    """Explain why a case is answered or declined at threshold tau_star.
 
-    ``L* = log(tau*/(1-tau*))``; answering requires ``|logit| >= L*``. Reports the
-    signed margin-to-answer (``> 0`` iff declined) and each feature's signed
-    contribution toward (or away from) the decided-class confidence.
+    The answering bar is L* = log(tau*/(1-tau*)), so answering requires
+    |logit| >= L*.
+
+    Reports the signed margin-to-answer, positive exactly when the case is
+    declined, and each feature's signed contribution toward or away from the
+    decided-class confidence.
+
+    Refs: SPEC "explain.py".
     """
     attr = local_attribution(head, x_row)
     logit = attr["logit"]
@@ -88,14 +104,18 @@ def abstention_explanation(head: "Head", x_row, tau_star) -> dict:
     }
 
 
-# Headroom added to the flip target in logit space. A delta landing EXACTLY on
-# |logit| = L* is DECLINED by the deployed float64 rule ``head.score(x) >= tau``
-# on a measurable fraction of cases: sigmoid(log(tau/(1-tau))) < tau in float64
-# for 6 of the 23 frozen TAU_GRID thresholds (1 ULP each), summation-order noise
-# between the attribution sum and Head.logit's BLAS dot reaches ~3e-14, and the
-# raw-space round trip adds ~1e-12 (adversarial verification 2026-07-31: exact
-# landings failed the deployed rule on 18.2% of fixture-head declines). 1e-9
-# dominates every measured shortfall; realized confidence moves by < 3e-10.
+# Headroom added to the flip target in logit space. A delta landing exactly on
+# |logit| = L* is declined by the deployed float64 rule head.score(x) >= tau on
+# a measurable fraction of cases. Three float64 effects stack up:
+#   - sigmoid(log(tau/(1-tau))) < tau for 6 of the 23 frozen TAU_GRID
+#     thresholds, 1 ULP each;
+#   - summation-order noise between the attribution sum and Head.logit's BLAS
+#     dot reaches ~3e-14;
+#   - the raw-space round trip adds ~1e-12.
+# 1e-9 dominates every measured shortfall, and realized confidence moves by
+# less than 3e-10.
+# Ref: adversarial verification 2026-07-31 -- exact landings failed the
+# deployed rule on 18.2% of fixture-head declines.
 _EPS_ANSWER_LOGIT = 1e-9
 
 
@@ -103,33 +123,37 @@ def counterfactual_to_answer(head: "Head", x_row, tau_star) -> dict:
     """Minimal counterfactuals into the answer region (SPEC explain.py).
 
     The head is linear in standardized space, so "what is the smallest change
-    that would make this case answerable?" has a closed-form answer. For a
-    declined case with margin ``m = L* - |logit| > 0`` on its current side
-    ``s = sign(logit)`` (tie at 0 -> +1):
+    that would make this case answerable?" has a closed-form answer. Take a
+    declined case with margin m = L* - |logit| > 0 on its current side
+    s = sign(logit), where a tie at 0 counts as +1. Two moves:
 
-    - minimal standardized-L2 move: direction ``s*coef``, exact minimal
-      distance ``m/||coef||_2`` (no move of smaller norm flips, in any
-      direction: Cauchy-Schwarz);
-    - single-feature counterfactual: ``delta_z_j = s*m/coef_j`` (raw units
-      ``delta_x_j = sd_j * delta_z_j``), ``inf`` where ``coef_j == 0``.
+    - minimal standardized-L2 move: direction s*coef, exact minimal distance
+      m/||coef||_2. By Cauchy-Schwarz no smaller-norm move flips it, in any
+      direction.
+    - single-feature counterfactual: delta_z_j = s*m/coef_j, in raw units
+      delta_x_j = sd_j * delta_z_j, and inf where coef_j == 0.
 
-    The REPORTED distances are those exact minima; the RETURNED delta vectors
-    are computed from ``m + _EPS_ANSWER_LOGIT`` so the flip holds under the
-    DEPLOYED answering rule ``head.score(x_cf) >= tau_star`` in float64 -- an
-    exact landing on the bar provably does not (see ``_EPS_ANSWER_LOGIT``).
-    ``flip_verified`` re-evaluates that deployed rule with no tolerance.
-    ``confidence_at_flip`` is the realized ``head.score`` at the flipped
-    point -- the WEAKEST answerable answer, within ~3e-10 above ``tau_star``
-    -- and ``answered_class_on_flip`` the current side's predicted class;
-    both are None unless the case was declined and the flip verified.
+    The reported distances are those exact minima. The returned delta vectors
+    instead use m + _EPS_ANSWER_LOGIT, so the flip survives the deployed
+    float64 rule head.score(x_cf) >= tau_star -- an exact landing on the bar
+    provably does not. flip_verified re-evaluates that deployed rule with no
+    tolerance.
 
-    These are SCORE-SPACE recourse statements about the gate, never causal or
-    clinically achievable actions: features are not independently manipulable
-    (a missingness indicator cannot "move 0.4"), and the artifact answers
-    "what would the gate need", not "what should the clinician do". Answered
-    cases return zero deltas, distance 0 and an EMPTY ranking (never the
-    argsort-of-degenerate identity permutation -- audit V22 pattern); an
-    all-zero head cannot flip (distance ``inf``, ``flip_verified`` False).
+    confidence_at_flip is the realized head.score at the flipped point: the
+    weakest answerable answer, within ~3e-10 above tau_star.
+    answered_class_on_flip is the current side's predicted class. Both are None
+    unless the case was declined and the flip verified.
+
+    These are score-space recourse statements about the gate, never causal or
+    clinically achievable actions. Features are not independently manipulable
+    -- a missingness indicator cannot "move 0.4" -- and the artifact answers
+    what the gate would need, not what the clinician should do.
+
+    Two degenerate cases. An answered case returns zero deltas, distance 0 and
+    an empty ranking, never the argsort-of-degenerate identity permutation. An
+    all-zero head cannot flip: distance inf, flip_verified False.
+
+    Refs: _EPS_ANSWER_LOGIT; audit V22.
     """
     attr = local_attribution(head, x_row)
     logit = attr["logit"]
@@ -165,7 +189,7 @@ def counterfactual_to_answer(head: "Head", x_row, tau_star) -> dict:
     single_x = sd * single_z
     delta_x_min = sd * delta_z_min
 
-    # the DEPLOYED rule, exactly as pipeline.py compares it -- no tolerance
+    # the deployed rule, exactly as pipeline.py compares it -- no tolerance
     x_cf = np.asarray(x_row, dtype=np.float64) + delta_x_min
     score_cf = float(head.score(x_cf.reshape(1, -1))[0])
     flip_verified = bool(score_cf >= tau_star)
@@ -192,10 +216,12 @@ def counterfactual_to_answer(head: "Head", x_row, tau_star) -> dict:
 
 
 def cohort_abstention_profile(head: "Head", x, answered_mask) -> dict:
-    """Mean ``|phi_j|`` for answered vs declined populations + gap ranking (SPEC explain.py).
+    """Mean |phi_j| for answered and declined cases, plus a gap ranking.
 
-    Identifies systematic abstention drivers: features whose typical magnitude of
-    contribution differs most between answered and declined cases.
+    Identifies systematic abstention drivers: the features whose typical
+    contribution magnitude differs most between the two populations.
+
+    Refs: SPEC "explain.py".
     """
     x = np.asarray(x, dtype=np.float64)
     answered_mask = np.asarray(answered_mask, dtype=bool)
@@ -206,9 +232,10 @@ def cohort_abstention_profile(head: "Head", x, answered_mask) -> dict:
     mean_ans = abs_phi[answered_mask].mean(axis=0) if answered_mask.any() else np.full(d, np.nan)
     mean_dec = abs_phi[declined_mask].mean(axis=0) if declined_mask.any() else np.full(d, np.nan)
     gap = mean_ans - mean_dec
-    # when either population is empty the gap is undefined: the ranking is
-    # EMPTY, never argsort of all-NaN -- which returns the identity permutation
-    # and fabricates feature 0 as the top abstention driver (audit V22).
+    # When either population is empty the gap is undefined, so the ranking is
+    # empty. It is never argsort of all-NaN: that returns the identity
+    # permutation and fabricates feature 0 as the top abstention driver.
+    # Ref: audit V22.
     if np.isnan(gap).all():
         gap_ranking = np.array([], dtype=np.int64)
     else:
@@ -223,16 +250,66 @@ def cohort_abstention_profile(head: "Head", x, answered_mask) -> dict:
     }
 
 
-def composition(head: "Head", target_x, answered_mask, rho_point=None, oracle_y=None) -> dict:
-    """Answered-set class composition, reported up to three tagged ways (SPEC explain.py; audit F25).
+def gaussian_conditional_shapley_matrix(coef, cov) -> np.ndarray:
+    """(k, k) matrix B with phi_cond = z @ B.T (SPEC explain.py, 2026-08-21).
 
-    ``predicted_class`` (estimated): fraction the head calls positive.
-    ``bbse_true_class`` (estimated, label-shift-tagged, only if ``rho_point`` given):
-    the label-shift-corrected true-positive fraction, obtained by re-weighting the
-    source posterior odds by ``rho`` per record.
-    ``oracle_true_class`` (diagnostic, only if ``oracle_y`` given): the realized
-    true-positive fraction from oracle labels -- reveals whether a certificate was
-    earned by answering only easy negatives.
+    Conditional Shapley values of the linear logit w . z under the Gaussian
+    conditional value function of Aas, Jullum & Loland (2021), with
+    z ~ N(0, cov).
+
+    The conditional mean is linear, so every coalition value is c + a_S . z,
+    with a_S[S] = w_S + cov_SS^{-1} cov_SSbar w_Sbar and a_S[Sbar] = 0. The
+    Shapley sum over the 2^k coalitions then collapses to one k x k matrix,
+    computed exactly by enumeration, no sampling. pinv handles a singular
+    cov_SS, which is what a feature beside its __missing sibling produces.
+
+    Two checks on B. Its columns sum to w -- efficiency, sum_j phi_j = w . z.
+    And B == diag(w) when cov is the identity, where conditional and
+    interventional values coincide.
+    """
+    w = np.asarray(coef, dtype=np.float64).ravel()
+    cov = np.asarray(cov, dtype=np.float64)
+    k = w.shape[0]
+    if cov.shape != (k, k):
+        raise ValueError(f"gaussian_conditional_shapley_matrix: cov shape "
+                         f"{cov.shape} != ({k}, {k})")
+    fact = [1.0]
+    for i in range(1, k + 1):
+        fact.append(fact[-1] * i)
+    # a_S for every coalition, indexed by bitmask
+    a = np.zeros((1 << k, k), dtype=np.float64)
+    idx = np.arange(k)
+    for mask in range(1, 1 << k):
+        in_s = ((mask >> idx) & 1).astype(bool)
+        s_idx, sbar_idx = idx[in_s], idx[~in_s]
+        a[mask, s_idx] = w[s_idx]
+        if sbar_idx.size:
+            a[mask, s_idx] += np.linalg.pinv(cov[np.ix_(s_idx, s_idx)]) @ (
+                cov[np.ix_(s_idx, sbar_idx)] @ w[sbar_idx])
+    b = np.zeros((k, k), dtype=np.float64)
+    for mask in range(1 << k):
+        size = bin(mask).count("1")
+        weight = fact[size] * fact[k - size - 1] / fact[k] if size < k else 0.0
+        if weight == 0.0:
+            continue
+        for j in range(k):
+            if not (mask >> j) & 1:
+                b[j] += weight * (a[mask | (1 << j)] - a[mask])
+    return b
+
+
+def composition(head: "Head", target_x, answered_mask, rho_point=None, oracle_y=None) -> dict:
+    """Answered-set class composition, reported up to three tagged ways.
+
+    - predicted_class (estimated): the fraction the head calls positive.
+    - bbse_true_class (estimated, label-shift-tagged, only when rho_point is
+      given): the label-shift-corrected true-positive fraction, from
+      re-weighting the source posterior odds by rho per record.
+    - oracle_true_class (diagnostic, only when oracle_y is given): the realized
+      true-positive fraction from oracle labels. This is what reveals a
+      certificate earned by answering only easy negatives.
+
+    Refs: SPEC "explain.py"; audit F25.
     """
     target_x = np.asarray(target_x, dtype=np.float64)
     answered_mask = np.asarray(answered_mask, dtype=bool)

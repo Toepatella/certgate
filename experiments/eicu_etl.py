@@ -1,43 +1,42 @@
-"""SPEC section "Real-data protocol (eICU-CRD v2.0)": eICU extract -> CertGate cohorts.
+"""Turn an eICU-CRD v2.0 extract into CertGate cohorts.
 
-Reads a released (or mock) eICU-CRD v2.0 extract directory -- five gzipped
-CSVs, ``patient`` / ``hospital`` / ``apacheApsVar`` / ``apachePredVar`` /
-``apachePatientResult`` -- with the ``csv`` module (NEVER line-based tools:
-``apacheadmissiondx`` and the discharge-location fields carry embedded
-newlines/commas/quotes), and emits a finite float64 feature matrix, the RAW
-two-valued outcome strings, and the RAW site identifiers, ready for
-``certgate.validate.from_raw``.
+Reads a released (or mock) extract directory of five gzipped CSVs: patient,
+hospital, apacheApsVar, apachePredVar, apachePatientResult. Parsing goes
+through the csv module, never a line-based tool -- apacheadmissiondx and the
+discharge-location fields carry embedded newlines, commas and quotes.
 
-The protocol is frozen in ``EICU-PROTOCOL.md`` and pre-registered BEFORE the
-extract was read; this module is its executable form. Four disciplines are
-load-bearing and every one traces to a stated risk:
+Emits a finite float64 feature matrix, the raw two-valued outcome strings and
+the raw site identifiers, ready for certgate.validate.from_raw.
 
-* **Deny by default** (T-1). ``FEATURE_NAMES`` is built by concatenating the
-  same frozen tuples used to one-hot, so names and columns cannot drift, and
-  ``assert_no_leak_columns`` runs at IMPORT time over ``EICU_LEAK_DENYLIST`` --
-  a leak cannot even be imported, let alone certified.
-* **Dual-channel missingness** (T-2). Both ``''`` (the documented SQL NULL --
-  the MIT-LCP loader is ``NULL ''``) AND the literal ``-1`` (the UNdocumented
-  APACHE sentinel) map to NaN. Handling only one poisons the matrix with a
-  finite ``-1``. Negative mass anywhere else is an unrecognised sentinel and
-  ABORTS (``reason=unexpected-negative-sentinel``) rather than flowing.
-* **Site-informative missingness is measured, never imputed away** (T-3/T-4).
-  CertGate v2 scope-cut covariate-shift mode, and the dataset authors state
-  that data completion varies by hospital, so ``preflight`` reports per-site
-  sentinel dispersion and per-site APACHE coverage, and APACHE availability
-  enters the ATTRITION LEDGER -- it is never applied as a filter in the
-  primary arm.
-* **Imputation is fit on S_train rows ONLY**. Pooled-matrix means would let the
-  target pool's covariate distribution into the training features: a
-  transductive leak no downstream gate catches.
+EICU-PROTOCOL.md freezes the protocol, pre-registered before the extract was
+read; this module is its executable form. Four disciplines are load-bearing,
+and each traces to a stated risk:
 
-The site (``patient.hospitalid``) is the unit of statistical independence;
-``hospitalid`` and ``wardid`` are on the feature denylist because a head that
-can read the site off the feature vector destroys the between-site
-generalisation the certificate rests on (audit V1's estimand is a SITE
-POPULATION AVERAGE).
+  - Deny by default. FEATURE_NAMES concatenates the same frozen tuples used to
+    one-hot, so names and columns cannot drift, and assert_no_leak_columns runs
+    at import over EICU_LEAK_DENYLIST -- a leak cannot even be imported.
+  - Dual-channel missingness. Both '' (the documented SQL NULL; the MIT-LCP
+    loader is NULL '') and a literal -1 (the undocumented APACHE sentinel) map
+    to NaN; handling only one leaves a finite -1 in the matrix. Any other
+    negative is an unrecognised sentinel and aborts
+    (reason=unexpected-negative-sentinel).
+  - Site-informative missingness is measured, never imputed away. CertGate v2
+    cut covariate-shift mode, and the dataset authors say completion varies by
+    hospital, so preflight reports per-site sentinel dispersion and APACHE
+    coverage, and availability enters the attrition ledger rather than
+    filtering the primary arm.
+  - Imputation is fit on S_train rows only. A pooled-matrix mean would be a
+    transductive leak no downstream gate catches.
+
+The site (patient.hospitalid) is the unit of statistical independence.
+hospitalid and wardid are on the feature denylist: a head that can read the
+site off the feature vector destroys the between-site generalisation the
+certificate rests on, and the estimand is a site population average.
 
 Stdlib + numpy only.
+
+Refs: SPEC "Real-data protocol (eICU-CRD v2.0)"; EICU-PROTOCOL.md; threats T-1,
+T-2, T-3 and T-4 (one per bullet, in order); audit V1 (the estimand).
 """
 from __future__ import annotations
 
@@ -61,14 +60,14 @@ csv.field_size_limit(10 ** 7)
 # =============================================================== errors =====
 
 class EicuError(ValueError):
-    """Every eICU-boundary rejection (SPEC "Real-data protocol"; audit F05/F35).
+    """Every eICU-boundary rejection.
 
-    Message form::
+    Message form:
 
         eicu_etl.<function>: <what failed>, got <repr> (reason=<tag>)
 
-    The reason-tag vocabulary is a CLOSED set (tests match on these
-    substrings)::
+    The reason-tag vocabulary is a closed set. Tests match on these
+    substrings.
 
         missing-table            duplicate-header          missing-column
         undecodable-table        truncated-table
@@ -81,9 +80,11 @@ class EicuError(ValueError):
         nonfinite-after-impute   leak-column-in-features   feature-width-mismatch
         record-level-output      hospitalid-unparseable    empty-cohort
 
-    ``record-level-output`` is raised by ``run_eicu.assert_aggregate_only``,
-    which imports this type; it is listed here because the vocabulary is
-    closed and shared.
+    record-level-output is raised by run_eicu.assert_aggregate_only, which
+    imports this type. It is listed here because the vocabulary is closed and
+    shared across both modules.
+
+    Refs: SPEC "Real-data protocol"; audits F05, F35.
     """
 
 
@@ -91,18 +92,19 @@ _UNSET = object()
 
 
 def _err(func: str, what: str, got=_UNSET, *, reason: str) -> EicuError:
-    """Build the house-format ``EicuError`` (message form in ``EicuError``)."""
+    """Build the house-format EicuError (message form documented on the class)."""
     if got is _UNSET:
         return EicuError(f"eicu_etl.{func}: {what} (reason={reason})")
     return EicuError(f"eicu_etl.{func}: {what}, got {got!r} (reason={reason})")
 
 
 # ============================================================ constants =====
-# B.0: protocol constants live HERE, at module top of the experiment module --
-# certgate/constants.py is NOT touched (no eICU constant enters the core
-# package). Every name below is pinned literally by tests/test_constants.py
-# (the run_synthetic.py precedent, extended); a red constants test is a design
-# change, not a nuisance (audit F13).
+# Protocol constants live here, at the top of the experiment module.
+# certgate/constants.py is never touched -- no eICU constant enters the core
+# package. Every name below is pinned literally by tests/test_constants.py,
+# extending the run_synthetic.py precedent; a red constants test is a design
+# change, not a nuisance.
+# Ref: EICU-PROTOCOL B.0; audit F13.
 
 EICU_TABLES = ("patient", "hospital", "apacheApsVar", "apachePredVar",
                "apachePatientResult")
@@ -121,34 +123,34 @@ EICU_MAX_CROSS_SITE_PATIENT_SHARE = 0.01
 EICU_N_TARGET_SITES = 24
 EICU_SPLIT_NAMESPACE = 9
 EICU_SPLIT_REPLICATES = 20
-EICU_MIN_TOTAL_SITES = 149      # SUFFICIENT floor, not the tight one: int()
+EICU_MIN_TOTAL_SITES = 149      # a sufficient floor, not the tight one: int()
                                 # truncation in the 40/20/40 split makes the
-                                # calibration count non-monotone in the total
-                                # (148 -> 51, 149 -> 50), so the checkable
-                                # property is "at and above 149 the projection
-                                # always clears MIN_CAL_CLUSTERS". The tight
-                                # breakpoint is 146; this keeps 3 sites of slack.
+                                # calibration count non-monotone (148 -> 51,
+                                # 149 -> 50). Tight breakpoint 146, so this
+                                # keeps 3 sites of slack.
 EICU_N_FEATURES = 161
 EICU_ARMS = ("primary", "apache-linked", "apache-complete")
 EICU_POOLED_TARGET_LABEL = "eicu-target-pool"
 
-# ---- the outcome-informative-missingness gates (2026-07-31 audit, E-9) -----
-# APACHE day-1 variables are defined over the first 24 hours, so a stay that
-# ends BECAUSE THE PATIENT DIED before the window closes carries no
-# apacheApsVar/apachePredVar row. Whole-row absence is therefore not only
-# SITE-informative (threat T-3) but partly an OUTCOME PROXY -- a leak channel
-# with no column name, invisible to a name denylist, to the -1 gate, to the
-# drift gate, and to the old alpha/coverage-conditioned F-D.
-EICU_MAX_OUTCOME_PREVALENCE_RATIO = 2.0   # absent:present prevalence ratio; above
+# ---- the outcome-informative-missingness gates -----------------------------
+# APACHE day-1 variables cover the first 24 hours. A stay that ends because the
+# patient died before that window closes carries no apacheApsVar/apachePredVar
+# row at all. Whole-row absence is therefore not only site-informative but
+# partly an outcome proxy: a leak channel with no column name, invisible to a
+# name denylist, to the -1 gate, to the drift gate, and to the old
+# alpha/coverage-conditioned F-D.
+# Ref: audit E-9 (2026-07-31); threat T-3.
+EICU_MAX_OUTCOME_PREVALENCE_RATIO = 2.0   # absent:present prevalence ratio; over
                                           # this the presence flags are an outcome
-                                          # proxy and build_raw ABORTS
+                                          # proxy and build_raw aborts
 EICU_MIN_OUTCOME_STRATUM = 100            # both strata must be populated for the
                                           # ratio to mean anything
-EICU_FEATURE_AUC_REVIEW = 0.75            # outcome_screen: a univariate AUC past this
-                                          # flags the column for timing re-audit
-# A NULL token that is not '' (Postgres text format writes \N) turns every
-# allowlisted APACHE numeric into 100% missing while build_raw succeeds; the
-# -1 gate protects only the opposite direction.
+EICU_FEATURE_AUC_REVIEW = 0.75            # outcome_screen: a univariate AUC past
+                                          # this flags the column for a timing
+                                          # re-audit
+# A null token that is not '' (Postgres text format writes \N) turns every
+# allowlisted APACHE numeric 100% missing while build_raw succeeds. The -1 gate
+# guards only the opposite direction.
 EICU_MAX_UNPARSEABLE_SHARE = 0.01
 _NULL_TOKEN_CARDINALITY_CAP = 8           # bounded retention of offending tokens
 
@@ -202,38 +204,39 @@ EICU_APV_NUMERIC = ("graftcount", "thrombolytics", "aids", "hepaticfailure",
                     "activetx", "readmit", "ima", "midur", "ventday1",
                     "oobventday1", "oobintubday1", "diabetes", "ejectfx")
 
-# ---- plausibility windows and the two frozen unit normalisations (A.5.6) ---
-# Interval semantics are stated per window; they are NOT symmetric, and the
-# fio2/temperature pairs are non-overlapping by construction so the convention
-# mapping is unambiguous (T-10).
-EICU_WINDOW_HEIGHT_CM = (100.0, 250.0)        # inclusive; 0/'' are the missing encodings
+# ---- plausibility windows and the two frozen unit normalisations -----------
+# Interval semantics are stated per window and are not symmetric. The fio2 and
+# temperature pairs do not overlap by construction, so the convention mapping
+# is unambiguous.
+#
+# The fio2 windows are lower-closed on purpose. fio2 0.21 (== 21) is room air,
+# the modal value of a ventilation-linked column, and ventilation status is
+# site-correlated -- discarding it would manufacture the very
+# informative-missingness channel this protocol undertakes to guard.
+# Ref: EICU-PROTOCOL A.5.6; threat T-10; audit E-18 (2026-07-31).
+EICU_WINDOW_HEIGHT_CM = (100.0, 250.0)        # inclusive; 0/'' encode missing
 EICU_WINDOW_WEIGHT_KG = (20.0, 300.0)         # inclusive
 EICU_WINDOW_PRE_ICU_HRS = (0.0, 720.0)        # inclusive
 EICU_WINDOW_FIO2_FRAC = (0.21, 1.0)           # [lo, hi]  -- fraction convention
-EICU_WINDOW_FIO2_PCT = (21.0, 100.0)          # [lo, hi]  -- percent convention
-                                              # LOWER-CLOSED (2026-07-31 audit, E-18):
-                                              # fio2 == 0.21 (== 21) is ROOM AIR, the
-                                              # modal value of a ventilation-linked
-                                              # column, and ventilation status is
-                                              # site-correlated -- discarding it would
-                                              # manufacture exactly the informative-
-                                              # missingness channel this protocol
-                                              # undertakes to guard. The fraction branch
-                                              # is tested FIRST, so 21.0 is unambiguous.
+EICU_WINDOW_FIO2_PCT = (21.0, 100.0)          # [lo, hi]  -- percent convention;
+                                              # both lower-closed, and the fraction
+                                              # branch is tried first, so 21.0 is
+                                              # unambiguous
 EICU_WINDOW_TEMP_C = (25.0, 45.0)             # (lo, hi)  -- Celsius
 EICU_WINDOW_TEMP_F = (77.0, 113.0)            # (lo, hi)  -- Fahrenheit contamination
 
-# Documented ordinal supports, used ONLY by preflight to warn on values outside
-# {documented range} u {-1} u {0} (A.5.6). They are never a filter.
+# Documented ordinal supports. Preflight uses them only to warn on values
+# outside {documented range} u {-1} u {0}. They are never a filter (A.5.6).
 EICU_ORDINAL_COLUMNS = ("intubated", "vent", "dialysis", "eyes", "motor",
                         "verbal", "meds")
 EICU_ORDINAL_RANGES = {"intubated": (0, 1), "vent": (0, 1), "dialysis": (0, 1),
                        "eyes": (1, 4), "motor": (1, 6), "verbal": (1, 5),
                        "meds": (0, 1)}
 
-# ---- leak denylist (A.7): deny by default, 36 entries ----------------------
-# Entries are (qualified source column, reason). assert_no_leak_columns is a
-# TEST, not a comment (T-1), and also runs at import.
+# ---- leak denylist: deny by default, 36 entries ----------------------------
+# Entries are (qualified source column, reason). assert_no_leak_columns
+# enforces the list, at import as well -- a check, not a comment.
+# Ref: EICU-PROTOCOL A.7; threat T-1.
 EICU_LEAK_DENYLIST = (
     ("apachepredvar.diedinhospital", "the outcome itself, as an integer"),
     ("apachepatientresult.actualhospitalmortality", "the outcome as a string"),
@@ -277,15 +280,16 @@ EICU_LEAK_DENYLIST = (
      "not a leak -- excluded as near-constant after the first-stay rule"),
 )
 
-#: Bare column names of the denylist (derived; the assertion surface).
+# Bare column names of the denylist (derived; this is the assertion surface).
 EICU_LEAK_COLUMNS = tuple(sorted({c.split(".")[-1]
                                   for c, _ in EICU_LEAK_DENYLIST}))
 
 
-# ---- required columns, addressed BY NAME (never by position) ---------------
-# The MIT-LCP \copy load is POSITIONAL against the DDL, which puts the
-# surrogate id FIRST -- contradicting the eicu.mit.edu doc pages. Addressing by
-# name is the only safe read (T-6).
+# ---- required columns, addressed by name and never by position -------------
+# The MIT-LCP \copy load is positional against the DDL, which puts the
+# surrogate id first -- contradicting the eicu.mit.edu doc pages. Addressing by
+# name is the only safe read.
+# Ref: threat T-6.
 EICU_REQUIRED_COLUMNS = {
     "patient": ("patientunitstayid", "patienthealthsystemstayid", "gender",
                 "age", "ethnicity", "hospitalid", "admissionheight",
@@ -304,7 +308,7 @@ EICU_REQUIRED_COLUMNS = {
 # ---- FEATURE_NAMES (A.5.8): names and columns cannot drift -----------------
 
 def _pairs(prefix, cols):
-    """``<prefix><col>`` immediately followed by its ``__missing`` sibling."""
+    """Each <prefix><col> name, immediately followed by its __missing sibling."""
     out = []
     for c in cols:
         out.append(f"{prefix}{c}")
@@ -313,7 +317,7 @@ def _pairs(prefix, cols):
 
 
 def _onehot_names(col, levels):
-    """One-hot names over a FROZEN level tuple; ``''`` renders as ``EMPTY``."""
+    """One-hot names over a frozen level tuple; '' renders as EMPTY."""
     return [f"{col}={(v if v else 'EMPTY')}" for v in levels]
 
 
@@ -335,14 +339,14 @@ FEATURE_INDEX = {name: i for i, name in enumerate(FEATURE_NAMES)}
 
 
 def assert_no_leak_columns(names) -> None:
-    """Refuse any denylisted source column in ``names`` (A.7; T-1).
+    """Refuse any denylisted source column in names (A.7; threat T-1).
 
-    Raises ``EicuError`` (``reason=leak-column-in-features``) if any
-    ``EICU_LEAK_DENYLIST`` column appears bare, under the ``aps_``/``apv_``
-    prefixes, with or without the ``__missing`` suffix, or as a ``<col>=``
-    one-hot stem. A leak here produces a spectacular and entirely fake result,
-    so the check is an assertion that runs at IMPORT and again inside
-    ``build_raw`` -- never a comment.
+    Raises EicuError (reason=leak-column-in-features) if an EICU_LEAK_DENYLIST
+    column appears bare, under the aps_ or apv_ prefix, with or without the
+    __missing suffix, or as a <col>= one-hot stem.
+
+    A leak here produces a spectacular and entirely fake result, so this runs
+    at import and again inside build_raw.
     """
     forbidden = {}
     stems = {}
@@ -367,8 +371,8 @@ def assert_no_leak_columns(names) -> None:
                    reason="leak-column-in-features")
 
 
-# The frozen width and the denylist are invariants of the MODULE, not of a
-# call: an import that violates either must fail loudly rather than wait for a
+# The frozen width and the denylist are invariants of the module, not of a
+# call. An import that violates either fails loudly, rather than waiting for a
 # certificate to be issued from a poisoned matrix.
 if len(FEATURE_NAMES) != EICU_N_FEATURES:
     raise _err("<module>",
@@ -409,10 +413,10 @@ _OTHER_CARDINALITY_CAP = 200      # unlisted-value counters are bounded
 # ============================================================== readers =====
 
 def _resolve_table_path(data_dir, table) -> str:
-    """Case-INSENSITIVE resolution of ``<table>.csv.gz`` (T-6).
+    """Case-insensitive resolution of <table>.csv.gz (threat T-6).
 
-    The released zip is CamelCase; a re-zip may not be. Raises ``EicuError``
-    (``reason=missing-table``) if no case-variant exists.
+    The released zip is CamelCase; a re-zip may not be. Raises EicuError
+    (reason=missing-table) if no case-variant exists.
     """
     want = f"{table.lower()}.csv.gz"
     try:
@@ -444,11 +448,11 @@ def _lower_header(raw_header, table, path):
     return lower
 
 
-#: Read-boundary failures that must become TYPED, table-naming errors.
-#: ``UnicodeDecodeError``'s "position N" is a decode-BUFFER offset, not a byte
-#: or row offset in the file, and neither it nor ``EOFError`` carries the table
-#: name -- on a five-table extract the operator cannot tell which file failed
-#: (2026-07-31 audit, E-14).
+# Read-boundary failures that must become typed, table-naming errors.
+# UnicodeDecodeError's "position N" is a decode-buffer offset, not a byte or
+# row offset in the file. Neither it nor EOFError names the table, so on a
+# five-table extract the operator cannot tell which file failed.
+# Ref: audit E-14 (2026-07-31).
 _READ_ERRORS = (UnicodeDecodeError, EOFError, gzip.BadGzipFile, zlib.error,
                 OSError)
 
@@ -460,8 +464,7 @@ def _read_reason(exc):
 
 
 def _read_failure(func, table, path, exc, fh=None):
-    """Typed re-raise naming the table, the path and (where the stream can
-    still be interrogated) the byte offset reached."""
+    """Typed re-raise naming the table, the path, and the byte offset if known."""
     where = ""
     try:                                    # best effort; never masks `exc`
         buf = getattr(fh, "buffer", None)
@@ -475,7 +478,7 @@ def _read_failure(func, table, path, exc, fh=None):
 
 
 def _read_header(path, table):
-    """Return ``(raw_header, lower_header)`` without consuming the table."""
+    """Return (raw_header, lower_header) without consuming the table."""
     fh = None
     try:
         with gzip.open(path, "rt", encoding="utf-8-sig", newline="") as fh:
@@ -491,8 +494,11 @@ def _read_header(path, table):
 
 
 def require_columns(header_lower, table, needed) -> None:
-    """Raise ``EicuError`` (``reason=missing-column``) naming the table, the
-    missing names, and the header as read (SPEC "Real-data protocol")."""
+    """Refuse a table that lacks a required column (SPEC "Real-data protocol").
+
+    Raises EicuError (reason=missing-column) naming the table, the missing
+    names, and the header as read.
+    """
     have = set(header_lower)
     missing = [c for c in needed if c not in have]
     if missing:
@@ -505,25 +511,27 @@ def require_columns(header_lower, table, needed) -> None:
 def read_table(data_dir, table):
     """Yield lowercase-keyed dict rows from a gzipped eICU CSV.
 
-    Resolves ``<table>.csv.gz`` case-INSENSITIVELY against the directory
-    listing (the released zip is CamelCase; a re-zip may not be), opens with
-    ``gzip.open(path, "rt", encoding="utf-8-sig", newline="")`` -- ``utf-8-sig``
-    strips a BOM if present and is a no-op otherwise -- and reads with
-    ``csv.reader`` taking the header via ``next(r)``. Header names are
-    ``.strip()``ed and ``.lower()``ed, so the CamelCase/lowercase ambiguity
-    cannot silently mismatch; columns are ALWAYS addressed BY NAME, never by
-    position (the MIT-LCP ``\\copy`` load is positional against the DDL, which
-    puts the surrogate id FIRST, contradicting the eicu.mit.edu doc pages).
+    Resolves <table>.csv.gz case-insensitively against the directory listing,
+    because the released zip is CamelCase and a re-zip may not be. Opens with
+    encoding utf-8-sig, which strips a BOM if present and is a no-op otherwise.
 
-    Raises ``EicuError`` (``reason=missing-table``) if no case-variant exists,
-    (``reason=duplicate-header``) if two headers lowercase to the same name,
-    (``reason=missing-column``) if the table lacks a column this module
-    addresses (``EICU_REQUIRED_COLUMNS``), and (``reason=undecodable-table`` /
-    ``reason=truncated-table``) on a non-UTF-8 byte or a partial/corrupt gzip
-    -- a bare ``UnicodeDecodeError``/``EOFError`` names neither the table nor
-    the file. Short rows are padded with ``''`` (the two missing channels are
-    equivalent downstream) and completely blank rows are skipped; a generator,
-    so the file is never materialised.
+    Header names are stripped and lowercased, so the CamelCase/lowercase
+    ambiguity cannot silently mismatch. Columns are always addressed by name.
+    The MIT-LCP \\copy load is positional against the DDL, which puts the
+    surrogate id first, contradicting the eicu.mit.edu doc pages.
+
+    Short rows are padded with '' -- the two missing channels are equivalent
+    downstream -- and wholly blank rows are skipped. This is a generator, so
+    the file is never materialised.
+
+    Raises EicuError with:
+      - reason=missing-table if no case-variant of the file exists
+      - reason=duplicate-header if two headers lowercase to the same name
+      - reason=missing-column if a column this module addresses is absent
+        (EICU_REQUIRED_COLUMNS)
+      - reason=undecodable-table or truncated-table on a non-UTF-8 byte or a
+        partial or corrupt gzip; a bare UnicodeDecodeError or EOFError names
+        neither the table nor the file
     """
     path = _resolve_table_path(data_dir, table)
     fh = None
@@ -551,11 +559,11 @@ def read_table(data_dir, table):
 # ========================================================= cell parsers =====
 
 def _maybe_float(s):
-    """``''``/whitespace/junk/non-finite -> ``None``; else ``float``.
+    """Empty, whitespace, junk or non-finite -> None; anything else -> float.
 
-    Non-finite is folded into "missing" deliberately: a cell literally reading
-    ``inf`` or ``nan`` parses under ``float()`` and would otherwise survive
-    into the matrix, which ``make_cohort`` rejects only at the very end.
+    Folding non-finite into "missing" is deliberate. A cell literally reading
+    inf or nan parses under float() and would otherwise survive into the
+    matrix, which make_cohort rejects only at the very end.
     """
     if s is None:
         return None
@@ -570,7 +578,7 @@ def _maybe_float(s):
 
 
 def _maybe_int(s):
-    """Integral token -> ``int``; anything else -> ``None`` (never raises)."""
+    """Integral token -> int; anything else -> None (never raises)."""
     if s is None:
         return None
     t = s.strip()
@@ -583,19 +591,21 @@ def _maybe_int(s):
 
 
 def parse_age(token):
-    """``patient.age`` (VARCHAR(10)) -> float years, per A.2/A.5.1.
+    """Parse patient.age (VARCHAR(10)) into float years.
 
-    ``''`` -> ``None`` (the caller drops, counted ``age-unparseable``);
-    ``'> 89'`` -> ``90.0`` (KEPT, with ``age_masked = 1``); anything else
-    ``float(int(t))`` -- ``int()`` FIRST so a non-integral residue raises
-    rather than silently rounding. The naive ``int(row['age'])`` raises on the
-    HIPAA ceiling token, which is exactly the trap
-    ``experiments/synth_fixture.py`` already models as ``attr_band``.
+    Three cases:
+      - '' -> None; the caller drops the stay, counted age-unparseable
+      - '> 89' -> 90.0, kept, with age_masked = 1
+      - anything else -> float(int(t)); int() runs first so a non-integral
+        residue raises instead of silently rounding
 
-    ``'> 89'`` is kept rather than dropped because ~3.5% of stays carry it, it
-    is a mortality-enriched stratum, and its share varies BY HOSPITAL -- so
-    dropping it is a site-correlated exclusion, the precise mechanism this
-    protocol must not quietly introduce.
+    A naive int(row['age']) raises on the HIPAA ceiling token -- the same trap
+    experiments/synth_fixture.py already models as attr_band.
+
+    '> 89' is kept rather than dropped because ~3.5% of stays carry it, it is a
+    mortality-enriched stratum, and its share varies by hospital. Dropping it
+    would be a site-correlated exclusion, exactly what this protocol must not
+    quietly introduce (EICU-PROTOCOL A.2, A.5.1).
     """
     t = (token or "").strip()
     if not t:
@@ -610,12 +620,12 @@ def _new_sentinel_counter():
 
 
 def _note_null_token(tokens, key, t):
-    """Retain a BOUNDED sample of the tokens that failed ``float()``.
+    """Retain a bounded sample of the tokens that failed float().
 
-    A count alone cannot tell the operator that the extract's NULL token is
-    ``'\\N'`` rather than ``''``; the token can, and it is the difference
-    between a one-line fix and a silently information-free matrix
-    (2026-07-31 audit, E-15).
+    A count alone cannot tell the operator that the extract's null token is
+    '\\N' rather than ''. The token itself can, and that is the difference
+    between a one-line fix and a silently information-free matrix.
+    Ref: audit E-15 (2026-07-31).
     """
     if tokens is None:
         return
@@ -627,18 +637,19 @@ def _note_null_token(tokens, key, t):
 
 
 def _parse_apache_cell(col, raw, key, sent, unit, win, tokens=None):
-    """One allowlisted APACHE numeric -> value or NaN (A.5.6; T-2/T-10).
+    """Parse one allowlisted APACHE numeric into a value or NaN (A.5.6).
 
-    Dual missing channel: ``''`` (the documented SQL NULL) AND the literal
-    ``-1`` (the UNdocumented sentinel) both map to NaN and are counted
-    SEPARATELY. Any other negative is an unrecognised sentinel: it is mapped
-    to NaN, counted as ``other_negative``, and ``build_raw`` ABORTS on a
-    non-zero count -- every allowlisted column has non-negative physiological
-    support, so a negative that is not exactly ``-1`` must not flow.
+    Dual missing channel: '' (the documented SQL NULL) and a literal -1 (the
+    undocumented sentinel) both map to NaN, counted separately. Any other
+    negative is an unrecognised sentinel. It maps to NaN, is counted as
+    other_negative, and build_raw aborts on a non-zero count -- every
+    allowlisted column has non-negative physiological support, so a negative
+    that is not exactly -1 must not flow.
 
-    The two frozen unit normalisations are applied BEFORE the window test and
-    counted in ``meta['unit_conversions']``; the fio2 and temperature window
-    pairs do not overlap, so the convention mapping is unambiguous.
+    The two frozen unit normalisations run before the window test and are
+    counted in meta['unit_conversions']. The fio2 and temperature window pairs
+    do not overlap, so the convention mapping is unambiguous.
+    Ref: threats T-2, T-10.
     """
     s = sent[key]
     t = (raw or "").strip()
@@ -664,9 +675,9 @@ def _parse_apache_cell(col, raw, key, sent, unit, win, tokens=None):
     if col == "fio2":
         lo, hi = EICU_WINDOW_FIO2_FRAC
         plo, phi = EICU_WINDOW_FIO2_PCT
-        # LOWER-CLOSED, fraction branch first: fio2 == 0.21 (== 21) is ROOM
-        # AIR, a valid modal observation on a ventilation-linked column, and
-        # ventilation status is site-correlated (2026-07-31 audit, E-18).
+        # Lower-closed, fraction branch first: fio2 0.21 (== 21) is room air,
+        # a valid modal observation on a ventilation-linked column, and
+        # ventilation status is site-correlated. Ref: audit E-18 (2026-07-31).
         if lo <= v <= hi:
             if v == lo:
                 unit[f"{key}:room-air-fraction"] += 1
@@ -692,19 +703,19 @@ def _parse_apache_cell(col, raw, key, sent, unit, win, tokens=None):
 
 
 def _parse_windowed(raw, key, window, sent, win, transform=None, tokens=None):
-    """A ``patient`` numeric under a frozen plausibility window (T-11).
+    """Parse a patient numeric under a frozen plausibility window (T-11).
 
-    ``0`` is the missing encoding for height/weight (not ``-1``) and falls out
-    of the window by construction; decimal-point entry errors (544 kg, 612 cm)
-    do too. Out-of-window values become NaN + indicator, counted in
-    ``window_clipped_counts`` -- never clipped to the boundary, which would
-    invent an observation.
+    0 is the missing encoding for height and weight (not -1) and falls out of
+    the window by construction. Decimal-point entry errors (544 kg, 612 cm) do
+    too. Out-of-window values become NaN plus an indicator, counted in
+    window_clipped_counts -- never clipped to the boundary, which would invent
+    an observation.
 
-    Unparseable tokens are SAMPLED via ``tokens``, exactly as
-    ``_parse_apache_cell`` does: the E-15 gate covers every allowlisted
-    numeric, and the patient block's ``hospitaladmitoffset`` doubles as the
-    first-stay tie-breaker, so a silent zeroing here also silently reorders
-    cohort selection (2026-07-31 arrival-day audit, E-22).
+    Unparseable tokens are sampled via tokens, exactly as _parse_apache_cell
+    does, so the null-token gate covers every allowlisted numeric. That matters
+    here because hospitaladmitoffset doubles as the first-stay tie-breaker: a
+    silent zeroing would also silently reorder cohort selection.
+    Ref: audits E-15, E-22 (2026-07-31 arrival day).
     """
     s = sent[key]
     t = (raw or "").strip()
@@ -731,7 +742,7 @@ def _parse_windowed(raw, key, window, sent, win, transform=None, tokens=None):
 # ====================================================== cohort selection ====
 
 def _dist_summary(values):
-    """Frozen per-site distribution summary (``site_stay_counts[stage]``)."""
+    """Frozen per-site distribution summary, as site_stay_counts[stage]."""
     arr = np.asarray(sorted(values), dtype=float)
     if arr.size == 0:
         return {"min": None, "q1": None, "median": None, "q3": None,
@@ -751,7 +762,7 @@ def _dist_summary(values):
 
 
 def _spread(values):
-    """``{mean, sd, p10, p50, p90}`` over a per-site rate vector."""
+    """Return {mean, sd, p10, p50, p90} over a per-site rate vector."""
     arr = np.asarray(list(values), dtype=float)
     if arr.size == 0:
         return {"mean": None, "sd": None, "p10": None, "p50": None, "p90": None}
@@ -762,7 +773,7 @@ def _spread(values):
 
 
 def _share(k, n):
-    """Empty-bin discipline: a rate over a zero denominator is ``None``."""
+    """Empty-bin discipline: a rate over a zero denominator is None."""
     return (float(k) / float(n)) if n else None
 
 
@@ -775,12 +786,13 @@ def _bump(counter, key):
 
 
 class _Quantiles:
-    """Chunked exact-quantile accumulator (memory-flat, no value retention).
+    """Chunked exact-quantile accumulator; memory-flat, retains no values.
 
     Values land in a small Python buffer that is folded into compact float64
-    chunks; peak memory is the chunks, not a list of boxed Python floats.
-    Exactness matters: the ``-1``-sentinel decision in T-2 is only adopted
-    AFTER the histogram proves the column's support is contiguous and
+    chunks, so peak memory is the chunks rather than a list of boxed floats.
+
+    Exactness matters: the -1-sentinel decision (threat T-2) is adopted only
+    after the histogram proves the column's support is contiguous and
     non-negative, and a sampled p01 cannot prove that.
     """
 
@@ -820,32 +832,33 @@ class _Quantiles:
 
 def _select_cohort(data_dir, *, profile=False, verbose=False,
                    strict_outcome=True):
-    """Scan A over ``patient``: the executable predicates S0-S5 (A.2).
+    """Scan A over patient: the executable cohort predicates S0-S5.
 
     Returns the selected stay ids (one per hospital admission), the attrition
     ledger for the first six steps, the drop counters, the cross-hospital
-    patient diagnostic, the RAW S0 identity counts, and -- when
-    ``profile=True`` -- the raw-table categorical/age/offset profile the
-    preflight reports.
+    patient diagnostic, and the raw S0 identity counts. With profile=True it
+    also returns the raw-table categorical, age and offset profile.
 
-    The first-stay rule is ``argmin unitvisitnumber``, tie-broken by ``argMAX
-    hospitaladmitoffset`` (the offsets are NEGATIVE minutes, so the EARLIEST
-    stay has the HIGHEST offset -- the sign trap W7), then ``argmin
-    patientunitstayid`` for determinism. NO LOS floor, NO minimum-stays-per-
-    hospital filter, NO APACHE filter: each of those three omissions is
-    deliberate and argued in EICU-PROTOCOL 2.2-2.4.
+    The first-stay rule is argmin unitvisitnumber, tie-broken by argmax
+    hospitaladmitoffset, then argmin patientunitstayid for determinism. The
+    offsets are negative minutes, so the earliest stay has the highest offset
+    -- that is the sign trap W7.
 
-    ``strict_outcome=False`` (used by ``preflight`` ONLY) collects unknown
-    ``hospitaldischargestatus`` levels into a bounded counter and drops those
-    stays instead of raising, so the step whose job is to TABULATE value sets
-    against the frozen expectations cannot be aborted by the very drift it
-    exists to report (2026-07-31 audit, E-16). ``build_raw`` keeps the raise.
+    There is no LOS floor, no minimum-stays-per-hospital filter and no APACHE
+    filter. All three omissions are deliberate and argued in the protocol.
 
-    ``patientunitstayid`` is the PRIMARY KEY of ``patient``: a repeat raises
-    ``duplicate-stay-id``. Silently resolving it is not available, because
-    scan A (here) would keep the LAST row's label and site while scan B keeps
-    the FIRST row's features -- one patient's covariates filed under another
-    row's outcome and another row's hospital (2026-07-31 audit, E-11).
+    strict_outcome=False, used by preflight only, collects unknown
+    hospitaldischargestatus levels into a bounded counter and drops those
+    stays instead of raising. The step whose job is to tabulate value sets
+    must not be aborted by the drift it exists to report. build_raw keeps the
+    raise.
+
+    patientunitstayid is the primary key of patient, and a repeat raises
+    duplicate-stay-id. Resolving it silently is not on offer: scan A here
+    would keep the last row's label and site while scan B keeps the first
+    row's features.
+
+    Refs: EICU-PROTOCOL A.2 and 2.2-2.4; audits E-16, E-11 (2026-07-31).
     """
     drop = Counter()
     warn = []
@@ -859,10 +872,10 @@ def _select_cohort(data_dir, *, profile=False, verbose=False,
     pid_multi = set()
     n_uniquepid = 0
     unknown_status = Counter()
-    # RAW S0 identity counts (E-13): EICU_REFERENCE_PATIENTS / _SITES /
-    # _UNIT_STAYS are the dataset's WHOLE-TABLE headline numbers, so they must
-    # be compared against counts taken BEFORE any predicate. The post-filter
-    # counts are a cohort diagnostic and are reported under distinct keys.
+    # Raw S0 identity counts. EICU_REFERENCE_PATIENTS / _SITES / _UNIT_STAYS
+    # are whole-table headline numbers, so they must be compared against counts
+    # taken before any predicate. Post-filter counts are a cohort diagnostic
+    # and go under distinct keys. Ref: audit E-13.
     raw_pids = set()
     raw_sites = set()
 
@@ -956,7 +969,7 @@ def _select_cohort(data_dir, *, profile=False, verbose=False,
         if pos:
             step_pos["site-parseable"] += 1
 
-        # ---- S2 outcome-known  ('' DROPS; any third level RAISES)
+        # ---- S2 outcome-known  ('' drops; any third level raises)
         status = (row[EICU_LABEL_COLUMN] or "").strip()
         if not status:
             drop["outcome-missing"] += 1
@@ -979,7 +992,7 @@ def _select_cohort(data_dir, *, profile=False, verbose=False,
         if pos:
             step_pos["outcome-known"] += 1
 
-        # ---- S3 adult ('> 89' KEPT as 90.0)
+        # ---- S3 adult ('> 89' kept as 90.0)
         try:
             age = parse_age(row["age"])
         except ValueError:
@@ -1002,9 +1015,9 @@ def _select_cohort(data_dir, *, profile=False, verbose=False,
             drop["stayid-unparseable"] += 1
             continue
         if stay_id in stay_meta:
-            # E-11: the PRIMARY KEY of `patient`. A repeat means a corrupt or
-            # concatenated extract; resolving it silently would make scan A
-            # (last row wins) and scan B (first row wins) disagree.
+            # A repeat of the `patient` primary key means a corrupt or
+            # concatenated extract. Resolving it silently would make scan A
+            # (last row wins) and scan B (first row wins) disagree. Ref: E-11.
             raise _err("_select_cohort",
                        "patientunitstayid is the PRIMARY KEY of `patient` and "
                        "repeats; a duplicate would file one row's features "
@@ -1069,8 +1082,8 @@ def _select_cohort(data_dir, *, profile=False, verbose=False,
             f"profile can be completed; build_raw WILL raise "
             f"unknown-outcome-level on this extract")
 
-    # E-9: n_positive (hence prevalence) at every step, so the ledger itself
-    # shows an outcome-correlated selection instead of hiding it in n_stays.
+    # n_positive, hence prevalence, at every step: the ledger itself then shows
+    # an outcome-correlated selection instead of hiding it in n_stays. Ref: E-9.
     attrition = [{"step": s, "n_stays": int(step_stays[s]),
                   "n_sites": len(step_sites[s]),
                   "n_positive": int(step_pos[s]),
@@ -1109,11 +1122,11 @@ def _select_cohort(data_dir, *, profile=False, verbose=False,
 
 
 def _prevalence_contrast(y_pos, flag, label):
-    """Outcome prevalence in the ``flag`` / ``not flag`` strata, and the ratio.
+    """Outcome prevalence in the flag and not-flag strata, plus the ratio.
 
-    ``flag`` is the PRESENCE indicator, so the reported ratio is
-    ``prevalence(absent) / prevalence(present)`` -- the direction in which an
-    outcome-informative absence channel shows up (2026-07-31 audit, E-9).
+    flag is the presence indicator, so the reported ratio is
+    prevalence(absent) / prevalence(present) -- the direction in which an
+    outcome-informative absence channel shows up (audit E-9).
     """
     y = np.asarray(y_pos, dtype=bool)
     f = np.asarray(flag, dtype=bool)
@@ -1140,25 +1153,25 @@ def _outcome_missingness(y_raw, aps_present, apv_present):
 
 
 def outcome_screen(x_raw, meta, *, names=None):
-    """Screen EVERY allowlisted feature against the outcome, before certifying.
+    """Screen every allowlisted feature against the outcome, before certifying.
 
     The denylist applies a "leak-suspect: timing relative to outcome
-    unverified" standard to two ``apachePatientResult`` columns; the same
-    standard has to reach the nine ``apachePredVar`` treatment/intervention
-    flags (``activetx`` above all -- active treatment versus comfort measures
-    is decided DURING the stay and is adjacent to death by definition), and
-    nothing in the DDL comments can settle it on a dataset whose sentinel
-    convention the DDL already gets wrong. So it is settled from the DATA,
-    before any certificate exists (2026-07-31 audit, E-19).
+    unverified" standard to two apachePatientResult columns. The same standard
+    has to reach the nine apachePredVar treatment and intervention flags --
+    activetx above all, since active treatment versus comfort measures is
+    decided during the stay and is adjacent to death by definition. Nothing in
+    the DDL comments can settle that on a dataset whose sentinel convention the
+    DDL already gets wrong, so it is settled from the data instead.
 
-    Returns an AGGREGATE-ONLY dict: per feature, the outcome prevalence by
-    stratum (binary columns) or in the top vs bottom decile (continuous), the
-    univariate rank AUC, and a ``flagged`` list of every feature whose
-    ``|AUC - 0.5|`` puts it past ``EICU_FEATURE_AUC_REVIEW``. NaN in ``x_raw``
-    is treated as its
-    own stratum for binary columns and ignored for the decile contrast, so the
-    screen works on the RAW (pre-imputation) matrix -- which is the only place
-    the missingness channel is still visible.
+    Returns an aggregate-only dict. Per feature: outcome prevalence by stratum
+    (binary) or in the top versus bottom decile (continuous), the univariate
+    rank AUC, and a flagged list of every feature whose |AUC - 0.5| puts it
+    past EICU_FEATURE_AUC_REVIEW.
+
+    NaN in x_raw is its own stratum for binary columns and is ignored for the
+    decile contrast, so the screen works on the raw pre-imputation matrix --
+    the only place the missingness channel is still visible.
+    Ref: audit E-19 (2026-07-31).
     """
     x = np.asarray(x_raw, dtype=np.float64)
     names = list(FEATURE_NAMES if names is None else names)
@@ -1212,7 +1225,7 @@ def outcome_screen(x_raw, meta, *, names=None):
 
 
 def _rank_auc(v, y):
-    """Tie-averaged Mann-Whitney AUC; ``None`` when either class is absent."""
+    """Tie-averaged Mann-Whitney AUC; None when either class is absent."""
     v = np.asarray(v, dtype=np.float64)
     y = np.asarray(y, dtype=bool)
     n = int(v.shape[0])
@@ -1236,53 +1249,54 @@ def _rank_auc(v, y):
 # =============================================================== build ======
 
 def build_raw(data_dir, *, arm="primary", strict_levels=True, verbose=True):
-    """``(x_raw, feature_names, meta)`` -- the deny-by-default feature build.
+    """Build (x_raw, feature_names, meta) -- the deny-by-default feature build.
 
-    ``x_raw`` is ``(n, EICU_N_FEATURES)`` float64 with NaN in every IMPUTABLE
-    feature column; indicator/one-hot/presence columns are already finite 0/1.
-    ``x_raw`` is NOT admissible to ``make_cohort`` -- call ``impute()`` first
-    (which is also where the transductive-leak rule lives).
+    x_raw is (n, EICU_N_FEATURES) float64 with NaN in every imputable feature
+    column; indicator, one-hot and presence columns are already finite 0/1. It
+    is not admissible to make_cohort -- call impute() first, which is also
+    where the transductive-leak rule lives.
 
     Three streaming passes, memory-bounded:
 
-      1. ``patient`` -> cohort predicates S0-S5, the patient feature block
-         written straight into the preallocated matrix, and ``stay_id ->
-         row_index`` built as a ``dict[int, int]``. No column strings are
-         retained. (Two scans of the 9.9 MB gz table: the first-stay rule
-         cannot be resolved until every stay of an admission has been seen, so
-         scan A selects and scan B fills. Retaining candidate feature values
-         instead would cost the full 200k x 161 matrix -- more memory than the
-         cohort it is selecting.)
-      2. ``apacheApsVar``, ``apachePredVar`` -> per-row lookup + fill of the
-         24/19 numeric blocks and their siblings; dedup by min surrogate id.
-      3. ``apachePatientResult`` -> COMPARATOR ONLY (version preference,
-         ``float()`` of ``predictedhospitalmortality``; ``'-1'`` -> NaN).
+      1. patient -> cohort predicates S0-S5, the patient feature block written
+         straight into the preallocated matrix, and stay_id -> row_index as a
+         dict[int, int]. No column strings are retained. The 9.9 MB gz table
+         is scanned twice: the first-stay rule cannot be resolved until every
+         stay of an admission has been seen, so scan A selects and scan B
+         fills. Retaining candidate feature values instead would cost the full
+         200k x 161 matrix, more memory than the cohort it is selecting.
+      2. apacheApsVar, apachePredVar -> per-row lookup and fill of the 24 and
+         19 numeric blocks and their siblings; dedup by min surrogate id.
+      3. apachePatientResult -> comparator only: version preference, float() of
+         predictedhospitalmortality, with '-1' mapping to NaN.
 
-    Raises ``EicuError``: unknown arm (``reason=unknown-arm``); a third outcome
-    level (``reason=unknown-outcome-level``); level drift over the cap when
-    ``strict_levels=True`` (``reason=categorical-level-drift``); an allowlisted
-    numeric with negative mass NOT at exactly ``-1.0``
-    (``reason=unexpected-negative-sentinel``); empty cohort
-    (``reason=empty-cohort``).
-    Asserts ``x_raw.shape == (n, len(FEATURE_NAMES))`` and
-    ``len(FEATURE_NAMES) == EICU_N_FEATURES``.
-    ``verbose`` prints ONE line to ``sys.stderr`` prefixed ``'[eicu] '``.
+    Raises EicuError with:
+      - reason=unknown-arm
+      - reason=unknown-outcome-level on a third outcome level
+      - reason=categorical-level-drift on level drift over the cap, when
+        strict_levels=True
+      - reason=unexpected-negative-sentinel on an allowlisted numeric with
+        negative mass not at exactly -1.0
+      - reason=empty-cohort
 
-    ``meta`` keys (frozen): ``n, arm, n_features, site_raw, y_raw, stay_id,
+    Asserts x_raw.shape == (n, len(FEATURE_NAMES)) and len(FEATURE_NAMES) ==
+    EICU_N_FEATURES. verbose prints one line to sys.stderr prefixed '[eicu] '.
+
+    meta keys are frozen: n, arm, n_features, site_raw, y_raw, stay_id,
     admission_id, patient_id, aps_present, apv_present,
     comparator_apache_version, comparator_predicted_mortality, imputable_cols,
     missing_counts, sentinel_counts, window_clipped_counts, unit_conversions,
     unparseable_tokens, outcome_missingness, categorical_other_counts,
     categorical_other_shares, attrition, drop_counts, dedup_counts,
-    cross_site_patients, site_meta`` -- plus ``warnings``, which A.5.6 and T-14
-    mandate by name.
+    cross_site_patients, site_meta -- plus warnings, which EICU-PROTOCOL A.5.6
+    and threat T-14 mandate by name. Every attrition entry additionally carries
+    n_positive and prevalence.
 
-    Three aborts beyond the frozen set, all added 2026-07-31: a NULL token that
-    is not ``''`` (``unrecognised-null-token``, E-15), a duplicate
-    ``patientunitstayid`` (``duplicate-stay-id``, E-11), and OUTCOME-informative
-    APACHE-row absence in the primary arm (``outcome-informative-missingness``,
-    E-9). Every ``attrition`` entry additionally carries ``n_positive`` and
-    ``prevalence``.
+    Three aborts sit beyond the frozen set, all added 2026-07-31:
+      - unrecognised-null-token: a null token that is not '' (E-15)
+      - duplicate-stay-id: a repeated patientunitstayid (E-11)
+      - outcome-informative-missingness: outcome-informative APACHE-row absence
+        in the primary arm (E-9)
     """
     if arm not in EICU_ARMS:
         raise _err("build_raw", f"arm must be one of {EICU_ARMS!r}", arm,
@@ -1333,8 +1347,8 @@ def build_raw(data_dir, *, arm="primary", strict_levels=True, verbose=True):
             continue
         if stay_id in row_of:
             # Unreachable: scan A already raised duplicate-stay-id. Kept as a
-            # belt-and-braces raise so the two scans can never silently
-            # disagree about which duplicate wins (2026-07-31 audit, E-11).
+            # second line of defence so the two scans can never silently
+            # disagree about which duplicate wins. Ref: audit E-11.
             raise _err("build_raw",
                        "patientunitstayid repeats between the two cohort scans",
                        stay_id, reason="duplicate-stay-id")
@@ -1418,9 +1432,9 @@ def build_raw(data_dir, *, arm="primary", strict_levels=True, verbose=True):
             n_rows_t += 1
             stay_id = _maybe_int(row["patientunitstayid"])
             if stay_id is None:
-                # E-21: a non-empty key that fails integer parse is a FORMAT
-                # artifact (pandas writes '141258.0'), and skipping it unread
-                # unlinks the row from every downstream gate.
+                # A non-empty key that fails integer parse is a format artifact
+                # (pandas writes '141258.0'). Skipping it unread would unlink
+                # the row from every downstream gate. Ref: audit E-21.
                 tok = (row["patientunitstayid"] or "").strip()
                 if tok:
                     n_badkey += 1
@@ -1469,16 +1483,19 @@ def build_raw(data_dir, *, arm="primary", strict_levels=True, verbose=True):
     x[:, _IDX_APS_PRESENT] = aps_present.astype(np.float64)
     x[:, _IDX_APV_PRESENT] = apv_present.astype(np.float64)
 
-    # ---- unrecognised-sentinel abort (T-2; threshold = amendment A6) -------
-    # The cells ALWAYS become missing (_parse_apache_cell maps v < 0 to NaN).
-    # The raise is a look-at-this gate, and it fires once a column's share of
-    # such cells is material: EICU_MAX_UNPARSEABLE_SHARE, the same frozen
-    # constant E-15/E-21 use. Sub-threshold mass is reported, not aborted --
-    # the released extract carries ONE such cell in ~4.1M
-    # (apacheApsVar.urine = -11245.5648) against an otherwise contiguous
-    # non-negative support, and refusing the study over it would be theatre.
-    # A6 is POST-HOC (the extract had been read); EICU-PROTOCOL.md SS0 requires
-    # every number derived from this extract to carry that label.
+    # ---- unrecognised-sentinel abort ---------------------------------------
+    # The cells always become missing; _parse_apache_cell maps v < 0 to NaN.
+    # The raise is a look-at-this gate that fires once a column's share of such
+    # cells is material, at EICU_MAX_UNPARSEABLE_SHARE.
+    #
+    # Sub-threshold mass is reported, not aborted. The released extract carries
+    # one such cell in ~4.1M (apacheApsVar.urine = -11245.5648) against an
+    # otherwise contiguous non-negative support, and refusing the study over it
+    # would be theatre.
+    #
+    # Amendment A6 set that threshold and is post-hoc: the extract had already
+    # been read. Every number derived from this extract must carry that label.
+    # Ref: threat T-2; EICU-PROTOCOL.md SS0; audits E-15, E-21.
     negatives = {k: v["other_negative"] for k, v in sent.items()
                  if k.startswith(("aps_", "apv_")) and v["other_negative"]}
     over_neg = {k: {"n_other_negative": int(v), "share": round(v / n, 8)}
@@ -1503,15 +1520,17 @@ def build_raw(data_dir, *, arm="primary", strict_levels=True, verbose=True):
             f"A6 is the one POST-HOC protocol amendment; label every number "
             f"derived from this extract accordingly")
 
-    # ---- unrecognised-NULL-token abort (E-15/E-22) -------------------------
-    # The -1 gate protects one direction only. A re-export whose NULL token is
+    # ---- unrecognised-null-token abort -------------------------------------
+    # The -1 gate protects one direction only. A re-export whose null token is
     # Postgres text-format '\N' (or 'NULL'/'NA') makes every allowlisted
-    # numeric 100% missing, every __missing sibling the constant 1.0, and 86
-    # of 161 coefficients exactly 0.0 -- while build_raw SUCCEEDS and
-    # `warnings` stays empty. The token is named, not just counted. The gate
-    # covers EVERY key in `sent`, not only aps_/apv_: the patient block's
-    # pre_icu_hours is fed by hospitaladmitoffset, the first-stay tie-breaker,
-    # so a silent zeroing there also silently reorders cohort selection.
+    # numeric 100% missing, every __missing sibling constant at 1.0, and 86 of
+    # 161 coefficients exactly 0.0 -- while build_raw succeeds and `warnings`
+    # stays empty. So the token is named, not merely counted.
+    #
+    # The gate covers every key in `sent`, not only aps_/apv_. pre_icu_hours is
+    # fed by hospitaladmitoffset, the first-stay tie-breaker, so a silent
+    # zeroing there also silently reorders cohort selection.
+    # Ref: audits E-15, E-22.
     unparseable = {}
     for key, counter in sent.items():
         k = counter["unparseable"]
@@ -1539,13 +1558,13 @@ def build_raw(data_dir, *, arm="primary", strict_levels=True, verbose=True):
     # ---- outcome-informative-missingness abort (E-9) -----------------------
     outcome_missing = _outcome_missingness(y_raw, aps_present, apv_present)
 
-    # ---- apache-coverage-collapse abort (E-21, leg 2) ----------------------
-    # E-9's ratio gate needs BOTH strata at EICU_MIN_OUTCOME_STRATUM, so a
-    # TOTALLY absent or unlinked block turns gate_applies false and certifies
-    # what partial absence would abort. When the cohort is large enough that
-    # the E-9 gate is supposed to be evaluable, a presence stratum that cannot
-    # reach the floor is a broken extract, not a legitimate corpus. The scale
-    # condition keeps the gate silent on tiny single-trap test corpora.
+    # ---- apache-coverage-collapse abort ------------------------------------
+    # E-9's ratio gate needs both strata at EICU_MIN_OUTCOME_STRATUM. A wholly
+    # absent or unlinked block turns gate_applies false, and would certify what
+    # partial absence aborts on. So when the cohort is large enough for that
+    # gate to be evaluable, a presence stratum that cannot reach the floor is a
+    # broken extract, not a legitimate corpus. The scale condition keeps this
+    # silent on tiny single-trap test corpora. Ref: audit E-21, leg 2.
     if arm == "primary" and n >= EICU_MIN_OUTCOME_STRATUM:
         starved = {k: {"n_present": v["n_present"], "n_absent": v["n_absent"]}
                    for k, v in outcome_missing.items()
@@ -1591,7 +1610,7 @@ def build_raw(data_dir, *, arm="primary", strict_levels=True, verbose=True):
                  for k, v in sorted(offenders.items())},
                 reason="outcome-informative-missingness")
 
-    # ---- pass 3: apachePatientResult (COMPARATOR ONLY) ---------------------
+    # ---- pass 3: apachePatientResult (comparator only) ---------------------
     big = np.iinfo(np.int64).max
     res_seen = {v: np.zeros(n, dtype=bool) for v in EICU_APACHE_VERSION_PREFERENCE}
     res_id = {v: np.full(n, big, dtype=np.int64) for v in EICU_APACHE_VERSION_PREFERENCE}
@@ -1625,8 +1644,8 @@ def build_raw(data_dir, *, arm="primary", strict_levels=True, verbose=True):
                 continue
         res_seen[version][r] = True
         res_id[version][r] = sid
-        # VARCHAR(50) holding a probability: float() FIRST, then compare.
-        # A string comparison ('-1' > '0') is a bug (T-9).
+        # VARCHAR(50) holding a probability: float() first, then compare. A
+        # string comparison ('-1' > '0') is a bug. Ref: threat T-9.
         pv = _maybe_float(row["predictedhospitalmortality"])
         res_pred[version][r] = (np.nan if pv is None
                                 or pv == EICU_SENTINEL_MISSING else pv)
@@ -1654,31 +1673,32 @@ def build_raw(data_dir, *, arm="primary", strict_levels=True, verbose=True):
             comp_version[int(r)] = v
             comp_pred[int(r)] = res_pred[v][int(r)]
 
-    # RP-8 (2026-08-01): the comparator column is a VARCHAR(50) holding a
-    # probability. `float()` above accepts anything numeric and only the exact
-    # `-1` sentinel maps to missing, so a stray finite cell outside [0, 1]
-    # flowed to TWO consumers that disagreed about it: `_comparator_row`
-    # computed AUC and Brier on it silently, while the post-hoc panel's
-    # `validate_inputs` rejects it outright -- and that rejection lands AFTER a
-    # replicate's certification work and BEFORE any artifact is written, so a
-    # DESCRIPTIVE layer could have taken the certificate down. One definition of
-    # "comparator available" now, mapped here, BEFORE `complete` is formed.
+    # The comparator column is a VARCHAR(50) holding a probability. `float()`
+    # above accepts anything numeric, and only the exact -1 sentinel maps to
+    # missing, so a stray finite cell outside [0, 1] reached two consumers that
+    # disagreed about it. `_comparator_row` computed AUC and Brier on it
+    # silently; the panel's `validate_inputs` rejects it outright.
+    #
+    # That rejection lands after a replicate's certification work and before any
+    # artifact is written, so a descriptive layer could have taken the
+    # certificate down. There is one definition of "comparator available" now,
+    # mapped here, before `complete` is formed.
     #
     # This is a guard, not a correction: the released extract has 0 such cells
     # in 297,064 apachePatientResult rows, so no published number moves. It is
-    # the A6 failure mode (`apacheApsVar.urine` held exactly ONE
-    # negative-not-`-1` cell in ~4.1M) applied to the one column where it would
+    # the A6 failure mode -- apacheApsVar.urine held exactly one negative cell
+    # that was not -1, in ~4.1M -- applied to the one column where it would
     # have been fatal rather than cosmetic. Counted and warned, never aborting:
-    # an unusable comparator cell is a missing comparator, and the primary arm
-    # does not depend on the comparator at all.
+    # an unusable comparator cell is just a missing comparator, and the primary
+    # arm does not use the comparator. Ref: audit RP-8 (2026-08-01).
     comp_oor = np.isfinite(comp_pred) & ((comp_pred < 0.0) | (comp_pred > 1.0))
     n_comp_oor = int(comp_oor.sum())
     if n_comp_oor:
         extreme = comp_pred[comp_oor]
         comp_pred[comp_oor] = np.nan
-        # The version tag travels with the value: a stay whose comparator
-        # cell was range-mapped to missing has no comparator, so reporting
-        # "IVa" for it would claim a version for a value that does not exist.
+        # The version tag travels with the value. A stay whose comparator cell
+        # was range-mapped to missing has no comparator, so reporting "IVa"
+        # would claim a version for a value that does not exist.
         for r in np.nonzero(comp_oor)[0]:
             comp_version[int(r)] = ""
         warn.append(
@@ -1689,7 +1709,7 @@ def build_raw(data_dir, *, arm="primary", strict_levels=True, verbose=True):
             f"-1 sentinel is. They are excluded from the comparator scoring, "
             f"from the apache-complete arm and from the panel's p_ref alike")
 
-    # ---- attrition: the APACHE steps are DIAGNOSTIC, never a filter --------
+    # ---- attrition: the APACHE steps are diagnostic, never a filter --------
     site_arr = np.asarray(site_raw, dtype=object)
     complete = aps_present & apv_present & np.isfinite(comp_pred)
     linked = aps_present & apv_present
@@ -1705,8 +1725,8 @@ def build_raw(data_dir, *, arm="primary", strict_levels=True, verbose=True):
                           "n_positive": n_pos_step,
                           "prevalence": _share(n_pos_step, n_step)})
 
-    # E-9: the ledger's own prevalence collapse is the headline diagnostic for
-    # outcome-informative APACHE absence. n_stays alone cannot show it.
+    # The ledger's own prevalence collapse is the headline diagnostic for
+    # outcome-informative APACHE absence. n_stays alone cannot show it (E-9).
     prev_primary = attrition[5]["prevalence"]
     prev_aps = attrition[6]["prevalence"]
     if prev_primary and prev_aps and prev_aps < prev_primary:
@@ -1733,13 +1753,15 @@ def build_raw(data_dir, *, arm="primary", strict_levels=True, verbose=True):
             f"{EICU_REFERENCE_SITES}; every guarantee sentence must be "
             f"re-scoped to the surviving site population BY NAME")
 
-    # ---- arm subsetting (declared sensitivity arms, never the headline) ----
-    # `apache-linked` (E-9) restricts to stays whose day-1 window is COMPLETE,
-    # making the presence flags constant and information-free. It is an
-    # IMMORTAL-TIME-SELECTED cohort -- that is the price, it is stated, and its
-    # n_sites and prevalence are reported beside the primary arm's wherever it
-    # appears. `apache-complete` additionally requires the comparator and so
-    # additionally deletes the ~18 zero-coverage hospitals (T-4).
+    # ---- arm subsetting: declared sensitivity arms, never the headline -----
+    # `apache-linked` restricts to stays whose day-1 window is complete, which
+    # makes the presence flags constant and information-free. The resulting
+    # cohort is immortal-time-selected. That is the price; it is stated, and
+    # the arm's n_sites and prevalence are reported beside the primary arm's
+    # wherever it appears.
+    #
+    # `apache-complete` additionally requires the comparator, so it also
+    # deletes the ~18 zero-coverage hospitals. Ref: audit E-9; threat T-4.
     if arm in ("apache-linked", "apache-complete"):
         mask = linked if arm == "apache-linked" else complete
         keep = np.nonzero(mask)[0]
@@ -1785,9 +1807,9 @@ def build_raw(data_dir, *, arm="primary", strict_levels=True, verbose=True):
             "model.SD_REL_TOL's guard, and carries a zero attribution")
 
     site_meta = _site_meta(site_raw, y_raw, aps_present, apv_present)
-    # Recomputed POST-subset: in the apache-linked arm both flags are constant
-    # by construction, and the reported contrast must say so rather than repeat
-    # the primary arm's number.
+    # Recomputed after the subset. In the apache-linked arm both flags are
+    # constant by construction, and the reported contrast must say so rather
+    # than repeat the primary arm's number.
     outcome_missingness = _outcome_missingness(y_raw, aps_present, apv_present)
 
     meta = {
@@ -1827,7 +1849,7 @@ def build_raw(data_dir, *, arm="primary", strict_levels=True, verbose=True):
 
 
 def _site_meta(site_raw, y_raw, aps_present, apv_present):
-    """Per-site aggregate strata (<= 208 entries; aggregate-only by shape)."""
+    """Per-site aggregate strata: at most 208 entries, aggregate by shape."""
     n_stays = Counter()
     n_pos = Counter()
     n_aps = Counter()
@@ -1851,18 +1873,18 @@ def _site_meta(site_raw, y_raw, aps_present, apv_present):
 # ============================================================== impute ======
 
 def impute(x_raw, fit_idx, *, verbose=False):
-    """Mean-impute every NaN with column means computed on ``x_raw[fit_idx]`` ONLY.
+    """Mean-impute every NaN using column means from x_raw[fit_idx] alone.
 
-    ``fit_idx`` MUST be the S_train row indices. Computing the mean on the
-    pooled matrix would let the target pool's covariate distribution into the
-    training features -- a transductive leak that no downstream gate catches. A
-    column that is entirely NaN within ``fit_idx`` falls back to
-    ``EICU_IMPUTE_FALLBACK = 0.0``, counted.
+    fit_idx must be the S_train row indices. A mean over the pooled matrix
+    would let the target pool's covariate distribution into the training
+    features -- a transductive leak no downstream gate catches. A column that
+    is entirely NaN within fit_idx falls back to EICU_IMPUTE_FALLBACK = 0.0,
+    counted.
 
-    Returns ``(x, fill)`` where ``x`` is finite float64 and ``fill`` is
-    ``{feature_name: value_used}`` (the determinism record; it goes into
-    provenance). Raises ``EicuError`` (``reason=impute-fit-empty``) on an empty
-    ``fit_idx`` and (``reason=nonfinite-after-impute``) if any NaN/inf survives.
+    Returns (x, fill): x finite float64, fill a {feature_name: value_used}
+    determinism record that goes into provenance. Raises EicuError with
+    reason=impute-fit-empty on an empty fit_idx, and
+    reason=nonfinite-after-impute if any NaN or inf survives.
     """
     x_raw = np.asarray(x_raw, dtype=np.float64)
     fit = np.asarray(fit_idx, dtype=int).ravel()
@@ -1911,21 +1933,21 @@ def impute(x_raw, fit_idx, *, verbose=False):
 # =============================================================== split ======
 
 def site_split(site_raw, *, replicate=0):
-    """Deterministic BY-SITE partition (A.8). Records never cross a boundary.
+    """Deterministic by-site partition; records never cross a boundary (A.8).
 
-    Holds out ``EICU_N_TARGET_SITES = 24`` hospitals, then splits the remainder
-    ``SPLIT_FRACTIONS`` (0.40 / 0.20 / 0.40) -- imported, never re-literalled.
-    At 208 hospitals: rest 184 -> train 73 / aux 36 / **cal 75** against
-    ``MIN_CAL_CLUSTERS = 50``, i.e. 50% headroom.
+    Holds out EICU_N_TARGET_SITES = 24 hospitals, then splits the remainder by
+    SPLIT_FRACTIONS (0.40 / 0.20 / 0.40), imported and never re-literalled. At
+    208 hospitals: rest 184 -> train 73 / aux 36 / cal 75, against
+    MIN_CAL_CLUSTERS = 50, i.e. 50% headroom.
 
-    Disjointness is asserted PAIRWISE -- a deliberate deviation from
-    ``fixture_etl.site_split``, whose ``assert not (a & b & c)`` is a TRIPLE
-    intersection and is strictly weaker (it passes on any two-way overlap).
+    Disjointness is asserted pairwise. That is a deliberate deviation from
+    fixture_etl.site_split, whose assert not (a & b & c) is a triple
+    intersection and strictly weaker -- it passes on any two-way overlap.
 
-    Keys are exactly ``('train','aux','cal','target')``; index arrays are
-    ``dtype=int``. Raises ``EicuError`` (``reason=too-few-sites``) below
-    ``EICU_MIN_TOTAL_SITES`` and (``reason=too-few-cal-clusters``) if
-    ``len(cal) < MIN_CAL_CLUSTERS``.
+    Keys are exactly ('train','aux','cal','target') and index arrays are
+    dtype=int. Raises EicuError with reason=too-few-sites below
+    EICU_MIN_TOTAL_SITES, and reason=too-few-cal-clusters if len(cal) is under
+    MIN_CAL_CLUSTERS.
     """
     uniq = sorted(set(site_raw))
     if len(uniq) < EICU_MIN_TOTAL_SITES:
@@ -1975,27 +1997,27 @@ def site_split(site_raw, *, replicate=0):
 
 
 def labels(meta) -> list:
-    """The raw two-valued outcome strings, one per record ('Expired'/'Alive').
+    """The raw two-valued outcome strings, one per record: 'Expired'/'Alive'.
 
-    Returns ``list(meta['y_raw'])``. Never a bool array -- ``coerce_labels``
-    owns the two-value contract, and S2 has already dropped ``''`` and raised
-    on any third level, so a fitting cohort is guaranteed exactly two observed
-    values.
+    Returns list(meta['y_raw']), never a bool array -- coerce_labels owns the
+    two-value contract. S2 has already dropped '' and raised on any third
+    level, so a fitting cohort has exactly two observed values.
     """
     return list(meta["y_raw"])
 
 
 def build_matrix(data_dir, *, arm="primary", strict_levels=True, replicate=0,
                  verbose=True):
-    """Convenience one-call path: ``build_raw`` -> ``site_split(replicate)`` ->
-    ``impute(fit_idx=idx['train'])``.
+    """One-call path: build_raw -> site_split(replicate) -> impute on S_train.
 
-    Returns ``(x, feature_names, meta)`` with ``meta`` additionally carrying
-    ``'split_idx'`` (dict of int arrays), ``'split_sites'`` (dict of str sets)
-    and ``'impute_fill'``. Used by ``run_eicu`` for a SINGLE replicate and by
-    the tests; the multi-replicate runner calls ``build_raw`` ONCE and loops
-    ``site_split`` + ``impute`` (re-reading a 200k-row extract 20 times is a
-    build error, not a style preference -- T-16).
+    Returns (x, feature_names, meta), with meta additionally carrying
+    'split_idx' (dict of int arrays), 'split_sites' (dict of str sets) and
+    'impute_fill'.
+
+    Used by run_eicu for a single replicate, and by the tests. The
+    multi-replicate runner instead calls build_raw once and loops site_split
+    plus impute: re-reading a 200k-row extract 20 times is a build error, not a
+    style preference (threat T-16).
     """
     x_raw, names, meta = build_raw(data_dir, arm=arm,
                                    strict_levels=strict_levels, verbose=verbose)
@@ -2008,8 +2030,9 @@ def build_matrix(data_dir, *, arm="primary", strict_levels=True, replicate=0,
 
 
 # ============================================================ preflight =====
-# The A.11 predictions are written HERE, by the non-certifying preflight, so
-# the pre-registration is emitted BEFORE any certificate exists (T-18).
+# The predictions are written here, by the non-certifying preflight, so the
+# pre-registration is emitted before any certificate exists.
+# Ref: EICU-PROTOCOL A.11; threat T-18.
 
 EICU_PREDICTIONS = (
     {"id": "P1",
@@ -2060,21 +2083,21 @@ EICU_PREDICTIONS = (
 
 
 def _header_case(raw_header):
-    """``'camel' | 'lower' | 'mixed'`` as READ (T-6: a re-zip may re-case).
+    """Classify a header as 'camel', 'lower' or 'mixed', exactly as read.
 
-    The verdict must be DECIDABLE from the header alone (2026-07-31 audit,
-    E-17). The old rule -- "camel iff EVERY name carries an upper-case
-    character" -- called a fully camelCase header ``'mixed'`` on four of the
-    five tables, because single-token names (``age``, ``gender``, ``ph``,
-    ``urine``, ``region``) cannot express case at all; and ``'mixed'`` reads as
-    "some columns were re-cased and some were not", a materially different and
-    misleading diagnosis in exactly the direction T-6 exists to detect.
+    The verdict must be decidable from the header alone (audit E-17). Names of
+    a single token (age, gender, ph, urine, region) cannot express case at all,
+    so a rule demanding an upper-case character in every name would call a
+    fully camelCase header 'mixed' on four of the five tables. That reads as
+    "some columns were re-cased and some were not", misleading in exactly the
+    direction threat T-6 exists to detect: a re-zip may re-case.
 
-    ``lower``  no name carries an upper-case character (the released extract).
-    ``camel``  at least one does and every name is alphanumeric -- a
-               case-varied rendering of the same names.
-    ``mixed``  at least one name carries an upper-case character AND at least
-               one carries a separator (``_``): a re-export from another tool.
+    The three verdicts:
+      - lower: no name carries an upper-case character (the released extract)
+      - camel: at least one does and every name is alphanumeric, a case-varied
+        rendering of the same names
+      - mixed: at least one name carries an upper-case character and at least
+        one carries a separator (_), i.e. a re-export from another tool
     """
     names = [h.strip() for h in raw_header]
     n_upper = sum(1 for h in names if any(c.isupper() for c in h))
@@ -2089,15 +2112,15 @@ def _scan_apache(data_dir, table, cols, prefix, stay_site, cohort_site_stays,
                  ordinal=False, stay_positive=None):
     """Profile one APACHE table: sentinels, quantiles, per-site dispersion.
 
-    Sentinel histograms cover EVERY row of the table (a table profile);
-    per-site dispersion and coverage cover only cohort-linked rows, because a
-    site is only meaningful through the cohort's stay -> hospital map.
+    Sentinel histograms cover every row of the table -- it is a table profile.
+    Per-site dispersion and coverage cover only cohort-linked rows, because a
+    site is meaningful only through the cohort's stay -> hospital map.
 
-    ``stay_positive`` (cohort stay id -> outcome bool) additionally accumulates
-    the OUTCOME-stratified per-column missingness counts that E-9 requires:
-    for each allowlisted column, ``[n_missing, n_missing_positive, n_present,
-    n_present_positive]`` over cohort-linked rows. Stays with NO row in this
-    table at all are added by ``preflight``, which knows the cohort.
+    stay_positive (cohort stay id -> outcome bool) additionally accumulates the
+    outcome-stratified per-column missingness counts E-9 requires: per
+    allowlisted column, [n_missing, n_missing_positive, n_present,
+    n_present_positive] over cohort-linked rows. Stays with no row at all in
+    this table are added by preflight, which knows the cohort.
     """
     sent = {c: _new_sentinel_counter() for c in cols}
     zero = Counter()
@@ -2119,8 +2142,8 @@ def _scan_apache(data_dir, table, cols, prefix, stay_site, cohort_site_stays,
         n_rows += 1
         stay_id = _maybe_int(row["patientunitstayid"])
         if stay_id is None:
-            # E-21: profile the join-key format so preflight can project the
-            # unparseable-join-key raise before any certification is run.
+            # Profile the join-key format, so preflight can project the
+            # unparseable-join-key raise before any certification runs (E-21).
             tok = (row["patientunitstayid"] or "").strip()
             if tok:
                 n_key_unparseable += 1
@@ -2276,33 +2299,36 @@ def _coverage_by_site(linked_stays, stay_site, cohort_site_stays):
 
 
 def preflight(data_dir, *, expect_reference=False, verbose=True) -> dict:
-    """Validate and PROFILE an extract WITHOUT building features or certifying.
+    """Validate and profile an extract without building features or certifying.
 
-    Streams all five tables. Returns an AGGREGATE-ONLY, JSON-serialisable dict
-    (no record-level arrays; every list is a value-count or a quantile
-    summary). ``expect_reference=True`` turns a row-count / site-count /
-    patient-count mismatch against ``EICU_REFERENCE_*`` into ``EicuError``
-    (``reason=reference-row-count-mismatch``) -- pass it for the real extract,
-    omit it for the mock.
+    Streams all five tables and returns an aggregate-only, JSON-serialisable
+    dict: no record-level arrays, and every list is a value-count or a quantile
+    summary. expect_reference=True turns a row-, site- or patient-count
+    mismatch against EICU_REFERENCE_* into EicuError
+    (reason=reference-row-count-mismatch). Pass it for the real extract, omit
+    it for the mock.
 
-    This is the loud boundary for everything that cannot be verified from the
-    DDL: the undocumented ``-1`` sentinel and its PER-SITE dispersion (T-2/T-3),
-    the frozen categorical vocabulary (T-7), the multi-row
-    ``apachePatientResult`` (T-8), the fio2/temperature unit ambiguity (T-10),
-    the implausible-physiology channel (T-11), and the heavy-tailed hospital
-    sizes that decide whether ``MIN_CAL_CLUSTERS`` is reachable at all (T-12),
-    the OUTCOME-informative half of the APACHE missingness channel (E-9:
-    ``outcome_stratified_missingness``, ``apache_absent_los``, and
-    ``n_positive`` on every attrition step), and an extract whose NULL token is
-    not ``''`` (E-15: ``unparseable_tokens``).
+    This is the loud boundary for everything the DDL cannot settle:
+      - the undocumented -1 sentinel and its per-site dispersion (T-2, T-3)
+      - the frozen categorical vocabulary (T-7)
+      - the multi-row apachePatientResult (T-8)
+      - the fio2 and temperature unit ambiguity (T-10)
+      - the implausible-physiology channel (T-11)
+      - heavy-tailed hospital sizes, which decide whether MIN_CAL_CLUSTERS is
+        reachable at all (T-12)
+      - the outcome-informative half of the APACHE missingness channel, under
+        outcome_stratified_missingness, apache_absent_los, and n_positive on
+        every attrition step (E-9)
+      - an extract whose null token is not '', under unparseable_tokens (E-15)
 
-    It does NOT raise on the conditions it exists to PROFILE -- categorical
-    drift, an unknown outcome level, an unrecognised NULL token, an
+    It does not raise on the conditions it exists to profile: categorical
+    drift, an unknown outcome level, an unrecognised null token, an
     outcome-informative presence flag. Each is reported exactly and listed in
-    ``reference_check["invalid_conditions"]`` naming the raise ``build_raw``
-    WILL make, so the fix is a visible SPEC diff rather than an absorption. It
-    builds no features and certifies nothing; the ONLY raise is the
-    reference-identity check under ``expect_reference=True``.
+    reference_check["invalid_conditions"], naming the raise build_raw will
+    make, so the fix is a visible SPEC diff rather than an absorption.
+
+    It builds no features and certifies nothing. The only raise is the
+    reference-identity check under expect_reference=True.
     """
     warnings = []
 
@@ -2316,8 +2342,8 @@ def preflight(data_dir, *, expect_reference=False, verbose=True) -> dict:
         raw_headers[t] = raw
         tables[t] = {"path": os.path.basename(path), "rows": None,
                      "header": list(lower),
-                     # E-17: the verdict AND the evidence it was drawn from,
-                     # so a wrong verdict is checkable rather than trusted.
+                     # The verdict and the evidence it came from, so a wrong
+                     # verdict is checkable rather than trusted (E-17).
                      "header_raw": [h.strip() for h in raw],
                      "header_case_as_read": _header_case(raw),
                      "n_names_with_uppercase": sum(
@@ -2329,8 +2355,8 @@ def preflight(data_dir, *, expect_reference=False, verbose=True) -> dict:
               file=sys.stderr)
 
     # ---- patient (scan A: predicates + raw profile) ------------------------
-    # strict_outcome=False (E-16): an unexpected hospitaldischargestatus token
-    # must not abort the step whose job is to TABULATE value sets.
+    # strict_outcome=False: an unexpected hospitaldischargestatus token must
+    # not abort the step whose job is to tabulate value sets (audit E-16).
     sel = _select_cohort(data_dir, profile=True, verbose=verbose,
                          strict_outcome=False)
     selected = sel["selected"]
@@ -2362,12 +2388,12 @@ def preflight(data_dir, *, expect_reference=False, verbose=True) -> dict:
                 f"exclusion) -- widen the constant in SPEC.md, do not patch here")
 
     patient_block = {
-        # E-13: `n_hospitals` / `n_uniquepid` are the DATASET IDENTITY counts
-        # and are taken at S0 over every patient row, because
-        # EICU_REFERENCE_SITES / _PATIENTS are whole-table headline numbers.
-        # The post-filter counts are a COHORT diagnostic and are named as such
-        # -- comparing them against the published totals made the mandatory
-        # first command abort on the genuine extract.
+        # `n_hospitals` / `n_uniquepid` are dataset-identity counts, taken at
+        # S0 over every patient row, because EICU_REFERENCE_SITES / _PATIENTS
+        # are whole-table headline numbers. The post-filter counts are a cohort
+        # diagnostic and are named as such: comparing those against the
+        # published totals made the mandatory first command abort on the
+        # genuine extract. Ref: audit E-13.
         "n_rows": sel["n_patient_rows"],
         "n_hospitals": sel["n_hospitals_raw"],
         "n_uniquepid": sel["n_uniquepid_raw"],
@@ -2406,11 +2432,11 @@ def preflight(data_dir, *, expect_reference=False, verbose=True) -> dict:
             continue
         n_cohort += 1
         site = stay_site[stay_id]
-        # E-9: ICU length of stay, read as a DIAGNOSTIC only (it is on the
-        # feature denylist and stays there). The LOS distribution of
-        # APACHE-ABSENT versus APACHE-PRESENT stays is the measurement that
-        # separates the SITE channel from the OUTCOME channel: if the absent
-        # stays are systematically short, they are short because they ended.
+        # ICU length of stay, read as a diagnostic only -- it is on the feature
+        # denylist and stays there. The LOS distribution of APACHE-absent
+        # versus APACHE-present stays separates the site channel from the
+        # outcome channel: if the absent stays are systematically short, they
+        # are short because they ended. Ref: audit E-9.
         los = _maybe_float(row.get("unitdischargeoffset", ""))
         if los is not None:
             los_by_stay[stay_id] = los / 60.0
@@ -2477,7 +2503,7 @@ def preflight(data_dir, *, expect_reference=False, verbose=True) -> dict:
     tables["apacheApsVar"]["rows"] = aps["n_rows"]
     tables["apachePredVar"]["rows"] = apv["n_rows"]
 
-    # ---- apachePatientResult (comparator + coverage diagnostic ONLY) -------
+    # ---- apachePatientResult (comparator + coverage diagnostic only) -------
     res_rows = 0
     res_per_stay = Counter()
     res_linked = set()
@@ -2496,7 +2522,7 @@ def preflight(data_dir, *, expect_reference=False, verbose=True) -> dict:
         bucket = version_pred.setdefault(
             version, {"available": 0, "minus_one": 0, "empty": 0})
         raw = (row["predictedhospitalmortality"] or "").strip()
-        # VARCHAR(50) holding a probability: float() FIRST (T-9).
+        # VARCHAR(50) holding a probability, so float() first (threat T-9).
         pv = _maybe_float(raw)
         if not raw:
             bucket["empty"] += 1
@@ -2532,7 +2558,7 @@ def preflight(data_dir, *, expect_reference=False, verbose=True) -> dict:
                 comp_ok.add(sid)
                 break
 
-    # ---- hospital (strata; contributes NO features) ------------------------
+    # ---- hospital (strata only; contributes no features) -------------------
     hosp_rows = 0
     hospital = {"numbedscategory": Counter(), "teachingstatus": Counter(),
                 "region": Counter()}
@@ -2543,7 +2569,7 @@ def preflight(data_dir, *, expect_reference=False, verbose=True) -> dict:
     tables["hospital"]["rows"] = hosp_rows
     hospital = {k: dict(v) for k, v in hospital.items()}
 
-    # ---- attrition (the three APACHE steps are DIAGNOSTIC, never a filter) -
+    # ---- attrition (the three APACHE steps are diagnostic, never a filter) -
     attrition = list(sel["attrition"])
     site_stay_counts = {step["step"]: _dist_summary(sel["site_counts"][step["step"]].values())
                         for step in attrition}
@@ -2553,8 +2579,8 @@ def preflight(data_dir, *, expect_reference=False, verbose=True) -> dict:
                          aps["linked_stays"] & apv["linked_stays"] & comp_ok)):
         counts = Counter(stay_site[s] for s in stays if s in stay_site)
         n_step = int(sum(counts.values()))
-        # E-9: n_positive per step, so the ledger itself shows an
-        # outcome-correlated selection instead of hiding it inside n_stays.
+        # n_positive per step, so the ledger itself shows an outcome-correlated
+        # selection instead of hiding it inside n_stays (E-9).
         n_pos_step = int(sum(1 for s in stays
                              if s in stay_site and stay_positive.get(s)))
         attrition.append({"step": step, "n_stays": n_step,
@@ -2620,11 +2646,10 @@ def preflight(data_dir, *, expect_reference=False, verbose=True) -> dict:
                 f"documented support [{lo}, {hi}] u {{-1, 0}}: "
                 f"{sorted(stray)[:6]!r}")
 
-    # ---- OUTCOME-stratified missingness (E-9) ------------------------------
-    # The load-bearing screen the old protocol had nowhere: APACHE day-1 rows
-    # do not exist for stays that end before the window closes, so absence is a
-    # partial OUTCOME proxy and not merely the site proxy T-3 describes. Every
-    # entry is (missing stratum, present stratum, ratio) over the COHORT.
+    # ---- outcome-stratified missingness (E-9) ------------------------------
+    # Absence of an APACHE day-1 row is a partial outcome proxy, not merely the
+    # site proxy T-3 describes; see EICU_MAX_OUTCOME_PREVALENCE_RATIO above.
+    # Every entry is (missing stratum, present stratum, ratio) over the cohort.
     def _contrast(name, n_miss, k_miss, n_pres, k_pres):
         p_miss = _share(k_miss, n_miss)
         p_pres = _share(k_pres, n_pres)
@@ -2648,7 +2673,7 @@ def preflight(data_dir, *, expect_reference=False, verbose=True) -> dict:
         k_pres = int(sum(stay_positive.get(s, False) for s in linked))
         outcome_missingness[tag] = _contrast(
             tag, n_cohort_total - n_pres, n_cohort_pos - k_pres, n_pres, k_pres)
-        # stays with NO row in this table are missing for EVERY column of it
+        # stays with no row in this table are missing for every column of it
         n_unlinked = n_cohort_total - n_pres
         k_unlinked = n_cohort_pos - k_pres
         prefix = "aps_" if tag == "aps_present" else "apv_"
@@ -2694,7 +2719,7 @@ def preflight(data_dir, *, expect_reference=False, verbose=True) -> dict:
             f"T-3 describes, and prediction P4 being satisfied is its SIGNATURE "
             f"rather than a confirmation")
 
-    # ---- unrecognised sentinels (build_raw will ABORT on these) ------------
+    # ---- unrecognised sentinels (build_raw will abort on these) ------------
     for label, block in (("apacheApsVar", aps), ("apachePredVar", apv)):
         bad = {c: e["n_other_negative"] for c, e in block["sentinels"].items()
                if e["n_other_negative"]}
@@ -2717,7 +2742,7 @@ def preflight(data_dir, *, expect_reference=False, verbose=True) -> dict:
                 f"to missing and the run proceeds (amendment A6, POST-HOC). "
                 f"Inspect the column's support before trusting it")
 
-    # ---- unrecognised NULL TOKEN (E-15/E-22): opposite direction of T-2 ----
+    # ---- unrecognised null token (E-15/E-22): opposite direction to T-2 ----
     unparseable_over = {}
     for label, block in (("apacheApsVar", aps), ("apachePredVar", apv)):
         for c, e in block["sentinels"].items():
@@ -2727,10 +2752,10 @@ def preflight(data_dir, *, expect_reference=False, verbose=True) -> dict:
                 unparseable_over[f"{label}.{c}"] = {
                     "n_unparseable": int(k), "share": round(k / n, 6),
                     "top_tokens": block["null_tokens"].get(c, {})}
-    # E-22: the patient numerics are gated by the SAME raise; the first
-    # version of this projection was APACHE-only, so a '\N' in
-    # admissionweight (or in hospitaladmitoffset, the first-stay tie-breaker)
-    # was projected as clean while build_raw silently zeroed the column.
+    # The patient numerics are gated by the same raise. An APACHE-only
+    # projection would call a '\N' in admissionweight -- or in
+    # hospitaladmitoffset, the first-stay tie-breaker -- clean, while build_raw
+    # silently zeroed the column. Ref: audit E-22.
     for c in ("admissionheight", "admissionweight", "hospitaladmitoffset"):
         e = patient_sent[c]
         n = e["n"]
@@ -2752,7 +2777,7 @@ def preflight(data_dir, *, expect_reference=False, verbose=True) -> dict:
             f"raise unrecognised-null-token (patient numerics: E-22). Sample: "
             f"{[(k, v['top_tokens']) for k, v in sample]!r}")
 
-    # ---- fio2 / temperature mass outside BOTH frozen windows (E-18) --------
+    # ---- fio2 / temperature mass outside both frozen windows (E-18) --------
     for label, block in (("apacheApsVar", aps), ("apachePredVar", apv)):
         for what, conv in (("fio2", block["fio2"]),
                            ("temperature", block["temperature"])):
@@ -2778,9 +2803,9 @@ def preflight(data_dir, *, expect_reference=False, verbose=True) -> dict:
         if ref is not None and entry["rows"] != ref:
             mismatches.append({"what": f"{t}.rows", "got": entry["rows"],
                                "expected": ref})
-    # Identity is checked against the RAW S0 counts (E-13); the split
-    # projection below uses the COHORT site count, which is what site_split
-    # actually partitions.
+    # Identity is checked against the raw S0 counts. The split projection below
+    # uses the cohort site count, which is what site_split actually partitions.
+    # Ref: audit E-13.
     if patient_block["n_hospitals"] != EICU_REFERENCE_SITES:
         mismatches.append({"what": "n_hospitals",
                            "got": patient_block["n_hospitals"],

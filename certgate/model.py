@@ -1,13 +1,14 @@
-"""SPEC section "model.py": logistic head with internal guarded standardization.
+"""Logistic head that standardizes its own inputs.
 
-The head stores the training standardization ``(mu, sd)`` and standardizes RAW
-``x`` internally on every call -- callers pass raw features to ``logit`` /
-``predict_proba`` / ``predict`` / ``score``. Standardization uses a
-relative-tolerance guard on ``sd`` (audit F06), so a near-constant column is
-divided by 1.0 rather than by a numerically-zero standard deviation.
+The head stores the training standardization (mu, sd) and applies it on every
+call, so callers always pass RAW features to logit / predict_proba / predict /
+score. A relative-tolerance guard on sd divides a near-constant column by 1.0
+rather than by a numerically-zero standard deviation.
 
-The score only ranks; certificate validity never depends on the head's quality
-or calibration (METHODS section 6).
+The score only ranks. Certificate validity never depends on how good or how
+well-calibrated the head is.
+
+Refs: SPEC "model.py"; METHODS 6; audit F06.
 """
 from __future__ import annotations
 
@@ -31,7 +32,7 @@ def _sigmoid(z):
 
 @dataclass
 class Head:
-    """Fitted logistic head (SPEC model.py). ``sd`` is already the guarded ``sd_safe``."""
+    """A fitted logistic head. sd is already the guarded sd_safe."""
 
     coef: np.ndarray        # (d,) standardized-space coefficients
     intercept: float
@@ -39,33 +40,35 @@ class Head:
     sd: np.ndarray          # (d,) guarded training standard deviations
 
     def logit(self, x):
-        """Decision logit on RAW ``x`` (standardized internally with stored mu/sd)."""
+        """Decision logit on RAW x, standardized internally with the stored mu/sd."""
         x = np.asarray(x, dtype=np.float64)
         z = (x - self.mu) / self.sd
         return self.intercept + z @ self.coef
 
     def predict_proba(self, x):
-        """P(y=1 | x) on RAW ``x``."""
+        """P(y=1 | x) on RAW x."""
         return _sigmoid(self.logit(x))
 
     def predict(self, x):
-        """Hard label (p1 >= 0.5) on RAW ``x``."""
+        """Hard label (p1 >= 0.5) on RAW x."""
         return self.predict_proba(x) >= 0.5
 
     def score(self, x):
-        """Selective-prediction confidence score max(p1, 1-p1) in [0.5, 1] on RAW ``x``."""
+        """Selective-prediction confidence, max(p1, 1-p1) in [0.5, 1], on RAW x."""
         p1 = self.predict_proba(x)
         return np.maximum(p1, 1.0 - p1)
 
 
 def fit_head(train: "Cohort") -> Head:
-    """Fit the L2 logistic head on standardized training features (SPEC model.py).
+    """Fit the L2 logistic head on standardized training features.
 
-    ``mu, sd`` come from ``train``; the guarded ``sd_safe`` replaces any column
-    whose ``sd`` fails the relative tolerance ``SD_REL_TOL * max(1, |mu|)`` with
-    1.0 (audit F06). sklearn ``LogisticRegression(C=HEAD_C, max_iter=HEAD_MAX_ITER)``
-    is fit on the standardized ``z``; the returned Head standardizes raw ``x`` the
-    same way.
+    mu and sd come from train. The guarded sd_safe replaces sd with 1.0 for any
+    column that fails the relative tolerance SD_REL_TOL * max(1, |mu|).
+
+    sklearn's LogisticRegression(C=HEAD_C, max_iter=HEAD_MAX_ITER) is fit on
+    the standardized z, and the returned Head standardizes raw x the same way.
+
+    Refs: SPEC "model.py"; audit F06.
     """
     x = np.asarray(train.x, dtype=np.float64)
     mu = x.mean(axis=0)

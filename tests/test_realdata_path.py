@@ -1,14 +1,18 @@
-"""SPEC "Tests": first end-to-end exercise of the RAW loader (``from_raw``).
+"""SPEC "Tests": end-to-end exercise of the raw loader, from_raw.
 
-Draws synthetic multi-site data, then DE-STRUCTURES it back into the raw shapes a
-real loader hands us -- string / int outcome labels and raw string site ids --
-rebuilds every split through ``from_raw``, and drives ``run_certgate`` to a
-certified rung. Covers the ``{1,2}`` int-label variant, the GAP-1 feature-width
-gate, and the all-negative TARGET pool that can only flow via
-``from_raw(require_both_classes=False)``. Also pins ``coerce_labels``' opt-in.
+Draws synthetic multi-site data, then takes it apart into the raw shapes a
+real loader hands us: string or int outcome labels, and raw string site ids.
+Every split is rebuilt through from_raw, and run_certgate is driven to a
+certified rung.
 
-Until now ``from_raw`` had no test or experiment exercising it at all; this file
-is the real-data readiness harness for the loader contract.
+Also covered:
+  - the {1,2} int-label variant
+  - the GAP-1 feature-width gate
+  - the all-negative target pool, which can only flow via
+    from_raw(require_both_classes=False)
+  - coerce_labels' opt-in
+
+This file is the real-data readiness harness for the loader contract.
 """
 import numpy as np
 import pytest
@@ -21,7 +25,7 @@ from certgate.pipeline import run_certgate
 
 
 def _rec_site_labels(cohort) -> np.ndarray:
-    """Per-record ORIGINAL site label -- robust to dense-id renumbering."""
+    """Per-record original site label, robust to dense-id renumbering."""
     return np.array([cohort.site_labels[s] for s in cohort.site_id], dtype=object)
 
 
@@ -41,9 +45,11 @@ def _assert_equivalent(rebuilt, original) -> None:
 
 @pytest.fixture(scope="module")
 def raw_splits():
-    """208 sites (keeps the 50-carrying calibration floor satisfied), split by
-    site, then rebuilt from raw string forms. Same draw sequence as the
-    established test_pipeline fixture so certification behaviour matches."""
+    """208 sites, split by site, then rebuilt from raw string forms.
+
+    208 keeps the 50-carrying calibration floor satisfied. The draw sequence
+    matches the test_pipeline fixture, so certification behaviour matches too.
+    """
     cfg = SimConfig()
     rng = np.random.default_rng(SEED)
     coh = draw_cohort(cfg, 208, rng)
@@ -75,8 +81,10 @@ def test_from_raw_end_to_end_certifies(raw_splits):
 
 
 def test_wrong_width_target_hits_gap1_gate(raw_splits):
-    """A target matrix one column too wide is rejected loudly at the boundary
-    (GAP 1) rather than surfacing as a raw numpy broadcast error in head.score."""
+    """A too-wide target matrix is rejected at the boundary (GAP 1).
+
+    Otherwise it surfaces as a raw numpy broadcast error inside head.score.
+    """
     rb = raw_splits["rebuilt"]
     bad = np.zeros((20, rb["train"].d + 1), dtype=np.float64)
     with pytest.raises(ValueError, match="feature-width-mismatch"):
@@ -84,9 +92,12 @@ def test_wrong_width_target_hits_gap1_gate(raw_splits):
 
 
 def test_all_negative_target_pool_flows(raw_splits):
-    """A genuinely all-negative deployment batch: 'case' absent, only 'control'
-    observed. Strict from_raw refuses (typo protection); the sanctioned opt-in
-    admits it, and certification -- which never needs target labels -- proceeds."""
+    """A genuinely all-negative deployment batch flows through the opt-in.
+
+    Only 'control' is observed; 'case' is absent. Strict from_raw refuses it
+    as typo protection, the sanctioned opt-in admits it, and certification
+    proceeds because it never needs target labels.
+    """
     rb, tgt = raw_splits["rebuilt"], raw_splits["orig"]["target"]
     y_all_control = np.array(["control"] * tgt.n)
     sids = [tgt.site_labels[s] for s in tgt.site_id]
@@ -117,7 +128,7 @@ def test_coerce_labels_optin_returns_all_false():
 
 
 def test_coerce_labels_optin_still_raises_on_multiple_distinct_when_absent():
-    # positive absent AND >1 observed value -> ambiguous, still raises under opt-in
+    # positive absent and more than one observed value -> ambiguous, raises
     with pytest.raises(CohortError, match="single observed value"):
         coerce_labels(np.array([0, 1, 1]), 9, allow_absent_positive=True)
 

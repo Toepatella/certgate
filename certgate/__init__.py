@@ -1,9 +1,9 @@
 """CertGate: finite-sample certified selective prediction for multi-site data.
 
-Public surface re-exports the load-bearing entry points so callers can do
-``from certgate import run_certgate, from_raw`` without reaching into modules.
-The statistical contract lives in ``SPEC.md``; every constant is pinned by
-``tests/test_constants.py``.
+This module re-exports the load-bearing entry points, so callers can write
+`from certgate import run_certgate, from_raw` without reaching into
+submodules. The statistical contract lives in SPEC.md, and every constant is
+pinned by tests/test_constants.py.
 """
 from certgate import constants
 from certgate.constants import (SEED, SPLIT_FRACTIONS, ALPHA_LADDER, DELTA,

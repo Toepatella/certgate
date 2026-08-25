@@ -1,16 +1,20 @@
-"""SPEC section "report.py": tiered report, guarantee text, provenance.
+"""Tiered report, guarantee text, provenance.
 
-Every number carries a tier tag -- ``certified`` / ``estimated`` /
-``diagnostic`` -- so the guarantee is never confused with an estimate
-(METHODS sections 3, 6, 7). The decline partition splits the target pool
-exactly once and asserts its parts sum to ``n_target``. Guarantee text is a
-verbatim obligation (audit F01/F02, corrected by audit V1/V3/V13/V27): the
-POPULATION-AVERAGE estimand with the mandatory between-site-dispersion clause,
-the explicit "not a realized-error-count bound" clause, the baseline-only
-shared ``1-delta`` event, the operative-rung selection clause, the
-tagged-assumption wording, the concept/combined-shift out-of-scope disclosure,
-and -- for BBSE rows -- the four-parameter box with its bootstrap caveat.
-``tests/test_report.py`` freezes the exact emitted string.
+Every number carries a tier tag -- certified, estimated or diagnostic -- so a
+guarantee is never read as an estimate. The decline partition splits the target
+pool exactly once and asserts its parts sum to n_target.
+
+The guarantee text is a verbatim obligation. A certified row must carry:
+
+  - the site-population-average estimand and its dispersion clause
+  - the "not a realized-error-count bound" clause
+  - the baseline-only shared 1-delta event
+  - the operative-rung selection clause
+  - the tagged-assumption wording
+  - the concept/combined-shift out-of-scope disclosure
+  - for BBSE rows, the four-parameter box and its bootstrap caveat
+
+Refs: SPEC "report.py"; METHODS 3, 6, 7; audits F01/F02, V1, V3, V13, V27.
 """
 
 import datetime
@@ -29,13 +33,14 @@ _ASSUMPTION = {"baseline": "exchangeability", "bbse": "label shift"}
 
 
 def provenance(**arrays_and_meta) -> dict:
-    """Reproducibility block for one run (SPEC report.py; audit F49).
+    """Reproducibility block for one run.
 
-    Records package versions (``numpy``, ``scipy``, ``scikit-learn`` via
-    ``importlib.metadata``), the Python version, the protocol ``SEED``, a
+    Records the package versions, the Python version, the protocol SEED, a
     sha256 content hash of every ndarray keyword, any scalar metadata, and a
-    UTC timestamp. The timestamp is intentionally the only non-deterministic
-    field, so callers comparing runs for determinism must exclude it.
+    UTC timestamp. The timestamp is the only non-deterministic field, so a
+    caller comparing runs for determinism must exclude it.
+
+    Refs: SPEC "report.py"; audit F49.
     """
     versions = {}
     for pkg in _PACKAGES:
@@ -46,9 +51,9 @@ def provenance(**arrays_and_meta) -> dict:
     input_hashes, meta = {}, {}
     for name, obj in arrays_and_meta.items():
         if isinstance(obj, np.ndarray):
-            # the digest binds dtype and shape as well as content (audit V11):
-            # a reshaped or transposed matrix must not be provenance-identical
-            # to the original.
+            # the digest binds dtype and shape as well as content: a reshaped
+            # or transposed matrix is never provenance-identical to the
+            # original (audit V11)
             arr = np.ascontiguousarray(obj)
             h = hashlib.sha256()
             h.update(arr.dtype.str.encode())
@@ -69,19 +74,22 @@ def provenance(**arrays_and_meta) -> dict:
 
 
 def _statement(alpha: float, modes) -> str:
-    """Verbatim guarantee text for a certified row (SPEC report.py; audit
-    F01/F02, corrected by audit V1/V3/V13/V27 -- the exact string is frozen by
-    ``tests/test_report.py``; any silent weakening of a clause fails there).
+    """Verbatim guarantee text for a certified row.
+
+    tests/test_report.py freezes the exact string; weakening a clause fails it.
+
+    Refs: SPEC "report.py"; audits F01/F02, V1, V3, V13, V27.
     """
     assumption = " or ".join(_ASSUMPTION[m] for m in modes)
-    # V1 + verification G-1/G-3: the certified estimand and the probability
-    # attribution are MODE-DEPENDENT. Baseline certifies the unweighted risk
-    # over the calibration site population (probability over the calibration
-    # draw); BBSE certifies the rho-REWEIGHTED risk -- the population risk at
-    # the target class prevalence -- and its probability is over the joint
-    # draw (calibration sites, S_aux split, target pool). Naming the
-    # calibration-population unweighted risk on a BBSE row emitted a
-    # demonstrably false certificate under a downward prevalence shift (G-1).
+    # Estimand and probability attribution both depend on the mode:
+    #   - baseline certifies the unweighted risk over the calibration site
+    #     population, with probability over the calibration draw;
+    #   - bbse certifies the rho-reweighted risk -- the population risk at the
+    #     target class prevalence -- with probability over the joint draw of
+    #     calibration sites, S_aux split and target pool.
+    # Naming the unweighted calibration-population risk on a BBSE row emits a
+    # false certificate under a downward prevalence shift.
+    # Ref: audit V1; verification G-1, G-3.
     if "bbse" in modes and "baseline" in modes:
         head_clause = (
             f"With confidence >= {1.0 - DELTA:.2f}, the M={M_INFLUENCE} "
@@ -110,7 +118,7 @@ def _statement(alpha: float, modes) -> str:
             f"were drawn, is <= {alpha}.")
     parts = [
         head_clause,
-        # V1: mandatory dispersion clause, same force as the binomial clause.
+        # mandatory dispersion clause, same force as the binomial (audit V1)
         "This bounds a site-population average, NOT any individual site's "
         "answered error rate: under between-site heterogeneity individual "
         "sites can exceed alpha while the average stays within budget, at a "
@@ -119,18 +127,18 @@ def _statement(alpha: float, modes) -> str:
         "alpha at binomial-dispersion rates even under a valid certificate.",
     ]
     if "bbse" not in modes:
-        # V3, narrowed per verification G-7: what is shared is the certified
-        # THRESHOLDS (coverage/diagnostics remain target-dependent). True only
-        # because the baseline permutation stream is target-label-free; BBSE
-        # fits depend on the target pool through the q_t interval, so no
-        # shared event exists there and the clause is omitted whenever BBSE
-        # covers the row.
+        # what is shared is the certified thresholds; coverage and diagnostics
+        # stay target-dependent. That holds only because the baseline
+        # permutation stream is target-label-free. BBSE fits depend on the
+        # target pool through the q_t interval, so no shared event exists and
+        # the clause is omitted whenever BBSE covers the row.
+        # Ref: audit V3; verification G-7.
         parts.append(
             "In the exchangeable mode the certified thresholds are a function "
             f"of the calibration draw alone -- one 1-{DELTA:.2f} event shared "
             f"by every target pool the certificate is applied to.")
     parts.append(
-        # V27: the operative rung is a data-driven selection over the ladder.
+        # the operative rung is a data-driven selection over the ladder (V27)
         f"The operative rung is the strictest certified alpha, a data-driven "
         f"selection over the {{{ALPHA_LADDER[0]}, {ALPHA_LADDER[1]}}} ladder; "
         f"the selected claim holds jointly at probability "
@@ -139,8 +147,8 @@ def _statement(alpha: float, modes) -> str:
         "Concept shift and combined shift are OUT OF SCOPE and undetectable "
         "from unlabeled data -- the certificate is void there.")
     if "bbse" in modes:
-        # V2/V13: four estimated parameters; the old "single non-finite-sample
-        # step" claim was false while q_t went unbudgeted.
+        # four estimated parameters, not one -- q_t carries its own budget
+        # (audits V2, V13)
         parts.append(
             "The [rho_lo, rho_hi] box covers FOUR estimated parameters "
             f"(c0, c1, pi_source, q_target) at Bonferroni "
@@ -156,20 +164,23 @@ def _statement(alpha: float, modes) -> str:
 
 def _bootstrap_estimate(head, cal, tau, weights=None, n_boot=500,
                         max_attempts=None):
-    """Estimated-tier answered-set risk at ``tau`` (SPEC report.py; v1 report.py:14-35).
+    """Estimated-tier answered-set risk at tau.
 
     Point estimate plus a cluster bootstrap over S_cal sites, weighted under
-    the deploy mode when weights are supplied. This is an ESTIMATE of the
-    (re-weighted) target risk, never the certified guarantee -- so it is
-    labelled with the weighting it used.
+    the deploy mode when weights are supplied. This estimates the (re-weighted)
+    target risk and is never the certified guarantee, so it is labelled with
+    the weighting it used.
 
-    Resampling discipline (audit V21, mirroring shift.py's audit-F40/B-8
-    rule): resamples with zero answered mass are topped up rather than
-    silently dropped -- quantiling over a reduced count keeps only the
-    high-mass resamples and biases the interval. If ``n_boot`` valid resamples
-    cannot be collected within ``2 * n_boot`` attempts, the CI is NaN, never a
-    quantile over fewer draws. An empty answered set yields a NaN point, never
-    0.0.
+    Resampling discipline, mirroring shift.py:
+
+      - resamples with zero answered mass are topped up, not dropped;
+        quantiling over a reduced count keeps only the high-mass resamples and
+        biases the interval
+      - if n_boot valid resamples cannot be collected within 2 * n_boot
+        attempts, the CI is NaN, never a quantile over fewer draws
+      - an empty answered set yields a NaN point, never 0.0
+
+    Refs: SPEC "report.py"; v1 report.py:14-35; audits V21, F40, B-8.
     """
     rng = np.random.default_rng(SEED)
     score = head.score(cal.x)
@@ -194,8 +205,8 @@ def _bootstrap_estimate(head, cal, tau, weights=None, n_boot=500,
             draws.append(num[idx].sum() / d)
     if len(draws) >= n_boot:
         lo, hi = (float(v) for v in np.quantile(draws, [0.025, 0.975]))
-    else:                                # top-up failed: NaN, never a reduced
-        lo = hi = float("nan")           # -count quantile (audit V21)
+    else:                                # top-up failed: NaN, never a
+        lo = hi = float("nan")           # quantile over fewer draws (V21)
     return dict(tier="estimated", point=point, ci95=(lo, hi),
                 n_boot=len(draws), n_attempts=n_attempts)
 
@@ -203,8 +214,8 @@ def _bootstrap_estimate(head, cal, tau, weights=None, n_boot=500,
 def _rm_vs_unweighted(head, cal, tau, weights=None) -> dict:
     """Influence-weighted risk R_M vs the plain record-mean risk (audit F26).
 
-    Reveals when the M-cap is masking a heavy-tail: a large positive gap means
-    the influence weighting is catching bad news that an unweighted read hides.
+    Shows when the M-cap is masking a heavy tail. A large positive gap means
+    the influence weighting is catching bad news an unweighted read hides.
     """
     score = head.score(cal.x)
     err = (head.predict(cal.x) != cal.y).astype(np.float64)
@@ -233,18 +244,19 @@ def _capped_influence_share(cal) -> float:
 
 
 def _combine_alpha(mode_results_alpha: dict) -> dict:
-    """OR-combine baseline and BBSE for one alpha (SPEC pipeline step 6; v1 M1).
+    """OR-combine baseline and BBSE for one alpha.
 
-    Deploy the most conservative certified threshold (max tau across modes),
-    then list only the modes that certified that exact threshold index -- the
+    Deploy the most conservative certified threshold, the max tau across modes.
+    Then list only the modes that certified that exact threshold index. The
     OR-guarantee "if either tagged assumption holds" rests on the modes that
     actually back the deployed tau.
 
-    Certified rows additionally carry ``mode_outcomes`` (fixture audit
-    2026-07-25): {mode: "covering" | "certified-not-covering" | <decline
-    reason>}, so a certified row still records why the non-deploying mode did
-    not contribute -- on real data, BBSE silently not contributing is the
-    interesting signal, and it was previously unrecoverable from the report.
+    A certified row also carries mode_outcomes, mapping each mode to
+    "covering", "certified-not-covering", or its decline reason. That records
+    why the non-deploying mode did not contribute; on real data, BBSE quietly
+    not contributing is the interesting signal.
+
+    Refs: SPEC pipeline step 6; v1 M1; fixture audit 2026-07-25.
     """
     cert = {m: r for m, r in mode_results_alpha.items()
             if r.get("tau_idx") is not None}
@@ -273,9 +285,10 @@ def build_report(*, target_label, head, cal, target_x, mode_results,
                  target_site_id_supplied=False) -> dict:
     """Assemble the full tiered report for one target pool (SPEC report.py).
 
-    ``mode_results`` maps ``alpha -> {"baseline": r, "bbse": r}`` where each
-    ``r`` has ``certified`` (list of tau indices), ``tau_idx``, ``tau`` and
-    ``reason``. ``gate_reason`` (``"insufficient-clusters"`` | ``"pool-too-small"``)
+    mode_results maps alpha -> {"baseline": r, "bbse": r}, where each r carries
+    certified (a list of tau indices), tau_idx, tau and reason.
+
+    gate_reason, either "insufficient-clusters" or "pool-too-small",
     short-circuits to an all-declined report whose partition puts every target
     record in the gate bucket.
     """
@@ -287,9 +300,9 @@ def build_report(*, target_label, head, cal, target_x, mode_results,
     # ---- gated exits (record-carrying cluster gate / target-pool floor) ----
     if gate_reason is not None:
         partition = _partition(n_target, 0, 0, gate_reason)
-        # same diagnostic key set as a full report (audit V25): a consumer
-        # indexing a gated report must get None, not KeyError. Only
-        # capped_influence_share is computable without a head -- so compute it.
+        # same diagnostic key set as a full report, so a consumer indexing a
+        # gated report gets None rather than KeyError. Only
+        # capped_influence_share is computable without a head (audit V25)
         diagnostic = dict(tier="diagnostic", n_target=n_target, coverage=0.0,
                           n_cal=n_cal, n_cal_carrying=n_carrying,
                           feasibility=feasibility, gate_reason=gate_reason,
@@ -307,8 +320,8 @@ def build_report(*, target_label, head, cal, target_x, mode_results,
 
     # ---- certified tier: one row per alpha, OR-combined across modes ----
     certified_tier, operative = [], None
-    # iterate only the rungs actually certified this run (caller may pass a
-    # subset of the ladder), preserving ladder order (strictest first)
+    # iterate only the rungs this run certified, since the caller may pass a
+    # subset of the ladder. Ladder order is kept: strictest first.
     for alpha in (a for a in ALPHA_LADDER if a in mode_results):
         combined = _combine_alpha(mode_results[alpha])
         row = dict(alpha=float(alpha), tier="certified", **combined)
@@ -349,11 +362,11 @@ def build_report(*, target_label, head, cal, target_x, mode_results,
         rm_gap = _rm_vs_unweighted(head, cal, operative["tau"], weights=w_dep)
     else:
         rm_gap = None
-    # the BBSE-implied composition view is an ESTIMATED quantity, not part of
-    # the certificate: supply rho_point whenever the fit did not decline,
-    # regardless of which mode won deployment (verification N5 -- gating it on
-    # deploy_mode silently degraded the documented three-way composition to
-    # two-way everywhere BBSE fits but loses the OR-combination).
+    # the BBSE-implied composition view is estimated, not part of the
+    # certificate. Supply rho_point whenever the fit did not decline, whichever
+    # mode won deployment. Gating it on deploy_mode silently degrades the
+    # three-way composition to two-way wherever BBSE fits but loses the
+    # OR-combination (verification N5).
     rho_pt = bbse_fit.rho_point if not bbse_fit.declined else None
 
     comp = composition(head, target_x, answered, rho_point=rho_pt,
@@ -373,7 +386,7 @@ def build_report(*, target_label, head, cal, target_x, mode_results,
         abstention_profile=abst,
         bbse=bbse_fit.diagnostics,
         # a report whose record-level target identity was never checked must
-        # be distinguishable from one whose was (verification F4)
+        # stay distinguishable from one whose was (verification F4)
         target_site_id_supplied=bool(target_site_id_supplied),
     )
 
@@ -385,8 +398,10 @@ def build_report(*, target_label, head, cal, target_x, mode_results,
 
 
 def _partition(n_target, answered, below_tau, structural_reason) -> dict:
-    """Exact decline partition (SPEC report.py). Keys always present; exactly
-    one structural bucket is populated. Asserts the parts sum to ``n_target``."""
+    """Exact decline partition (SPEC report.py).
+
+    Every key is always present and exactly one structural bucket is populated.
+    Asserts that the parts sum to n_target."""
     part = {"answered": 0, "below_tau": 0, "failsafe": 0,
             "pool-too-small": 0, "insufficient-clusters": 0}
     if structural_reason is not None:
@@ -425,8 +440,8 @@ def render_text(report: dict) -> str:
     lines.append(f"  [diagnostic] coverage {d['coverage']:.2f}, "
                  f"n_cal_carrying {d['n_cal_carrying']}")
     db = report["decline_partition"]
-    # "[partition]" not "[declines]": the dict includes the ANSWERED count, and
-    # on a certified report the old label read as N declines (fixture audit
-    # 2026-07-25)
+    # "[partition]", not "[declines]": the dict includes the answered count, so
+    # a decline label would read as N declines on a certified report (fixture
+    # audit 2026-07-25)
     lines.append("  [partition] " + ", ".join(f"{k} {v}" for k, v in db.items()))
     return "\n".join(lines)

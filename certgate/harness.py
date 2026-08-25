@@ -1,22 +1,24 @@
-"""Validation instrumentation (SPEC section "harness.py", METHODS 7).
+"""Instrumentation for validating the gate.
 
-Numbers that must never be conflated (audit F29 lesson -- every label says
-exactly what it computes; per-site scope corrected by audit V1):
+Nothing here touches the certified path. These read oracle labels and only
+ever measure.
 
-  - ``hard_violation`` flags a single pool ONLY when the one-sided 95% Wilson
-    lower bound on its answered error exceeds alpha. Applied to a single fresh
-    site this is a PER-SITE DISPERSION DIAGNOSTIC with NO delta target
-    (audit V1): the certificate bounds the site-population average, not
-    individual sites, so per-site exceedances rise with between-site
-    heterogeneity while the certified aggregate stays within budget. The
-    conformance metric with the <= delta target is the aggregate R_M on a
-    fresh multi-site pool (METHODS 7.1, computed in the experiment harness).
-  - ``exceedance_reference`` is the binomial P(realized answered-error rate >
-    alpha), a diagnostic against which the raw exceedance count is compared
-    (small answered sets exceed alpha by luck at binomial-dispersion rates).
+Two numbers look alike and mean different things, so keep them apart:
 
-These are harness-only measurements over oracle labels; they never enter the
-certified path.
+  - hard_violation flags one pool when the one-sided 95% Wilson lower bound on
+    its answered error exceeds alpha. On a single fresh site that is a
+    DISPERSION diagnostic with no delta target. The certificate bounds the
+    average across sites, not any one site, so per-site exceedances climb with
+    between-site heterogeneity while the certified average stays in budget.
+  - exceedance_reference is the binomial P(realized answered-error rate >
+    alpha). It is the yardstick for the raw exceedance count: small answered
+    sets clear alpha on luck alone, at exactly this rate.
+
+The number that does carry the <= delta target is the aggregate R_M on a fresh
+multi-site pool (METHODS 7.1), computed in the experiment harness.
+
+Refs: SPEC "harness.py"; METHODS 7; audits F29 (every label says exactly what
+it computes), V1 (per-site scope).
 """
 
 import numpy as np
@@ -26,10 +28,13 @@ SIZE_BINS = ((0, 30), (30, 100), (100, 300), (300, np.inf))
 
 
 def wilson_lcb(k, n, level=0.95):
-    """One-sided lower Wilson confidence bound on a binomial proportion
-    (METHODS 7). ``level`` is the one-sided confidence (0.95 -> z ~= 1.645).
-    Returns 0.0 for ``n <= 0``; result is clamped to [0, 1] and monotone
-    non-decreasing in ``k``."""
+    """One-sided lower Wilson confidence bound on a binomial proportion.
+
+    level is the one-sided confidence (0.95 -> z ~= 1.645). Returns 0.0 when
+    n <= 0. The result is clamped to [0, 1] and rises monotonically with k.
+
+    Refs: METHODS 7.
+    """
     if n <= 0:
         return 0.0
     z = float(norm.ppf(level))
@@ -43,9 +48,13 @@ def wilson_lcb(k, n, level=0.95):
 
 
 def hard_violation(err_answered, alpha):
-    """A certificate is HARD-violated iff the one-sided 95% Wilson lower bound
-    on the answered-set error exceeds ``alpha`` (METHODS 7). An empty answered
-    set (``wilson_lcb == 0``) is never a violation."""
+    """True when the answered-set error is high enough to call a hard violation.
+
+    The bar is the one-sided 95% Wilson lower bound exceeding alpha. An empty
+    answered set gives wilson_lcb == 0, so it is never a violation.
+
+    Refs: METHODS 7.
+    """
     err_answered = np.asarray(err_answered)
     n = int(err_answered.shape[0])
     k = int(np.count_nonzero(err_answered))
@@ -53,10 +62,14 @@ def hard_violation(err_answered, alpha):
 
 
 def exceedance_reference(n_answered, alpha):
-    """Binomial reference probability that the realized answered-error RATE
-    exceeds ``alpha`` (METHODS 7): ``P(K/n > alpha)`` for ``K ~ Binomial(n, p)``
-    at the boundary ``p = alpha`` -- the dispersion curve of the worst valid
-    certificate. Returns 0.0 for ``n_answered <= 0``."""
+    """How often a perfectly valid certificate still exceeds alpha by luck.
+
+    P(K/n > alpha) for K ~ Binomial(n, p) evaluated at the boundary p = alpha,
+    which traces the dispersion curve of the worst certificate that is still
+    valid. Returns 0.0 when n_answered <= 0.
+
+    Refs: METHODS 7.
+    """
     if n_answered <= 0:
         return 0.0
     k_thresh = int(np.floor(alpha * n_answered + 1e-9))   # rate > alpha <=> K > alpha*n

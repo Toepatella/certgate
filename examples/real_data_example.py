@@ -1,23 +1,20 @@
-"""Worked real-data example: from a CSV-like dataset to a CertGate certificate.
+"""Worked example: from a CSV-like dataset to a CertGate certificate.
 
-This script is the glue a practitioner writes when a real multi-site clinical
-dataset arrives. It is deliberately end-to-end and heavily commented:
+This is the glue a practitioner writes when real multi-site clinical data
+arrives. It runs end to end:
 
   1. Write a small synthetic dataset to a temporary CSV, then read it back with
-     the *stdlib* ``csv`` module -- NO pandas (CertGate adds no dependencies;
-     see requirements.txt) -- so the genuine from-a-file path is exercised.
-  2. Split sites into train / aux / cal BY SITE (never by record -- see the loud
-     comment in ``_split_by_site``).
-  3. Build each split's Cohort with ``from_raw`` (coerce labels + densify site
-     ids + run the loud input contract).
-  4. Run ``run_certgate`` WITHOUT oracle labels and print what the report holds:
-     certified rungs, the guarantee statement, the decline partition, and an
-     abstention explanation for one declined deployment case.
-  5. Show what an honest decline looks like (structural refusal with a reason
-     code) and note what degrades gracefully when oracle labels are absent.
+     the stdlib csv module -- no pandas, so the genuine from-a-file path gets
+     exercised.
+  2. Split sites into train / aux / cal by site, never by record.
+  3. Build each split's Cohort with from_raw.
+  4. Run run_certgate without oracle labels and print the report: certified
+     rungs, guarantee statement, decline partition, and one abstention
+     explanation.
+  5. Show what an honest decline looks like.
 
-Run it directly:  ``python examples/real_data_example.py``
-It is deterministic (everything seeds from ``certgate.constants.SEED``).
+Run it directly:  python examples/real_data_example.py
+Deterministic: everything seeds from certgate.constants.SEED.
 """
 import csv
 import os
@@ -26,9 +23,9 @@ import tempfile
 
 import numpy as np
 
-# Run directly, this script puts examples/ -- not the repo root -- on sys.path,
-# so ``import certgate`` would fail. Add the repo root. This is module-level
-# (never inside a function), which respects the repo's top-level-imports invariant.
+# Run directly, this script puts examples/ on sys.path rather than the repo
+# root, so `import certgate` would fail. Add the repo root. Module level, never
+# inside a function -- that is the repo's top-level-imports invariant.
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
@@ -49,10 +46,10 @@ NEGATIVE = "control"     # the single other observed value -> y=0
 # CSV write / read (stdlib csv only -- no pandas)                             #
 # --------------------------------------------------------------------------- #
 def _write_labeled_csv(path, cohort):
-    """Historical multi-site data WITH outcomes -> a CSV a hospital might export.
+    """Historical multi-site data with outcomes, as a hospital might export it.
 
-    Columns: ``site, outcome, x0..x{d-1}``; one row per patient record. This is
-    the shape of data you already have labels for (the calibration sites).
+    Columns: site, outcome, x0..x{d-1}; one row per patient record. This is the
+    shape of data you already have labels for -- the calibration sites.
     """
     d = cohort.d
     with open(path, "w", newline="") as fh:
@@ -65,13 +62,14 @@ def _write_labeled_csv(path, cohort):
 
 
 def _write_features_only_csv(path, cohort):
-    """A NEW deployment batch: site id + features, NO outcome column.
+    """A new deployment batch: site id + features, no outcome column.
 
-    In real deployment the outcomes do not exist yet -- these are patients whose
-    risk we are about to gate. Certification never needs their labels. The SITE
-    column, however, must travel with the batch: a multi-site deployment pool
-    passes it to ``run_certgate`` as ``target_site_id`` so the per-site target
-    disjointness gate and BBSE's cluster-correct q interval both see it.
+    In real deployment the outcomes do not exist yet. These are the patients
+    whose risk we are about to gate, and certification never needs their labels.
+
+    The site column must still travel with the batch. A multi-site pool hands it
+    to run_certgate as target_site_id, which feeds both the per-site target
+    disjointness gate and BBSE's cluster-correct q interval.
     """
     d = cohort.d
     with open(path, "w", newline="") as fh:
@@ -116,22 +114,20 @@ def _read_features_only_csv(path):
 # Split BY SITE (never by record)                                            #
 # --------------------------------------------------------------------------- #
 def _split_by_site(sites, outcomes, feats, rng):
-    """Partition WHOLE SITES into train / aux / cal by ``SPLIT_FRACTIONS``.
+    """Partition whole sites into train / aux / cal by SPLIT_FRACTIONS.
 
-    *** Split BY SITE, never by record. ***  The site (hospital) is the unit of
-    statistical independence -- that is the whole point of CertGate. Two reasons
-    this matters, both loud:
-      - ``run_certgate`` ASSERTS site-disjointness at entry (``assert_site_disjoint``)
-        across train/aux/cal, and additionally rejects a ``target_label`` (or, when
-        supplied, ``target_site_id`` labels) naming any train/aux/cal site (audit
-        V9) -- the TARGET must be a genuinely new site too, and for a multi-site
-        deployment pool you should pass ``target_site_id`` so this is checked
-        per site (it also gives BBSE its cluster-correct q_t interval). This
-        example's deployment pool spans 12 sites and passes it below.
-      - Even if it somehow slipped through, a record-level split would silently
-        break the finite-sample guarantee (leakage across the calibration draw).
-    So we assign each SITE LABEL to exactly one split, then route every record by
-    its site.
+    Split by site, NEVER by record. The site (hospital) is the unit of
+    statistical independence, which is the whole point of CertGate.
+
+      - run_certgate asserts site-disjointness (assert_site_disjoint) across
+        train/aux/cal, and rejects a target naming any train/aux/cal site -- the
+        target must be a genuinely new site too. For a multi-site pool, pass
+        target_site_id so the check runs per site; it also gives BBSE its
+        cluster-correct q_t interval. This example's pool spans 12 sites.
+      - Even if that slipped through, a record-level split would silently break
+        the finite-sample guarantee by leaking across the calibration draw.
+
+    Refs: audit V9 (target-site rejection).
     """
     unique_sites = sorted(set(sites))                 # deterministic base order
     perm = rng.permutation(len(unique_sites))
@@ -160,17 +156,16 @@ def _split_by_site(sites, outcomes, feats, rng):
 def _build_cohorts(buckets):
     """Turn each raw split into a Cohort via the from_raw loader contract.
 
-    ``from_raw`` does the whole raw -> Cohort job: ``coerce_labels`` maps the
+    from_raw does the whole raw -> Cohort job: coerce_labels maps the
     "case"/"control" strings to strict bool (positive_label="case"),
-    ``densify_sites`` maps the raw string site ids to dense 0..K-1, and
-    ``make_cohort`` runs the loud input checks. Fitting cohorts keep the strict
-    ``require_both_classes=True`` default (single-class data breaks the head fit).
+    densify_sites maps raw site ids to dense 0..K-1, and make_cohort runs the
+    loud input checks. Fitting cohorts keep require_both_classes=True, since
+    single-class data breaks the head fit.
 
-    WARNING -- missing-label sentinels are NOT auto-detected. ``coerce_labels``
-    rejects ONLY NaN / None. Domain sentinels like ``-1``, ``9``, ``"NA"`` or
-    ``""`` are treated as ordinary label values (and a third distinct value trips
-    the ">2 distinct labels" error). Clean sentinels out of the outcome column
-    BEFORE calling ``from_raw``.
+    Missing-label sentinels are NOT auto-detected. coerce_labels rejects only
+    NaN and None; domain sentinels like -1, 9, "NA" or "" count as ordinary
+    label values, and a third distinct value trips the ">2 distinct labels"
+    error. Clean them out of the outcome column before calling from_raw.
     """
     cohorts = {}
     for name, b in buckets.items():
@@ -183,20 +178,19 @@ def _build_cohorts(buckets):
 def main():
     rng = np.random.default_rng(SEED)                 # deterministic throughout
 
-    # The documented 208-site generator (SimConfig defaults): 40% of 208 ~ 83
-    # calibration sites clears the 50-record-carrying floor comfortably, and
-    # this exact draw reproduces the split tests/test_pipeline.py pins as
-    # certifying alpha=0.10. The temp CSV is ~35 MB -- the price of realistic
-    # site sizes (the certificate's feasibility rides on BOTH cluster count
-    # and per-site atom noise).
+    # The documented 208-site generator (SimConfig defaults). 40% of 208 is
+    # about 83 calibration sites, clearing the 50-record-carrying floor, and
+    # this exact draw is the split tests/test_pipeline.py pins as certifying
+    # alpha=0.10. The temp CSV is ~35 MB, the price of realistic site sizes:
+    # feasibility rides on both cluster count and per-site atom noise.
     cfg = SimConfig()
     historical = draw_cohort(cfg, 208, rng)
-    # The deployment batch is a MULTI-SITE pool of NEW sites (12 of them --
-    # comfortably above BBSE_MIN_TARGET_SITES=10, so BBSE's q interval takes
-    # the cluster-bootstrap path instead of declining). Features only matter
-    # here, so require_both_classes=False (a real batch may legitimately be
-    # all one class). Drawn from its OWN rng stream so the deployment pool's
-    # shape can never reshuffle the historical split above.
+    # The deployment batch is a multi-site pool of 12 new sites. Twelve is above
+    # BBSE_MIN_TARGET_SITES=10, so BBSE's q interval takes the cluster-bootstrap
+    # path instead of declining. Only features matter here, so
+    # require_both_classes=False -- a real batch may legitimately be all one
+    # class. It draws from its own rng stream, so the pool's shape can never
+    # reshuffle the historical split above.
     deployment = draw_cohort(cfg, 12, np.random.default_rng(SEED + 1),
                              site_label_prefix="deploy",
                              require_both_classes=False)
@@ -221,16 +215,15 @@ def main():
           f"{target_x.shape[1]} features, "
           f"{len(set(target_sites))} sites")
 
-    # ---- run the gate WITHOUT oracle labels ----
-    # Certification NEVER needs target labels; it certifies the answered-set error
-    # RATE from the calibration draw. What degrades gracefully when oracle labels
-    # are absent: only the DIAGNOSTIC oracle composition (the realized true-positive
-    # fraction among answered cases) is omitted from the report -- every load-bearing
-    # certified/estimated number still fires.
-    # target_site_id carries the pool's per-record raw site labels: the
-    # pipeline asserts every target site is disjoint from train/aux/cal, and
-    # BBSE's q_t interval becomes a cluster bootstrap over the 12 target
-    # sites rather than a single-site Clopper-Pearson interval.
+    # ---- run the gate without oracle labels ----
+    # Certification NEVER needs target labels. It certifies the answered-set
+    # error rate from the calibration draw. Without oracle labels the report
+    # only omits the diagnostic oracle composition; every certified or
+    # estimated number still fires.
+    # target_site_id carries the pool's per-record raw site labels, so the
+    # pipeline can assert every target site is disjoint from train/aux/cal, and
+    # BBSE's q_t interval becomes a cluster bootstrap over the 12 target sites
+    # instead of a single-site Clopper-Pearson interval.
     rep = run_certgate(cohorts["train"], cohorts["aux"], cohorts["cal"],
                        target_x, target_label="deploy-pool",
                        target_site_id=target_sites)
@@ -243,8 +236,8 @@ def main():
             print(f"  alpha={row['alpha']:.2f}: CERTIFIED  tau={row['tau']:.3f}  "
                   f"deploy_mode={row['deploy_mode']}  modes={row['modes']}  "
                   f"coverage={row['coverage']:.3f}")
-            # mode_outcomes records why the OTHER mode did not contribute --
-            # on real data BBSE silently not contributing is the interesting
+            # mode_outcomes records why the other mode did not contribute. On
+            # real data, BBSE silently not contributing is the interesting
             # signal (e.g. 'failsafe' vs 'bbse-ill-conditioned').
             print(f"              per-mode outcomes: {row['mode_outcomes']}")
         else:
@@ -264,8 +257,8 @@ def main():
         print(f"  {k}: {v}")
 
     # ---- abstention explanation for one declined deployment case ----
-    # Re-fit the head on train to explain a specific case. fit_head is deterministic,
-    # so this is the SAME head run_certgate fit internally.
+    # Re-fit the head on train to explain a specific case. fit_head is
+    # deterministic, so this is the same head run_certgate fit internally.
     head = fit_head(cohorts["train"])
     declined = np.where(~rep["answered_mask"])[0]
     if op is not None and declined.size:
@@ -284,8 +277,8 @@ def main():
         print("\n(No declined deployment case in this batch -- coverage was 100%.)")
 
     # ---- what an honest decline looks like ----
-    # A structural refusal issues NO certificate and puts every target record in a
-    # single gate bucket, tagged with a reason code. Two structural reasons:
+    # A structural refusal issues no certificate. Every target record lands in
+    # one gate bucket, tagged with a reason code. The two structural reasons:
     #   * "pool-too-small"        -- target pool below MIN_ANSWERABLE
     #   * "insufficient-clusters" -- fewer than 50 record-carrying calibration sites
     print("\n" + "=" * 72)

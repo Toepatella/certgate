@@ -1,8 +1,8 @@
 """SPEC "Tests" for the BBSE label-shift mode.
 
-Falsifiability first: the pure label shift is verified to push the baseline
-answered risk above alpha (so the baseline walk certifies-and-violates) BEFORE
-BBSE behaviour is judged. Then the three declines and the affine-in-rho
+Falsifiability first. The pure label shift is verified to push the baseline
+answered risk above alpha, so the baseline walk certifies-and-violates, before
+any BBSE behaviour is judged. Then the three declines and the affine-in-rho
 property.
 """
 import numpy as np
@@ -24,12 +24,13 @@ RHO_TRUE = (TGT_BASE / (1 - TGT_BASE)) / (SRC_BASE / (1 - SRC_BASE))
 
 @pytest.fixture(scope="module")
 def source():
-    """A source split (sep=1.8 -> a realistic, not near-perfect, head) at 260
-    sites: good enough to certify in-distribution, weak enough that a real
-    label shift bites the answered set. The TARGET pool is drawn with a large
-    single site (size_lo=2000) so its Clopper-Pearson q interval -- audit V2 --
-    is informative and the fit does not decline for target-pool noise; the
-    feature/label distribution is unchanged (size affects only the site size).
+    """A 260-site source split with a realistic, not near-perfect, head.
+
+    sep=1.8 is good enough to certify in-distribution, weak enough that a real
+    label shift bites the answered set. The target pool is one large site
+    (size_lo=2000) so its Clopper-Pearson q interval is informative and the fit
+    does not decline for target-pool noise; size affects only the site size,
+    not the feature or label distributions (audit V2).
     """
     cfg = SimConfig(sep=1.8)
     rng = np.random.default_rng(20260721)
@@ -72,29 +73,30 @@ def test_pure_label_shift_falsifiability_and_bbse(source):
     ans_t = head.score(tgt.x) >= tau
     err_t = head.predict(tgt.x) != tgt.y
     target_risk = err_t[ans_t].mean()
-    assert target_risk > alpha                             # ... and VIOLATES
+    assert target_risk > alpha                             # ... and violates
 
-    # 3. BBSE certifies-or-declines -- and a certificate it DOES issue on this
-    # draw must not be a certify-and-violate (audit V6 found the old
-    # reason-in-domain assertion vacuous: the set WAS certify_bbse's complete
-    # return domain, so the predicate was identically true).
+    # 3. BBSE certifies or declines. Any certificate it does issue on this
+    # draw must not be a certify-and-violate. Audit V6 found the old
+    # reason-in-domain assertion vacuous: the set was certify_bbse's complete
+    # return domain, so the predicate was identically true.
     from certgate.harness import hard_violation
     rb = certify_bbse(head, fit, cal, alpha)
     if rb["reason"] is None:
         ans_b = head.score(tgt.x) >= rb["tau"]
         assert not hard_violation(err_t[ans_b], alpha)
     else:
-        # a decline issues nothing -- the certified fields must be empty
-        # (verification N6: asserting reason-in-domain here was vacuous, the
-        # set WAS the complete return domain)
+        # a decline issues nothing, so the certified fields must be empty
+        # (verification N6, the same vacuous-assertion lesson as above)
         assert rb["tau"] is None and rb["tau_idx"] is None
         assert rb["certified"] == []
 
 
 def test_degenerate_three_site_pool(source):
-    """A 3-site pool with no positives at all: the point estimate is degenerate
-    and every bootstrap resample is invalid -> decline, never a reduced-count
-    quantile (audit F40/B-8)."""
+    """A 3-site pool with no positives at all must decline (audits F40, B-8).
+
+    The point estimate is degenerate and every bootstrap resample is invalid,
+    so no reduced-count quantile is taken.
+    """
     head, tgt = source["head"], source["tgt"]
     d = source["cfg"].d
     rng = np.random.default_rng(3)
@@ -107,8 +109,8 @@ def test_degenerate_three_site_pool(source):
 
 
 def test_weak_head_ill_conditioned(source):
-    """A near-constant head cannot separate the classes: c1 - c0 collapses
-    below BBSE_GAP_FLOOR -> ill-conditioned (audit B-9)."""
+    """A near-constant head cannot separate the classes, so c1 - c0 collapses
+    below BBSE_GAP_FLOOR and the fit is ill-conditioned (audit B-9)."""
     head, aux, tgt = source["head"], source["aux"], source["tgt"]
     d = source["cfg"].d
     weak = Head(coef=np.zeros(d), intercept=-0.2, mu=np.zeros(d),
@@ -118,8 +120,8 @@ def test_weak_head_ill_conditioned(source):
 
 
 def test_q_t_outside_box_misspecified(source):
-    """q_t forced above the box's [c0_lo, c1_hi] range (implied prevalence
-    outside (0,1)) -> misspecified (audit F41/B-9)."""
+    """q_t forced above the box's [c0_lo, c1_hi] range is misspecified: the
+    implied prevalence falls outside (0, 1) (audits F41, B-9)."""
     head, aux = source["head"], source["aux"]
     d = source["cfg"].d
     v = source["cfg"].direction()
@@ -131,13 +133,14 @@ def test_q_t_outside_box_misspecified(source):
 
 
 def test_statistic_affine_in_rho():
-    """The class-reweighted atom is affine in rho at a FIXED normalization:
-    the second difference over equally-spaced rho vanishes to ~1e-12. Note
-    this is the fixed-wmax property only; the production walk uses a
-    per-endpoint wmax=max(1,rho) under which the atom mean is NOT affine --
-    dual-endpoint soundness on that path is pinned by
-    test_dual_endpoint_soundness_straddling_rho_one (the sign-carrier, not the
-    atom mean, is what stays affine there)."""
+    """The class-reweighted atom is affine in rho at a fixed normalization.
+
+    The second difference over equally-spaced rho vanishes to ~1e-12. This is
+    the fixed-wmax property only: the production walk uses a per-endpoint
+    wmax=max(1,rho) under which the atom mean is not affine, and there the
+    sign-carrier stays affine instead (see
+    test_dual_endpoint_soundness_straddling_rho_one).
+    """
     rng = np.random.default_rng(0)
     n = 4000
     site_id = rng.integers(0, 40, n)
@@ -154,11 +157,13 @@ def test_statistic_affine_in_rho():
 
 
 def test_dual_endpoint_soundness_straddling_rho_one():
-    """R1 (REDTEAM.md): on the production per-endpoint normalization
-    wmax=max(1,rho) the atom mean is piecewise in rho (kink at rho=1) -- NOT
-    affine -- but the sign-carrier (mean - alpha) * max(1, rho) IS affine, so
-    the certifiable set {rho: E[Z] <= alpha} is convex and testing both
-    endpoints of an interval straddling rho=1 covers every interior rho."""
+    """Testing both endpoints of a rho interval covers every interior rho.
+
+    On the production normalization wmax=max(1,rho) the atom mean is piecewise
+    in rho with a kink at rho=1, so it is not affine. But the sign-carrier
+    (mean - alpha) * max(1, rho) is affine, making the certifiable set
+    {rho: E[Z] <= alpha} convex (R1, REDTEAM.md).
+    """
     rng = np.random.default_rng(0)
     n = 4000
     site_id = rng.integers(0, 40, n)
@@ -174,16 +179,18 @@ def test_dual_endpoint_soundness_straddling_rho_one():
         for r in rhos])
     sign_carrier = (means - alpha) * np.maximum(1.0, rhos)   # == A + rho*B
     assert np.abs(np.diff(sign_carrier, 2)).max() < 1e-12    # affine in rho
-    # the raw atom mean must show the kink -- guards against re-documenting
-    # the old (false) "atom mean is affine across rho=1" justification
+    # the raw atom mean must show the kink, which guards against re-documenting
+    # the old, false "atom mean is affine across rho=1" justification
     assert np.abs(np.diff(means, 2)).max() > 1e-6
 
 
 def _flat_cohort(n_sites, n_pos_err, n_pos_ok, n_neg_err, n_neg_ok):
-    """d=1 cohort of ``n_sites`` identical sites for the identity head
-    (logit = x): x=-0.5 -> predicted negative, x=+0.5 -> predicted positive;
-    either way score = 0.622 >= TAU_GRID[0], so every record is answered at
-    the first threshold. Positives carry BBSE weight rho, negatives weight 1."""
+    """A d=1 cohort of n_sites identical sites for the identity head.
+
+    With logit = x: x=-0.5 predicts negative, x=+0.5 predicts positive. Either
+    way score = 0.622 >= TAU_GRID[0], so every record is answered at the first
+    threshold. Positives carry BBSE weight rho, negatives weight 1.
+    """
     per = ([(-0.5, True)] * n_pos_err      # y=1 predicted 0 -> error
            + [(+0.5, True)] * n_pos_ok    # y=1 predicted 1 -> correct
            + [(+0.5, False)] * n_neg_err  # y=0 predicted 1 -> error
@@ -204,25 +211,28 @@ def _manual_fit(rho_lo, rho_hi, order=(0,)):
 
 
 def test_dual_endpoint_loop_requires_both_endpoints():
-    """REVIEW-FABLE B-1: test_dual_endpoint_soundness_straddling_rho_one pins
-    the R1 *math* but never calls certify_bbse; this pins the dual-endpoint
-    LOOP itself. Each scenario makes one endpoint favorable and the other
-    poisonous, so certify_bbse must decline (failsafe) in BOTH orientations --
-    a regression to single-endpoint testing on either side falsely certifies
-    one of them. Collapsing the interval onto the favorable endpoint certifies
-    (power check: the decline is attributable to the other endpoint, not to
-    lack of power). Deterministic: fixed endpoint rng streams, identical sites."""
+    """The dual-endpoint loop itself, not just the R1 math behind it.
+
+    test_dual_endpoint_soundness_straddling_rho_one pins that math but never
+    calls certify_bbse. Each scenario here makes one endpoint favorable and the
+    other poisonous, so certify_bbse must decline (failsafe) in both
+    orientations; a single-endpoint regression falsely certifies one of them.
+
+    Collapsing the interval onto the favorable endpoint certifies, so the
+    decline comes from the other endpoint, not lack of power. Fixed rng streams
+    and identical sites keep it deterministic (REVIEW-FABLE B-1).
+    """
     head = Head(coef=np.array([1.0]), intercept=0.0, mu=np.zeros(1),
                 sd=np.ones(1))
     alpha = 0.10
     n_sites = 200
 
-    # A: errors sit on POSITIVES (weight rho) -> weighted answered risk RISES
+    # A: errors sit on positives (weight rho), so weighted answered risk rises
     #    with rho: rho=0.2 favorable (risk ~0.010), rho=3.0 poisonous (~0.136).
     cal_a = _flat_cohort(n_sites, n_pos_err=5, n_pos_ok=0,
                          n_neg_err=0, n_neg_ok=95)
-    # B: errors sit on NEGATIVES (weight 1) under a large correct positive
-    #    mass (weight rho) -> risk FALLS with rho: rho=0.2 poisonous (~0.114),
+    # B: errors sit on negatives (weight 1) under a large correct positive
+    #    mass (weight rho), so risk falls with rho: rho=0.2 poisonous (~0.114),
     #    rho=3.0 favorable (~0.021).
     cal_b = _flat_cohort(n_sites, n_pos_err=0, n_pos_ok=70,
                          n_neg_err=5, n_neg_ok=25)
@@ -239,9 +249,9 @@ def test_dual_endpoint_loop_requires_both_endpoints():
 # ---- audit V2/V14: the q_t confidence share and its decline paths ----------
 
 def test_empty_target_declines(source):
-    """audit V14: an empty target pool must decline loudly as
-    ``bbse-empty-target``, never flow a NaN q_t through NaN-blind gates into
-    an opaque downstream error."""
+    """An empty target pool must decline loudly as bbse-empty-target, never
+    flow a NaN q_t through NaN-blind gates into an opaque downstream error
+    (audit V14)."""
     from certgate.shift import fit_bbse
     head, aux = source["head"], source["aux"]
     d = source["cfg"].d
@@ -250,8 +260,7 @@ def test_empty_target_declines(source):
 
 
 def test_fit_records_q_interval(source):
-    """The fit's diagnostics carry the q interval (audit V2) and it brackets
-    the observed q_t."""
+    """The fit's diagnostics carry a q interval bracketing q_t (audit V2)."""
     from certgate.shift import fit_bbse
     head, aux, tgt = source["head"], source["aux"], source["tgt"]
     fit = fit_bbse(head, aux, tgt.x, np.random.default_rng(7))
@@ -263,10 +272,10 @@ def test_fit_records_q_interval(source):
 
 
 def test_multi_site_q_interval_path(source):
-    """>= BBSE_MIN_TARGET_SITES target sites: the q interval takes the
-    cluster-bootstrap path (unconditional assertions -- verification N6's
-    lesson: an `if not declined` guard can leave a test with no reachable
-    teeth)."""
+    """At or above BBSE_MIN_TARGET_SITES, q takes the cluster-bootstrap path.
+
+    The assertions are unconditional: an `if not declined` guard can leave a
+    test with no reachable teeth (verification N6)."""
     from certgate.shift import fit_bbse
     head, aux, tgt = source["head"], source["aux"], source["tgt"]
     n = tgt.n
@@ -281,10 +290,12 @@ def test_multi_site_q_interval_path(source):
 
 
 def test_few_target_sites_decline_bbse_target_clustering(source):
-    """verification F1 (critical): a percentile bootstrap over 2-9 target
-    sites cannot approach nominal coverage (measured rho-miss up to 46% at
-    K=2 against nominal 2.5%, certify-and-violate at 3.4x delta where the bet
-    has power) -- 2 <= K < BBSE_MIN_TARGET_SITES must DECLINE, never pretend."""
+    """2 <= K < BBSE_MIN_TARGET_SITES target sites must decline, never pretend.
+
+    A percentile bootstrap over 2-9 sites cannot approach nominal coverage:
+    rho-miss up to 46% at K=2 against a nominal 2.5%, and certify-and-violate
+    at 3.4x delta where the bet has power (verification F1, critical).
+    """
     from certgate.shift import fit_bbse
     from certgate.constants import BBSE_MIN_TARGET_SITES
     head, aux, tgt = source["head"], source["aux"], source["tgt"]
@@ -298,12 +309,14 @@ def test_few_target_sites_decline_bbse_target_clustering(source):
 
 
 def test_q_interval_propagation_regression():
-    """audit V2 regression: with the (c0, c1, pi_s) box held DEGENERATE at
-    truth, Clopper-Pearson q intervals propagated through the 16-corner rho
-    interval miss rho_true at most at the nominal per-parameter level (CP is
-    conservative) + MC tolerance. The old point-q_t code -- equivalent to a
-    zero-width q interval -- misses at ~10x nominal on the same draws; this
-    test fails against it."""
+    """Clopper-Pearson q intervals keep rho coverage at the nominal level.
+
+    With the (c0, c1, pi_s) box held degenerate at truth, q intervals
+    propagated through the 16-corner rho interval miss rho_true at most at the
+    nominal per-parameter level plus MC tolerance; CP is conservative. The old
+    point-q_t code, a zero-width q interval, misses at ~10x nominal on the same
+    draws, so this test fails against it (audit V2).
+    """
     from certgate.shift import _q_interval, rho_box_interval
     from certgate.constants import BBSE_DELTA_CONF, BBSE_BONFERRONI
     c0, c1, pi_s = 0.05, 0.60, 0.10
@@ -329,19 +342,22 @@ def test_q_interval_propagation_regression():
     # nominal per-parameter miss is lvl (two-sided); CP is conservative, so
     # allow only MC noise on top
     assert miss_interval / R <= lvl + 3.0 * np.sqrt(lvl / R) + 0.01
-    # the point-q behaviour the audit demonstrated: an order of magnitude
-    # above nominal on identical draws -- the defect this test exists to catch
+    # the point-q behaviour the audit demonstrated: an order of magnitude above
+    # nominal on identical draws, the defect this test exists to catch
     assert miss_point / R > 10 * lvl
 
 
 def test_bbse_walk_break_not_continue():
-    """audit V6 #8: the BBSE fixed-sequence walk must STOP at the first
-    failing threshold. Fixture: errors score ~0.62 (answered only at low
-    thresholds -> threshold 0 is poisonous), correct records score ~0.95
-    (still answered at high thresholds -> threshold 20 alone would certify).
-    Walk order [0, 20]: ``break`` yields failsafe; a ``continue`` regression
-    would certify threshold 20. The old fixture's one-element order could not
-    distinguish them."""
+    """The BBSE fixed-sequence walk must stop at the first failing threshold.
+
+    Fixture: errors score ~0.62, so they are answered only at low thresholds
+    and threshold 0 is poisonous; correct records score ~0.95, so threshold 20
+    alone would certify.
+
+    Under walk order [0, 20] a `break` yields failsafe while a `continue`
+    regression would certify threshold 20; a one-element order cannot tell them
+    apart (audit V6 #8).
+    """
     head = Head(coef=np.array([1.0]), intercept=0.0, mu=np.zeros(1),
                 sd=np.ones(1))
     alpha = 0.10
@@ -371,10 +387,12 @@ def test_bbse_walk_break_not_continue():
 
 
 def test_q_ci_is_clopper_pearson_at_the_bonferroni_level(source):
-    """audit V6 #4 killer: the per-parameter level must be
-    BBSE_DELTA_CONF / BBSE_BONFERRONI. The single-site q interval is exact
-    Clopper-Pearson, so its endpoints pin the level in closed form -- a
-    mutation dropping the Bonferroni division shifts them and fails here."""
+    """The per-parameter level must be BBSE_DELTA_CONF / BBSE_BONFERRONI.
+
+    The single-site q interval is exact Clopper-Pearson, so its endpoints pin
+    the level in closed form; a mutation dropping the Bonferroni division
+    shifts them and fails here (audit V6 #4).
+    """
     from scipy.stats import beta
     from certgate.constants import BBSE_DELTA_CONF, BBSE_BONFERRONI
     head, aux, tgt = source["head"], source["aux"], source["tgt"]
@@ -391,11 +409,11 @@ def test_q_ci_is_clopper_pearson_at_the_bonferroni_level(source):
 
 
 def test_q_interval_matches_the_scipy_reference_implementation():
-    """The single-site q interval is exact Clopper-Pearson. The existing pin
-    compares it to ``beta.ppf``, which is the SAME construction the code uses --
-    so it cannot catch a wrong quantile pairing. ``binomtest.proportion_ci`` is
-    an independent path with its own k=0 / k=n handling.
-    """
+    """The single-site q interval is exact Clopper-Pearson.
+
+    The existing pin compares it to beta.ppf, the same construction the code
+    uses, so it cannot catch a wrong quantile pairing. binomtest.proportion_ci
+    is an independent path with its own k=0 and k=n handling."""
     from scipy.stats import binomtest
     from certgate.shift import _q_interval
     from certgate.constants import BBSE_DELTA_CONF, BBSE_BONFERRONI
@@ -413,10 +431,11 @@ def test_q_interval_matches_the_scipy_reference_implementation():
 
 
 def test_fit_bbse_diagnostics_stable_key_set(source):
-    """fixture audit 2026-07-25 (audit-V25 discipline extended to the bbse
-    sub-dict): full fits and every decline branch emit bbse_diagnostics()'s
-    exact key set, with None for whatever the branch did not compute — a
-    consumer indexing any key gets None, never KeyError."""
+    """Full fits and every decline branch emit the same diagnostics key set.
+
+    Whatever a branch did not compute comes back as None, so a consumer
+    indexing any key gets None, never a KeyError. This extends the audit V25
+    discipline to the bbse sub-dict (fixture audit 2026-07-25)."""
     from certgate.shift import bbse_diagnostics
     keys = set(bbse_diagnostics())
     head, aux, tgt = source["head"], source["aux"], source["tgt"]
@@ -440,12 +459,14 @@ def test_fit_bbse_diagnostics_stable_key_set(source):
 
 
 def test_bootstrap_shortfall_declines_not_reduced_quantile(source, monkeypatch):
-    """audit V6 #10 killer: when fewer than BBSE_BOOT valid resamples arrive
-    within the attempt budget, the fit must DECLINE (bbse-degenerate-
-    bootstrap), never quantile over the reduced count (audit F40/B-8). Fixture:
-    positives live in one of three sites, so ~32% of site-resamples are
-    invalid; with the attempt budget pinched to 2100 the valid count lands far
-    below 2000 -- a mutation that proceeds with 'whatever arrived' fails here."""
+    """A bootstrap shortfall must decline, not quantile over a reduced count.
+
+    When fewer than BBSE_BOOT valid resamples arrive within the attempt budget
+    the fit returns bbse-degenerate-bootstrap. Fixture: positives live in one
+    of three sites, so ~32% of site-resamples are invalid; with the budget
+    pinched to 2100 the valid count lands far below 2000, and a mutation that
+    proceeds with whatever arrived fails here (audits V6 #10, F40, B-8).
+    """
     import certgate.shift as shift_mod
     head = source["head"]
     tgt = source["tgt"]

@@ -1,13 +1,16 @@
-"""SPEC "Tests" for report.py's OR-combination (`_combine_alpha`).
+"""SPEC "Tests" for report.py's OR-combination, _combine_alpha.
 
-REVIEW-FABLE A-1 (skeptic-confirmed): the OR-rule -- deploy the most
-conservative certified threshold across modes, then list ONLY the modes whose
-own FWER-controlled certified prefix contains the deployed index -- was
-previously exercised only through the in-distribution end-to-end path where
-baseline and BBSE agree. These unit tests pin the covered-mode selection
-against DIVERGENT mode results, so a regression that listed a mode
-unconditionally (silently attaching an assumption tag the mode never earned)
+The OR-rule has two steps. Deploy the most conservative certified threshold
+across modes. Then list only the modes whose own FWER-controlled certified
+prefix contains the deployed index.
+
+Until these tests it was exercised only through the in-distribution end-to-end
+path, where baseline and BBSE agree. They pin the covered-mode selection
+against divergent mode results, so a regression that listed a mode
+unconditionally -- silently attaching an assumption tag it never earned --
 fails here.
+
+Refs: REVIEW-FABLE A-1 (skeptic-confirmed).
 """
 import pytest
 
@@ -23,9 +26,12 @@ def _mode(certified, tau_idx, reason=None):
 
 
 def test_subset_prefixes_cover_both_modes():
-    """baseline certified deeper (deploys the lower tau idx 2); bbse deploys
-    the higher tau idx 5 -> bbse wins deployment (most conservative), and
-    baseline is covered too because idx 5 is inside its certified prefix."""
+    """Both modes are listed when one prefix contains the other's index.
+
+    baseline certifies deeper and would deploy tau idx 2; bbse deploys the
+    higher idx 5, so bbse wins deployment as the most conservative. baseline
+    is covered too, because idx 5 sits inside its certified prefix.
+    """
     out = _combine_alpha({
         "baseline": _mode([8, 5, 2], tau_idx=2),
         "bbse": _mode([8, 5], tau_idx=5),
@@ -39,8 +45,10 @@ def test_subset_prefixes_cover_both_modes():
 
 
 def test_declined_mode_never_listed():
-    """A declined mode (tau_idx None) must not appear in `modes`, whatever its
-    reason says."""
+    """A declined mode never appears in modes, whatever its reason says.
+
+    A mode is declined when its tau_idx is None.
+    """
     out = _combine_alpha({
         "baseline": _mode([4, 3], tau_idx=3),
         "bbse": _mode([], tau_idx=None, reason="bbse-ill-conditioned"),
@@ -49,19 +57,20 @@ def test_declined_mode_never_listed():
     assert out["deploy_mode"] == "baseline"
     assert out["tau_idx"] == 3
     assert out["modes"] == ["baseline"]
-    # fixture audit 2026-07-25: the certified row itself records WHY the
-    # non-deploying mode did not contribute -- the decline reason passes
-    # through instead of vanishing
+    # the certified row records why the non-deploying mode did not contribute:
+    # the decline reason passes through instead of vanishing
+    # (fixture audit 2026-07-25)
     assert out["mode_outcomes"] == {"baseline": "covering",
                                     "bbse": "bbse-ill-conditioned"}
 
 
 def test_disjoint_prefixes_deploy_mode_alone():
-    """The regression-sensitive case: baseline certified SOMETHING (idx 2) but
-    not the deployed index (bbse's idx 8) -> baseline must be excluded from the
-    OR-guarantee even though it is a certifying mode. An implementation that
-    listed every certifying mode would return both and mis-attach the
-    exchangeability tag to a threshold baseline never certified."""
+    """A certifying mode that misses the deployed index is still excluded.
+
+    baseline certifies idx 2 but not bbse's deployed idx 8, so it stays out of
+    the OR-guarantee. Listing every certifying mode instead would mis-attach
+    the exchangeability tag to a threshold baseline never certified.
+    """
     out = _combine_alpha({
         "baseline": _mode([2], tau_idx=2),
         "bbse": _mode([8], tau_idx=8),
@@ -86,14 +95,16 @@ def test_no_certifying_mode_declines_with_reasons():
                               "bbse": "bbse-misspecified"}
 
 
-# ---- audit V6 #13/#14: the guarantee text is FROZEN as an exact string -----
-# A token-presence check let a mutation invert the concept-shift clause to
-# assert its exact opposite while the suite stayed green. Exact equality means
-# any silent weakening -- or strengthening -- of a mandated clause fails here;
-# changing this text is a SPEC change (edit SPEC.md first, then this literal).
-# Three frozen variants (verification G-1/G-3: the estimand and probability
-# attribution are mode-dependent; naming the calibration-population unweighted
-# risk on a BBSE row emitted a demonstrably false certificate).
+# ---- audit V6 #13/#14: the guarantee text is frozen as an exact string -----
+# A token-presence check let a mutation invert the concept-shift clause into
+# its exact opposite while the suite stayed green. Exact equality means any
+# silent weakening -- or strengthening -- of a mandated clause fails here.
+# Changing this text is a SPEC change: edit SPEC.md first, then this literal.
+#
+# There are three frozen variants because the estimand and the probability
+# attribution are mode-dependent. Naming the calibration-population unweighted
+# risk on a BBSE row emitted a demonstrably false certificate.
+# Ref: verification G-1/G-3.
 
 _FROZEN_BASELINE_010 = (
     "Under the tagged assumption (exchangeability), with probability >= 0.95 "
@@ -181,9 +192,11 @@ def test_guarantee_statement_frozen_bbse_only():
 
 
 def test_bbse_rows_never_claim_a_shared_event():
-    """audit V3: the fit depends on the target pool through the q_t interval,
-    so distinct targets get distinct boxes -- no shared event exists in BBSE
-    mode and the clause must be absent."""
+    """BBSE rows must not carry the shared-event clause (audit V3).
+
+    The fit depends on the target pool through the q_t interval, so distinct
+    targets get distinct boxes and no shared event exists.
+    """
     from certgate.report import _statement
     for modes in (("baseline", "bbse"), ("bbse",)):
         s = _statement(0.10, modes)

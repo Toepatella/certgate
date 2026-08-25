@@ -1,25 +1,32 @@
-"""SPEC section "data.py": simplified synthetic multi-site generator + site splits.
+"""Synthetic multi-site generator and the site splits.
 
-Ports the exact-shift semantics of ``../xAI-projtect-v1/testbed/generator.py`` (METHODS section 7)
-but drops the covariate-delta, missingness/availability, and oracle latent/site
-machinery -- a Cohort holds only ``x, y, site_id, site_labels``.
+Ports the exact-shift semantics of ../xAI-projtect-v1/testbed/generator.py,
+minus the covariate-delta, missingness/availability, and oracle latent/site
+machinery. A Cohort here holds only x, y, site_id, site_labels.
 
-Generative model (chosen so each shift is EXACT, not approximate):
-  Site c:   size n_c ~ clipped LogNormal(size_mu, size_sigma);
-            random effect u_c ~ N(0, s_u^2) on the log-odds base rate;
-            pi_c = sigmoid(logit(base) + u_c).
-  Record:   class-conditional Gaussians x | y ~ N(mu_y, I_d), symmetric means
-            mu_1 = +sep/2 * v, mu_0 = -sep/2 * v (v unit) -- Bayes-exact logistic
-            posterior logit P(y=1 | x, c) = logit(pi_c) + sep * (v . x).
+The generative model is chosen so each shift is EXACT rather than approximate:
 
-Shift paths:
-  label shift    class-conditional path with a shifted site-level base rate
-                 (P(x|y) invariant -- the BBSE assumption, exactly).
-  concept shift  marginal-then-posterior path: draw the site mixture, then tilt
-                 the posterior logit by concept_intercept + concept_slope . x
-                 (neither exchangeability nor label shift holds).
-Label shift composing with concept tilt is the unidentifiable regime and raises
-``ValueError`` by design.
+  Site c:   size n_c ~ clipped LogNormal(size_mu, size_sigma)
+            random effect u_c ~ N(0, s_u^2) on the log-odds base rate
+            pi_c = sigmoid(logit(base) + u_c)
+  Record:   class-conditional Gaussians x | y ~ N(mu_y, I_d), with symmetric
+            means mu_1 = +sep/2 * v and mu_0 = -sep/2 * v for unit v. That
+            makes the posterior logit Bayes-exact:
+            P(y=1 | x, c) = logit(pi_c) + sep * (v . x).
+
+Two shift paths:
+
+  label shift    The class-conditional path with a shifted site-level base
+                 rate. P(x|y) stays invariant, which is the BBSE assumption
+                 holding exactly.
+  concept shift  Marginal-then-posterior: draw the site mixture, then tilt the
+                 posterior logit by concept_intercept + concept_slope . x.
+                 Neither exchangeability nor label shift survives this.
+
+Asking for both at once is the unidentifiable regime, and raises ValueError by
+design.
+
+Refs: SPEC "data.py"; METHODS 7.
 """
 from __future__ import annotations
 
@@ -44,7 +51,7 @@ def _logit(p):
 
 @dataclass
 class SimConfig:
-    """Frozen generator parameters (SPEC data.py). Defaults match METHODS section 1."""
+    """Frozen generator parameters. The defaults match METHODS 1."""
 
     d: int = 8
     sep: float = 2.2
@@ -56,7 +63,7 @@ class SimConfig:
     size_hi: int = 5000
 
     def direction(self) -> np.ndarray:
-        """Unit signal direction v = normalized ones on the first ``d//2`` dims."""
+        """Unit signal direction v: normalized ones on the first d//2 dims."""
         v = np.zeros(self.d)
         v[: max(1, self.d // 2)] = 1.0
         return v / np.linalg.norm(v)
@@ -75,14 +82,20 @@ def draw_cohort(cfg: SimConfig, n_sites: int, rng, *, label_base_rate=None,
                 concept_intercept: float = 0.0, concept_slope=None,
                 site_label_prefix: str = "s",
                 require_both_classes: bool = True) -> Cohort:
-    """Draw a multi-site Cohort (SPEC data.py).
+    """Draw a multi-site Cohort.
 
-    Class-conditional exact path when there is no concept tilt (pure label shift
-    when ``label_base_rate`` is set); marginal-then-posterior path for concept
-    tilt (``../xAI-projtect-v1/testbed/generator.py`` lines 130-159 semantics). Composing a
-    ``label_base_rate`` with a concept tilt raises ``ValueError`` -- the
-    unidentifiable regime. Site labels ``f"{prefix}-{i:04d}"`` guarantee
-    disjointness across distinct prefixes.
+    With no concept tilt this takes the class-conditional exact path, which is
+    pure label shift when label_base_rate is set. With a concept tilt it takes
+    the marginal-then-posterior path, following the semantics of
+    ../xAI-projtect-v1/testbed/generator.py lines 130-159.
+
+    Asking for a label_base_rate and a concept tilt together raises ValueError:
+    that is the unidentifiable regime.
+
+    Site labels are f"{prefix}-{i:04d}", so distinct prefixes are guaranteed
+    disjoint.
+
+    Refs: SPEC "data.py".
     """
     concept = (concept_intercept != 0.0) or (concept_slope is not None)
     if label_base_rate is not None and concept:
@@ -121,7 +134,7 @@ def draw_cohort(cfg: SimConfig, n_sites: int, rng, *, label_base_rate=None,
 
 
 def subset_sites(cohort: Cohort, keep_dense_ids) -> Cohort:
-    """Keep only the named sites, renumbering densely and carrying labels (SPEC data.py)."""
+    """Keep only the named sites, renumbering densely and carrying labels over."""
     keep = np.unique(np.asarray(keep_dense_ids, dtype=np.int64))    # sorted, unique
     if keep.size and (keep.min() < 0 or keep.max() >= cohort.n_sites):
         raise CohortError("subset_sites: keep id out of range 0..n_sites-1")
@@ -136,11 +149,12 @@ def subset_sites(cohort: Cohort, keep_dense_ids) -> Cohort:
 
 
 def split_sites(cohort: Cohort, rng) -> tuple[Cohort, Cohort, Cohort]:
-    """Partition sites into ``(train, aux, cal)`` by ``SPLIT_FRACTIONS``, site-disjoint.
+    """Partition sites into (train, aux, cal) by SPLIT_FRACTIONS, site-disjoint.
 
-    Implements the METHODS section 2 discipline: a random permutation of sites is
-    cut 40/20/40; the calibration cohort takes the remainder so every site is
-    assigned exactly once.
+    A random permutation of sites is cut 40/20/40, and the calibration cohort
+    takes the remainder, so every site is assigned exactly once.
+
+    Refs: METHODS 2.
     """
     n_sites = cohort.n_sites
     perm = rng.permutation(n_sites)

@@ -1,14 +1,17 @@
-"""ETL: hostile synthetic relational extract -> CertGate cohorts (SPEC Tests,
-fixture audit 2026-07-25).
+"""ETL: hostile synthetic relational extract -> CertGate cohorts.
 
-Reads a `synth_fixture` output directory's {entity_session,measurement}.csv.gz
-with the csv module (NEVER line-based tools: fields carry embedded
-newlines/commas/quotes), builds a finite float64 feature matrix with explicit
-missing-indicator columns, and partitions BY SITE (the unit of statistical
-independence). The feature matrix deliberately NEVER includes close_state —
-in --signal mode that column IS the outcome.
+Reads a synth_fixture output directory's entity_session.csv.gz and
+measurement.csv.gz with the csv module. Line-based tools are never safe here:
+the fields carry embedded newlines, commas and quotes.
+
+Builds a finite float64 feature matrix with explicit missing-indicator
+columns, then partitions by site -- the unit of statistical independence.
+The matrix never includes close_state: in --signal mode that column is the
+outcome.
 
 Stdlib + numpy only.
+
+Refs: SPEC Tests; fixture audit 2026-07-25.
 """
 from __future__ import annotations
 
@@ -34,8 +37,10 @@ csv.field_size_limit(10 ** 7)
 # ---------------------------------------------------------------- readers ---
 
 def _read_table(data_dir, name):
-    """Yield dict rows from a gzipped CSV. csv.reader with newline='' is the
-    ONLY safe read: the generator embeds newlines/commas/quotes in text fields."""
+    """Yield dict rows from a gzipped CSV, opened with newline=''.
+
+    Anything line-based corrupts fields with embedded newlines or quotes.
+    """
     path = f"{data_dir}/{name}.csv.gz"
     with gzip.open(path, "rt", encoding="utf-8", newline="") as fh:
         r = csv.reader(fh)
@@ -45,7 +50,7 @@ def _read_table(data_dir, name):
 
 
 def _maybe_float(s):
-    """'' / whitespace / junk -> None; else float. Never raises."""
+    """Parse s as a float, or None for empty, whitespace or junk. Never raises."""
     if s is None:
         return None
     t = s.strip()
@@ -58,17 +63,17 @@ def _maybe_float(s):
 
 
 def _attr_band(s):
-    """The documented int() trap: '' is missing, '> 89' is a ceiling token.
+    """Parse attr_band: '' is missing, and '> 89' is a ceiling token for 90.
 
     A naive int(row['attr_band']) raises on ~7.3% of rows here (578 '> 89'
-    + 80 ''), which is exactly what the generator advertises.
+    plus 80 ''), which is exactly what the generator advertises.
     """
     t = (s or "").strip()
     if not t:
         return None
     if t == "> 89":
         return 90.0
-    return float(int(t))          # int() first: asserts the residue is integral
+    return float(int(t))          # int() first: the residue must be integral
 
 
 # ------------------------------------------------------- measurement agg ---
@@ -113,11 +118,11 @@ FEATURE_NAMES = (
 
 
 def build_matrix(data_dir, verbose=True):
-    """Return (x, feature_names, meta) where meta carries per-row raw fields.
+    """Return (x, feature_names, meta), where meta carries per-row raw fields.
 
-    Missing numerics are mean-imputed and every imputed column gets a 0/1
-    indicator sibling, so no NaN ever reaches make_cohort (which rejects
-    non-finite x loudly).
+    Missing numerics are mean-imputed, and every imputed column gets a 0/1
+    indicator sibling. So no NaN ever reaches make_cohort, which rejects
+    non-finite x loudly.
     """
     agg = measurement_aggregates(data_dir)
     rows = []
@@ -142,7 +147,7 @@ def build_matrix(data_dir, verbose=True):
                 raw_num[k][i] = v
         try:
             b = _attr_band(d["attr_band"])
-        except ValueError:                       # would-be int() blow-up
+        except ValueError:                       # a naive int() would fail here
             band_trap_hits += 1
             b = None
         if b is not None:
@@ -215,7 +220,7 @@ def build_matrix(data_dir, verbose=True):
 # ---------------------------------------------------------------- split ----
 
 def site_split(site_raw):
-    """Deterministic BY-SITE partition. Records never cross a split boundary."""
+    """Deterministic by-site partition; records never cross a split boundary."""
     uniq = sorted(set(site_raw))
     rng = np.random.default_rng(SPLIT_RNG_SEED)
     perm = rng.permutation(len(uniq))

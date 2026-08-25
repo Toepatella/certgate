@@ -1,29 +1,34 @@
-"""SPEC "Real-data protocol": the eICU mock corpus, end to end.
+"""The eICU mock corpus, end to end.
 
-`experiments/eicu_mock.py` emits a schema-faithful, byte-deterministic gzip-CSV
-corpus carrying every documented eICU-CRD v2.0 wart (dual `-1`/`''` sentinels,
-the HIPAA `'> 89'` age token, negative admit offsets whose EARLIEST stay has
-the HIGHEST one, multi-row `apachePatientResult` across `'IV'`/`'IVa'`,
-site-correlated APACHE coverage, heavy-tailed hospital sizes, duplicate stay
-ids, cross-hospital `uniquepid`, a BOM, embedded newlines, mixed `fio2` and
-temperature units); `experiments/eicu_etl.py` turns it into a finite float64
-feature matrix, raw two-valued outcome strings and raw hospital site labels;
-`from_raw` -> `run_certgate` must reach an HONEST outcome on it -- a certificate
-whose oracle-checked answered risk respects its own alpha, or a decline.
-Certification is never asserted; honesty is.
+experiments/eicu_mock.py writes a schema-faithful, byte-deterministic gzip-CSV
+corpus carrying every documented eICU-CRD v2.0 wart:
 
-The load-bearing tests here are the LEAK KILLERS (T-1, failure criterion F-D).
-A leak in this path produces a spectacular and entirely fake result, so the
-denylist is proved three ways: structurally (allowlist and denylist disjoint
-and jointly exhaustive over every DDL column of the five source tables),
-by name (`assert_no_leak_columns` over the 36-entry denylist, and it must RAISE
-when a leak is reintroduced), and behaviourally (a head fit on the shipped
-matrix cannot approach the discrimination a reintroduced label column trivially
-attains).
+  - the dual -1 and empty-string sentinels, and the HIPAA '> 89' age token
+  - negative admit offsets, so the earliest stay has the highest one
+  - multi-row apachePatientResult across 'IV' and 'IVa'
+  - site-correlated APACHE coverage, heavy-tailed sizes, duplicate stay ids
+  - a BOM, embedded newlines, cross-hospital uniquepid, mixed unit conventions
 
-The always-on arm keeps the default suite fast; the full-scale arm (208
-hospitals / 200,859 stays -- the real eICU scale) runs only when
+experiments/eicu_etl.py turns that into a finite float64 feature matrix, raw
+outcome strings and raw hospital labels. from_raw -> run_certgate must then
+reach an honest outcome: a certificate whose oracle-checked answered risk
+respects its own alpha, or a decline. Honesty is asserted, never certification.
+
+The load-bearing tests are the leak killers, because a leak here produces a
+spectacular and entirely fake result. The denylist is proved three ways:
+
+  - structurally: allowlist and denylist are disjoint and between them cover
+    every DDL column of the five source tables
+  - by name: assert_no_leak_columns over the 36-entry denylist, and it must
+    raise when a leak is reintroduced
+  - behaviourally: a head fit on the shipped matrix cannot approach what a
+    reintroduced label column trivially attains
+
+The always-on arm keeps the default suite fast. The full-scale arm -- 208
+hospitals / 200,859 stays, the real eICU scale -- runs only under
 CERTGATE_EICU=1.
+
+Refs: SPEC "Real-data protocol"; threat T-1; failure criterion F-D.
 """
 from __future__ import annotations
 
@@ -61,37 +66,36 @@ from experiments import run_synthetic
 
 # ---------------------------------------------------------------------------
 # Sizes for the auxiliary corpora. The canonical small arm is the mock's own
-# default (180 hospitals / 9000 stays -> 63 carrying calibration sites, so
-# certification is REACHABLE and a decline is equally legitimate). The tiny
-# byte-determinism corpus deliberately runs signal=False, the one configuration
-# in which `generate` admits fewer than EICU_MIN_TOTAL_SITES sites.
+# default: 180 hospitals / 9000 stays -> 63 carrying calibration sites, so
+# certification is reachable and a decline is equally legitimate. The tiny
+# byte-determinism corpus runs signal=False, the one configuration in which
+# generate admits fewer than EICU_MIN_TOTAL_SITES sites.
 TINY_SITES, TINY_STAYS = 60, 900
 DRIFT_STAYS = 2400
 
-# F-D, the unfalsifiable-success failure: a good result is a leak alarm. The
-# mock's outcome is driven by a latent severity at the frozen slope
-# EICU_MOCK_SIGNAL_B = 0.85, whose Bayes-optimal AUC is Phi(0.85/sqrt(2)) =
-# 0.726; the shipped clean corpus measures 0.597. The ceiling is therefore set
-# from that stated Bayes-optimal value plus a margin -- NOT 25 points above it.
+# F-D, the unfalsifiable-success failure: too good a result is a leak alarm.
+# The mock's outcome comes from a latent severity at the frozen slope
+# EICU_MOCK_SIGNAL_B = 0.85, so its Bayes-optimal AUC is Phi(0.85/sqrt(2)) =
+# 0.726 and the shipped clean corpus measures 0.597.
 #
-# 2026-07-31 audit, E-10: the old ceiling was 0.98, so a probe whose own
-# comment computed the honest ceiling as ~0.73 could only detect a leak of
-# near-label strength -- which is exactly what its single positive control
-# injected. A leak-planted corpus measuring 0.835 passed it. 0.80 leaves ~0.07
-# of headroom over the Bayes-optimal value for finite-sample noise and still
-# refuses anything a latent-severity model at B = 0.85 cannot produce.
+# The ceiling is therefore derived from that Bayes-optimal value plus a margin.
+# 0.80 leaves ~0.07 of headroom for finite-sample noise and still refuses
+# anything a latent-severity model at B = 0.85 cannot produce. A ceiling far
+# above it -- the audit found 0.98 -- detects only a leak of near-label
+# strength, and let a leak-planted corpus measuring 0.835 through.
+# Ref: audit E-10 (2026-07-31).
 LEAK_AUC_CEILING = 0.80
 
 # The subtle positive control: outcome-correlated APACHE-row absence at this
-# rate. Nothing else about the corpus changes. At p = 0.30 the shipped small
-# corpus measures head AUC 0.671 (BELOW the ceiling above -- which is why the
-# AUC leg alone is not enough), missingness-ablation drop +0.082, and an
-# absent:present outcome prevalence ratio of 3.86.
+# rate, with nothing else about the corpus changed. At p = 0.30 the shipped
+# small corpus measures head AUC 0.671, missingness-ablation drop +0.082, and
+# an absent:present outcome prevalence ratio of 3.86. That AUC sits below the
+# ceiling above, which is why the AUC leg alone is not enough.
 LEAK_ABSENCE_RATE = 0.30
 
-# Generous on purpose: the load-bearing assertion is the pandas/pyarrow refusal
-# (audit F16), and this set only has to keep a genuinely new third-party import
-# from passing unnoticed.
+# Generous on purpose. The load-bearing assertion is the pandas/pyarrow
+# refusal; this set only has to keep a genuinely new third-party import from
+# passing unnoticed. Ref: audit F16.
 _STDLIB_OK = {
     "__future__", "abc", "argparse", "array", "ast", "bisect", "collections",
     "contextlib", "copy", "csv", "dataclasses", "datetime", "decimal", "enum",
@@ -108,17 +112,18 @@ PREFLIGHT_KEYS = {
     "apache_coverage_by_site", "hospital", "categorical_drift", "attrition",
     "fio2_convention", "temperature_convention", "ordinal_value_sets",
     "reference_check", "predictions", "warnings",
-    # 2026-07-31 audit: the three screens the old preflight had nowhere.
+    # Three screens the 2026-07-31 audit added.
     "outcome_stratified_missingness",   # E-9  outcome-informative absence
     "apache_absent_los",                # E-9  site channel vs outcome channel
     "unparseable_tokens",               # E-15 a NULL token that is not ''
-    # 2026-07-31 arrival-day audit (A5): the join-key format profile, so the
-    # unparseable-join-key / apache-coverage-collapse raises are projected.
+    # The join-key format profile, so preflight projects the
+    # unparseable-join-key and apache-coverage-collapse raises.
+    # Ref: arrival-day audit, amendment A5 (2026-07-31).
     "join_key_unparseable",             # E-21 an unlinked child table
 }
 
-# E-17: the casing verdict is DECIDABLE, so it is pinned PER TABLE for both
-# mock header modes rather than accepted as "one of the three".
+# The casing verdict is decidable, so it is pinned per table for both mock
+# header modes rather than accepted as "one of the three". Ref: audit E-17.
 HEADER_CASE_EXPECTED = {"camel": "camel", "lower": "lower"}
 
 MANIFEST_KEYS = {
@@ -127,7 +132,7 @@ MANIFEST_KEYS = {
     "row_counts", "apache_site_coverage_bands", "sites_with_zero_result_rows",
 }
 
-# Every leak the protocol names (§A.7). Asserted by NAME so that deleting a
+# Every leak the protocol names (§A.7). Asserted by name, so deleting a
 # denylist row cannot pass silently.
 KNOWN_LEAKS = (
     "diedinhospital", "actualhospitalmortality", "actualicumortality",
@@ -142,8 +147,8 @@ KNOWN_LEAKS = (
     "acutephysiologyscore",
 )
 
-# The `patient` source columns that DO contribute features (§A.5.1/§A.5.2).
-# `hospitaladmitoffset` is the source of the `pre_icu_hours` feature -- the one
+# The patient source columns that do contribute features (§A.5.1/§A.5.2).
+# hospitaladmitoffset is the source of the pre_icu_hours feature -- the one
 # allowlisted column whose feature name differs from its column name.
 ALLOW_PATIENT = frozenset({
     "age", "admissionheight", "admissionweight", "hospitaladmitoffset",
@@ -151,12 +156,14 @@ ALLOW_PATIENT = frozenset({
     "unittype", "unitstaytype",
 })
 
-# Deny-by-default's third bucket: columns that are neither features nor leaks
-# -- surrogate/natural keys, admission-time timestamps that carry no outcome
-# information and are not modelled, the APACHE version tag, and the
-# site-CONSTANT `hospital` covariates read only as diagnostic strata (§A.6).
-# Pinned per table so that a new column in the schema, or a column silently
-# promoted into the allowlist, fails the exhaustiveness test.
+# Deny-by-default's third bucket: columns that are neither features nor leaks.
+#   - surrogate and natural keys
+#   - admission-time timestamps, which carry no outcome information and are
+#     not modelled
+#   - the APACHE version tag
+#   - the site-constant hospital covariates, read only as diagnostic strata
+# Pinned per table, so a new schema column -- or a column quietly promoted into
+# the allowlist -- fails the exhaustiveness test. Ref: protocol §A.6.
 NEITHER = {
     "patient": frozenset({
         "patientunitstayid", "patienthealthsystemstayid",
@@ -178,7 +185,7 @@ NEITHER = {
 # ------------------------------------------------------------------ helpers --
 
 def _gz_hashes(data_dir) -> dict:
-    """sha256 of every `.csv.gz` in a corpus directory, keyed by filename."""
+    """sha256 of every .csv.gz in a corpus directory, keyed by filename."""
     out = {}
     for p in sorted(pathlib.Path(data_dir).iterdir()):
         if p.name.endswith(".csv.gz"):
@@ -189,8 +196,8 @@ def _gz_hashes(data_dir) -> dict:
 def _int_leaf_sum(obj) -> int:
     """Sum of every integer leaf in a nested counter structure.
 
-    The ETL's counter dicts (`sentinel_counts`, `dedup_counts`, ...) are frozen
-    by NAME but not by internal shape; summing the leaves asserts "this channel
+    The ETL's counter dicts (sentinel_counts, dedup_counts, ...) are frozen by
+    name but not by internal shape. Summing the leaves asserts "this channel
     fired" without pinning a nesting the contract leaves open.
     """
     if isinstance(obj, bool):
@@ -216,9 +223,9 @@ def _deny_bare() -> set:
 
 # ---- minimal hand-built corpora: one planted trap per corpus, no mock -------
 #
-# The mock plants every wart at a RATE; these corpora plant one exactly, so a
-# regression in a single documented trap goes red on its own line rather than
-# perturbing an aggregate. Column names and DDL order come from
+# The mock plants every wart at a rate; these corpora plant exactly one. A
+# regression in a single documented trap then goes red on its own line rather
+# than perturbing an aggregate. Column names and DDL order come from
 # EICU_MOCK_SCHEMA, so the two writers cannot drift apart.
 
 _PATIENT_ROW = dict(
@@ -299,9 +306,9 @@ def _hospital(hid):
 def _write_corpus(dst, rows_by_table) -> str:
     """Write a five-table gzip-CSV corpus with DDL column names and order.
 
-    Byte-determinism discipline mirrors `synth_fixture.TableWriter`
-    (`GzipFile(filename="", mtime=0, fileobj=...)` + `TextIOWrapper(newline="")`)
-    so a planted corpus is reproducible too; `csv.writer` owns the line endings.
+    Byte-determinism mirrors synth_fixture.TableWriter: a GzipFile with
+    filename="" and mtime=0, wrapped in TextIOWrapper(newline=""), so a planted
+    corpus is reproducible too. csv.writer owns the line endings.
     """
     os.makedirs(dst, exist_ok=True)
     for table in mock.EICU_MOCK_TABLES:
@@ -318,7 +325,7 @@ def _write_corpus(dst, rows_by_table) -> str:
 
 
 def _row_of(meta, stay) -> int:
-    """Matrix row index carrying a given `patientunitstayid` (order-free)."""
+    """Matrix row index carrying a given patientunitstayid, order-free."""
     hit = np.flatnonzero(np.asarray(meta["stay_id"]) == int(stay))
     assert hit.size == 1, f"stay {stay} appears {hit.size} times, expected 1"
     return int(hit[0])
@@ -336,7 +343,7 @@ def _attrition(meta_or_pf) -> dict:
 # ------------------------------------------------------ end-to-end driver ----
 
 def _run_eicu(data_dir, replicate=0):
-    """generate-already-done -> ETL -> cohorts -> run_certgate. (rep, ctx)."""
+    """ETL -> cohorts -> run_certgate on a built corpus, as (rep, ctx)."""
     x_raw, names, meta = etl.build_raw(data_dir, verbose=False)
     idx, sets = etl.site_split(meta["site_raw"], replicate=replicate)
     x, fill = etl.impute(x_raw, idx["train"])
@@ -352,7 +359,7 @@ def _run_eicu(data_dir, replicate=0):
 
     train, aux, cal = cohort("train"), cohort("aux"), cohort("cal")
     target = cohort("target", strict=False)
-    # records never cross a boundary; the assertion runs BEFORE every certification
+    # records never cross a boundary; this runs before every certification
     assert_site_disjoint(train=train, aux=aux, cal=cal)
     tgt_sites = [site_raw[i] for i in idx["target"]]
     rep = run_certgate(train, aux, cal, target.x,
@@ -387,7 +394,7 @@ def _assert_honest(rep, ctx):
 
 @pytest.fixture(scope="module")
 def mock_small(tmp_path_factory):
-    """The canonical small corpus, generated ONCE (never into the repo)."""
+    """The canonical small corpus, generated once and never into the repo."""
     out = str(tmp_path_factory.mktemp("eicu_small") / "corpus")
     manifest = mock.generate(mock.MockConfig(out=out))
     return dict(dir=out, manifest=manifest)
@@ -395,9 +402,9 @@ def mock_small(tmp_path_factory):
 
 @pytest.fixture(scope="module")
 def mock_tiny(tmp_path_factory):
-    """Two byte-identical runs plus a `--tables` projection, same seed.
+    """Two byte-identical runs plus a --tables projection, same seed.
 
-    signal=False is the one configuration in which `generate` admits fewer than
+    signal=False is the one configuration in which generate admits fewer than
     EICU_MIN_TOTAL_SITES sites, so the determinism arm stays cheap.
     """
     base = tmp_path_factory.mktemp("eicu_tiny")
@@ -414,15 +421,18 @@ def mock_tiny(tmp_path_factory):
 
 
 def _plant_outcome_correlated_absence(src, dst, rate, seed=7):
-    """Copy a corpus, deleting APACHE rows for a fraction of DECEDENTS.
+    """Copy a corpus, deleting APACHE rows for a fraction of decedents.
 
-    This is the mechanism of the 2026-07-31 critical finding (E-9) in its
-    purest form: "the day-1 window did not close because the stay ended".
-    NOTHING else about the corpus changes -- same features, same labels, same
-    hospitals, same coverage band structure -- so anything the pipeline sees
-    downstream is attributable to this channel alone. The resulting APACHE
-    coverage stays indistinguishable from the released extract's
-    171177/200859 = 0.852, which is why coverage cannot be the screen.
+    This is the E-9 mechanism in its purest form: the day-1 window did not
+    close because the stay ended. Nothing else changes -- same features,
+    labels, hospitals and coverage bands -- so whatever the pipeline sees
+    downstream comes from this channel alone.
+
+    The resulting APACHE coverage stays indistinguishable from the released
+    extract's 171177/200859 = 0.852, which is why coverage cannot be the
+    screen.
+
+    Refs: audit E-9, the 2026-07-31 critical finding.
     """
     os.makedirs(dst, exist_ok=True)
     rng = random.Random(seed)
@@ -468,14 +478,13 @@ def mock_leak(tmp_path_factory, mock_small):
 
 
 def _plant_column_level_absence(src, dst, rate, seed=11):
-    """Copy a corpus, BLANKING every allowlisted APS cell for some decedents.
+    """Copy a corpus, blanking every allowlisted APS cell for some decedents.
 
-    The row is KEPT, so `aps_present` stays 1 for every stay and the whole-row
-    prevalence-ratio abort structurally cannot see this. What moves is the 24
-    `aps_*__missing` siblings. The mechanism is realistic -- a panel that stops
-    being drawn once a patient is dying -- and it is the case that proves the
-    F-D ablation leg has power the ratio gate does not: the two gates cover
-    different halves of the same channel.
+    The row is kept, so aps_present stays 1 for every stay and the whole-row
+    prevalence-ratio abort cannot see this; what moves is the 24
+    aps_*__missing siblings. The mechanism is realistic -- a panel stops being
+    drawn once a patient is dying -- and it proves the F-D ablation leg has
+    power the ratio gate does not.
     """
     os.makedirs(dst, exist_ok=True)
     rng = random.Random(seed)
@@ -518,23 +527,22 @@ def _plant_column_level_absence(src, dst, rate, seed=11):
 
 @pytest.fixture(scope="module")
 def mock_leak_subcap(tmp_path_factory, mock_small):
-    """A COLUMN-level leak: the rows survive, only the cells go missing.
+    """A column-level leak: the rows survive, only the cells go missing.
 
-    `build_raw` succeeds on this corpus -- the presence flags are untouched, so
-    the prevalence-ratio abort cannot fire -- and the only thing left to catch
-    it is the missingness-ablation leg of F-D, the leg the old alpha- and
-    coverage-conditioned F-D did not have.
+    build_raw succeeds on this corpus, because the presence flags are untouched
+    and the prevalence-ratio abort cannot fire. The only thing left to catch it
+    is the missingness-ablation leg of F-D.
     """
     out = str(tmp_path_factory.mktemp("eicu_leak_sub") / "corpus")
-    # Calibrated: head AUC 0.705 (BELOW EICU_LEAK_AUC_CEILING = 0.90, so the
-    # discrimination leg is silent), ablation drop +0.106 (over the 0.05 cap),
-    # whole-row presence ratio 1.11 (unchanged from the clean corpus).
+    # Calibrated: head AUC 0.705, below EICU_LEAK_AUC_CEILING = 0.90, so the
+    # discrimination leg stays silent. Ablation drop +0.106, over the 0.05 cap.
+    # Whole-row presence ratio 1.11, unchanged from the clean corpus.
     return _plant_column_level_absence(mock_small["dir"], out, 0.35)
 
 
 @pytest.fixture(scope="module")
 def mock_drift(tmp_path_factory):
-    """A corpus whose categorical drift is pushed PAST EICU_MAX_OTHER_SHARE."""
+    """A corpus whose categorical drift is pushed past EICU_MAX_OTHER_SHARE."""
     out = str(tmp_path_factory.mktemp("eicu_drift") / "corpus")
     mock.generate(mock.MockConfig(stays=DRIFT_STAYS,
                                   sites=mock.EICU_MOCK_SMALL_SITES,
@@ -546,16 +554,16 @@ def mock_drift(tmp_path_factory):
 def pipeline_small(mock_small):
     """The full always-on path: ETL -> split -> impute -> cohorts -> certgate.
 
-    Built ONCE: re-reading the extract per test is a build error, not a style
-    preference (T-16)."""
+    Built once. Re-reading the extract per test is a build error, not a style
+    preference (T-16).
+    """
     rep, ctx = _run_eicu(mock_small["dir"])
     return dict(rep=rep, **ctx)
 
 
 @pytest.fixture(scope="module")
 def planted(tmp_path_factory):
-    """Sentinel corpus: one clean stay, one all-`-1`, one all-`''`, one with no
-    APACHE row at all."""
+    """Sentinel corpus: clean, all -1, all empty string, no APACHE row."""
     dst = str(tmp_path_factory.mktemp("eicu_planted") / "corpus")
     return _write_corpus(dst, {
         "patient": [_patient(1), _patient(2), _patient(3), _patient(4)],
@@ -570,8 +578,7 @@ def planted(tmp_path_factory):
 
 @pytest.fixture(scope="module")
 def planted_dedup(tmp_path_factory):
-    """Dedup corpus: IV/IVa version preference, duplicate surrogate ids in both
-    `apachePatientResult` and `apacheApsVar`, and a `'-1'` STRING probability."""
+    """Dedup corpus: IV/IVa preference, duplicate ids, a '-1' probability."""
     dst = str(tmp_path_factory.mktemp("eicu_dedup") / "corpus")
     return _write_corpus(dst, {
         "patient": [_patient(s) for s in (1, 2, 3, 4, 5)],
@@ -592,18 +599,22 @@ def planted_dedup(tmp_path_factory):
 # =============================================================== 1-3. mock ===
 
 def test_mock_is_byte_deterministic(mock_tiny):
-    """Two runs at the same seed are byte-identical per `.csv.gz` -- the gzip
-    header is frozen (`filename=""`, `mtime=0`) and every RNG stream is derived
-    from the seed, so a corpus is a reproducible input, not a snapshot."""
+    """Two runs at the same seed give byte-identical .csv.gz files.
+
+    The gzip header is frozen and every stream derives from the seed, so a
+    corpus is a reproducible input, not a snapshot.
+    """
     ha, hb = _gz_hashes(mock_tiny["a"]), _gz_hashes(mock_tiny["b"])
     assert ha, "no .csv.gz files written"
     assert ha == hb
 
 
 def test_mock_table_subset_is_a_byte_identical_projection(mock_tiny):
-    """`--tables patient,hospital` is a PROJECTION of the full run, not a
-    different draw: the plan always runs in full and id counters are per table,
-    so a subset can be regenerated without re-deriving the whole corpus."""
+    """--tables patient,hospital is a projection, not a different draw.
+
+    The plan always runs in full and id counters are per table, so a subset
+    regenerates without re-deriving the whole corpus.
+    """
     full, sub = _gz_hashes(mock_tiny["a"]), _gz_hashes(mock_tiny["subset"])
     assert set(sub) == {"patient.csv.gz", "hospital.csv.gz"}
     for name, digest in sub.items():
@@ -619,9 +630,7 @@ def test_mock_manifest_has_the_frozen_key_set(mock_small):
 
 
 def test_mock_level_tuples_match_the_etl_tuples():
-    """The sanctioned stdlib-only duplication is PINNED: `eicu_mock` may not
-    import numpy (and therefore may not import `eicu_etl`), so its level tuples
-    are copies -- copies that must never drift from the protocol's."""
+    """eicu_mock cannot import eicu_etl, so its level tuples are pinned."""
     for suffix in ("GENDER", "ETHNICITY", "ADMITSOURCE", "UNITTYPE",
                    "UNITSTAYTYPE"):
         assert (getattr(mock, f"EICU_MOCK_LEVELS_{suffix}")
@@ -639,8 +648,8 @@ def test_feature_name_list_matches_the_pinned_width():
     names = list(etl.FEATURE_NAMES)
     assert len(names) == etl.EICU_N_FEATURES == 161
     assert len(set(names)) == len(names), "duplicate feature name"
-    # every __missing sibling is IMMEDIATELY adjacent to its parent, so a
-    # column and its indicator can never be reordered apart
+    # every __missing sibling sits immediately after its parent, so a column
+    # and its indicator can never be reordered apart
     for i, nm in enumerate(names):
         if nm.endswith("__missing"):
             assert i > 0 and names[i - 1] == nm[: -len("__missing")], nm
@@ -656,14 +665,14 @@ def test_feature_name_list_matches_the_pinned_width():
 
 
 def test_rank_auc_matches_the_sklearn_reference_implementation():
-    """``_rank_auc`` is hand-rolled because the enclave rule pins `eicu_etl` to
-    numpy + certgate (audit F16), so sklearn cannot be imported there -- but the
-    AUC it produces is a PUBLISHED number (the APACHE-IVa comparison), and until
-    now the only assertion about it was object identity of two call sites.
+    """_rank_auc agrees with sklearn's roc_auc_score.
 
-    Tie handling is the whole risk: the tie-averaged Mann-Whitney form and
-    sklearn's trapezoidal ROC integration agree only if ties are averaged
-    correctly, so the cases below are weighted towards ties.
+    It is hand-rolled because the enclave rule pins eicu_etl to numpy plus
+    certgate, and the AUC it produces is a published number: the APACHE-IVa
+    comparison. Tie handling is the whole risk, so the cases below are
+    weighted towards ties.
+
+    Refs: audit F16.
     """
     rng = np.random.default_rng(11)
     cases = {
@@ -685,8 +694,7 @@ def test_rank_auc_matches_the_sklearn_reference_implementation():
 
 
 def test_leak_denylist_excludes_every_known_leak_from_features():
-    """T-1. Every documented leak is on the denylist AND absent from the
-    feature names in every form the ETL could have emitted it."""
+    """Every documented leak is denylisted and out of the features (T-1)."""
     assert len(etl.EICU_LEAK_DENYLIST) == 36
     bare = _deny_bare()
     names = list(etl.FEATURE_NAMES)
@@ -700,8 +708,7 @@ def test_leak_denylist_excludes_every_known_leak_from_features():
 
 
 def test_assert_no_leak_columns_raises_when_a_leak_is_reintroduced():
-    """The denylist is only worth what its enforcement is worth: adding a leak
-    back in ANY of the sanctioned spellings must raise, not warn."""
+    """Reintroducing a leak in any sanctioned spelling must raise, not warn."""
     names = list(etl.FEATURE_NAMES)
     for reintroduced in ("diedinhospital", "apv_diedinhospital",
                          "apv_diedinhospital__missing",
@@ -712,14 +719,13 @@ def test_assert_no_leak_columns_raises_when_a_leak_is_reintroduced():
 
 
 def test_allowlist_and_denylist_are_disjoint_and_jointly_exhaustive():
-    """Deny by DEFAULT, proved structurally.
+    """Deny by default, proved structurally.
 
     Every DDL column of the five source tables lands in exactly one of three
-    buckets -- allowlisted feature source, denylisted, or a pinned
-    neither-bucket of keys/timestamps/site-constant strata. A column moved from
-    the denylist into the allowlist collides; a column quietly dropped from the
-    denylist becomes unclassified. Both fail here, which is the point: the
-    allowlist cannot grow by accident.
+    buckets: allowlisted feature source, denylisted, or the pinned
+    neither-bucket of keys, timestamps and site-constant strata. A column moved
+    into the allowlist collides, and one quietly dropped from the denylist
+    becomes unclassified, so the allowlist cannot grow by accident.
     """
     deny = _deny_bare()
     allow = {"patient": ALLOW_PATIENT,
@@ -748,20 +754,20 @@ def test_allowlist_and_denylist_are_disjoint_and_jointly_exhaustive():
     assert not unclassified, (
         f"columns classified neither as features, leaks, nor keys: "
         f"{unclassified} -- deny by default means every column has a verdict")
-    # `apachePatientResult` and `hospital` contribute NO features (§A.6): the
-    # first has 8.65% zero-coverage hospitals, the second is site-CONSTANT.
+    # apachePatientResult and hospital contribute no features (§A.6): the first
+    # has 8.65% zero-coverage hospitals, the second is site-constant.
     assert not allow["apachePatientResult"] and not allow["hospital"]
 
 
 def test_no_leak_reaches_the_matrix_via_implausible_discrimination(
         pipeline_small):
-    """T-1/F-D behaviourally: a leak announces itself as implausible AUC.
+    """A leak announces itself as implausible AUC.
 
-    The ceiling is set from the mock's own STATED Bayes-optimal AUC (0.726 at
-    EICU_MOCK_SIGNAL_B = 0.85) plus a margin. The 2026-07-31 audit (E-10) found
-    it at 0.98 -- 25 points above the value the constant's own comment computed
-    -- so the probe could only see a leak of near-label strength, which is
-    exactly what its single positive control injected.
+    The ceiling is derived from the mock's own Bayes-optimal AUC; the
+    arithmetic is on LEAK_AUC_CEILING above. The positive control below proves
+    the probe has the power to see the leak it is looking for.
+
+    Refs: threat T-1; failure criterion F-D; audit E-10.
     """
     train, cal = pipeline_small["train"], pipeline_small["cal"]
     head = fit_head(train)
@@ -771,7 +777,7 @@ def test_no_leak_reaches_the_matrix_via_implausible_discrimination(
         f"{LEAK_AUC_CEILING} -- re-audit EICU_LEAK_DENYLIST and the "
         f"first-stay/dedup logic before reporting any number (F-D)")
 
-    # positive control: the probe has the power to see a leak of this kind
+    # positive control: an outcome column must be visible to the probe
     leak_train = Cohort(x=np.column_stack([train.x, train.y.astype(np.float64)]),
                         y=train.y, site_id=train.site_id,
                         site_labels=train.site_labels)
@@ -786,13 +792,12 @@ def test_no_leak_reaches_the_matrix_via_implausible_discrimination(
 
 
 def test_leak_auc_ceiling_sits_just_above_the_mocks_bayes_optimal_auc():
-    """E-10: the ceiling must be DERIVED from the mock's own outcome model.
+    """The ceiling must be derived from the mock's own outcome model.
 
-    Phi(B/sqrt(2)) is the AUC a score recovering the latent severity PERFECTLY
-    attains, so it is the honest upper bound for anything the mock can produce.
-    A ceiling far above it makes the probe decorative; a ceiling below it makes
-    the suite flaky. Pinning the relation here is what stops the 0.98 the audit
-    found from coming back.
+    Phi(B/sqrt(2)) is the AUC a score that recovers the latent severity
+    perfectly attains, the honest upper bound for anything the mock can
+    produce. A ceiling far above it makes the probe decorative; one below it
+    makes the suite flaky (audit E-10).
     """
     bayes = 0.5 * (1.0 + math.erf(mock.EICU_MOCK_SIGNAL_B / 2.0))
     assert bayes == pytest.approx(0.7264, abs=5e-4)
@@ -802,18 +807,18 @@ def test_leak_auc_ceiling_sits_just_above_the_mocks_bayes_optimal_auc():
 
 def test_outcome_correlated_apache_absence_is_caught_before_any_certificate(
         mock_leak):
-    """THE critical finding (E-9), as a regression test.
+    """The E-9 critical finding, as a regression test.
 
-    APACHE day-1 rows do not exist for a stay that ends BECAUSE THE PATIENT
-    DIED before the window closes, so `aps_present` / `apv_present` and the 43
-    `__missing` siblings are a partial OUTCOME proxy with no column name --
-    invisible to the 36-entry denylist, to the `-1` gate, to the drift gate,
-    and to the old alpha- and coverage-conditioned F-D.
+    APACHE day-1 rows do not exist for a stay that ends because the patient
+    died before the window closes. So aps_present, apv_present and the 43
+    __missing siblings are an outcome proxy with no column name, invisible to
+    the denylist, the -1 gate and the drift gate alike.
 
-    `mock_leak` plants exactly that mechanism at LEAK_ABSENCE_RATE and changes
-    nothing else. Three assertions, in the order the pipeline meets them:
-    preflight MEASURES it, `build_raw` ABORTS on it, and the declared
-    `apache-linked` arm is the escape that pays the immortal-time cost.
+    mock_leak plants that mechanism and changes nothing else. Three assertions
+    follow, in pipeline order: preflight measures it, build_raw aborts on it,
+    and the apache-linked arm is the escape that pays the immortal-time cost.
+
+    Refs: audit E-9; failure criterion F-D.
     """
     # 1. preflight measures it and names the raise build_raw will make
     pf = etl.preflight(mock_leak, verbose=False)
@@ -828,7 +833,7 @@ def test_outcome_correlated_apache_absence_is_caught_before_any_certificate(
     assert (ledger["apache-aps-linked"]["prevalence"]
             < ledger["primary-cohort"]["prevalence"])
     # ... and the LOS diagnostic that separates the site channel from the
-    # outcome channel: absent stays are short because they ENDED
+    # outcome channel: absent stays are short because they ended
     los = pf["apache_absent_los"]
     assert los["aps_absent"]["n"] > 0 and los["aps_present"]["n"] > 0
 
@@ -854,15 +859,12 @@ def test_outcome_correlated_apache_absence_is_caught_before_any_certificate(
 
 def test_the_leak_probe_fires_on_a_subtle_leak_not_only_on_the_label(
         mock_leak_subcap, mock_small):
-    """E-10: the runtime alarm has power against a REALISTIC leak.
+    """The runtime alarm has power against a realistic leak.
 
-    `mock_leak_subcap` plants outcome-correlated missingness at the CELL level:
-    the `apacheApsVar` rows survive, so `aps_present` stays 1 everywhere and
-    the whole-row prevalence-ratio abort structurally cannot fire. `build_raw`
-    succeeds, and the only thing left is the ablation leg of F-D -- the leg the
-    old alpha- and coverage-conditioned F-D did not have. The two gates cover
-    different halves of the same channel, and this is the half that needs the
-    runtime probe.
+    mock_leak_subcap plants outcome-correlated missingness at the cell level.
+    The apacheApsVar rows survive, so aps_present stays 1 everywhere, the
+    whole-row prevalence-ratio abort cannot fire, and build_raw succeeds. Only
+    the ablation leg of F-D is left, and it is what sees this (audit E-10).
     """
     def probe(data_dir):
         x_raw, names, meta = etl.build_raw(data_dir, verbose=False)
@@ -885,7 +887,7 @@ def test_the_leak_probe_fires_on_a_subtle_leak_not_only_on_the_label(
     assert not clean["auc_alarm"] and not clean["ablation_alarm"], clean
     assert clean["ablation_drop"] <= 0.02      # honest: the block adds nothing
 
-    # the leak is real, and it is NOT visible to the AUC ceiling alone
+    # the leak is real, and the AUC ceiling alone cannot see it
     assert leaked["head_auc_oos"] > clean["head_auc_oos"]
     assert leaked["head_auc_oos"] <= run_eicu.EICU_LEAK_AUC_CEILING
     assert not leaked["auc_alarm"]
@@ -901,13 +903,13 @@ def test_the_leak_probe_fires_on_a_subtle_leak_not_only_on_the_label(
 
 def test_outcome_screen_covers_every_feature_and_names_the_timing_suspects(
         pipeline_small):
-    """E-19: "is this column post-hoc?" is answered from DATA, not DDL comments.
+    """Post-hoc timing is settled from data, not from DDL comments.
 
     The denylist applies a "timing relative to outcome unverified" standard to
-    two `apachePatientResult` columns; nine `apachePredVar` treatment flags
-    (`activetx` above all -- active treatment versus comfort measures is decided
-    DURING the stay) had no timing verification at all, and nothing in the
-    preflight could settle it. `outcome_screen` does.
+    two apachePatientResult columns, but nine apachePredVar treatment flags had
+    no timing verification at all. activetx is the worst: active treatment
+    versus comfort measures is decided during the stay. Nothing in preflight
+    could settle that; outcome_screen does (audit E-19).
     """
     ctx = pipeline_small
     screen = etl.outcome_screen(ctx["x_raw"], ctx["meta"], names=ctx["names"])
@@ -918,7 +920,7 @@ def test_outcome_screen_covers_every_feature_and_names_the_timing_suspects(
         assert e["kind"] in ("binary", "continuous", "degenerate"), name
         assert e["auc"] is None or 0.0 <= e["auc"] <= 1.0
 
-    # every named timing suspect is screened, and on the CLEAN corpus none of
+    # every named timing suspect is screened, and on the clean corpus none of
     # them is anywhere near the review band
     for col in run_eicu.EICU_TIMING_UNVERIFIED:
         e = screen["features"][f"apv_{col}"]
@@ -929,7 +931,7 @@ def test_outcome_screen_covers_every_feature_and_names_the_timing_suspects(
             f"any number is reported (E-19)")
     assert not screen["flagged"]
 
-    # ... and the screen HAS power: an injected outcome column is flagged
+    # ... and the screen has power: an injected outcome column is flagged
     y = ctx["y_bool"].astype(np.float64)
     x2 = np.column_stack([ctx["x_raw"], y])
     screen2 = etl.outcome_screen(x2, ctx["meta"],
@@ -940,8 +942,7 @@ def test_outcome_screen_covers_every_feature_and_names_the_timing_suspects(
 # ========================================================== 6-7. preflight ===
 
 def test_preflight_profiles_without_certifying(mock_small):
-    """The mandatory non-certifying pass: it profiles, it writes the a-priori
-    predictions, and it builds no features and issues no certificate."""
+    """The mandatory pass: it profiles; it builds and certifies nothing."""
     pf = etl.preflight(mock_small["dir"], verbose=False)
     assert set(pf) == PREFLIGHT_KEYS
     assert "certified" not in pf and "operative" not in pf
@@ -951,7 +952,7 @@ def test_preflight_profiles_without_certifying(mock_small):
         assert set(entry) == {"path", "rows", "header", "header_raw",
                               "header_case_as_read", "n_names_with_uppercase",
                               "reference_rows", "rows_match_reference"}
-        # E-17: the verdict is DECIDABLE and pinned, not merely "one of three"
+        # E-17: the verdict is decidable and pinned, not merely "one of three"
         assert entry["header_case_as_read"] == HEADER_CASE_EXPECTED["camel"]
         assert len(entry["header_raw"]) == len(entry["header"])
         assert entry["reference_rows"] == etl.EICU_REFERENCE_ROW_COUNTS[t]
@@ -961,14 +962,14 @@ def test_preflight_profiles_without_certifying(mock_small):
     assert pf["patient"]["n_rows"] == pf["tables"]["patient"]["rows"]
     assert pf["patient"]["n_rows"] == man["stays_written"]
     assert pf["patient"]["n_hospitals"] == man["sites"]
-    # E-13: identity counts are RAW (S0); cohort counts are named separately
+    # E-13: identity counts are raw (S0); cohort counts are named separately
     assert pf["patient"]["n_hospitals_cohort"] <= pf["patient"]["n_hospitals"]
     assert pf["patient"]["n_uniquepid_cohort"] <= pf["patient"]["n_uniquepid"]
     assert set(pf["patient"]["hospitaldischargestatus"]) <= {"Alive",
                                                              "Expired", ""}
 
-    # the ledger is frozen in ORDER, and records n_sites and n_positive as
-    # well as n_stays -- E-9: n_stays alone cannot show a prevalence collapse
+    # the ledger is frozen in order, and records n_sites and n_positive as well
+    # as n_stays: n_stays alone cannot show a prevalence collapse (E-9)
     assert [e["step"] for e in pf["attrition"]] == list(etl.EICU_ATTRITION_STEPS)
     for e in pf["attrition"]:
         assert set(e) == {"step", "n_stays", "n_sites", "n_positive",
@@ -978,10 +979,10 @@ def test_preflight_profiles_without_certifying(mock_small):
     assert att["raw-unit-stays"] >= att["outcome-known"] >= att["adult"] \
         >= att["first-stay"] == att["primary-cohort"]
 
-    # The mandated site-informative-missingness diagnostic (T-3): CertGate v2
-    # scope-cut covariate-shift mode, so this must be SURFACED per site and
-    # never imputed away. Asserted as a superset -- the five mandated fields
-    # must be present and well-formed; measuring MORE of what the SPEC wants
+    # The mandated site-informative-missingness diagnostic (T-3). CertGate v2
+    # scope-cut covariate-shift mode, so this must be surfaced per site and
+    # never imputed away. Asserted as a superset: the five mandated fields must
+    # be present and well-formed, and measuring more of what the SPEC wants
     # measured is not a regression.
     assert set(pf["sentinel_site_dispersion"]) >= {"apacheApsVar",
                                                    "apachePredVar"}
@@ -995,7 +996,7 @@ def test_preflight_profiles_without_certifying(mock_small):
             assert mandated <= set(stats), f"{table}.{col} lost {mandated - set(stats)}"
             for field in mandated:
                 assert 0.0 <= float(stats[field]) <= 1.0, (table, col, field)
-        # the mock modulates the -1 rate PER SITE (wart W3), so the dispersion
+        # the mock modulates the -1 rate per site (wart W3), so the dispersion
         # this diagnostic exists to expose must be non-zero somewhere
         assert any(s["sd_site_minus_one_rate"] > 0.0 for s in per_col.values())
 
@@ -1010,8 +1011,7 @@ def test_preflight_profiles_without_certifying(mock_small):
 
 
 def test_preflight_reference_check_raises_on_the_mock(mock_small):
-    """T-6: the wrong download must not silently produce numbers of a different
-    dataset. The mock is not the extract, so `expect_reference=True` refuses."""
+    """The mock is not the extract, so expect_reference=True refuses (T-6)."""
     with pytest.raises(etl.EicuError, match="reference-row-count-mismatch"):
         etl.preflight(mock_small["dir"], expect_reference=True, verbose=False)
 
@@ -1029,9 +1029,12 @@ def test_missing_table_and_missing_column_are_loud(tmp_path):
 # ================================================ 8-13. the planted traps ====
 
 def test_minus_one_sentinel_never_reaches_the_matrix(planted):
-    """T-2. `-1` is the UNDOCUMENTED APACHE sentinel: it is a plausible finite
-    number, so it passes every downstream gate and silently poisons the head.
-    The all-`-1` stay must arrive as ALL-missing, and no `-1` may survive."""
+    """-1 is the undocumented APACHE sentinel (T-2).
+
+    It is a plausible finite number, so it passes every downstream gate and
+    silently poisons the head. The all -1 stay must arrive as all-missing, and
+    no -1 may survive.
+    """
     x_raw, names, meta = etl.build_raw(planted, verbose=False)
     r1, r2 = _row_of(meta, 1), _row_of(meta, 2)
     aps_cols = [i for i, n in enumerate(names)
@@ -1048,7 +1051,7 @@ def test_minus_one_sentinel_never_reaches_the_matrix(planted):
         assert np.isfinite(x_raw[r1, col]), names[col]
         assert x_raw[r1, _col_of(names, names[col] + "__missing")] == 0.0
 
-    # presence is ROW presence, not VALUE presence: the all-(-1) stay carried a
+    # presence is row presence, not value presence: the all-(-1) stay carried a
     # row, so the flag stays 1.0 while all 43 siblings flip together
     assert x_raw[r2, _col_of(names, "aps_present")] == 1.0
     assert x_raw[r2, _col_of(names, "apv_present")] == 1.0
@@ -1069,9 +1072,7 @@ def test_minus_one_sentinel_never_reaches_the_matrix(planted):
 
 
 def test_empty_string_is_a_second_missing_channel(planted):
-    """The documented SQL NULL (the MIT-LCP loader is `NULL ''`) and the
-    undocumented `-1` are INDEPENDENT channels; handling only one leaves the
-    other in the matrix."""
+    """Handling the -1 sentinel alone leaves the SQL NULL '' in the matrix."""
     x_raw, names, meta = etl.build_raw(planted, verbose=False)
     r2, r3 = _row_of(meta, 2), _row_of(meta, 3)
     block = [i for i, n in enumerate(names)
@@ -1087,9 +1088,11 @@ def test_empty_string_is_a_second_missing_channel(planted):
 
 
 def test_absent_apache_row_clears_the_presence_flag(planted):
-    """T-3: whole-row APACHE absence is site-correlated. It is named by one
-    explicit column rather than smeared across 43 `__missing` siblings, so the
-    abstention explanations can point at it (prediction P4)."""
+    """Whole-row APACHE absence is site-correlated (T-3).
+
+    It is named by one explicit column rather than smeared across 43 __missing
+    siblings, so the abstention explanations can point at it (prediction P4).
+    """
     x_raw, names, meta = etl.build_raw(planted, verbose=False)
     r4 = _row_of(meta, 4)
     assert x_raw[r4, _col_of(names, "aps_present")] == 0.0
@@ -1102,10 +1105,13 @@ def test_absent_apache_row_clears_the_presence_flag(planted):
 
 
 def test_unexpected_negative_sentinel_aborts(tmp_path):
-    """T-2's other half. Every allowlisted column has non-negative
-    physiological support, so negative mass that is NOT exactly `-1.0` is an
-    UNRECOGNISED sentinel: it must abort, not flow, and not be absorbed by the
-    `value < 0 => missing` rule the histogram has not yet justified."""
+    """T-2's other half: an unrecognised negative sentinel aborts.
+
+    Every allowlisted column has non-negative physiological support, so
+    negative mass that is not exactly -1.0 is unrecognised. It must abort --
+    never flow, and never be absorbed by a "value < 0 means missing" rule the
+    histogram has not yet justified.
+    """
     dst = _write_corpus(str(tmp_path / "negsentinel"), {
         "patient": [_patient(1), _patient(2)],
         "hospital": [_hospital(1)],
@@ -1118,14 +1124,17 @@ def test_unexpected_negative_sentinel_aborts(tmp_path):
 
 
 def test_sub_threshold_negative_sentinel_flows_as_missing(tmp_path):
-    """Amendment A6 (POST-HOC, 2026-07-31): negative-not-`-1` mass below
-    `EICU_MAX_UNPARSEABLE_SHARE` maps to missing and WARNS instead of aborting.
+    """Amendment A6: sub-threshold negative mass warns instead of aborting.
 
-    The released extract carries exactly one such cell in ~4.1M
-    (`apacheApsVar.urine = -11245.5648`, stay 1805017) against an otherwise
-    contiguous non-negative support. The cells always became NaN; the raise was
-    a look-at-this gate, so no computed number changes. Above the threshold the
-    abort must still fire -- pinned by the test above at a 1-in-2 rate.
+    Negative-not-(-1) mass below EICU_MAX_UNPARSEABLE_SHARE maps to missing and
+    warns. The released extract carries exactly one such cell in ~4.1M:
+    apacheApsVar.urine = -11245.5648, stay 1805017.
+
+    Those cells always became NaN and the raise was only a look-at-this gate,
+    so no computed number changes. Above the threshold the abort must still
+    fire, which the test above pins at a 1-in-2 rate.
+
+    Refs: EICU-PROTOCOL amendment A6, post-hoc, logged data-seen.
     """
     n = 200                                    # 1/200 = 0.005 < 0.01
     rows = {"patient": [], "hospital": [_hospital(1)],
@@ -1144,7 +1153,7 @@ def test_sub_threshold_negative_sentinel_flows_as_missing(tmp_path):
     assert meta["sentinel_counts"]["aps_urine"]["other_negative"] == 1
     assert any("A6" in w for w in meta["warnings"]), (
         "a post-hoc relaxation must announce itself in the warnings")
-    # the offending cell is MISSING, never a finite negative
+    # the offending cell is missing, never a finite negative
     r = _row_of(meta, 3)
     assert np.isnan(x_raw[r, _col_of(names, "aps_urine")])
     assert x_raw[r, _col_of(names, "aps_urine__missing")] == 1.0
@@ -1159,10 +1168,13 @@ def test_sub_threshold_negative_sentinel_flows_as_missing(tmp_path):
 
 
 def test_age_over_89_is_kept_and_flagged(tmp_path):
-    """The HIPAA ceiling token. Dropping `'> 89'` (the common benchmark's
-    `max_age=89`) removes a mortality-enriched stratum whose SHARE VARIES BY
-    HOSPITAL -- a site-correlated exclusion. It is kept at 90.0 with an
-    explicit indicator so the ceiling is visible to the head and to Shapley."""
+    """The HIPAA age-ceiling token is kept, not dropped.
+
+    Dropping '> 89' -- the common benchmark's max_age=89 -- removes a
+    mortality-enriched stratum whose share varies by hospital, so it is a
+    site-correlated exclusion. It is kept at 90.0 with an explicit indicator,
+    which leaves the ceiling visible to the head and to Shapley.
+    """
     dst = _write_corpus(str(tmp_path / "age"), {
         "patient": [_patient(1, age=etl.EICU_AGE_MASK_TOKEN), _patient(2, age="45"),
                     _patient(3, age=""), _patient(4, age="17"),
@@ -1190,8 +1202,11 @@ def test_age_over_89_is_kept_and_flagged(tmp_path):
 
 
 def test_blank_discharge_status_is_dropped_never_imputed(tmp_path):
-    """~0.87% of stays have NO usable outcome. MIT-LCP's own `icustay_detail`
-    uses `ELSE NULL`; a coerced blank would fabricate ~1750 survivors."""
+    """~0.87% of stays have no usable outcome, and they are dropped.
+
+    MIT-LCP's own icustay_detail uses ELSE NULL, and a coerced blank would
+    fabricate ~1750 survivors.
+    """
     dst = _write_corpus(str(tmp_path / "status"), {
         "patient": [_patient(1, hospitaldischargestatus="Alive"),
                     _patient(2, hospitaldischargestatus="Expired"),
@@ -1209,8 +1224,7 @@ def test_blank_discharge_status_is_dropped_never_imputed(tmp_path):
 
 
 def test_a_third_outcome_level_raises(tmp_path):
-    """A value outside {'Alive','Expired',''} is a schema surprise, not a
-    survivor: it must raise rather than be silently coerced to negative."""
+    """A value outside {'Alive', 'Expired', ''} must raise, not be coerced."""
     dst = _write_corpus(str(tmp_path / "badstatus"), {
         "patient": [_patient(1), _patient(2, hospitaldischargestatus="Transferred")],
         "hospital": [_hospital(1)],
@@ -1221,9 +1235,12 @@ def test_a_third_outcome_level_raises(tmp_path):
 
 
 def test_first_stay_rule_picks_the_highest_hospitaladmitoffset(tmp_path):
-    """S4's sign trap: `hospitaladmitoffset` is NEGATIVE minutes, so the
-    EARLIEST stay has the HIGHEST (least negative) offset. `min` here silently
-    selects the LAST ICU stay of an admission -- a post-hoc selection."""
+    """S4's sign trap: hospitaladmitoffset is negative minutes.
+
+    The earliest stay therefore has the highest, least negative, offset. Using
+    min here silently selects the last ICU stay of an admission, which is a
+    post-hoc selection.
+    """
     dst = _write_corpus(str(tmp_path / "firststay"), {
         "patient": [
             # tie on unitvisitnumber -> max offset wins (-14 beats -22)
@@ -1231,7 +1248,7 @@ def test_first_stay_rule_picks_the_highest_hospitaladmitoffset(tmp_path):
                      hospitaladmitoffset=-14),
             _patient(1002, patienthealthsystemstayid=100, unitvisitnumber=1,
                      hospitaladmitoffset=-22),
-            # unitvisitnumber is the PRIMARY key: 1 beats 2 despite the offset
+            # unitvisitnumber is the primary key: 1 beats 2 despite the offset
             _patient(2001, patienthealthsystemstayid=200, unitvisitnumber=2,
                      hospitaladmitoffset=-10),
             _patient(2002, patienthealthsystemstayid=200, unitvisitnumber=1,
@@ -1249,17 +1266,19 @@ def test_first_stay_rule_picks_the_highest_hospitaladmitoffset(tmp_path):
     assert sorted(int(s) for s in meta["stay_id"]) == [1001, 2002, 3001]
     att = _attrition(meta)
     assert att["adult"] == 6 and att["first-stay"] == 3
-    # the offset survives ONLY as a windowed pre-ICU duration, sign corrected
+    # the offset survives only as a windowed pre-ICU duration, sign corrected
     assert x_raw[_row_of(meta, 1001), _col_of(names, "pre_icu_hours")] == \
         pytest.approx(14.0 / 60.0)
     assert len(set(int(a) for a in np.asarray(meta["admission_id"]))) == 3
 
 
 def test_apache_result_dedup_is_version_preferred_and_counted(planted_dedup):
-    """T-8/T-9. `apachePatientResult` carries one row per apacheVersion (297,064
-    rows over 171,177 stays, which is not 2x), and
-    `predictedhospitalmortality` is a VARCHAR holding a probability: compared
-    as a string, `'-1' > '0'`. `float()` first, always."""
+    """apachePatientResult carries one row per apacheVersion (T-8, T-9).
+
+    That is 297,064 rows over 171,177 stays, which is not 2x. And
+    predictedhospitalmortality is a VARCHAR holding a probability, so compared
+    as a string '-1' > '0'. Call float() first, always.
+    """
     _, _, meta = etl.build_raw(planted_dedup, verbose=False)
     pred = np.asarray(meta["comparator_predicted_mortality"], dtype=np.float64)
     ver = list(meta["comparator_apache_version"])
@@ -1269,7 +1288,7 @@ def test_apache_result_dedup_is_version_preferred_and_counted(planted_dedup):
     assert pred[_row_of(meta, 2)] == pytest.approx(0.33)   # IV only
     assert ver[_row_of(meta, 2)] == "IV"
     assert pred[_row_of(meta, 3)] == pytest.approx(0.55)   # min surrogate id
-    assert np.isnan(pred[_row_of(meta, 4)])                # the '-1' STRING
+    assert np.isnan(pred[_row_of(meta, 4)])                # the '-1' string
     assert np.isnan(pred[_row_of(meta, 5)])                # no row at all
     assert not (pred == -1.0).any()
     assert etl.EICU_APACHE_VERSION_PREFERENCE == ("IVa", "IV")
@@ -1277,25 +1296,26 @@ def test_apache_result_dedup_is_version_preferred_and_counted(planted_dedup):
 
 
 def test_duplicate_apache_rows_keep_the_minimum_surrogate_id(planted_dedup):
-    """`apacheApsVar` does not declare `patientunitstayid` unique. The tie-break
-    is explicit and the count is REPORTED -- never a silent drop."""
+    """Duplicate APS rows: the minimum surrogate id wins, and it is counted."""
     x_raw, names, meta = etl.build_raw(planted_dedup, verbose=False)
     assert x_raw[_row_of(meta, 1), _col_of(names, "aps_heartrate")] == 88.0
     assert _int_leaf_sum(meta["dedup_counts"]) > 0
 
 
 def test_categorical_level_drift_raises(mock_drift, pipeline_small):
-    """T-7. A level tuple frozen without seeing the data can be wrong. Unlisted
-    values fall to OTHER and are COUNTED; past the 5% cap the run stops, and
-    the fix is a visible SPEC + constants diff, not a drift bucket the head
-    quietly learns."""
+    """A level tuple frozen without seeing the data can be wrong (T-7).
+
+    Unlisted values fall to the OTHER bucket and are counted. Past the 5% cap
+    the run stops, and the fix is a visible SPEC plus constants diff -- never a
+    drift bucket the head quietly learns.
+    """
     with pytest.raises(etl.EicuError, match="categorical-level-drift"):
         etl.build_raw(mock_drift, strict_levels=True, verbose=False)
     _, _, meta = etl.build_raw(mock_drift, strict_levels=False, verbose=False)
     shares = meta["categorical_other_shares"]
     assert max(shares.values()) > etl.EICU_MAX_OTHER_SHARE == 0.05
 
-    # the canonical corpus exercises the OTHER bucket WITHOUT tripping the gate
+    # the canonical corpus exercises the OTHER bucket without tripping the gate
     # (wart W16), so the cap is tested from both sides
     ok = pipeline_small["meta"]["categorical_other_shares"]
     assert set(ok) == set(shares)
@@ -1310,7 +1330,7 @@ def test_site_split_is_by_site_disjoint_and_deterministic(pipeline_small):
     site_raw = pipeline_small["site_raw"]
     assert set(sets) == {"train", "aux", "cal", "target"}
     keys = ("train", "aux", "cal", "target")
-    for i, a in enumerate(keys):                   # PAIRWISE, not a triple
+    for i, a in enumerate(keys):                   # pairwise, not a triple
         for b in keys[i + 1:]:
             assert not (sets[a] & sets[b]), f"{a} and {b} share sites"
     uniq = set(site_raw)
@@ -1328,7 +1348,7 @@ def test_site_split_is_by_site_disjoint_and_deterministic(pipeline_small):
     for key in keys:
         assert np.array_equal(again[key], idx[key])
     _, other = etl.site_split(site_raw, replicate=1)
-    assert other != sets                           # an INDEPENDENT re-split
+    assert other != sets                           # an independent re-split
 
 
 def test_site_split_refuses_a_population_it_cannot_calibrate():
@@ -1339,10 +1359,12 @@ def test_site_split_refuses_a_population_it_cannot_calibrate():
 
 
 def test_split_leaves_at_least_min_cal_clusters(pipeline_small):
-    """The site arithmetic, worked: 180 mock hospitals - 24 held out = 156;
-    40/20/40 gives 62/31/63, and EICU_MOCK_MIN_STAYS_PER_SITE = 12 makes all 63
-    RECORD-CARRYING, so the MIN_CAL_CLUSTERS = 50 gate is deterministically
-    satisfied and certification is reachable."""
+    """The site arithmetic, worked.
+
+    180 mock hospitals minus 24 held out leaves 156, and 40/20/40 gives
+    62/31/63. EICU_MOCK_MIN_STAYS_PER_SITE = 12 makes all 63 record-carrying,
+    so MIN_CAL_CLUSTERS = 50 is satisfied and certification is reachable.
+    """
     sets, cal = pipeline_small["sets"], pipeline_small["cal"]
     uniq = len(set(pipeline_small["site_raw"]))
     assert uniq == mock.EICU_MOCK_SMALL_SITES == 180
@@ -1357,9 +1379,12 @@ def test_split_leaves_at_least_min_cal_clusters(pipeline_small):
 
 
 def test_impute_means_come_from_train_only(pipeline_small):
-    """The transductive leak no downstream gate catches: pooled-matrix means
-    would carry the TARGET pool's covariate distribution into the training
-    features. Perturbing the target pool must leave the fills untouched."""
+    """The transductive leak no downstream gate catches.
+
+    Pooled-matrix means would carry the target pool's covariate distribution
+    into the training features, so perturbing the target pool must leave the
+    fills untouched.
+    """
     x_raw, idx, fill = (pipeline_small["x_raw"], pipeline_small["idx"],
                         pipeline_small["fill"])
     perturbed = x_raw.copy()
@@ -1368,11 +1393,11 @@ def test_impute_means_come_from_train_only(pipeline_small):
     perturbed[tgt] = np.where(np.isnan(block), np.nan, block + 1000.0)
     x_p, fill2 = etl.impute(perturbed, idx["train"])
     assert fill2 == fill
-    # asserted on the MATRIX too, so the check does not rest on the internal
+    # asserted on the matrix too, so the check does not rest on the internal
     # shape of the fill record: the fitting rows come out identical
     assert np.array_equal(x_p[idx["train"]], pipeline_small["x"][idx["train"]])
 
-    # and moving the fit set DOES move the imputed values -- the test has teeth
+    # and moving the fit set does move the imputed values -- the test has teeth
     x_c, _ = etl.impute(x_raw, idx["cal"])
     assert not np.array_equal(x_c, pipeline_small["x"])
     with pytest.raises(etl.EicuError, match="impute-fit-empty"):
@@ -1380,8 +1405,10 @@ def test_impute_means_come_from_train_only(pipeline_small):
 
 
 def test_labels_flow_through_coerce_labels_not_a_bool_array(pipeline_small):
-    """`coerce_labels` owns the two-value contract; the ETL never hand-builds a
-    bool array. `require_both_classes=False` is the TARGET-pool-only opt-in."""
+    """coerce_labels owns the two-value contract, never a hand-built array.
+
+    require_both_classes=False is the target-pool-only opt-in.
+    """
     y_raw = pipeline_small["y_raw"]
     assert isinstance(y_raw, list)
     assert all(isinstance(v, str) for v in y_raw)
@@ -1396,11 +1423,13 @@ def test_labels_flow_through_coerce_labels_not_a_bool_array(pipeline_small):
 
 
 def test_hospitalid_survives_densify_sites_without_collision(pipeline_small):
-    """Site identity is emitted as ONE canonical spelling per hospital
-    (`hosp-{int(hospitalid)}`), so `densify_sites`' cosmetic-collision raise --
-    which exists because a hospital split into two 'independent' clusters buys
-    certification strength the honest clustering refuses -- cannot fire on our
-    own output. `hospitalid`/`wardid` never enter x."""
+    """Site identity has one canonical spelling per hospital.
+
+    It is always hosp-{int(hospitalid)}, so densify_sites' cosmetic-collision
+    raise cannot fire on our own output. That raise exists because a hospital
+    split into two "independent" clusters buys certification strength the
+    honest clustering refuses. hospitalid and wardid never enter x.
+    """
     site_raw = pipeline_small["site_raw"]
     dense, labels = densify_sites(site_raw)        # must not raise
     assert len(labels) == len(set(site_raw)) == 180
@@ -1416,9 +1445,11 @@ def test_hospitalid_survives_densify_sites_without_collision(pipeline_small):
 
 def test_etl_output_is_deterministic_and_build_matrix_agrees(
         mock_small, pipeline_small):
-    """Identical inputs -> byte-identical features. `build_matrix` is a
-    convenience wrapper over build_raw -> site_split -> impute and must not
-    diverge from the explicit path the runner uses."""
+    """Identical inputs give byte-identical features.
+
+    build_matrix wraps build_raw -> site_split -> impute, and must not diverge
+    from the explicit path the runner uses.
+    """
     x1, n1, m1 = etl.build_matrix(mock_small["dir"], verbose=False)
     x2, n2, m2 = etl.build_matrix(mock_small["dir"], verbose=False)
     assert np.array_equal(x1, x2)
@@ -1436,9 +1467,12 @@ def test_etl_output_is_deterministic_and_build_matrix_agrees(
 # ============================================ 18-21. the certification path ===
 
 def test_smoke_end_to_end_reaches_an_honest_outcome(pipeline_small):
-    """The whole path on the pooled 24-hospital target arm, plus one
-    per-hospital (K == 1) pool. Certification is NEVER asserted; the assertion
-    is that whatever is issued survives the oracle."""
+    """The whole path on the pooled target arm, plus one per-hospital pool.
+
+    The pooled arm holds 24 hospitals; the per-hospital pool has K == 1.
+    Certification is never asserted. The assertion is that whatever is issued
+    survives the oracle.
+    """
     rep, ctx = pipeline_small["rep"], pipeline_small
     outcome = _assert_honest(rep, ctx)
     assert outcome in ("certified", "declined")
@@ -1454,7 +1488,7 @@ def test_smoke_end_to_end_reaches_an_honest_outcome(pipeline_small):
     assert ctx["target"].x.dtype == np.float64
     assert np.isfinite(ctx["target"].x).all()
 
-    # ---- per-hospital arm: target_site_id SUPPLIED even though K == 1 ----
+    # ---- per-hospital arm: target_site_id supplied even though K == 1 ----
     site, _n = Counter(ctx["tgt_sites"]).most_common(1)[0]
     rows = np.array([i for i in ctx["idx"]["target"]
                      if ctx["site_raw"][i] == site], dtype=int)
@@ -1476,13 +1510,12 @@ def test_smoke_end_to_end_reaches_an_honest_outcome(pipeline_small):
 def test_the_honesty_assertion_fires_on_a_bad_certificate(pipeline_small):
     """The honesty check must not be dead code.
 
-    At the mock's frozen signal strength both arms currently DECLINE (a
-    legitimate outcome the contract explicitly refuses to assert against), so
-    the certified branch of `_assert_honest` -- the oracle `hard_violation`
-    gate, the assertion this whole file exists to make -- would otherwise never
-    execute. Here it is driven both ways against the real head and the real
-    held-out pool: a certificate that answers exactly the records the head gets
-    WRONG must be rejected, and one that answers only correct records accepted.
+    At the mock's frozen signal strength both arms decline, so the certified
+    branch of _assert_honest -- the oracle hard_violation gate this whole file
+    exists to reach -- would never execute. It is therefore driven both ways
+    against the real head and held-out pool: a certificate answering exactly
+    the head's mistakes must be rejected, one answering only correct records
+    accepted.
     """
     ctx = pipeline_small
     head = fit_head(ctx["train"])
@@ -1509,13 +1542,12 @@ def test_the_honesty_assertion_fires_on_a_bad_certificate(pipeline_small):
 
 @pytest.fixture(scope="module")
 def mock_certified_run(tmp_path_factory, mock_small):
-    """One QUICK `run_certification` on the always-on corpus, run ONCE.
+    """One quick run_certification on the always-on corpus, run once.
 
-    This is the only always-on test that drives the RUNNER (rather than the
-    pipeline) end to end, so it is the only place the POST-HOC panel's wiring
-    into `run_eicu` is exercised: the gated writers, the summary section, the
-    figure skip and the label plumbing. `quick=True` skips the figures, which
-    is what keeps the cost in the seconds.
+    This is the only always-on test that drives the runner rather than the
+    pipeline, so it is the only place the post-hoc panel's wiring into run_eicu
+    is exercised: gated writers, summary section, figure skip, label plumbing.
+    quick=True skips the figures, which keeps the cost in the seconds.
     """
     out = str(tmp_path_factory.mktemp("eicu_panel_run") / "out")
     payload = run_eicu.run_certification(mock_small["dir"], out,
@@ -1525,20 +1557,20 @@ def mock_certified_run(tmp_path_factory, mock_small):
 
 
 def test_mock_run_writes_the_reliability_panel(mock_certified_run):
-    """The POST-HOC panel (2026-08-01) reaches disk, gated and labelled.
+    """The post-hoc panel reaches disk, gated and labelled.
 
-    The mock declines every rung by arithmetic, so this ALSO exercises the
-    `tau_star=None` / all-False-mask branch on the real runner -- the branch
-    the mock corpus is otherwise unable to reach -- and proves it is a legal
-    shape rather than a crash: every answered statistic is `None` carrying
-    `undefined-point`, and the artifact is still strict JSON.
+    Added 2026-08-01, after the extract was read. The mock declines every rung
+    by arithmetic, so this also exercises the tau_star=None, all-False-mask
+    branch on the runner. That branch is a legal shape, not a crash: every
+    answered statistic is None carrying undefined-point, and the artifact is
+    still strict JSON.
     """
     out = mock_certified_run["out"]
 
     raw = open(os.path.join(out, "EICU_reliability_panel.json"),
                encoding="utf-8").read()
-    # `nan` / `Infinity` are NOT valid JSON; a reader would either choke or
-    # (in Python) silently produce a float that no downstream tool can print.
+    # nan and Infinity are not valid JSON. A reader would either choke or, in
+    # Python, silently produce a float no downstream tool can print.
     assert "NaN" not in raw and "Infinity" not in raw
     doc = json.loads(raw, parse_constant=_reject_json_constant)
     assert "POST-HOC" in doc["post_hoc"]
@@ -1546,9 +1578,9 @@ def test_mock_run_writes_the_reliability_panel(mock_certified_run):
     assert len(doc["panels"]) == 1
     panel = doc["panels"][0]
 
-    # the panel carries the SANDBOX's root seed, never certgate's: re-pointing
-    # it at constants.SEED would discard the external verification that is the
-    # whole reason the module was ported rather than re-derived.
+    # the panel carries the sandbox's own root seed, never certgate's.
+    # Re-pointing it at constants.SEED would silently discard the external
+    # verification that is the whole reason to port rather than re-derive.
     assert panel["settings"]["seed"] == rp.PANEL_SEED == 20260731
     assert panel["settings"]["seed"] != SEED
     assert panel["schema_version"] == "srp/1"
@@ -1562,7 +1594,7 @@ def test_mock_run_writes_the_reliability_panel(mock_certified_run):
                   panel["skill"]["contrast"]):
         assert block["ci"] is None
         assert block["ci_status"] in rp.CI_STATUSES
-    # the DECLINED scope is fully populated at K = 24 >= MIN_SITES_FOR_CI
+    # the declined scope is fully populated at K = 24 >= MIN_SITES_FOR_CI
     assert panel["ece"]["declined"]["ece"] is not None
     assert panel["skill"]["all"]["ci_status"] == "ok"
 
@@ -1574,32 +1606,33 @@ def test_mock_run_writes_the_reliability_panel(mock_certified_run):
     assert {r["scope"] for r in rows} == {"answered", "declined"}
     assert all(r["ci_status"] in rp.CI_STATUSES for r in rows)
     # RP-9: the CSV is the panel artifact most easily detached from the
-    # directory that explains it, so the label rides on EVERY row rather than
+    # directory that explains it, so the label rides on every row rather than
     # being inherited from a neighbouring file.
     assert all(r["post_hoc"] == rp.POST_HOC_LABEL for r in rows)
 
     text = open(os.path.join(out, "EICU-SUMMARY.md"), encoding="utf-8").read()
     assert "## EICU-RELIABILITY" in text
-    # PIN AMENDMENT 2026-08-20: the panel section was appended LAST on
-    # 2026-08-01 and stays at that historical position (index 5); the
-    # revision-2 subgroups section is appended after it -- append-only, never
-    # an insert, so both assertions below are the durable form of the old
-    # "[-1]" check.
+    # EICU_SUMMARY_SECTIONS is APPEND-ONLY. A new section goes last so that no
+    # section written before it moves, which is what keeps every
+    # EICU-SUMMARY.md already on disk parseable. The panel sits at index 5 and
+    # the subgroups section after it.
     assert run_eicu.EICU_SUMMARY_SECTIONS.index("EICU-RELIABILITY") == 5
-    assert "EICU-SUBGROUPS" == run_eicu.EICU_SUMMARY_SECTIONS[-1]
+    assert run_eicu.EICU_SUMMARY_SECTIONS.index("EICU-SUBGROUPS") == 6
+    # the value-function contrast is appended after the subgroups, again last
+    assert "EICU-FAITHFULNESS" == run_eicu.EICU_SUMMARY_SECTIONS[-1]
     block = mock_certified_run["payload"]["reliability"]
     assert block["post_hoc"] == rp.POST_HOC_LABEL
     assert block["n_panels"] == 1
-    # RP-9: the estimand disclosures travel WITH the numbers into the
-    # human-facing summary. notes[1] in particular -- the block prints
-    # brier_reference / brier_primary_matched / brier_difference side by side,
-    # which is exactly the arrangement it governs.
+    # RP-9: the estimand disclosures travel with the numbers into the
+    # human-facing summary. notes[1] governs exactly the arrangement the block
+    # prints: brier_reference, brier_primary_matched and brier_difference side
+    # by side.
     assert block["notes"] == list(rp.NOTES)
     assert "MARGINAL" in block["notes"][1]
     assert "not independent" in block["replicate_spread_note"] or \
         "NOT independent" in block["replicate_spread_note"]
-    # the key names the WHOLE three-name interval dict it actually holds; the
-    # paired interval is the `brier_difference` member inside it
+    # the key names the whole three-name interval dict it holds; the paired
+    # interval is the brier_difference member inside it
     assert "brier_difference_ci_replicate0" not in block
     assert "brier_reference_ci_replicate0" in block
     assert block["ci_status_counts"]                  # the vocabulary is counted
@@ -1621,13 +1654,71 @@ def test_mock_run_writes_the_reliability_panel(mock_certified_run):
     _assert_no_forbidden_key(doc)
 
 
+def test_mock_run_writes_the_faithfulness_block(mock_certified_run):
+    """The post-hoc value-function contrast reaches disk, gated and labelled.
+
+    The always-on mock declines every rung, so this exercises the tau=None
+    branch on the runner. No rows are fabricated, the CSV is header-only, and
+    the summary block still carries the label and a no-certificate status per
+    replicate.
+    """
+    out = mock_certified_run["out"]
+    block = mock_certified_run["payload"]["faithfulness"]
+    assert block["post_hoc"] == run_eicu.EICU_FAITHFULNESS_LABEL
+    assert block["k"] == run_eicu.EICU_FAITHFULNESS_TOP_K
+    assert block["n_replicates_ok"] == 0
+    assert [sc["status"] for sc in block["replicates"]] == ["no-certificate"]
+    assert block["features"] == {}
+    assert block["max_abs_diff_vs_abstention_ranking"] is None
+    rows = list(csv.DictReader(open(os.path.join(out, "EICU_faithfulness.csv"),
+                                    encoding="ascii")))
+    assert rows == []
+    text = open(os.path.join(out, "EICU-SUMMARY.md"), encoding="utf-8").read()
+    assert "## EICU-FAITHFULNESS" in text
+    run_eicu.assert_aggregate_only(run_eicu._json_ready(block),
+                                   "EICU-FAITHFULNESS")
+    _assert_no_forbidden_key(block)
+
+
+def test_faithfulness_rows_on_a_certified_head():
+    """The block on a head that does certify, the synthetic fixture.
+
+    It emits k rows per replicate under both value functions, the
+    interventional gap reproduces cohort_abstention_profile exactly, and under
+    an identity covariance the two value functions coincide.
+    """
+    from certgate.data import SimConfig, draw_cohort, split_sites
+    from certgate.model import fit_head
+    from certgate.explain import cohort_abstention_profile
+    rng = np.random.default_rng(5)
+    coh = draw_cohort(SimConfig(), 40, rng)
+    train, _, _ = split_sites(coh, rng)
+    head = fit_head(train)
+    target = draw_cohort(SimConfig(), 6, rng, site_label_prefix="t")
+    names = [f"f{j}" for j in range(head.coef.shape[0])]
+    tau = 0.75
+    rows, sc = run_eicu._faithfulness_rows(head, train, target, names, tau,
+                                           0, "primary", k=8)
+    assert sc["status"] == "ok" and len(rows) == 8
+    prof = cohort_abstention_profile(head, target.x,
+                                     head.score(target.x) >= tau)
+    for r in rows:
+        j = names.index(r["feature"])
+        assert abs(r["gap_int"] - float(prof["gap"][j])) < 1e-6
+    assert {r["rank_int"] for r in rows} == set(range(1, 9))
+    assert {r["rank_cond"] for r in rows} == set(range(1, 9))
+    assert sc["top_driver_int"] == names[int(prof["gap_ranking"][0])]
+    assert sc["n_answered"] + sc["n_declined"] == target.n
+    for r in rows:
+        run_eicu.assert_aggregate_only(r, "faithfulness-row")
+
+
 def _reject_json_constant(token):
     raise AssertionError(f"non-finite JSON constant {token!r} in the panel")
 
 
 def _assert_no_forbidden_key(node):
-    """Recursive: a future key addition must not reintroduce `site_id` or
-    `answered_mask` under a nested block the flat gate happens to reach."""
+    """Recursive: no forbidden key may hide under a nested block."""
     stack = [node]
     while stack:
         item = stack.pop()
@@ -1641,21 +1732,21 @@ def _assert_no_forbidden_key(node):
 
 
 def test_panel_gate_is_the_deployed_mask_not_a_rounded_tau(pipeline_small):
-    """The certified branch of the eICU panel call, which the mock corpus
-    cannot reach through `run_certification` (it declines every rung).
+    """The certified branch of the eICU panel call, unreachable on the mock.
 
-    Two things are pinned. (1) `panel_from_head` derives the mask from
-    `head.score(x) >= tau` itself, so a driver never constructs `p` and the
-    `predict_proba` / `score` conflation is structurally unreachable. (2) a
-    mask re-derived from a tau ROUNDED to 6 dp -- which is exactly what
-    `_eval_rung` stores -- is REJECTED when it disagrees with the deployed one
-    at the boundary, instead of silently panelling a different answered set.
+    Two things are pinned:
+
+      - panel_from_head derives the mask from head.score(x) >= tau itself, so
+        a driver never constructs p and the predict_proba / score conflation
+        is structurally unreachable.
+      - a mask re-derived from a tau rounded to 6 dp, which is what _eval_rung
+        stores, is rejected when it disagrees with the deployed one.
     """
     ctx = pipeline_small
     head = fit_head(ctx["train"])
     target = ctx["target"]
     scores = head.score(target.x)
-    # an ACTUAL score value, so nudging tau up by one ulp is guaranteed to drop
+    # an actual score value, so nudging tau up by one ulp is guaranteed to drop
     # at least that record out of the answered set
     tau = float(np.sort(scores)[scores.size // 3])
 
@@ -1669,7 +1760,7 @@ def test_panel_gate_is_the_deployed_mask_not_a_rounded_tau(pipeline_small):
                               answered_mask=(scores >= tau), n_boot=32)
     assert same == panel
 
-    # a mask built at a tau that rounds to a DIFFERENT set is refused
+    # a mask built at a tau that rounds to a different set is refused
     bad = scores >= float(np.nextafter(tau, 1.0))
     assert not np.array_equal(bad, scores >= tau)
     with pytest.raises(rp.PanelError, match="deployed-mask-mismatch"):
@@ -1678,8 +1769,7 @@ def test_panel_gate_is_the_deployed_mask_not_a_rounded_tau(pipeline_small):
 
 
 def _panel_for_figure(*, answered_share, with_reference):
-    """A small but REAL panel payload, shaped exactly as `run_certification`
-    accumulates one (the `replicate` key included)."""
+    """A small real panel payload, shaped as run_certification builds one."""
     rng = np.random.default_rng(11)
     n_sites, per_site = 24, 40
     n = n_sites * per_site
@@ -1695,16 +1785,13 @@ def _panel_for_figure(*, answered_share, with_reference):
 
 
 def test_reliability_figure_renders_including_the_degenerate_shape(tmp_path):
-    """`_reliability_figure` is UNREACHABLE from the always-on mock arm, which
-    runs `quick=True` and skips every figure -- so a crash there would abort a
-    20-replicate REAL-EXTRACT run after all the certification work was done.
+    """_reliability_figure, driven directly on both shapes it can meet.
 
-    Driving it directly is cheap and covers both shapes it can meet: an
-    ordinary panel with a reference scorer, and the degenerate all-declined /
-    `reference: None` panel the runner produces whenever no rung certifies (the
-    only shape the mock corpus can reach). The second is the one that would
-    take the `no reference-matched Brier` branch and the empty-answered-curve
-    branch together.
+    The always-on mock arm runs quick=True and skips every figure, so a crash
+    here would abort a 20-replicate real run after all the certification work
+    was done. The shapes are an ordinary panel with a reference scorer, and the
+    degenerate all-declined panel with reference None. The second takes the
+    no-reference-matched-Brier and empty-answered-curve branches together.
     """
     normal = _panel_for_figure(answered_share=0.6, with_reference=True)
     degenerate = _panel_for_figure(answered_share=0.0, with_reference=False)
@@ -1721,7 +1808,7 @@ def test_reliability_figure_renders_including_the_degenerate_shape(tmp_path):
         assert os.path.exists(png) and os.path.getsize(png) > 0, name
 
     # and an empty accumulator (every replicate's panel skipped) is a no-op,
-    # never an exception on `panel_payloads[0]`
+    # never an exception on panel_payloads[0]
     out = str(tmp_path / "empty")
     os.makedirs(out, exist_ok=True)
     run_eicu._reliability_figure(out, [], verbose=False)
@@ -1730,24 +1817,17 @@ def test_reliability_figure_renders_including_the_degenerate_shape(tmp_path):
 
 
 def test_reliability_figure_survives_a_point_outside_its_own_interval(tmp_path):
-    """THE shape that actually crashed, and the one `_panel_for_figure` cannot
-    reach: a percentile interval that does not straddle its own point estimate.
+    """A percentile interval that does not straddle its own point estimate.
 
-    `site_bootstrap_ci` quantiles the resampling distribution and promises no
-    such straddle, and for a paired ratio-of-sums over 24 sites
-    (`brier.reference.brier_difference`) the point can land outside. A raw
-    `point - ci['lo']` then goes NEGATIVE and matplotlib RAISES
-    `ValueError: 'yerr' must not contain negative values` rather than warning
-    -- inside `_figures`, which `run_certification` calls before it assembles
-    the summary payload, so a descriptive figure took `EICU-SUMMARY.md` and the
-    whole 20-replicate real-extract summary down with it.
-
-    `_panel_for_figure` builds `p_ref` as `clip(p + N(0, 0.1))`, a near-copy of
-    the primary scorer, which puts `brier_difference` comfortably inside its
-    interval every time -- so the shape is planted here on a REAL payload
-    rather than waited for.
+    site_bootstrap_ci quantiles the resampling distribution and promises no
+    such straddle, and for the paired brier_difference over 24 sites the point
+    can land outside. A raw point - ci['lo'] then goes negative and matplotlib
+    raises rather than warning -- inside _figures, which run_certification
+    calls before the summary payload exists, so a descriptive figure takes the
+    whole run's summary down with it. _panel_for_figure cannot reach the shape,
+    so it is planted here rather than waited for.
     """
-    # the clamp itself, at the one place it is now defined
+    # the clamp itself, at the one place it is defined
     assert rp.panel_ci_halfwidths(0.001, {"lo": 0.004, "hi": 0.009}) == (0.0,
                                                                          0.008)
     assert rp.panel_ci_halfwidths(0.5, {"lo": 0.4, "hi": 0.6}) == (
@@ -1762,7 +1842,7 @@ def test_reliability_figure_survives_a_point_outside_its_own_interval(tmp_path):
     ref = payload["brier"]["reference"]
     assert ref is not None and ref["ci"] is not None
     point = float(ref["brier_difference"])
-    # push BOTH endpoints above the point: lo > point is the negative-yerr case
+    # push both endpoints above the point: lo > point is the negative-yerr case
     ref["ci"]["brier_difference"] = {"lo": point + 0.01, "hi": point + 0.02}
 
     planted = 0
@@ -1790,13 +1870,12 @@ def test_reliability_figure_survives_a_point_outside_its_own_interval(tmp_path):
 
 def test_reliability_curve_legend_names_every_plotted_scope(tmp_path,
                                                             monkeypatch):
-    """The legend entry belongs to the first payload that PLOTS a scope, not to
-    `base`.
+    """The legend entry belongs to the first payload that plots a scope.
 
-    Under RP-8 `base` is merely the lowest-numbered replicate whose panel
-    SURVIVED. If that one answered nothing, its answered curve is empty and a
-    `base`-only label left every later replicate's answered points on the
-    figure as unlabelled scattered dots with no key at all.
+    It does not belong to base. Under RP-8 base is merely whichever replicate
+    survived, and if that one answered nothing its answered curve is empty. A
+    base-only label then leaves every later replicate's answered points as
+    unlabelled scattered dots with no key.
     """
     base = _panel_for_figure(answered_share=0.0, with_reference=False)
     later = dict(_panel_for_figure(answered_share=0.6, with_reference=True),
@@ -1821,29 +1900,16 @@ def test_reliability_curve_legend_names_every_plotted_scope(tmp_path,
 
 def test_a_panel_error_costs_a_diagnostic_and_never_the_certificate(
         tmp_path, monkeypatch, capsys, mock_small):
-    """RP-8, THE GUARD ITSELF: `except rp.PanelError` around the panel call.
+    """RP-8, the guard itself: the catch around the panel call.
 
-    The repair had two halves and only one was pinned. `eicu_etl`'s
-    out-of-range comparator map is covered by
-    `test_out_of_range_comparator_probability_is_mapped_to_missing`, but the
-    wrapper -- the half that bounds the blast radius of every channel we
-    CANNOT name -- was implemented and untested: deleting the `try`/`except`
-    left the suite green. That is the worse half to leave unpinned, because it
-    is the one that runs on the real extract against unmodelled inputs, and it
-    sits AFTER every certification call for the replicate and BEFORE any
-    artifact is written -- so its absence trades a whole 20-replicate
-    real-extract run for a missing diagnostic.
+    That wrapper bounds the blast radius of every failure channel we cannot
+    name. It sits after every certification call for the replicate and before
+    any artifact is written, so losing it trades a whole 20-replicate run for
+    a missing diagnostic.
 
-    The failure is planted at the only boundary the runner crosses into the
-    panel (`run_eicu.rp.panel_from_head`), which is also the boundary SPEC
-    names as the single entry point, so this cannot pass by patching a path
-    the driver does not use.
-
-    Four things are asserted (a-d below), and the first is the whole point:
-    the run RETURNS. Remove the `except` and this test goes red before the
-    first assertion is even reached, because `run_certification` propagates
-    the planted `PanelError` instead of returning a payload -- which is
-    exactly the behaviour on a real extract that the guard exists to prevent.
+    The failure is planted at run_eicu.rp.panel_from_head, the single entry
+    point SPEC names. Four things are asserted, (a) to (d) below; the first is
+    the whole point, that the run returns rather than propagating.
     """
     calls = []
 
@@ -1855,14 +1921,14 @@ def test_a_panel_error_costs_a_diagnostic_and_never_the_certificate(
 
     out = str(tmp_path / "rp8")
     # quick=False on purpose: the always-on panel test runs quick=True and so
-    # never reaches `_figures`, which is exactly where an empty accumulator
-    # would strand a 20-replicate run after all the certification work was done.
+    # never reaches _figures, which is exactly where an empty accumulator would
+    # strand a 20-replicate run after all the certification work was done.
     payload = run_eicu.run_certification(mock_small["dir"], out,
                                          replicates=1, quick=False,
                                          verbose=False)
     assert calls == [0], "the planted failure must be reached exactly once"
 
-    # (a) the certified run COMPLETED and its own artifacts are all there
+    # (a) the certified run completed and its own artifacts are all there
     for name in ("EICU_pooled.csv", "EICU_per_site.csv",
                  "EICU_diagnostics.json", "EICU_certificate.json",
                  "EICU-SUMMARY.md", "EICU_pooled.png", "EICU_per_site.png"):
@@ -1873,7 +1939,7 @@ def test_a_panel_error_costs_a_diagnostic_and_never_the_certificate(
         assert payload["pooled"]["rungs"][str(float(alpha))][
             "n_replicates"] == 1
 
-    # (b) the swallow is NOT silent: warnings + stderr, naming the replicate
+    # (b) the swallow is not silent: warnings and stderr, naming the replicate
     diag = json.load(open(os.path.join(out, "EICU_diagnostics.json"),
                           encoding="utf-8"))
     skips = [w for w in diag["warnings"] if "[MEASURE] RP-8" in w]
@@ -1884,20 +1950,19 @@ def test_a_panel_error_costs_a_diagnostic_and_never_the_certificate(
     assert skips == [w for w in payload["pooled"]["warnings"]
                      if "[MEASURE] RP-8" in w]
     assert "[MEASURE] RP-8" in capsys.readouterr().err
-    # the POST-HOC label still rides along -- the label is unconditional, the
+    # the POST-HOC label still rides along: the label is unconditional, the
     # panel is not
     assert rp.POST_HOC_LABEL in diag["warnings"]
 
-    # (c) the shortfall is arithmetic (SPEC RP-8: `n_panels < replicates`), the
-    # no-panel note is TRUE of the case that produced it, and the summary still
+    # (c) the shortfall is arithmetic (SPEC RP-8: n_panels < replicates), the
+    # no-panel note is true of the case that produced it, and the summary still
     # parses with every certification section present and in frozen order
     block = payload["reliability"]
     assert block["n_panels"] == 0 < block["replicates"] == 1
     assert block["post_hoc"] == rp.POST_HOC_LABEL
-    # the old note read "no panel was produced: the pooled arm ran zero
-    # replicates" UNCONDITIONALLY -- false here, where one replicate ran and was
-    # certified and only its panel is missing. The note must now cover the case
-    # that produced it and point at the warnings that explain it.
+    # one replicate ran here, and was certified; only its panel is missing. The
+    # note must cover the case that produced it and point at the warnings that
+    # explain it, rather than claiming the arm ran zero replicates.
     note = " ".join(block["note"].split())
     assert "replicates = 1" in note
     assert "EVERY replicate's panel was SKIPPED under RP-8" in note
@@ -1912,7 +1977,8 @@ def test_a_panel_error_costs_a_diagnostic_and_never_the_certificate(
     assert list(sections) == expected == ["EICU-POOLED", "EICU-PERSITE",
                                           "EICU-COMPARATOR",
                                           "EICU-RELIABILITY",
-                                          "EICU-SUBGROUPS"]
+                                          "EICU-SUBGROUPS",
+                                          "EICU-FAITHFULNESS"]
     for name, rendered in sections.items():
         body = json.loads(rendered.strip().removeprefix("```json")
                           .removesuffix("```"))
@@ -1921,11 +1987,11 @@ def test_a_panel_error_costs_a_diagnostic_and_never_the_certificate(
                       .removeprefix("```json").removesuffix("```"))[
         "n_panels"] == 0
 
-    # (d) nothing CLAIMS a panel that never ran. The two panel artifacts are
-    # still written -- their absence would read as "the panel was never wired
-    # in" rather than "it was skipped, here is why" -- but they are EMPTY, and
-    # the figure, whose title would otherwise name a replicate whose curve does
-    # not exist, is not written at all (quick=False, so its siblings are).
+    # (d) nothing claims a panel that never ran. The two panel artifacts are
+    # still written but empty: their absence would read as "never wired in"
+    # rather than "skipped, here is why". The figure is not written at all,
+    # since its title would name a replicate whose curve does not exist
+    # (quick=False, so its siblings are written).
     doc = json.loads(open(os.path.join(out, "EICU_reliability_panel.json"),
                           encoding="utf-8").read(),
                      parse_constant=_reject_json_constant)
@@ -1941,18 +2007,15 @@ def test_a_panel_error_costs_a_diagnostic_and_never_the_certificate(
 
 
 def test_out_of_range_comparator_probability_is_mapped_to_missing(tmp_path):
-    """RP-8 (2026-08-01). `predictedhospitalmortality` is a VARCHAR(50) holding
-    a probability and only the exact `-1` sentinel mapped to missing, so a stray
-    finite cell outside [0, 1] flowed to two consumers that DISAGREED about it:
-    `_comparator_row` scored AUC and Brier on it silently, while the post-hoc
-    panel's `validate_inputs` rejects it -- after a replicate's certification
-    work and before any artifact is written, so a DESCRIPTIVE layer could have
-    taken the certificate down.
+    """A comparator probability outside [0, 1] maps to missing (RP-8).
 
-    The released extract carries no such cell (0 of 297,064 rows), which is why
-    this is planted: it is the A6 failure mode (ONE negative-not-`-1`
-    `apacheApsVar.urine` cell in ~4.1M) applied to the one column where it would
-    have been fatal rather than cosmetic.
+    predictedhospitalmortality is a VARCHAR(50) holding a probability, and only
+    the exact -1 sentinel used to map to missing. A stray finite cell outside
+    [0, 1] then reached two consumers that disagreed: _comparator_row scored it
+    silently, while the panel's validate_inputs rejects it -- after the
+    replicate's certification work, so a descriptive layer could take the
+    certificate down. The released extract carries no such cell, 0 of 297,064
+    rows, so this one is planted.
     """
     n = 40
     rows = {"patient": [], "hospital": [_hospital(1)], "apacheApsVar": [],
@@ -1979,12 +2042,12 @@ def test_out_of_range_comparator_probability_is_mapped_to_missing(tmp_path):
     assert np.isnan(comp[r_bad])            # 1.4 -> missing, like -1
     assert np.isnan(comp[r_sentinel])
     assert comp[r_ok] == 0.25
-    # no finite cell outside [0, 1] survives anywhere -- which is precisely the
-    # precondition `reliability.validate_inputs` enforces on p_ref
+    # no finite cell outside [0, 1] survives anywhere, which is precisely the
+    # precondition reliability.validate_inputs enforces on p_ref
     fin = comp[np.isfinite(comp)]
     assert fin.size and np.all((fin >= 0.0) & (fin <= 1.0))
 
-    # ONE definition of "comparator available": the mapped cell is absent from
+    # one definition of "comparator available": the mapped cell is absent from
     # the apache-complete arm too, so the comparator scoring and the panel's
     # p_ref agree instead of disagreeing silently.
     complete_step = [s for s in meta["attrition"]
@@ -1993,9 +2056,12 @@ def test_out_of_range_comparator_probability_is_mapped_to_missing(tmp_path):
 
 
 def test_run_eicu_refuses_record_level_output():
-    """T-17. PhysioNet's DUA restricts derived record-level artifacts and
-    `experiments/out/` is a TRACKED directory, so every write goes through the
-    refusal -- including the arrays a naive `json.dump` of a report would emit."""
+    """Every write goes through the record-level refusal (T-17).
+
+    The PhysioNet DUA restricts derived record-level artifacts and
+    experiments/out/ is tracked. The refusal covers the arrays a naive
+    json.dump of a report would emit.
+    """
     for payload in (
         {"stay_id": [1, 2, 3]},
         {"summary": {"per_site": {"site_raw": ["hosp-1"]}}},
@@ -2018,22 +2084,23 @@ def test_run_eicu_refuses_record_level_output():
 
 
 def test_rm_helpers_are_the_synthetic_ones():
-    """The real-data numbers must be computed by the SAME functions as the
-    paper's synthetic ones; a re-implementation would let them drift silently."""
+    """Real-data numbers use the same helpers as the paper's synthetic ones."""
     assert run_eicu._rm_on_pool is run_synthetic._rm_on_pool
     assert run_eicu._per_site_exceed_frac is run_synthetic._per_site_exceed_frac
     assert run_eicu._rate is run_synthetic._rate
     assert run_eicu._write_csv is run_synthetic._write_csv
-    # the rank AUC joined the discipline 2026-08-10 -- it was a byte-equivalent
-    # clone of the ETL's, the one house helper that had escaped this net
+    # the rank AUC was a byte-equivalent clone of the ETL's, the one house
+    # helper that had escaped this net
     assert run_eicu._auc is etl._rank_auc
 
 
 def test_etl_imports_no_undeclared_dependency():
-    """Audit F16. `pandas` and `pyarrow` are installed in this environment and
-    are NOT in requirements.txt; `eicu_etl` is stdlib + numpy only and
-    `eicu_mock` is stdlib only. Imports are also checked to be at MODULE TOP
-    LEVEL (the enclave/reproducibility requirement)."""
+    """The ETL declares every dependency it uses (audit F16).
+
+    pandas and pyarrow are installed here and are not in requirements.txt.
+    eicu_etl is stdlib plus numpy only, eicu_mock is stdlib only, and every
+    import sits at module top level for the enclave requirement.
+    """
     allowed = {
         "experiments.eicu_etl": {"numpy", "certgate"},
         "experiments.eicu_mock": set(),
@@ -2069,14 +2136,13 @@ def test_etl_imports_no_undeclared_dependency():
 # ============================ 2026-07-31 ingest-audit boundary regressions ===
 
 def test_duplicate_patientunitstayid_raises(tmp_path):
-    """E-11: `patientunitstayid` is the PRIMARY KEY of `patient`.
+    """patientunitstayid is the primary key of patient (E-11).
 
-    Before the fix a duplicate collapsed SILENTLY and INCONSISTENTLY: scan A's
-    `stay_meta[stay_id] = ...` kept the LAST row's label and hospital while
-    scan B's `if stay_id in row_of: continue` kept the FIRST row's features, so
-    a record carried one patient's covariates under another row's outcome --
-    and the collapse was mis-accounted as a first-stay drop. `dedup_counts` was
-    empty, because `patient` has no dedup path.
+    Unguarded, a duplicate collapses silently and inconsistently: scan A keeps
+    the last row's label and hospital, scan B keeps the first row's features,
+    and the record carries one patient's covariates under another's outcome.
+    The collapse is also mis-accounted as a first-stay drop, and dedup_counts
+    stays empty, because patient has no dedup path.
     """
     d = _write_corpus(str(tmp_path / "dup"), {
         "patient": [_patient(1, age=30, hospitaldischargestatus="Alive"),
@@ -2089,7 +2155,7 @@ def test_duplicate_patientunitstayid_raises(tmp_path):
         etl._select_cohort(d)
 
     # the site variant is equally fatal and equally invisible to
-    # assert_site_disjoint / site_split, which compare LABELS only
+    # assert_site_disjoint and site_split, which compare labels only
     d2 = _write_corpus(str(tmp_path / "dup_site"), {
         "patient": [_patient(1, hospitalid=1, age=30),
                     _patient(1, hospitalid=2, age=80),
@@ -2100,14 +2166,13 @@ def test_duplicate_patientunitstayid_raises(tmp_path):
 
 
 def test_a_null_token_that_is_not_empty_string_raises(tmp_path):
-    """E-15: the opposite direction of the `-1` gate, which had no guard.
+    """The opposite direction of the -1 gate (E-15).
 
-    A Postgres text-format re-export writes `\\N` for NULL. Every allowlisted
-    APACHE numeric then parses as `unparseable`, all 43 parents become 100%
-    NaN, all 43 `__missing` siblings become the constant 1.0,
-    `model.SD_REL_TOL` zeroes 86 of 161 coefficients -- and before the fix
-    `build_raw` SUCCEEDED, with an empty `warnings` list, so a certificate was
-    issued about a model that had seen no physiology at all.
+    A Postgres text-format re-export writes \\N for NULL. Every allowlisted
+    APACHE numeric then parses as unparseable: all 43 parents go 100% NaN, all
+    43 __missing siblings go constant at 1.0, and model.SD_REL_TOL zeroes 86 of
+    161 coefficients. Unguarded, build_raw succeeds with an empty warnings
+    list, so a certificate gets issued about a model that saw no physiology.
     """
     rows = {"patient": [], "hospital": [_hospital(1)],
             "apacheApsVar": [], "apachePredVar": []}
@@ -2133,14 +2198,14 @@ def test_a_null_token_that_is_not_empty_string_raises(tmp_path):
 
 
 def test_null_token_in_patient_numeric_aborts(tmp_path):
-    """E-22: the E-15 gate covers the PATIENT numerics, not only aps_/apv_.
+    """The E-15 gate covers the patient numerics too, not only aps_ and apv_.
 
-    Before the fix `\\N` in `admissionweight` flowed silently: the column went
-    constant at the imputation fallback with `sentinel_counts` recording 100%
-    unparseable and the warnings list unchanged -- and the same token in
-    `hospitaladmitoffset` (the SS4 first-stay tie-breaker) silently changed
-    WHICH stays entered the cohort, with no trace in the attrition ledger
-    (2026-07-31 arrival-day audit).
+    Unguarded, \\N in admissionweight flows silently: the column goes constant
+    at the imputation fallback and the warnings list is unchanged. The same
+    token in hospitaladmitoffset, the SS4 first-stay tie-breaker, changes which
+    stays enter the cohort with no trace in the attrition ledger.
+
+    Refs: audit E-22, arrival-day audit (2026-07-31).
     """
     rows = {"patient": [], "hospital": [_hospital(1)],
             "apacheApsVar": [], "apachePredVar": [],
@@ -2163,15 +2228,16 @@ def test_null_token_in_patient_numeric_aborts(tmp_path):
 
 
 def test_float_join_keys_abort_not_unlink(tmp_path):
-    """E-21 leg 1: a join-key FORMAT artifact raises, never silently unlinks.
+    """E-21 leg 1: a join-key format artifact raises, never silently unlinks.
 
-    A pandas int64 -> float64 `to_csv` round-trip writes `patientunitstayid`
-    as '141258.0' (scientific notation is the same trap). `_maybe_int` returns
-    None, the row is skipped UNREAD, and before the fix every aps_* column
-    collapsed to the imputation fallback with zero warnings, the E-15 gate
-    blind (no cell was ever read) and the E-9 gate `gate_applies=false` -- the
-    exact end state `unrecognised-null-token`'s own message warns about,
-    reached through a door with no gate on it (2026-07-31 arrival-day audit).
+    A pandas int64 -> float64 to_csv round-trip writes patientunitstayid as
+    '141258.0'; scientific notation is the same trap. _maybe_int returns None
+    and the row is skipped unread. Every aps_ column then collapses to the
+    imputation fallback with the E-15 gate blind (no cell was ever read) and
+    the E-9 gate reporting gate_applies=false -- the end state
+    unrecognised-null-token warns about, through a door with no gate on it.
+
+    Refs: arrival-day audit (2026-07-31).
     """
     rows = {"patient": [_patient(i) for i in range(1, 5)],
             "hospital": [_hospital(1)],
@@ -2193,13 +2259,13 @@ def test_float_join_keys_abort_not_unlink(tmp_path):
 
 
 def test_apache_coverage_collapse_on_broken_join(tmp_path):
-    """E-21 leg 2: an UNLINKED APACHE block aborts once the cohort can carry E-9.
+    """E-21 leg 2: an unlinked APACHE block aborts once E-9 is evaluable.
 
-    Keys shifted so nothing joins while every ROW COUNT stays intact -- the
-    route `EICU_REFERENCE_ROW_COUNTS` cannot see by construction. Before the
-    fix this certified with 89/161 constant columns and a warnings list
-    SHORTER than the clean corpus's. The same corpus with the keys pointing
-    home must build: the gate is keyed on the JOIN, not the scale.
+    The keys are shifted so nothing joins while every row count stays intact,
+    the route EICU_REFERENCE_ROW_COUNTS cannot see by construction. Unguarded,
+    this certifies with 89 of 161 columns constant and a warnings list shorter
+    than the clean corpus's. The same corpus with the keys pointing home must
+    build: the gate is keyed on the join, not the scale.
     """
     n = etl.EICU_MIN_OUTCOME_STRATUM + 20
     stays = range(1, n + 1)
@@ -2231,11 +2297,10 @@ def test_apache_coverage_collapse_on_broken_join(tmp_path):
 def test_apache_coverage_collapse_on_header_only_table(tmp_path):
     """E-21 leg 2, second route: a header-only child table aborts at scale.
 
-    The tiny single-trap corpora above (`planted`, the age/status corpora)
-    legitimately ship empty APACHE tables and MUST keep building -- the gate
-    arms only at n_cohort >= EICU_MIN_OUTCOME_STRATUM, the exact scale at
-    which E-9 is supposed to be evaluable and total absence would otherwise
-    bypass it.
+    The tiny single-trap corpora above ship empty APACHE tables legitimately
+    and must keep building, so the gate arms only at
+    n_cohort >= EICU_MIN_OUTCOME_STRATUM -- the scale at which E-9 becomes
+    evaluable and total absence would otherwise bypass it.
     """
     n = etl.EICU_MIN_OUTCOME_STRATUM + 20
     rows = {"patient": [_patient(
@@ -2249,7 +2314,7 @@ def test_apache_coverage_collapse_on_header_only_table(tmp_path):
     with pytest.raises(etl.EicuError, match="apache-coverage-collapse"):
         etl.build_raw(d, verbose=False)
 
-    # the apache-linked escape is NOT the remedy here: with zero linked stays
+    # the apache-linked escape is not the remedy here: with zero linked stays
     # that arm has an empty cohort, and the honest failure is empty-cohort
     with pytest.raises(etl.EicuError, match="empty-cohort"):
         etl.build_raw(d, arm="apache-linked", verbose=False)
@@ -2257,13 +2322,12 @@ def test_apache_coverage_collapse_on_header_only_table(tmp_path):
 
 def test_read_boundary_failures_are_typed_and_name_the_table(tmp_path,
                                                              mock_small):
-    """E-14: every boundary rejection is a TYPED error with a reason tag.
+    """Every boundary rejection is a typed error with a reason tag (E-14).
 
-    A non-UTF-8 byte used to escape as a bare `UnicodeDecodeError` whose
-    "position N" is a decode-BUFFER offset, and a partial unzip of the
-    multi-GB download as a bare `EOFError`. Neither names the table or the
-    path, so on a five-table extract the operator cannot tell which file
-    failed.
+    Untyped, a non-UTF-8 byte escapes as a bare UnicodeDecodeError whose
+    "position N" is a decode-buffer offset, and a partial unzip of the multi-GB
+    download as a bare EOFError. Neither names the table or the path, so the
+    operator cannot tell which of five files failed.
     """
     # 1. undecodable: one latin-1 byte inside a text field
     bad = str(tmp_path / "undecodable")
@@ -2300,21 +2364,20 @@ def test_read_boundary_failures_are_typed_and_name_the_table(tmp_path,
         list(etl.read_table(trunc, "patient"))
     assert "'patient'" in str(ei.value)
 
-    # both tags are in the module's CLOSED reason-tag vocabulary
+    # both tags are in the module's closed reason-tag vocabulary
     for tag in ("undecodable-table", "truncated-table"):
         assert tag in etl.EicuError.__doc__
 
 
 def test_preflight_profiles_through_an_unknown_outcome_level(tmp_path,
                                                              mock_small):
-    """E-16: preflight must not be aborted by the drift it exists to report.
+    """Preflight must not be aborted by the drift it exists to report (E-16).
 
-    One row of 9000 re-cased to 'EXPIRED' (a plausible re-export) used to raise
-    `unknown-outcome-level` from inside `_select_cohort`'s row loop, discarding
-    every value count already accumulated -- so the operator got the token but
-    no count, no site distribution, no attrition ledger, no sentinel
-    histograms, and no `EICU_preflight.json` at all. `build_raw`'s raise is
-    unchanged.
+    One row of 9000 re-cased to 'EXPIRED' is a plausible re-export. Raising
+    unknown-outcome-level from inside _select_cohort's row loop discards every
+    value count already accumulated, so the operator gets the token but no
+    count, no site distribution, no ledger and no EICU_preflight.json at all.
+    build_raw's own raise is unchanged.
     """
     d = str(tmp_path / "thirdlevel")
     os.makedirs(d, exist_ok=True)
@@ -2346,7 +2409,7 @@ def test_preflight_profiles_through_an_unknown_outcome_level(tmp_path,
             fh.close()
             assert done
 
-    # preflight COMPLETES and reports the token, its count, and the raise
+    # preflight completes and reports the token, its count, and the raise
     pf = etl.preflight(d, verbose=False)
     assert set(pf) == PREFLIGHT_KEYS
     assert pf["patient"]["hospitaldischargestatus"].get("EXPIRED") == 1
@@ -2363,19 +2426,14 @@ def test_preflight_profiles_through_an_unknown_outcome_level(tmp_path,
 
 def test_reference_check_passes_when_the_constants_match_the_corpus(
         monkeypatch, mock_small):
-    """E-13: the mandatory first command must not abort on a CORRECT extract.
+    """The mandatory first command must not abort on a correct extract (E-13).
 
-    `n_uniquepid` was counted POST-filter (after the S1-S4 drops) and compared
-    against EICU_REFERENCE_PATIENTS = 139367, the dataset's PRE-filter
-    published total. On the real extract ~1751 stays carry a blank outcome and
-    at 1.44 stays/patient most of those patients lose every stay, so the
-    computed count lands ~1.7% low and `preflight(expect_reference=True)` --
-    the documented arrival-day command -- aborts, writing NO artifact at all.
-    The old suite could not see this: its only reference test asserts a RAISE,
-    so a spurious mismatch and a genuine one were indistinguishable.
-
-    Here every reference constant is re-pinned to the mock's own TRUE
-    whole-table values, so the only thing that can disagree is the estimator.
+    Counting n_uniquepid post-filter and comparing it against
+    EICU_REFERENCE_PATIENTS = 139367, the pre-filter published total, lands
+    ~1.7% low: ~1751 stays carry a blank outcome, and at 1.44 stays per patient
+    most of those lose every stay. preflight(expect_reference=True) then aborts
+    and writes no artifact. Here the constants are re-pinned to the mock's own
+    whole-table values, so only the estimator can disagree.
     """
     d = mock_small["dir"]
     rows = {t: sum(1 for _ in etl.read_table(d, t)) for t in etl.EICU_TABLES}
@@ -2390,11 +2448,11 @@ def test_reference_check_passes_when_the_constants_match_the_corpus(
     monkeypatch.setattr(etl, "EICU_REFERENCE_PATIENTS", len(uids))
     monkeypatch.setattr(etl, "EICU_REFERENCE_UNIT_STAYS", rows["patient"])
 
-    pf = etl.preflight(d, expect_reference=True, verbose=False)   # must NOT raise
+    pf = etl.preflight(d, expect_reference=True, verbose=False)   # must not raise
     assert pf["reference_check"]["ok"] is True
     assert pf["reference_check"]["mismatches"] == []
-    # the identity counts are the RAW ones; the cohort counts are separate and
-    # are ALLOWED to be smaller -- that is the distinction the fix introduced
+    # the identity counts are the raw ones; the cohort counts are separate and
+    # are allowed to be smaller, which is the distinction that matters here
     assert pf["patient"]["n_uniquepid"] == len(uids)
     assert pf["patient"]["n_hospitals"] == len(sites)
     assert pf["patient"]["n_uniquepid_cohort"] < pf["patient"]["n_uniquepid"]
@@ -2402,14 +2460,13 @@ def test_reference_check_passes_when_the_constants_match_the_corpus(
 
 def test_header_case_verdict_is_pinned_per_table_for_both_mock_modes(
         tmp_path_factory, mock_small):
-    """E-17: a fully camelCase header must not read as 'mixed'.
+    """A fully camelCase header must not read as 'mixed' (E-17).
 
-    The old rule required EVERY name to carry an upper-case character, so
-    single-token names (`age`, `gender`, `ph`, `urine`, `region`) forced
-    'mixed' on four of the five tables -- and 'mixed' reads as "some columns
-    were re-cased and some were not", a materially different diagnosis in
-    exactly the direction T-6 exists to detect. The old test accepted any of
-    the three values, so it could not see the wrong answer.
+    Requiring every name to carry an upper-case character forces 'mixed' on
+    four of the five tables, because of single-token names like age, gender and
+    urine. But 'mixed' reads as "some columns were re-cased and some were not",
+    a materially different diagnosis, in exactly the direction T-6 exists to
+    detect. So the verdict is pinned per table.
     """
     camel = etl.preflight(mock_small["dir"], verbose=False)
     for t in etl.EICU_TABLES:
@@ -2432,14 +2489,13 @@ def test_header_case_verdict_is_pinned_per_table_for_both_mock_modes(
 
 
 def test_room_air_fio2_is_an_observation_not_a_missing_value(tmp_path):
-    """E-18: the fio2 windows are lower-CLOSED.
+    """The fio2 windows are lower-closed (E-18).
 
-    `fio2 == 0.21` (equivalently `21`) is ROOM AIR -- the modal value of a
-    ventilation-linked column. The frozen windows were lower-OPEN, so it was
-    discarded as missing and the loss was buried in a `unit_conversions`
-    counter. Ventilation status is site-correlated, so that converted the
-    commonest valid value into exactly the informative-missingness channel this
-    protocol undertakes to guard.
+    fio2 == 0.21, equivalently 21, is room air: the modal value of a
+    ventilation-linked column. A lower-open window discards it as missing and
+    buries the loss in a unit_conversions counter. Ventilation status is
+    site-correlated, so that turns the commonest valid value into exactly the
+    informative-missingness channel this protocol undertakes to guard.
     """
     rows = {"patient": [], "hospital": [_hospital(1)],
             "apacheApsVar": [], "apachePredVar": []}
@@ -2457,7 +2513,7 @@ def test_room_air_fio2_is_an_observation_not_a_missing_value(tmp_path):
         r = _row_of(meta, stay)
         assert x[r, jm] == 0.0, f"stay {stay} fio2 dropped as missing"
         assert x[r, j] == pytest.approx(want), stay
-    # the room-air conversions are COUNTED, so the decision stays visible
+    # the room-air conversions are counted, so the decision stays visible
     conv = meta["unit_conversions"]
     assert conv.get("aps_fio2:room-air-fraction") == 1
     assert conv.get("aps_fio2:room-air-percent") == 1
@@ -2469,10 +2525,12 @@ def test_room_air_fio2_is_an_observation_not_a_missing_value(tmp_path):
 @pytest.mark.skipif(os.environ.get("CERTGATE_EICU") != "1",
                     reason="full-scale eICU mock arm; set CERTGATE_EICU=1")
 def test_full_scale_mock_reaches_an_honest_outcome(tmp_path):
-    """The real eICU scale: 208 hospitals / 200,859 unit stays (~35 MB of
-    gzip), 24 held out -> 73/36/75 with MIN_CAL_CLUSTERS = 50 and 50%
+    """The real eICU scale: 208 hospitals, 200,859 unit stays, ~35 MB of gzip.
+
+    Holding out 24 hospitals leaves 73/36/75, so MIN_CAL_CLUSTERS = 50 has 50%
     headroom. Certification is plausible here and, if issued, must survive the
-    oracle; a decline is equally acceptable."""
+    oracle. A decline is equally acceptable.
+    """
     out = str(tmp_path / "eicu_full")
     manifest = mock.generate(mock.MockConfig(stays=mock.EICU_MOCK_FULL_STAYS,
                                              sites=mock.EICU_MOCK_FULL_SITES,
@@ -2500,28 +2558,22 @@ def test_full_scale_mock_reaches_an_honest_outcome(tmp_path):
 @pytest.mark.skipif(os.environ.get("CERTGATE_EICU_LARGE") != "1",
                     reason="large-site eICU mock arm; set CERTGATE_EICU_LARGE=1")
 def test_large_mock_reaches_the_certified_branch():
-    """E-20: `margin_floor` scales as 1/n_carrying, so the frozen-size decline
-    does NOT generalise to "any corpus size".
+    """margin_floor scales as 1/n_carrying (E-20).
 
-    The claim that the mock "declines every rung BY ARITHMETIC, at any corpus
-    size" was propagated into SPEC.md, EICU-PROTOCOL.md (twice, including the
-    operator checklist), CLAUDE.md and the comment on the frozen pin. It is
-    false: the oracle margin 0.0354 is compared against a floor that FALLS with
-    the calibration cluster count, and the crossing point is n_carrying = 77
-    (~217 hospitals). At 900 hospitals the mock certifies alpha = 0.10 with
-    EICU_MOCK_SIGNAL_B untouched.
+    So the mock's frozen-size decline does not generalise to any corpus size.
+    The oracle margin 0.0354 meets a floor that falls with the calibration
+    cluster count, crossing at n_carrying = 77, about 217 hospitals. At 900
+    hospitals the mock certifies alpha = 0.10, EICU_MOCK_SIGNAL_B untouched.
 
-    This arm exists so the certified branch -- `_eval_rung`'s certified path,
-    `_abstention_ranking` (which settles P4), `_rm_on_pool` /
-    `_per_site_exceed_frac` -- is exercised before the extract lands, and so
-    that the corrected claim stays checkable. It still asserts HONESTY, never
-    that certification happens.
+    This arm exercises the certified branch before the extract lands:
+    _eval_rung's path, _abstention_ranking (which settles P4), _rm_on_pool and
+    _per_site_exceed_frac. It still asserts honesty only.
     """
     import tempfile
     from certgate.certify import margin_floor
     from certgate.constants import DELTA
 
-    # the arithmetic the corrected claim rests on
+    # the arithmetic the claim rests on
     assert margin_floor(63, DELTA, 0.10) > 0.0354     # small arm  -> declines
     assert margin_floor(75, DELTA, 0.10) > 0.0354     # full arm   -> declines
     assert margin_floor(77, DELTA, 0.10) < 0.0354     # crossing point
@@ -2537,22 +2589,19 @@ def test_large_mock_reaches_the_certified_branch():
 
 
 # ---------------------------------------------------------------------------
-# 2026-08-10 hardening -- the audit fixes around the panel wiring and the
-# eICU dashboard driver (SPEC "A DESCRIPTIVE layer may never abort the
-# certified run", amended the same day)
+# 2026-08-10 hardening -- audit fixes around the panel wiring and the eICU
+# dashboard driver. SPEC, amended the same day: a descriptive layer may never
+# abort the certified run.
 # ---------------------------------------------------------------------------
 
 def test_a_non_panel_error_also_costs_only_the_diagnostic(
         tmp_path, monkeypatch, mock_small):
     """RP-8 is about who survives the crash, not the exception's type.
 
-    The 2026-08-10 audit demonstrated two panel escapes that are NOT
-    `PanelError` -- a length-mismatched mask raises a bare numpy broadcast
-    `ValueError` from inside the gate cross-check's count, and a duck-typed
-    head without `predict_proba` raises `AttributeError` -- and the old
-    `except rp.PanelError` let either take a 20-replicate certified run down
-    from inside the descriptive layer. The broadened catch must swallow the
-    crash, keep the certificate, and NAME the unexpected type as a wiring
+    Two panel escapes are not PanelError: a length-mismatched mask raises a
+    bare numpy broadcast ValueError, and a duck-typed head without
+    predict_proba raises AttributeError. The broadened catch must swallow
+    either, keep the certificate, and name the unexpected type as a wiring
     defect rather than a data rejection.
     """
     def _boom(*args, **kwargs):
@@ -2569,16 +2618,18 @@ def test_a_non_panel_error_also_costs_only_the_diagnostic(
     assert "planted-non-panel-failure" in skips[0]
     assert "UNEXPECTED ValueError" in skips[0]
     assert "wiring defect" in skips[0]
-    # and a PanelError stays an EXPECTED rejection: no wiring-defect callout
-    # (pinned by test_a_panel_error_costs_a_diagnostic_and_never_the_
-    # certificate, whose message assertions would fail on the [UNEXPECTED tag)
+    # and a PanelError stays an expected rejection, with no wiring-defect
+    # callout; pinned by test_a_panel_error_costs_a_diagnostic_and_never_the_
+    # certificate, whose message assertions would fail on the [UNEXPECTED tag
 
 
 def test_per_item_keys_items_must_be_dicts(tmp_path):
-    """The per-item gate is a no-op on scalars, so a flat float list under the
-    named key -- the record-level shape the gate exists to stop -- previously
-    exited the process ungated (600 floats pass where 513 would abort any
-    other key). Only dicts, one aggregate payload each, are sanctioned."""
+    """Per-item keys must hold dicts, one aggregate payload each.
+
+    The gate is a no-op on scalars, so a flat float list under the named key --
+    the record-level shape it exists to stop -- escapes ungated: 600 floats
+    pass where 513 would abort any other key.
+    """
     good = {"post_hoc": rp.POST_HOC_LABEL,
             "panels": [{"replicate": 0, "ece": 0.1}]}
     path = str(tmp_path / "good.json")
@@ -2603,9 +2654,11 @@ def test_per_item_keys_items_must_be_dicts(tmp_path):
 
 
 def test_an_empty_panel_run_removes_a_stale_reliability_png(tmp_path):
-    """Re-running into the same --out after every panel was skipped under
-    RP-8 must not leave the PREVIOUS run's figure beside an EICU-SUMMARY.md
-    reporting n_panels: 0 -- a stale PNG reads as current output."""
+    """A run that produced no panel clears the previous run's figure.
+
+    A stale PNG left beside an EICU-SUMMARY.md reporting n_panels: 0 reads as
+    current output. Reachable by re-running into the same --out under RP-8.
+    """
     out = str(tmp_path)
     png = os.path.join(out, "EICU_reliability_panel.png")
     with open(png, "wb") as fh:
@@ -2622,11 +2675,13 @@ class _CalStub:
 
 
 def test_dashboard_cross_check_refuses_an_uncomparable_certificate(tmp_path):
-    """The vacuous-success hole: every comparison was guarded by
-    `want is not None`, so a released certificate carrying none of the six
-    fields (operative: null -- a run that certified no rung) skipped them all
-    and STILL returned the 'all match' banner string. A comparison that
-    cannot be made is a failed cross-check, not a passed one."""
+    """A comparison that cannot be made is a failed cross-check.
+
+    Guarding every comparison on "want is not None" opens a vacuous-success
+    hole. A released certificate carrying none of the six fields -- operative
+    null, from a run that certified no rung -- skips them all and still returns
+    the "all match" banner string.
+    """
     row = {"alpha": 0.1, "tau": 0.85, "tau_idx": 15, "deploy_mode": "baseline"}
     ref_path = str(tmp_path / "EICU_certificate.json")
 
@@ -2643,16 +2698,18 @@ def test_dashboard_cross_check_refuses_an_uncomparable_certificate(tmp_path):
     msg = dash_eicu._cross_check(row, _CalStub(), 0.855, ref_path)
     assert msg.startswith("alpha, tau, tau_idx")
 
-    # a MISSING file stays the labelled-unverified path, never a false pass
+    # a missing file stays the labelled-unverified path, never a false pass
     msg2 = dash_eicu._cross_check(row, _CalStub(), 0.855,
                                   str(tmp_path / "absent.json"))
     assert msg2.startswith(dash_eicu._UNVERIFIED)
 
 
 def test_dashboard_answered_risk_never_prints_nan():
-    """report._bootstrap_estimate emits NaN for an empty answered set and a
-    (NaN, NaN) ci95 when the top-up declines (audit V21); the banner used to
-    print the literal 'nan (95% CI nan-nan)'."""
+    """The banner never prints a literal 'nan (95% CI nan-nan)'.
+
+    report._bootstrap_estimate emits NaN for an empty answered set, and a
+    (NaN, NaN) ci95 when the top-up declines (audit V21).
+    """
     nan = float("nan")
     assert dash_eicu._answered_risk(
         {"estimated": {"point": nan, "ci95": (nan, nan)}}) is None
@@ -2665,9 +2722,11 @@ def test_dashboard_answered_risk_never_prints_nan():
 
 
 def test_dashboard_out_guard_refuses_the_sidecar_output_dirs(tmp_path):
-    """`out` alone missed the tracked sidecar dirs (out-panel/, out-sens/) --
-    exactly where a record-level page must never land, since .gitignore's own
-    note declares them tracked-by-design."""
+    """The out guard covers the tracked sidecar directories too.
+
+    Checking for "out" alone misses out-panel/ and out-sens/, which .gitignore
+    declares tracked by design and where a record-level page must never land.
+    """
     for d in ("out", "out-panel", "out-sens"):
         bad = os.path.join(str(tmp_path), d, "explain_dashboard_eicu.html")
         with pytest.raises(SystemExit, match="record-level-output"):

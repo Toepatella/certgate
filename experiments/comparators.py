@@ -1,27 +1,25 @@
-"""Alternative one-sided upper confidence bounds for E8 arm A (SPEC:
-"Experiments" companion `experiments/comparators.py`).
+"""Alternative one-sided upper confidence bounds for E8 arm A.
 
-Pure arithmetic over per-site atoms in [0, 1]; a DAG leaf over numpy/scipy —
-``certgate/`` never imports this module. Each bound answers the question the
-betting test answers inside the walk ("is the atom mean provably <= alpha at
-level delta?"), decided as ``ucb(atoms, delta) <= alpha`` inside E8's local
-fixed-sequence walk. The validity classes differ, and stating them is the
-point of the comparison:
+Pure arithmetic over per-site atoms in [0, 1]. A DAG leaf over numpy and
+scipy: certgate/ never imports this module.
+
+Each bound answers the question the betting test answers inside the walk --
+is the atom mean provably <= alpha at level delta? E8's local fixed-sequence
+walk decides it as ucb(atoms, delta) <= alpha. They differ in validity class,
+and naming that difference is the point of the comparison:
 
     hoeffding_ucb       finite-sample, distribution-free for [0,1] variables
     mpeb_ucb            finite-sample, variance-adaptive (Maurer-Pontil
-                        empirical Bernstein; moved verbatim from the
-                        test-local reference in ``tests/test_certify.py``,
-                        which now imports it, so the truncation negative
-                        control and this comparator can never drift)
-    t_ucb               exact only under normality of the site atoms —
-                        included as the practitioners' default, not as a
-                        finite-sample-valid certificate
-    site_bootstrap_ucb  asymptotic percentile bootstrap; resamples SITES
-                        (atoms), never records (RP-2)
+                        empirical Bernstein)
+    t_ucb               exact only under normal site atoms; the practitioners'
+                        default, not a finite-sample-valid certificate
+    site_bootstrap_ucb  asymptotic percentile bootstrap that resamples sites,
+                        never records
 
-Every bound returns ``inf`` where it is undefined (fewer than two atoms),
-which can never certify.
+Every bound returns inf where it is undefined (fewer than two atoms), which
+can never certify.
+
+Refs: SPEC "Experiments" companion; RP-2 (resamples sites, not records).
 """
 import numpy as np
 from scipy import stats
@@ -39,10 +37,12 @@ def hoeffding_ucb(z, delta):
 def mpeb_ucb(z, delta):
     """Maurer-Pontil empirical-Bernstein UCB (range 1).
 
-    Verbatim arithmetic of the truncation-negative-control reference that
-    lived in ``tests/test_certify.py`` (audit Hole-1); the ``log(2/delta)``
-    constant is the paper's own (delta/2 to the variance concentration), so
-    this is the conservative one-sided form.
+    Same arithmetic as the truncation negative control in
+    tests/test_certify.py, which imports this function so the two cannot
+    drift apart. The log(2/delta) constant is the paper's own: delta/2 goes
+    to the variance concentration, so this is the conservative one-sided form.
+
+    Refs: audit Hole-1.
     """
     z = np.asarray(z, dtype=float)
     n = len(z)
@@ -62,9 +62,11 @@ def t_ucb(z, delta):
 
 
 def site_bootstrap_ucb(z, delta, n_boot, rng):
-    """Percentile-bootstrap UCB for the atom mean; resamples SITES, never
-    records (RP-2). Asymptotic — its miscoverage at small site counts is one
-    of the things E8 arm A measures."""
+    """Percentile-bootstrap UCB for the atom mean (RP-2).
+
+    Resamples sites, never records. Asymptotic: its miscoverage at small site
+    counts is one of the things E8 arm A measures.
+    """
     z = np.asarray(z, dtype=float)
     n = len(z)
     if n < 2:

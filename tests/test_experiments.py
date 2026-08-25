@@ -1,8 +1,11 @@
-"""verification N2: the instruments that produce the paper's numbers.
+"""The instruments that produce the paper's numbers.
 
-``_rm_on_pool`` is E1's conformance instrument after the audit-V1 rescoring;
-``_rate``'s None-vs-0.0 distinction keeps zero-certificate cells honest; the
-summary writer's preserved blocks must survive partial reruns.
+Three things get pinned here:
+  - _rm_on_pool, E1's conformance instrument after the audit-V1 rescoring
+  - _rate's None-vs-0.0 distinction, which keeps zero-certificate cells honest
+  - the summary writer's preserved blocks, which must survive partial reruns
+
+Refs: verification N2.
 """
 import numpy as np
 
@@ -14,9 +17,13 @@ from experiments.run_synthetic import (_rm_on_pool, _per_site_exceed_frac,
 
 
 def _two_site_pool():
-    """Site A: 50 records, 10 answered errors, 40 answered correct.
-    Site B: 400 records (> M=100), all answered, 8 errors.
-    Head = identity on d=1; scores engineered via x."""
+    """A two-site toy pool with hand-computable answered errors.
+
+      - site A: 50 records, 10 answered errors, 40 answered correct
+      - site B: 400 records (above M=100), all answered, 8 errors
+
+    The head is the identity on d=1, so x engineers the scores.
+    """
     # x: sign gives prediction; |logit| gives score; all answered at tau=0.55
     xs, ys = [], []
     xs += [+1.0] * 10 + [-1.0] * 40          # A: 10 predicted-pos on y=False
@@ -30,12 +37,16 @@ def _two_site_pool():
 
 
 def test_rm_on_pool_matches_closed_form_and_is_not_the_record_mean():
-    """R_M = sum_c (g_c/n_c) err_c / sum_c (g_c/n_c) ans_c with g_c=min(n_c,M).
-    Site A: g/n = 50/50 = 1 -> weight 1 per record share; site B: g/n =
-    100/400 = 0.25. R_M = (1*10 + 0.25*8) / (1*50 + 0.25*400) = 12/150 = 0.08.
-    The unweighted record mean is 18/450 = 0.04 -- HALF of R_M; a mutation
-    substituting it (the exact aggregate-vs-record confusion V1 corrects)
-    fails here."""
+    """R_M against hand arithmetic, and against the record mean it is not.
+
+        R_M = sum_c (g_c/n_c) err_c / sum_c (g_c/n_c) ans_c, g_c = min(n_c, M)
+
+    Site A has g/n = 50/50 = 1, site B has g/n = 100/400 = 0.25. So
+    R_M = (1*10 + 0.25*8) / (1*50 + 0.25*400) = 12/150 = 0.08.
+
+    The unweighted record mean is 18/450 = 0.04, half of R_M. Substituting it
+    is the aggregate-vs-record confusion audit V1 corrects.
+    """
     head = Head(coef=np.array([1.0]), intercept=0.0, mu=np.zeros(1),
                 sd=np.ones(1))
     pool = _two_site_pool()
@@ -48,8 +59,11 @@ def test_rm_on_pool_matches_closed_form_and_is_not_the_record_mean():
 
 
 def test_per_site_exceed_frac_closed_form():
-    """Site A risk 10/50 = 0.20 > alpha=0.10; site B risk 8/400 = 0.02 -> 1/2
-    answering sites exceed."""
+    """One of the two answering sites exceeds alpha.
+
+    Site A risk is 10/50 = 0.20, above alpha = 0.10. Site B risk is
+    8/400 = 0.02.
+    """
     head = Head(coef=np.array([1.0]), intercept=0.0, mu=np.zeros(1),
                 sd=np.ones(1))
     pool = _two_site_pool()
@@ -58,18 +72,22 @@ def test_per_site_exceed_frac_closed_form():
 
 
 def test_rate_none_vs_zero():
-    """_rate(0, 0) is None (no certificates issued), never 0.0 (zero
-    violations) -- the distinction that keeps E2's zero-certificate BBSE cell
-    honest."""
+    """_rate(0, 0) is None, never 0.0.
+
+    None means no certificates were issued; 0.0 would mean zero violations.
+    That distinction keeps E2's zero-certificate BBSE cell honest.
+    """
     assert _rate(0, 0) is None
     assert _rate(0, 10) == 0.0
     assert _rate(3, 10) == 0.3
 
 
 def test_summary_preserved_blocks_survive_two_partial_runs(tmp_path):
-    """audit V26: preserved sections must survive a SECOND partial run (the
-    header regex must tolerate the '(preserved...)' suffix), and fresh blocks
-    carry their own run stamps."""
+    """Preserved sections survive a second partial run (audit V26).
+
+    The header regex must tolerate the '(preserved...)' suffix. Fresh blocks
+    carry their own run stamps.
+    """
     out = str(tmp_path)
     _write_summary(out, {"E2": {"R": 5, "x": 1}}, quick=True)
     blocks1 = _existing_summary_blocks(f"{out}/summary.md")
@@ -79,8 +97,8 @@ def test_summary_preserved_blocks_survive_two_partial_runs(tmp_path):
     blocks2 = _existing_summary_blocks(f"{out}/summary.md")
     assert set(blocks2) == {"E2", "E3"}
     assert blocks2["E2"] == blocks1["E2"]          # byte-identical carry
-    # run 3: recompute only E1 -> E2 must STILL survive (second-generation
-    # preservation through the suffixed header)
+    # run 3: recompute only E1 -> E2 must still survive, a second generation
+    # of preservation through the suffixed header
     _write_summary(out, {"E1": {"R": 5, "z": 3}}, quick=True)
     blocks3 = _existing_summary_blocks(f"{out}/summary.md")
     assert set(blocks3) == {"E1", "E2", "E3"}
@@ -92,9 +110,13 @@ def test_summary_preserved_blocks_survive_two_partial_runs(tmp_path):
 
 
 def test_e8_bound_walk_mirrors_fixed_sequence_semantics():
-    """SPEC E8 arm A: the comparator walk must share the library walk's
-    contract exactly -- test in order, stop at first failure, deploy the
-    lowest-tau certified index; empty prefix -> (None)."""
+    """The comparator walk shares the library walk's contract exactly.
+
+    Test in order, stop at the first failure, deploy the lowest-tau certified
+    index. An empty prefix deploys None.
+
+    Refs: SPEC E8 arm A.
+    """
     from experiments.run_synthetic import _bound_walk
     atoms = np.array([[0.02], [0.04], [0.5], [0.03]])
     tau_grid = np.array([0.9, 0.8, 0.7, 0.6])
@@ -123,9 +145,13 @@ def test_e8_flip_labels_rate_and_determinism():
 
 
 def test_e9_fnr_rng_deterministic_and_ladder_indexed():
-    """SPEC "Outcome-weighted atoms": the FNR permutation stream mirrors
-    certification_rng's sha256 construction, indexes E9_FNR_LADDER, and can
-    never alias a certification stream (leading 9 discriminator)."""
+    """The FNR permutation stream mirrors certification_rng's sha256 build.
+
+    It indexes E9_FNR_LADDER, and the leading-9 discriminator keeps it from
+    ever aliasing a certification stream.
+
+    Refs: SPEC "Outcome-weighted atoms".
+    """
     from experiments.run_synthetic import _e9_fnr_rng
     a = _e9_fnr_rng(0.5, "e9-fnr").integers(0, 2 ** 31, 4)
     b = _e9_fnr_rng(0.5, "e9-fnr").integers(0, 2 ** 31, 4)
@@ -166,9 +192,13 @@ def test_fnr_on_pool_closed_form():
 
 
 def test_eicu_subgroup_rows_masks_floor_and_no_certificate():
-    """Revision-2 item 3b instrument test on a synthetic stand-in cohort:
-    one-hot masks, age__missing exclusion, whole-cell and per-scope floor
-    suppression (null-never-zero), and the no-certificate path."""
+    """_subgroup_rows on a synthetic stand-in cohort.
+
+    Covers one-hot masks, age__missing exclusion, whole-cell and per-scope
+    floor suppression (null never zero), and the no-certificate path.
+
+    Refs: revision-2 item 3b.
+    """
     from types import SimpleNamespace
     from experiments.run_eicu import _subgroup_rows
 

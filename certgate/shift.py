@@ -1,26 +1,35 @@
-"""Label-shift (BBSE) assumption mode (SPEC section "shift.py", METHODS 5).
+"""Label-shift (BBSE) assumption mode.
 
-Black-box shift estimation with a cluster-robust confidence box on
-``(c0, c1, pi_source, q_target)`` propagated to an odds-ratio interval
-``[rho_lo, rho_hi]``; certification tests the worst case over that interval at
-``BBSE_DELTA_BET`` while the box spends ``BBSE_DELTA_CONF``, restoring
-``1 - delta`` by union bound. Ported from the audited v1 ``fit_a2/certify_a2``
-(``../xAI-projtect-v1/testbed/modes.py``) with the SPEC hardening: bootstrap top-up-or-decline
-(audit F40/B-8), q_t range decline (audit F41/B-9), deterministic per-endpoint
-permutation streams (supersedes v1's shared-stream pattern), and -- audit V2 --
-a confidence share for ``q_t`` itself: the target predicted-positive rate is a
-noisy estimate of the target population rate, not an observed constant, and
-treating it as exact issued false certificates at up to 3x delta under pure
-label shift (isolated by control: with ``q_t`` effectively exact the same code
-issued zero false certificates).
+Black-box shift estimation puts a cluster-robust confidence box on
+(c0, c1, pi_source, q_target). That box propagates to an odds-ratio interval
+[rho_lo, rho_hi], and certification tests the worst case over the interval.
 
-Declines (never fallbacks): ``bbse-empty-target`` ->
-``bbse-target-clustering`` -> ``bbse-degenerate-bootstrap`` ->
-``bbse-ill-conditioned`` -> ``bbse-misspecified``.
+The budget splits two ways: the bet spends BBSE_DELTA_BET, the box spends
+BBSE_DELTA_CONF. A union bound puts them back together as 1 - delta.
 
-Runtime dependencies are ``constants``, ``certify`` and scipy only; ``Cohort``
-and ``Head`` are duck-typed at runtime and imported for type hints solely under
-``TYPE_CHECKING`` (validate/model are authored in parallel).
+Ported from the audited v1 fit_a2/certify_a2
+(../xAI-projtect-v1/testbed/modes.py), plus four pieces of SPEC hardening:
+
+  - bootstrap top-up-or-decline;
+  - decline when the q_t range leaves the box;
+  - deterministic per-endpoint permutation streams, replacing v1's single
+    shared stream;
+  - a confidence share for q_t itself.
+
+That last one is not cosmetic. The target predicted-positive rate is a noisy
+estimate, not an observed constant; treating it as exact issued false
+certificates at up to 3x delta under pure label shift, where a control with
+q_t effectively exact issued none.
+
+Declines, never fallbacks:
+
+  bbse-empty-target -> bbse-target-clustering -> bbse-degenerate-bootstrap
+  -> bbse-ill-conditioned -> bbse-misspecified
+
+Runtime dependencies are constants, certify and scipy only. Cohort and Head are
+duck-typed at runtime and imported for type hints under TYPE_CHECKING only.
+
+Refs: SPEC "shift.py"; METHODS 5; audits F40/B-8, F41/B-9, V2.
 """
 
 from __future__ import annotations
@@ -45,13 +54,17 @@ if TYPE_CHECKING:                      # type hints only -- never imported at ru
 
 @dataclass
 class BBSEFit:
-    """Frozen label-shift correction (METHODS 5). A function of
-    ``(head, S_aux, target pool)`` only. ``q_target`` is an ESTIMATE of the
-    target population predicted-positive rate carrying sampling error, and it
-    receives its own confidence share in the box (audit V2). Scale-invariance
-    lets record weights be ``(1, rho)`` with ``rho`` the target/source odds
-    ratio of the positive class. ``walk_orders`` maps each alpha to its
-    S_aux-derived fixed sequence."""
+    """Frozen label-shift correction, a function of (head, S_aux, target pool).
+
+    q_target is an estimate of the target population predicted-positive rate
+    and carries sampling error, so it gets its own confidence share in the box.
+
+    Scale-invariance lets record weights be (1, rho), with rho the
+    target/source odds ratio of the positive class. walk_orders maps each alpha
+    to its S_aux-derived fixed sequence.
+
+    Refs: METHODS 5; audit V2.
+    """
     declined: bool
     reason: str
     rho_lo: float
@@ -68,14 +81,16 @@ _DIAG_KEYS = ("n_target", "n_target_sites", "min_target_sites", "q_target",
 
 
 def bbse_diagnostics(**known) -> dict:
-    """Stable-key diagnostics dict (SPEC shift.py; fixture audit 2026-07-25 —
-    audit-V25's stable-key discipline extended to the bbse sub-dict).
+    """Diagnostics dict with a stable key set.
 
-    Every ``BBSEFit.diagnostics`` — full fit, every decline path, and the
-    pipeline's not-run placeholder — carries the SAME key set, with ``None``
-    for whatever that branch did not compute: a consumer indexing any key gets
-    ``None``, never ``KeyError``. Unknown keys are rejected loudly so the set
-    cannot drift silently.
+    Every BBSEFit.diagnostics carries the same keys -- a full fit, every
+    decline path, and the pipeline's not-run placeholder alike. Keys a branch
+    did not compute are None, so a consumer indexing any key gets None rather
+    than KeyError.
+
+    Unknown keys are rejected loudly so the set cannot drift silently.
+
+    Refs: SPEC "shift.py"; audit V25 (fixture audit 2026-07-25).
     """
     unknown = set(known) - set(_DIAG_KEYS)
     if unknown:
@@ -88,18 +103,22 @@ def bbse_diagnostics(**known) -> dict:
 
 
 def _q_interval(pred, target_site_id, lvl, rng):
-    """Two-sided level-``lvl`` confidence interval for the target population
-    predicted-positive rate ``q`` (audit V2).
+    """Two-sided level-lvl interval for the target predicted-positive rate q.
 
-    ``target_site_id is None`` (or one distinct site) is the caller DECLARING
-    the pool is a single site: exact Clopper-Pearson on the record count --
-    finite-sample, valid for records iid within one site. A multi-site pool
-    with unknown clustering under-covers here and MUST supply
-    ``target_site_id``. With >= BBSE_MIN_TARGET_SITES sites: percentile
-    cluster bootstrap over target sites (``BBSE_BOOT`` resamples; every
-    resample is valid -- ``q`` needs no both-classes constraint; asymptotic
-    like the S_aux box). 2..BBSE_MIN_TARGET_SITES-1 sites decline upstream in
-    ``fit_bbse`` (verification F1) and never reach this function.
+    Passing target_site_id as None, or as one distinct site, is the caller
+    declaring the pool is a single site. That branch is exact Clopper-Pearson
+    on the record count -- finite-sample valid for records iid within one site.
+    A multi-site pool must supply target_site_id, or the interval under-covers.
+
+    With at least BBSE_MIN_TARGET_SITES sites the interval is a percentile
+    cluster bootstrap over target sites, BBSE_BOOT resamples. Every resample is
+    valid, because q needs no both-classes constraint. It is asymptotic, like
+    the S_aux box.
+
+    Pools of 2..BBSE_MIN_TARGET_SITES-1 sites decline upstream in fit_bbse and
+    never reach here.
+
+    Refs: audit V2; verification F1.
     """
     pred = np.asarray(pred, dtype=bool)
     n = int(pred.shape[0])
@@ -126,8 +145,11 @@ def _q_interval(pred, target_site_id, lvl, rng):
 
 
 def _site_stats(head: "Head", cohort: "Cohort") -> np.ndarray:
-    """Per-site sufficient statistics ``(n, pos, pred1&pos, pred1&neg)`` stacked
-    as ``(4, n_sites)`` via bincount (y is bool by the Cohort contract)."""
+    """Per-site sufficient statistics, stacked as (4, n_sites).
+
+    Rows are n, pos, pred1&pos, pred1&neg, built with bincount. y is bool by
+    the Cohort contract.
+    """
     yhat = head.predict(cohort.x)
     n_sites = cohort.n_sites
     n = np.bincount(cohort.site_id, minlength=n_sites).astype(float)
@@ -143,19 +165,22 @@ def _site_stats(head: "Head", cohort: "Cohort") -> np.ndarray:
 
 
 def rho_box_interval(q_lo, q_hi, q_point, lo, hi, point):
-    """Worst-case odds-ratio interval over the 16 corners of the
-    ``(q, c0, c1, pi_s)`` box, plus the point estimate (SPEC shift.py;
-    audit V2).
+    """Worst-case odds-ratio interval over the (q, c0, c1, pi_s) box.
 
-    Corner coverage of the box interior: ``pi_t = (q - c0)/(c1 - c0)`` is
-    monotone in each coordinate on the gated region (``c1 - c0 >=
-    BBSE_GAP_FLOOR > 0``), rho is monotone in ``pi_t`` and ``pi_s``, and the
-    clip preserves monotonicity -- so the extremes over the 4-D box are
-    attained at corners. Clip effect (precision, verification F2-bbse):
-    coverage of the unclipped odds ratio holds whenever the true ``pi_t`` lies
-    in ``[PI_CLIP, 1-PI_CLIP]``; outside that range the exposure is bounded at
-    the PI_CLIP odds scale (~1e-4 shift in an affine-in-rho statistic).
-    Misspecification declines first (audit F41/B-9).
+    Returns that interval plus the point estimate, evaluated at the box's 16
+    corners.
+
+    Corners suffice. On the gated region (c1 - c0 >= BBSE_GAP_FLOOR > 0),
+    pi_t = (q - c0)/(c1 - c0) is monotone in each coordinate, rho is monotone
+    in pi_t and pi_s, and the clip preserves monotonicity. So the extremes over
+    the 4-D box are attained at corners.
+
+    The clip costs precision, not coverage: the unclipped odds ratio stays
+    covered whenever the true pi_t lies in [PI_CLIP, 1-PI_CLIP]. Outside that
+    range the exposure is bounded at the PI_CLIP odds scale, about 1e-4 in an
+    affine-in-rho statistic. Misspecification declines before it gets there.
+
+    Refs: SPEC "shift.py"; audits V2, F41/B-9; verification F2-bbse.
     """
     def rho_of(q, c0, c1, pi_s):
         pi_t = np.clip((q - c0) / (c1 - c0), PI_CLIP, 1.0 - PI_CLIP)
@@ -173,28 +198,37 @@ def rho_box_interval(q_lo, q_hi, q_point, lo, hi, point):
 
 def fit_bbse(head: "Head", aux: "Cohort", target_x, rng,
              target_site_id=None) -> BBSEFit:
-    """Fit the BBSE confidence box on S_aux + the target pool and propagate it
-    to a worst-case odds-ratio interval (SPEC section "shift.py", METHODS 5).
+    """Fit the BBSE confidence box and propagate it to an odds-ratio interval.
 
-    Bootstrap draws site-index resamples until ``BBSE_BOOT`` VALID ones are
-    collected (valid iff the pooled resample has >=1 positive and >=1 negative)
-    or ``BBSE_BOOT_MAX_ATTEMPTS`` are exhausted -- in which case decline
-    ``bbse-degenerate-bootstrap`` (never quantile over a silently reduced count;
-    audit F40/B-8).
+    The box is fit on S_aux plus the target pool; the interval is the worst
+    case over that box.
 
-    ``q_t`` (audit V2): the target predicted-positive rate is an ESTIMATE of
-    the target population rate and gets its own confidence share at level
-    ``BBSE_DELTA_CONF / BBSE_BONFERRONI`` -- exact Clopper-Pearson for a
-    single-site pool (``target_site_id`` None or one distinct value), a
-    cluster bootstrap over target sites otherwise (see ``_q_interval``).
+    The bootstrap draws site-index resamples until BBSE_BOOT valid ones are
+    collected, valid meaning the pooled resample holds a positive and a
+    negative. If BBSE_BOOT_MAX_ATTEMPTS run out first it declines
+    bbse-degenerate-bootstrap, never a quantile over a reduced count.
 
-    Decline order: ``bbse-empty-target`` (audit V14) ->
-    ``bbse-target-clustering`` (verification F1) ->
-    ``bbse-degenerate-bootstrap`` -> ``bbse-ill-conditioned`` when the
-    worst-case confusion gap ``lo_c1 - hi_c0 < BBSE_GAP_FLOOR`` ->
-    ``bbse-misspecified`` unless the WHOLE q interval sits inside the box
-    range ``[lo_c0, hi_c1]`` (audit F41/B-9, widened by V2; the ``not (...)``
-    form is NaN-safe, so a non-finite q declines instead of flowing through).
+    q_t is an estimate of the target population predicted-positive rate, so it
+    gets its own confidence share at BBSE_DELTA_CONF / BBSE_BONFERRONI. That
+    share is exact Clopper-Pearson for a single-site pool (target_site_id None
+    or one distinct value), and a cluster bootstrap over target sites
+    otherwise -- see _q_interval.
+
+    Decline order:
+
+      - bbse-empty-target;
+      - bbse-target-clustering;
+      - bbse-degenerate-bootstrap;
+      - bbse-ill-conditioned, when the worst-case confusion gap
+        lo_c1 - hi_c0 < BBSE_GAP_FLOOR;
+      - bbse-misspecified, unless the whole q interval sits inside the box
+        range [lo_c0, hi_c1].
+
+    That last test is written as not (...), which is NaN-safe: a non-finite q
+    declines instead of flowing through.
+
+    Refs: SPEC "shift.py"; METHODS 5; audits F40/B-8, F41/B-9 (widened by V2),
+    V2, V14; verification F1.
     """
     stats = _site_stats(head, aux)
     n_sites = stats.shape[1]
@@ -203,10 +237,11 @@ def fit_bbse(head: "Head", aux: "Cohort", target_x, rng,
         return BBSEFit(True, "bbse-empty-target",
                        float("nan"), float("nan"), float("nan"),
                        bbse_diagnostics(n_target=0))
-    # q cluster-bootstrap floor (verification F1): a percentile bootstrap over
-    # 2..K-1 target sites cannot approach nominal coverage (measured rho-miss
-    # up to 46% at K=2 against nominal 2.5%, certify-and-violate at 3.4x delta
-    # where the bet has power) -- decline rather than pretend.
+    # q cluster-bootstrap floor. A percentile bootstrap over 2..K-1 target
+    # sites cannot approach nominal coverage: measured rho-miss up to 46% at
+    # K=2 against a nominal 2.5%, and certify-and-violate at 3.4x delta where
+    # the bet has power. Decline rather than pretend.
+    # Ref: verification F1.
     if target_site_id is not None:
         sid = np.asarray(target_site_id)
         if sid.ndim != 1 or sid.shape[0] != n_target:
@@ -277,8 +312,9 @@ def fit_bbse(head: "Head", aux: "Cohort", target_x, rng,
                                                  point)
     diag.update(rho_lo=rho_lo, rho_hi=rho_hi, rho_point=rho_point)
 
-    # walk orders from point-rho-weighted S_aux atoms (S_cal-independent;
-    # in-sample flattery here affects power only, never validity)
+    # Walk orders from point-rho-weighted S_aux atoms. These are
+    # S_cal-independent, so in-sample flattery here costs power, never
+    # validity.
     score_aux = head.score(aux.x)
     err_aux = head.predict(aux.x) != aux.y
     w_pt = np.where(aux.y, rho_point, 1.0)
@@ -294,24 +330,28 @@ def fit_bbse(head: "Head", aux: "Cohort", target_x, rng,
 
 
 def certify_bbse(head: "Head", fit: BBSEFit, cal: "Cohort", alpha) -> dict:
-    """BBSE certification for one alpha rung (SPEC section "shift.py",
-    METHODS 5). Decline passthrough when the fit declined; otherwise a
-    dual-endpoint fixed-sequence walk at ``BBSE_DELTA_BET`` where each threshold
-    passes only if the betting test rejects at BOTH ``rho_lo`` and ``rho_hi``
-    atom sets. Soundness: under the per-endpoint normalization
-    ``wmax=max(1,rho)`` the atom mean is piecewise in ``rho`` (kink at 1; an
-    interior max is possible), but the statistic is scale-invariant, so
-    ``sign(E[Z]-alpha) = sign(A + rho*B)`` with ``(A, B)`` rho-free -- affine
-    in ``rho``. The certifiable set ``{rho: E[Z] <= alpha}`` is thus convex:
-    certifying both endpoints covers every interior ``rho``, and a violating
-    ``rho`` in the box forces a violating endpoint whose level-``BBSE_DELTA_BET``
-    test controls false certification.
+    """BBSE certification for one alpha rung.
 
-    Per-endpoint permutation streams are ``certification_rng(alpha, MODE_BBSE,
-    "lo")`` and ``"hi"`` -- deterministic, order-independent, and free of any
-    target identifier (audit V3; the fit itself remains legitimately
-    target-dependent through the q_t interval, which is why the shared-event
-    clause is claimed for baseline mode only).
+    A declined fit passes straight through. Otherwise this is a dual-endpoint
+    fixed-sequence walk at BBSE_DELTA_BET: a threshold passes only if the
+    betting test rejects on both the rho_lo and the rho_hi atom sets.
+
+    Why two endpoints are enough. Under the per-endpoint normalization
+    wmax=max(1,rho) the atom mean is piecewise in rho, with a kink at 1, so an
+    interior maximum is possible. But the statistic is scale-invariant, so
+    sign(E[Z]-alpha) = sign(A + rho*B) with (A, B) free of rho -- affine in
+    rho. So the certifiable set {rho: E[Z] <= alpha} is convex: certifying both
+    endpoints covers every interior rho, and a violating rho inside the box
+    forces a violating endpoint, whose level-BBSE_DELTA_BET test controls false
+    certification.
+
+    The per-endpoint permutation streams are certification_rng(alpha,
+    MODE_BBSE, "lo") and the same with "hi". Both are deterministic,
+    order-independent, and carry no target identifier. The fit itself stays
+    legitimately target-dependent through the q_t interval, which is why the
+    shared-event clause is claimed for baseline mode only.
+
+    Refs: SPEC "shift.py"; METHODS 5; audit V3.
     """
     n_cal_sites = cal.n_sites
     n_carrying = int((cal.site_sizes > 0).sum())

@@ -1,13 +1,20 @@
-"""SPEC "Tests": the hostile-extract fixture, end to end (fixture audit 2026-07-25).
+"""SPEC "Tests": the hostile-extract fixture, end to end.
 
-`experiments/synth_fixture.py --signal` emits a 10-table gzip-CSV corpus with
-every documented structural wart AND a latent-severity outcome;
-`experiments/fixture_etl.py` turns it into finite features + raw site labels;
-`from_raw` -> `run_certgate` must reach an HONEST outcome on it: either a
-certificate whose oracle-checked answered error respects alpha, or a decline.
-The smoke test keeps the default suite fast; the full-scale arm (20800
-sessions / 208 heavy-tailed sites — the pilot-trial configuration) runs only
-when CERTGATE_FIXTURE=1.
+The path under test:
+  - experiments/synth_fixture.py --signal emits a 10-table gzip-CSV corpus
+    with every documented structural wart and a latent-severity outcome
+  - experiments/fixture_etl.py turns it into finite features and raw site
+    labels
+  - from_raw, then run_certgate, must reach an honest outcome
+
+Honest means either a certificate whose oracle-checked answered error respects
+alpha, or a decline.
+
+The smoke test keeps the default suite fast. The full-scale arm -- 20800
+sessions over 208 heavy-tailed sites, the pilot-trial configuration -- runs
+only when CERTGATE_FIXTURE=1.
+
+Refs: fixture audit 2026-07-25.
 """
 import json
 import os
@@ -72,9 +79,11 @@ def _assert_honest(rep, ctx):
 
 
 def test_fixture_smoke_end_to_end(tmp_path):
-    """Small-scale (~seconds): the hostile corpus travels the whole real-data
-    path and lands on an honest outcome. Uniform site sizes keep the
-    50-carrying-cluster gate deterministically satisfied at this scale."""
+    """The hostile corpus travels the whole real-data path in a few seconds.
+
+    It must land on an honest outcome. Uniform site sizes keep the
+    50-carrying-cluster gate deterministically satisfied at this scale.
+    """
     rep, ctx = _run_fixture(tmp_path, sessions=5000, sites=150, rate=0.05,
                             site_sigma=0.0)
     outcome = _assert_honest(rep, ctx)
@@ -91,9 +100,12 @@ def test_fixture_smoke_end_to_end(tmp_path):
 @pytest.mark.skipif(os.environ.get("CERTGATE_FIXTURE") != "1",
                     reason="full-scale fixture arm; set CERTGATE_FIXTURE=1")
 def test_fixture_full_scale_certifies_honestly(tmp_path):
-    """Pilot-trial configuration (20800 sessions / 208 heavy-tailed sites,
-    ~20 s): certification is plausible here, and if issued must survive the
-    oracle; a decline is equally acceptable — the assertion is honesty."""
+    """Pilot-trial configuration: 20800 sessions over 208 sites, ~20 s.
+
+    The sites are heavy-tailed. Certification is plausible at this scale, and
+    if issued it must survive the oracle. A decline is equally acceptable:
+    the assertion is honesty.
+    """
     rep, ctx = _run_fixture(tmp_path, sessions=20800, sites=208, rate=0.1,
                             site_sigma=1.1)
     outcome = _assert_honest(rep, ctx)

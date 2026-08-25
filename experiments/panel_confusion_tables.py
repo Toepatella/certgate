@@ -1,14 +1,13 @@
-"""Read-only derivation of the eICU answered/declined confusion tables
-(revision-2 item 3a; closes the eICU half of panel item S2-28).
+"""Read-only derivation of the eICU answered/declined confusion tables.
 
-Everything here is DERIVED from the released 20-replicate reliability panel
-``experiments/out/EICU_reliability_panel.json`` -- the restricted extract is
-never touched, no pipeline is re-run, and this file WRITES NOTHING: results go
-to stdout as JSON, exactly like ``experiments/panel_s2_tables.py``.
+Everything here is derived from the released 20-replicate reliability panel
+experiments/out/EICU_reliability_panel.json. The restricted extract is never
+touched and no pipeline is re-run. This file writes nothing: results go to
+stdout as JSON, exactly like experiments/panel_s2_tables.py.
 
-The derivation: the panel's ``skill`` block computes ``model_error_rate`` at
-``DECISION_THRESHOLD = 0.5``, which coincides with the head's own hard-label
-rule, so on every scope (answered / declined / all)
+The panel's skill block computes model_error_rate at DECISION_THRESHOLD = 0.5,
+which coincides with the head's own hard-label rule. So on every scope
+(answered / declined / all):
 
     errors = model_error_rate * n            # = FP + FN
     TP = (n_predicted_positive + n_observed_positive - errors) / 2
@@ -16,21 +15,23 @@ rule, so on every scope (answered / declined / all)
     FN = n_observed_positive - TP
     TN = n - TP - FP - FN
 
-``model_error_rate`` is rounded once at emit time (6 dp), so the worst-case
-reconstruction error in ``errors`` is 5e-7 * n < 0.01 record at these pool
-sizes; every derived count must land within INT_TOL of an integer or this
-script refuses to emit (a derivation that cannot be made exact is a failed
-derivation, not a table).
+model_error_rate is rounded once at emit time (6 dp), so the worst-case
+reconstruction error in errors is 5e-7 * n, under 0.01 record at these pool
+sizes. Every derived count must land within INT_TOL of an integer, or this
+script refuses to emit anything at all.
 
-POST-HOC status: every number below descends from the panel, whose post-hoc
-label therefore governs this table too; the label is re-emitted verbatim as
-the first key of the output. No certified quantity is touched, none of the
-protocol's predictions or failure criteria are settled, and there are NO
-bootstrap intervals here -- the panel does not bootstrap a sensitivity
-statistic, and NOTES[1] of the panel forbids differencing marginal interval
-endpoints, so this table reports exact counts and point rates only.
+Post-hoc status: every number below descends from the panel, so the panel's
+post-hoc label governs this table too. The label is re-emitted verbatim as the
+first key of the output. No certified quantity is touched, and none of the
+protocol's predictions or failure criteria are settled.
 
-Run: ``python -m experiments.panel_confusion_tables [path-to-panel-json]``
+There are no bootstrap intervals here. The panel does not bootstrap a
+sensitivity statistic, and NOTES[1] of the panel forbids differencing marginal
+interval endpoints, so this table reports exact counts and point rates only.
+
+Run: python -m experiments.panel_confusion_tables [path-to-panel-json]
+
+Refs: revision-2 item 3a; panel item S2-28 (eICU half).
 """
 
 import json
@@ -43,9 +44,9 @@ OUT = os.path.join(os.path.dirname(__file__), "out")
 PANEL_PATH = os.path.join(OUT, "EICU_reliability_panel.json")
 SCOPES = ("answered", "declined", "all")
 INT_TOL = 0.05           # reconstruction slack; true worst case is ~0.01
-# The verified replicate-0 answered-scope 2x2 (checked by hand against the
-# panel's composition/skill blocks when this script was designed). If the
-# derivation ever fails to reproduce it, nothing else is trustworthy.
+# Replicate-0 answered-scope 2x2, verified by hand against the panel's
+# composition and skill blocks. If the derivation ever stops reproducing it,
+# nothing else here is trustworthy.
 SELF_CHECK = dict(replicate=0, scope="answered", tp=57, fp=6, fn=537, tn=12364)
 
 
@@ -82,8 +83,10 @@ def _reconstruct(comp, skill):
 
 
 def _op_chars(c, skill):
-    """Operating characteristics; same row shape as panel_s2_tables Table 7,
-    plus fnr and the panel's own constant-rule reference carried through."""
+    """Operating characteristics, same row shape as panel_s2_tables Table 7.
+
+    Adds fnr, and carries the panel's own constant-rule reference through.
+    """
     tp, fp, fn, tn = c["tp"], c["fp"], c["fn"], c["tn"]
     n = tp + fp + fn + tn
     return dict(
@@ -113,7 +116,7 @@ def derive(panel_doc):
                        **_op_chars(c, panel["skill"][scope]))
             per_scope[scope].append(row)
 
-    # HARD self-check against the hand-verified replicate-0 cell counts.
+    # Hard self-check against the hand-verified replicate-0 cell counts.
     chk = next(row for row in per_scope[SELF_CHECK["scope"]]
                if row["replicate"] == SELF_CHECK["replicate"])
     for k in ("tp", "fp", "fn", "tn"):
