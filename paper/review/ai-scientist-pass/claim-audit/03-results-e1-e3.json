@@ -1,5 +1,6 @@
 {
   "section": "S4.1 setup + S4.2 E1 + S4.3 E2 + S4.4 E3",
+  "citations_reverified": "Citations re-verified against the working tree 2026-08-25. Line numbers and quoted comment text were re-pointed after the 2026-08-24 comment humanization and the 2026-08-25 paper de-labelling; findings, verdicts and numbers are the originals and are unchanged. Scope: many quote fields and draft line references also predate the 2026-08-21 manuscript trim, which rewrote prose this pass did not re-point; where such a quote also carried an E1-E9 codename it is annotated in place rather than rewritten. The E1-E9 names kept in section, source and method_notes fields are artifact prefixes (E1_validity.csv, summary.md blocks), which the 2026-08-25 pass did not remove. line_range and the per-claim line fields are left at the audit's original values as its own record of what it covered.",
   "line_range": [120, 141],
   "audit_date": "2026-08-14",
   "method_notes": [
@@ -11,7 +12,7 @@
   ],
   "claims": [
     {"quote": "eICU-CRD v2.0", "value": "v2.0", "source": "dataset version identifier (EICU-PROTOCOL.md)", "status": "OUT_OF_SCOPE", "note": "Dataset-version metadata, not a result number."},
-    {"quote": "208 sites with clipped-lognormal sizes spanning roughly 20 to 5,000 records", "value": "208 sites; sizes clipped to [20, 5000]", "source": "experiments/run_synthetic.py:51 ANCHOR_SITES=208; certgate/data.py SimConfig size_lo=20, size_hi=5000 (lognormal size_mu=6.0, size_sigma=1.1)", "status": "TRACED", "note": "'roughly 20 to 5,000' = the literal clip bounds."},
+    {"quote": "208 sites with clipped-lognormal sizes spanning roughly 20 to 5,000 records", "value": "208 sites; sizes clipped to [20, 5000]", "source": "experiments/run_synthetic.py:62 ANCHOR_SITES=208; certgate/data.py SimConfig size_lo=20, size_hi=5000 (lognormal size_mu=6.0, size_sigma=1.1)", "status": "TRACED", "note": "'roughly 20 to 5,000' = the literal clip bounds."},
     {"quote": "$d = 8$ features", "value": "8", "source": "certgate/data.py SimConfig d=8", "status": "TRACED", "note": ""},
     {"quote": "class signal on one normalized direction supported by features 0-3", "value": "features 0-3", "source": "certgate/data.py SimConfig.direction(): ones on first d//2 = 4 dims, normalized", "status": "TRACED", "note": ""},
     {"quote": "$\\mathrm{sep} = 2.2$", "value": "2.2", "source": "certgate/data.py SimConfig sep=2.2; experiments/out/summary.md E2/E3 key sep=2.2", "status": "TRACED", "note": ""},

@@ -1,5 +1,6 @@
 {
   "section": "Title/abstract + S1 Introduction + S2 Related work",
+  "citations_reverified": "Citations re-verified against the working tree 2026-08-25. Line numbers and quoted comment text were re-pointed after the 2026-08-24 comment humanization and the 2026-08-25 paper de-labelling; findings, verdicts and numbers are the originals and are unchanged. Scope: many quote fields and draft line references also predate the 2026-08-21 manuscript trim, which rewrote prose this pass did not re-point; where such a quote also carried an E1-E9 codename it is annotated in place rather than rewritten. line_range and the per-claim line fields are left at the audit's original values as its own record of what it covered.",
   "line_range": [1, 47],
   "claims": [
     {
@@ -19,14 +20,14 @@
     {
       "quote": "a label-shift mode carrying its four parameters' uncertainty inside the guarantee",
       "value": "4 parameters",
-      "source": "certgate/report.py:142-145 ('The [rho_lo, rho_hi] box covers FOUR estimated parameters'), frozen by tests/test_report.py",
+      "source": "certgate/report.py:153-155 ('The [rho_lo, rho_hi] box covers FOUR estimated parameters'), frozen by tests/test_report.py",
       "status": "TRACED",
       "note": "Design constant of the BBSE box; guarantee text is frozen (audit V2/V13)."
     },
     {
       "quote": "On a 208-site synthetic cohort",
       "value": 208,
-      "source": "experiments/run_synthetic.py:51 ANCHOR_SITES = 208, pinned tests/test_constants.py:111; E4 grid row n_sites=208 in experiments/out/summary.md",
+      "source": "experiments/run_synthetic.py:62 ANCHOR_SITES = 208, pinned tests/test_constants.py:111; E4 grid row n_sites=208 in experiments/out/summary.md",
       "status": "TRACED",
       "note": "Frozen anchor site count of the synthetic grid."
     },
@@ -61,7 +62,7 @@
     {
       "quote": "under a prevalence shift to 0.22",
       "value": 0.22,
-      "source": "experiments/out/summary.md E2 target_base_rate = 0.22; run_synthetic.py:52 SHIFT_BASE = 0.22, pinned via E2_SHIFT_SWEEP tests/test_constants.py:119",
+      "source": "experiments/out/summary.md E2 target_base_rate = 0.22; run_synthetic.py:63 SHIFT_BASE = 0.22, pinned via E2_SHIFT_SWEEP tests/test_constants.py:119",
       "status": "TRACED",
       "note": "Frozen shift anchor."
     },
@@ -152,14 +153,14 @@
     {
       "quote": "whose four estimated parameters carry their own uncertainty inside the certificate",
       "value": "4 parameters",
-      "source": "certgate/report.py:142-145, frozen by tests/test_report.py",
+      "source": "certgate/report.py:153-155, frozen by tests/test_report.py",
       "status": "TRACED",
       "note": "Second occurrence (S1, line 25); same frozen guarantee-text constant."
     },
     {
       "quote": "On a 208-site synthetic cohort matched to the size, prevalence, and heterogeneity profile",
       "value": 208,
-      "source": "experiments/run_synthetic.py:51 ANCHOR_SITES = 208, pinned tests/test_constants.py:111",
+      "source": "experiments/run_synthetic.py:62 ANCHOR_SITES = 208, pinned tests/test_constants.py:111",
       "status": "TRACED",
       "note": "Second occurrence (S1, line 27)."
     },
@@ -194,7 +195,7 @@
     {
       "quote": "under a site-level prevalence shift from $0.095$ to $0.22$",
       "value": "0.095 -> 0.22",
-      "source": "certgate/data.py:51 SimConfig.base_rate = 0.095 (pinned tests/test_constants.py:140); summary.md E2 shift_sweep null arm target_base = 0.095 and target_base_rate = 0.22 (E2_SHIFT_SWEEP pinned tests/test_constants.py:119)",
+      "source": "certgate/data.py:58 SimConfig.base_rate = 0.095 (pinned tests/test_constants.py:138); summary.md E2 shift_sweep null arm target_base = 0.095 and target_base_rate = 0.22 (E2_SHIFT_SWEEP pinned tests/test_constants.py:119)",
       "status": "TRACED",
       "note": "Both endpoints are frozen constants and appear in the E2 artifact."
     },
@@ -238,12 +239,12 @@
       "value": "~2*delta",
       "source": "experiments/out/summary.md E7 record '0.05'.rm_exceed_rate = 0.096 at s_u=2.0 (0.035 at s_u=0.5) vs DELTA = 0.05",
       "status": "TRACED",
-      "note": "0.096/0.05 = 1.92, honestly summarized as 'up to twice delta'; heterogeneity arm (s_u=2.0) is the max."
+      "note": "0.096/0.05 = 1.92, honestly summarized as 'up to twice delta'; heterogeneity arm (s_u=2.0) is the max. [2026-08-25 re-verification: this quote predates the 2026-08-21 manuscript trim, so it is not verbatim today; Section 1 now reads 'then violates its aggregate budget at nearly twice $\\delta$ under high heterogeneity (Section 4.8)' at draft.md:31, with the E-codename gone. Verdict and numbers unchanged.]"
     },
     {
       "quote": "folds the estimation uncertainty of all four corrected parameters into the $1-\\delta$ budget",
       "value": "4 parameters",
-      "source": "certgate/report.py:142-145, frozen by tests/test_report.py",
+      "source": "certgate/report.py:153-155, frozen by tests/test_report.py",
       "status": "TRACED",
       "note": "Third occurrence (contribution 2)."
     },

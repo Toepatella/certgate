@@ -312,6 +312,16 @@ def cohort_abstention_profile(head, x, answered_mask) -> dict
     # mean |phi_j| answered vs declined + gap ranking. When EITHER population is empty the
     # gap is undefined: gap_ranking is an EMPTY array, never argsort of all-NaN (which
     # returns the identity permutation and fabricates feature 0 as top driver — audit V22).
+def gaussian_conditional_shapley_matrix(coef, cov) -> np.ndarray   # (k, k)
+    # 2026-08-21 (post-hoc value-function contrast; see the eICU section). For the linear
+    # logit w.z with z ~ N(0, cov) the CONDITIONAL Shapley values (Aas, Jullum & Loland
+    # 2021) are themselves LINEAR in z: v(S) = c + a_S.z with a_S[S] = w_S +
+    # cov_SS^{-1} cov_SSbar w_Sbar (Gaussian conditional mean; pinv for a singular
+    # block), a_S[Sbar] = 0, so phi_cond = z @ B.T with
+    #   B[j,:] = sum_{S not containing j} |S|!(k-|S|-1)!/k! (a_{S+j} - a_S),
+    # enumerated EXACTLY over all 2^k coalitions (k <= ~16). Columns of B sum to w
+    # (efficiency: sum_j phi_j = w.z) and B == diag(w) when cov == I (interventional == conditional under
+    # independence) -- both pinned by tests/test_explain.py. numpy only.
 def counterfactual_to_answer(head, x_row, tau_star) -> dict
     # Minimal counterfactuals into the answer region (2026-07-31; the contrastive
     # form the reject-explanation literature is ahead on — R3-15/R3-16). The head is
@@ -383,7 +393,10 @@ extract carries `POST_HOC_LABEL` (A6 discipline).
 
 PORTED from the verified reference implementation in `selective-reliability-panel/srp` (581 tests
 green, deterministic). The port is **byte-exact**: identical input arrays must give an identical
-panel dict, including every bootstrap endpoint. Three consequences are binding.
+panel dict, including every bootstrap endpoint. Byte-exact refers to the CODE: the
+comments and docstrings were rewritten for readability 2026-08-24 and no longer match
+the sandbox text, so a re-pipe-back would overwrite that prose. Three consequences are
+binding.
 
 * The digest prefix stays the byte literal `b"srp/1"` and `SCHEMA_VERSION` stays the string
   `"srp/1"`. Renaming either moves EVERY confidence interval in the panel, because the prefix is
@@ -762,7 +775,7 @@ have taken the certificate down with it. Two independent repairs, both required:
   `EICU-RELIABILITY.n_panels < replicates` is the arithmetic record that a replicate produced
   none. (Known cosmetic nit, accepted rather than fixed: with a column-shaped mask the
   broadcast in `reliability.py`'s mismatch counter inflates the record count in the error
-  MESSAGE; the abort itself is correct, and `certgate/reliability.py` is not edited — byte-exact
+  MESSAGE; the abort itself is correct, and `certgate/reliability.py`'s CODE is not edited — byte-exact
   port, `PANEL_DICT_SHA256`.)
 
 ## `report.py`
@@ -1073,7 +1086,7 @@ reproduces the grid's cohorts without re-running it, and self-checks against the
 `E1_validity.csv` (at M=100 it must reproduce every baseline-deploying draw's tau exactly —
 currently 194/194, 0 mismatches). OPEN: not yet folded into `run_synthetic.py`'s CSV/summary
 writers, so `python -m experiments.run_synthetic` alone does NOT regenerate SI Tables S4 and S5;
-SI A.3's one-command claim covers Figures 3–4, SI Figures S3–S9 and SI Tables S2–S3, S6
+SI A.3's one-command claim covers Figures 4–5, SI Figures S3–S9 and SI Tables S2–S3, S6
 and S9 only until it does.
 
 **Companion: `experiments/comparators.py`** (revision-2, E8 arm A). Pure alternative-bound
@@ -1651,6 +1664,51 @@ enumerated places ((1) a leading `post_hoc` column on every `EICU_subgroups.csv`
 `post_hoc` field of the `EICU-SUBGROUPS` summary block), certifies nothing, and settles none of
 P1–P7 / F-A–F-E. The dims/bands/label are pinned by an APPENDED post-hoc constants test that
 carries no pre-registration claim (the reliability-panel precedent).
+
+**PIN AMENDMENT (2026-08-21, venue-fit pass), same house rule.** `EICU_SUMMARY_SECTIONS` gains an
+eighth entry, `"EICU-FAITHFULNESS"`, APPENDED LAST for the post-hoc attribution value-function
+contrast below; ordering again SPEC (this paragraph) → `experiments/run_eicu.py` →
+`tests/test_constants.py`. Every artifact written under the 7-tuple still parses and preserves.
+
+**POST-HOC attribution value-function contrast (2026-08-21; decision-letter item 9 /
+revision-plan S1-12 "faithfulness").** The deployed attributions are the INTERVENTIONAL Shapley
+values of the linear logit with the S_train-mean baseline (`explain.py`, audit V20), and that
+section already records that the CONDITIONAL values differ under correlated features. ICU
+features are correlated, so `run_eicu` measures the size of the dependence instead of asserting
+it away. Per replicate, on the POOLED target arm at the deployed operative tau: take the
+`EICU_FAITHFULNESS_TOP_K = 10` features with the largest interventional answered-minus-declined
+|gap| — the SAME selection rule and depth as the `abstention_gap_ranking` the runner already
+emits, so the sub-game is exactly the driver set a reader sees (a sub-game on those k
+features; the other features enter every coalition value as their fixed interventional
+contribution and cancel in every marginal), estimate their standardized covariance on S_TRAIN
+ONLY (the same split the baseline mean comes from; never the target
+pool), and compute the conditional Shapley values under the Gaussian conditional value function
+(Aas, Jullum & Løland 2021) EXACTLY by enumerating all 2^k coalitions —
+`explain.gaussian_conditional_shapley_matrix(coef_k, cov_k)` returns the k x k matrix B with
+`phi_cond = z_k @ B.T`, columns summing to `coef_k` (efficiency, `sum_j phi_j = w.z`) and `B == diag(coef_k)` when the
+covariance is the identity (the two value functions coincide under independence; both pinned
+by test). The block emits, per selected feature, mean |phi| on the answered and declined sets
+and the answered-minus-declined gap under BOTH value functions, the rank of each feature as an
+abstention driver under each, and three scalars: the Spearman correlation of the two gap
+orderings, the top driver under each, and the largest off-diagonal |correlation| among the k
+features with the pair that attains it and the full k x k training correlation matrix (the premise,
+measured; 100 aggregate numbers). The interventional half is recomputed independently and
+cross-checked feature by feature against the `abstention_gap_ranking` already in
+`EICU_diagnostics.json` (`max_abs_diff_vs_abstention_ranking`, rounding only; `n_cross_checked`
+must equal k). Design log: the first cut (2026-08-21, same day, before any number was quoted)
+selected the k largest-|coefficient| features; on the real extract that set was dominated by
+missingness indicators with near-zero gaps and overlapped the emitted driver ranking on ONE
+feature, so the cross-check covered n = 1 and the block was not measuring the reading it
+exists to test. The selection was changed to the driver set and the run repeated; the top
+driver (GCS motor) was the same under both value functions under either selection. Binary and `__missing` indicator
+features inside the top-k are covered by the Gaussian APPROXIMATION the cited method makes,
+and the block says so in its label. Everything descends from data seen after the freeze: the
+block is labeled by `EICU_FAITHFULNESS_LABEL`, carried in TWO enumerated places ((1) a leading
+`post_hoc` column on every `EICU_faithfulness.csv` row, (2) the `post_hoc` field of the
+`EICU-FAITHFULNESS` summary block), certifies nothing, settles none of P1–P7 / F-A–F-E, and
+consumes no `_rng` draw — every certified quantity is byte-identical with and without it. `k`
+and the label are pinned by an APPENDED post-hoc constants test that carries no
+pre-registration claim (the subgroups precedent).
 
 **PIN AMENDMENT (2026-08-01), recorded because the house rule forbids silent edits to a pinned
 literal.** `EICU_SUMMARY_SECTIONS` was a 5-tuple until this date; the reliability-panel work

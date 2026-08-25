@@ -1,4 +1,5 @@
 {
+ "citation_note": "Citations re-verified against the working tree 2026-08-25. Line numbers, paths and quoted caption text were re-pointed after the 2026-08-24 comment humanization and the 2026-08-25 paper de-labelling; every finding, severity and number in this file is the original and is unchanged. Three things to read it with. (1) The quotes in verdicts, stoppers, stumbles and nits are pre-rewrite snapshots of paper/draft.md and are not expected to match the current draft: this pass's own Phase 4/4b fixes (commits a2ac193, a2e8b12) removed the text they quote. The fused '## Explainability: answers and abstentions' heading and the 'VERIFY: PMLR volume' note in the references both have zero hits in the draft today, which is the stoppers being closed, not the citations being wrong. (2) The manuscript was renumbered 2026-08-21: main Figures 2, 3, 4 and 5 as reviewed here are today Figures S9, S7, S8 and 2, while Figure 1 and Figures S1-S6 keep their numbers, and Tables 1, 2 and 3 are today Table S1, Table 1 and Table 2. Figure names throughout this file are the reviewed-build names. (3) The paper/draft.md line numbers cited in fig_minor were re-pointed to the 2026-08-25 tree; where an item's stated reason for a judgement has since lapsed, that is recorded inside the item rather than by changing the judgement.",
  "verdicts": [
   {
    "persona": "Clinical-informatics researcher who runs a hospital analytics group; fluent in prediction models, TRIPOD(-Cluster), calibration, discrimination, and internal-external validation; no working knowledge of anytime-valid inference, betting martingales, or conformal prediction internals. Reads methods papers to decide whether a tool is deployable and auditable.",
@@ -359,7 +360,7 @@
   {
    "figure": "Figure 1 — The CertGate pipeline (paper/build/out/sn/figs/pipeline.pdf)",
    "kind": "CAPTION",
-   "detail": "The caption's explicit 'Notation in the figure' sentence defines Z_c, rho, delta_bet, and delta_conf but omits (c0, c1, pi_s) and q_t, which appear unglossed in the label-shift machinery box and are only defined in Section 3.6 — a small self-containedness gap in a sentence whose stated purpose is to cover the figure's notation.",
+   "detail": "The caption's explicit 'Figure notation:' sentence defines Z_c, rho, delta_bet, and delta_conf but omits (c0, c1, pi_s) and q_t, which appear unglossed in the label-shift machinery box and are only defined in Section 3.6 — a small self-containedness gap in a sentence whose stated purpose is to cover the figure's notation.",
    "severity": "MINOR"
   },
   {
@@ -371,7 +372,7 @@
   {
    "figure": "Figure 2 (E2_label_shift.png) — Label-shift stress test: failure at the registered shift, and the magnitude sweep",
    "kind": "FIGREF",
-   "detail": "Main text Section 4.3 (paper/draft.md line 134) places '(Figure 2, left)' immediately after the claim that 'the influence-weighted answered risk on a fresh label-shifted pool exceeds alpha for 97.5% of its certificates', and the '(Figure 2, right)' reference introduces 'aggregate-estimand violation 0.0 to 0.975' — but neither panel plots the influence-weighted / aggregate-estimand violation series. The left panel shows only the hard-violation rate (0.395) and the BBSE decline annotation; the right panel's legend carries hard-viol, certify rates, and certify-and-violate only. The figure fully supports the 39.5% / dose-response / BBSE-zero claims, but a reader sent to it for the 97.5% or 0.975 numbers will not find them; either move the figure citations so they anchor only the plotted quantities, or point the aggregate-estimand numbers at their actual source.",
+   "detail": "Main text Section 4.3 (paper/draft.md line 135 as of 2026-08-25) places '(Figure 2, left)' immediately after the claim that 'the influence-weighted answered risk on a fresh label-shifted pool exceeds alpha for 97.5% of its certificates', and the '(Figure 2, right)' reference introduces 'aggregate-estimand violation 0.0 to 0.975' — but neither panel plots the influence-weighted / aggregate-estimand violation series. The left panel shows only the hard-violation rate (0.395) and the BBSE decline annotation; the right panel's legend carries hard-viol, certify rates, and certify-and-violate only. The figure fully supports the 39.5% / dose-response / BBSE-zero claims, but a reader sent to it for the 97.5% or 0.975 numbers will not find them; either move the figure citations so they anchor only the plotted quantities, or point the aggregate-estimand numbers at their actual source.",
    "severity": "MINOR"
   },
   {
@@ -389,7 +390,7 @@
   {
    "figure": "Figure 3 (E4_site_sweep.png) — Site-count frontier: certify rate and mean coverage vs site count at both rungs",
    "kind": "IMAGE",
-   "detail": "Code-register labeling below journal polish: axis label 'n_sites' (vs 'number of sites'), legend entries 'alpha=0.05'/'alpha=0.1' (vs Greek alpha as used in the caption), residual internal experiment code 'E4' in both panel titles, and the titles say 'cluster count' where the caption and axis say site count. The plot is still clearly connectable to its caption (certify rate / coverage vs site count), so this is cosmetic, but the mixed vocabulary (cluster vs site) compounds the 50-vs-125 unit confusion above.",
+   "detail": "Code-register labeling below journal polish: axis label 'n_sites' (vs 'number of sites'), legend entries 'alpha=0.05'/'alpha=0.1' (vs Greek alpha as used in the caption), residual internal experiment code 'E4' in both panel titles (re-checked 2026-08-25: the regenerated experiments/out/E4_site_sweep.png no longer carries it — the titles now read 'Certify rate vs cluster count' and 'Mean coverage vs cluster count' — but the typeset copy at paper/build/out/sn/figs/E4_site_sweep.png is still the pre-08-25 image and does, so this half closes only when the build figures are re-synced), and the titles say 'cluster count' where the caption and axis say site count. The plot is still clearly connectable to its caption (certify rate / coverage vs site count), so this is cosmetic, but the mixed vocabulary (cluster vs site) compounds the 50-vs-125 unit confusion above.",
    "severity": "MINOR"
   },
   {
@@ -425,7 +426,7 @@
   {
    "figure": "Figure 5",
    "kind": "FIGREF",
-   "detail": "The single main-text citation (Section 4.10, draft.md line 172, alongside Table 3) anchors only the left panel's content (certification at alpha=0.10, mean coverage 0.890). The paragraph that states exactly what the centre panel plots - R_M averaging 0.0478, range 0.0348-0.0593, exceeding alpha on none of the 20 (line 174) - and the paragraph reporting the right panel's dispersion diagnostic at 0.027 against the registered [0.05, 0.30] (line 186, prediction P2) do not cite Figure 5, so readers of those passages are never pointed to the panels that display those numbers. Adding '(Figure 5, centre)' and '(Figure 5, right)' at those two spots would integrate all three panels. The references that do exist are accurate, as is the SI A.3 provenance mention (line 238).",
+   "detail": "The single main-text citation (Section 4.10, draft.md line 173 as of 2026-08-25, alongside Table 3 — today Table 2) anchors only the left panel's content (certification at alpha=0.10, mean coverage 0.890). The paragraph that states exactly what the centre panel plots - R_M averaging 0.0478, range 0.0348-0.0593, exceeding alpha on none of the 20 (line 175) - and the paragraph reporting the right panel's dispersion diagnostic at 0.027 against the registered [0.05, 0.30] (line 185, prediction P2) do not cite Figure 5, so readers of those passages are never pointed to the panels that display those numbers. Adding '(Figure 5, centre)' and '(Figure 5, right)' at those two spots would integrate all three panels. The references that do exist are accurate, as is the SI A.3 provenance mention (line 265).",
    "severity": "MINOR"
   },
   {
@@ -473,31 +474,31 @@
   {
    "figure": "Figure S4",
    "kind": "FIGREF",
-   "detail": "The single main-text reference (draft.md line 138, section 4.4) places '(Supplementary Figure S4)' immediately after the estimand-level claim 'against the certified estimand the failure is total -- 100% of certificates exceed alpha on a fresh concept-tilted pool', but the figure does not display that 100% quantity (rm_exceed_rate=1.0 in the artifact) anywhere -- it plots only the 70% hard-violation rate. A reader dispatched to the figure to verify '100%' finds 0.700. Moving the citation to follow the 'hard-violates 70.0% (exact 95% CI [0.631, 0.763])' clause, or adding the estimand-level rate to the plot/caption, would align reference and content.",
+   "detail": "The single main-text reference (draft.md line 139 as of 2026-08-25, section 4.4) places '(Supplementary Figure S4)' immediately after the estimand-level claim 'against the certified estimand the failure is total -- 100% of certificates exceed alpha on a fresh concept-tilted pool', but the figure does not display that 100% quantity (rm_exceed_rate=1.0 in the artifact) anywhere -- it plots only the 70% hard-violation rate. A reader dispatched to the figure to verify '100%' finds 0.700. Moving the citation to follow the 'hard-violates 70.0% (exact 95% CI [0.631, 0.763])' clause, or adding the estimand-level rate to the plot/caption, would align reference and content.",
    "severity": "MINOR"
   },
   {
    "figure": "Figure S4",
    "kind": "IMAGE",
-   "detail": "The 'no certificates' annotation at alpha=0.05 is small, rotated 90 degrees, rendered in light gray, and the dashed DELTA=0.05 line strikes directly through it; at print size it is easy to miss even though it is the only in-figure explanation for the empty column. Secondary nit: the legend uses the code-style token 'DELTA=0.05' where the caption and text use the Greek delta -- connectable, but a delta glyph would match the manuscript notation. (The 'E3' in the title is not flagged: the caption itself leads with 'E3 concept-shift negative control', so the plot-to-caption connection is immediate.)",
+   "detail": "The 'no certificates' annotation at alpha=0.05 is small, rotated 90 degrees, rendered in light gray, and the dashed DELTA=0.05 line strikes directly through it; at print size it is easy to miss even though it is the only in-figure explanation for the empty column. Secondary nit: the legend uses the code-style token 'DELTA=0.05' where the caption and text use the Greek delta -- connectable, but a delta glyph would match the manuscript notation. (The 'E3' in the title is not flagged: the caption itself leads with 'E3 concept-shift negative control', so the plot-to-caption connection is immediate. Re-checked 2026-08-25 — both halves of that reasoning have since moved. The caption now reads 'Figure S4. Concept-shift negative control.', so the plot-to-caption bridge quoted here is gone; but the regenerated experiments/out/E3_concept_shift.png no longer carries the code either, its title now reading 'Concept-shift negative control (should FAIL)', so nothing is left to flag on the current artifact. Only the un-re-synced typeset copy at paper/build/out/sn/figs/E3_concept_shift.png still shows 'E3'.)",
    "severity": "MINOR"
   },
   {
    "figure": "Figure S5",
    "kind": "IMAGE",
-   "detail": "The right panel's title is clipped at the PNG's right edge mid-word: it reads 'E5 answered-vs-declined |phi| gap (mean +/- 95% CI over 186 dra' with 'draws)' cut off by the image boundary (verified in the raw 1210x440 PNG at paper/build/out/sn/figs/E5_explain.png, not a viewer scaling effect). Interpretation is recoverable from the caption, but the figure should be regenerated with a tight bounding box or shorter title so no text runs off the canvas.",
+   "detail": "The right panel's title is clipped at the PNG's right edge mid-word: it reads 'E5 answered-vs-declined |phi| gap (mean +/- 95% CI over 186 dra' with 'draws)' cut off by the image boundary (verified in the raw 1210x440 PNG at paper/build/out/sn/figs/E5_explain.png, not a viewer scaling effect; quote re-verified against that PNG 2026-08-25 and still exact — unlike E1-E4, this figure was not re-rendered in the 2026-08-25 de-labelling, because only the left panel's title was de-labelled in source while the R = 200 branch f-string at run_synthetic.py:889 was left reading 'E5 answered-vs-declined |phi| gap', so both panel titles still carry the code and the right one is still clipped). Interpretation is recoverable from the caption, but the figure should be regenerated with a tight bounding box or shorter title so no text runs off the canvas.",
    "severity": "MINOR"
   },
   {
    "figure": "Figure S5",
    "kind": "FIGREF",
-   "detail": "The only in-text callout (draft.md line 146) attaches '(Supplementary Figure S5)' to the clause 'each declined case's margin-to-answer localizes its confidence deficit to named features' — a per-declined-case attribution display the figure does not contain (its panels show global standardized coefficients and the pooled answered-vs-declined |phi| gap). Meanwhile the following sentence, which reports exactly what the right panel plots (mean gaps -0.21 to -0.26 over 186 draws), has no callout. A reader following the reference will look for a per-case decomposition that isn't there; move or duplicate the callout to the replication sentence, or reword the citing clause to what the panels show.",
+   "detail": "The only in-text callout (draft.md line 147 as of 2026-08-25) attaches '(Supplementary Figure S5)' to the clause 'each declined case's margin-to-answer localizes its confidence deficit to named features' — a per-declined-case attribution display the figure does not contain (its panels show global standardized coefficients and the pooled answered-vs-declined |phi| gap). Meanwhile the following sentence, which reports exactly what the right panel plots (mean gaps -0.21 to -0.26 over 186 draws), has no callout. A reader following the reference will look for a per-case decomposition that isn't there; move or duplicate the callout to the replication sentence, or reword the citing clause to what the panels show.",
    "severity": "MINOR"
   },
   {
    "figure": "Figure S5",
    "kind": "CAPTION",
-   "detail": "The caption asserts 'the top-gap feature is uniform across features 0-3 (modal share 0.274 vs 0.25 chance)' as part of describing the right panel, but neither panel depicts this per-draw top-gap-feature distribution — the bars of similar height are consistent with it but the 0.274/0.25 statistic has no visual counterpart in the figure. All other caption numbers (coefficients ~1.15-1.18, |.| <= 0.036 for features 4-7, gaps -0.21 to -0.26, 186 draws, sign convention) match the plot. Consider flagging the modal-share figure as 'not shown' or leaving it to the main text (where it already appears at line 146).",
+   "detail": "The caption asserts 'the top-gap feature is uniform across features 0-3 (modal share 0.274 vs 0.25 chance)' as part of describing the right panel, but neither panel depicts this per-draw top-gap-feature distribution — the bars of similar height are consistent with it but the 0.274/0.25 statistic has no visual counterpart in the figure. All other caption numbers (coefficients ~1.15-1.18, |.| <= 0.036 for features 4-7, gaps -0.21 to -0.26, 186 draws, sign convention) match the plot. Consider flagging the modal-share figure as 'not shown' or leaving it to the main text (where it already appears at line 147).",
    "severity": "MINOR"
   },
   {

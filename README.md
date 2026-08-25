@@ -92,10 +92,12 @@ certgate/
     comparators.py     ← E8 alternative cluster-aware bounds (pure arithmetic)
     panel_s2_tables.py ← read-only analysis behind SI Tables S4–S5
     panel_confusion_tables.py ← read-only derived confusion tables (SI Table S7)
+    fig_eicu_abstention_drivers.py ← read-only renderer of main Figure 3 from the released eICU diagnostics
     out/               ← figures + CSVs for the paper (20-replicate eICU aggregates included)
     out-sens/          ← eICU apache-complete sensitivity arm (aggregate-only sidecar)
     out-panel/         ← eICU replicate-0 panel measurement (aggregate-only sidecar, POST-HOC)
     out-subgroups/     ← eICU subgroup aggregates (aggregate-only sidecar)
+    out-faithfulness/  ← eICU replicate-0 attribution value-function contrast (aggregate-only sidecar, POST-HOC; SI Table S10)
   examples/
     real_data_example.py    ← runnable from_raw → run_certgate walkthrough
     explain_dashboard.py    ← self-contained interactive explanation dashboard
@@ -129,14 +131,15 @@ python -m experiments.run_synthetic            # full paper grid
 
 The manuscript master is `paper/draft.md` (pandoc markdown; citations are `[@key]` groups against `paper/references.bib`) — the canonical, self-contained home of every result number alongside the generated artifacts in `experiments/out*/`. `python paper/make_submission.py` builds the whole submission package for Discover Computing (Springer Nature `sn-jnl`, pdflatex): `CertGate_DiscoverComputing.pdf` (the submission typescript), `CertGate_SI.pdf` (Supplementary Information A — deferred proofs, reproducibility details, the frozen-constants register as Table S1, and Figures S1–S9), `CertGate_compact.pdf` (a 10pt reading copy, not the typescript), and the Snapp figures zip (`Fig1.pdf`, `Fig2.png`, …). `paper/cover-letter.md` is the submission cover letter. Author-only blanks are marked `[[TBC:...]]` throughout — grep for that token to enumerate what remains before submission.
 
-Figure → source map (as called out in the draft; the current build keeps four figures and two tables in the main text and moves the rest to the peer-reviewed SI):
+Figure → source map (as called out in the draft; the current build keeps five figures and two tables in the main text and moves the rest to the peer-reviewed SI):
 
 | Figure | Source |
 |---|---|
 | 1 | `paper/figures-src/pipeline.tex` (schematic, compiled at build time) |
 | 2 | `experiments/out/EICU_pooled.png` |
-| 3 | `experiments/out/E8_suite.png` |
-| 4 | `experiments/out/E9_frontiers.png` |
+| 3 | `experiments/out/EICU_abstention_drivers.png` (rendered read-only from the released `EICU_diagnostics.json` by `experiments/fig_eicu_abstention_drivers.py`) |
+| 4 | `experiments/out/E8_suite.png` |
+| 5 | `experiments/out/E9_frontiers.png` |
 | S1 | `experiments/out/EICU_reliability_panel.png` (SI) |
 | S2 | `experiments/out/EICU_per_site.png` (SI) |
 | S3 | `experiments/out/E1_validity.png` (SI) |
@@ -147,7 +150,7 @@ Figure → source map (as called out in the draft; the current build keeps four 
 | S8 | `experiments/out/E6_fairness.png` (SI) |
 | S9 | `experiments/out/E2_label_shift.png` (SI) |
 
-Main-text tables: 1 = eICU attrition ledger, 2 = eICU per-replicate certificates. SI tables: S1 = frozen-constants register, S2 = E1 exceedance strata, S3 = E6 per-site coverage bins, S4 = influence-cap sweep, S5 = operating characteristics, S6 = E4 frontier, S7 = derived answered/declined confusion, S8 = eICU subgroup coverage, S9 = E6 three-way answered-set composition. One artifact PNG deliberately carries no figure number: `E6_reliability.png` (its results appear as prose in §4.7). And `experiments/out-sens/` is the frozen 2026-07-31 sensitivity-arm record: it predates the reliability panel, so it legitimately lacks the three `EICU_reliability*` files a current-code rerun would add.
+Main-text tables: 1 = eICU attrition ledger, 2 = eICU per-replicate certificates. SI tables: S1 = frozen-constants register, S2 = realized exceedance strata (E1 artifacts), S3 = per-site coverage bins (E6 artifacts), S4 = influence-cap sweep, S5 = operating characteristics, S6 = cluster-count sweep grid (E4 artifacts), S7 = derived answered/declined confusion, S8 = eICU subgroup coverage, S9 = three-way answered-set composition (E6 artifacts), S10 = eICU attribution value-function contrast (POST-HOC; `experiments/out-faithfulness/EICU_faithfulness.csv`). One artifact PNG deliberately carries no figure number: `E6_reliability.png` (its results appear as prose in §4.7). And `experiments/out-sens/` is the frozen 2026-07-31 sensitivity-arm record: it predates the reliability panel, so it legitimately lacks the three `EICU_reliability*` files a current-code rerun would add.
 
 Cloning without SSH keys: `git clone https://github.com/Toepatella/certgate.git`
 

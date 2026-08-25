@@ -20,6 +20,8 @@ Four examiners prosecuted the pooled Stage-1 findings against the manuscript (Ex
 
 Kill rate is low because Stage 1 ran six referees over one manuscript: the dominant Stage-2 outcome was merging co-discovered findings, not refuting them.
 
+> Citations re-verified against the working tree 2026-08-25. Line numbers and quoted comment text were re-pointed after the 2026-08-24 comment humanization and the 2026-08-25 paper de-labelling; findings, verdicts and numbers are the originals and are unchanged. Quotations of `paper/draft.md` prose are left at their review-time wording and line numbers: they record a draft state the revision deliberately superseded. Artifact filename prefixes (`E1_validity.csv` … `E9_*`, `run_E5`, `run_E6`) are **not** renamed — those prefixes were deliberately kept and are still live pointers.
+
 ---
 
 ## Verified findings — CONFIRMED
@@ -34,7 +36,9 @@ I read all six experiments. E2's "uncorrected baseline" is CertGate's own *excha
 
 ### DS-05 — CONFIRMED
 
-> "# Figures" (line 298) … "**Figure 1. E1 in-distribution validity.**" (line 300) … "**Figure 6. E6 per-site coverage and answered error.**" (line 310)
+> "# Figures" (line 298) … "**Figure S3. In-distribution validity.**" (line 300) … "**Figure S8. Per-site coverage and answered error by site size.**" (line 310)
+
+*(Float titles carried forward to the current draft. At review time these read "**Figure 1. E1 in-distribution validity.**" and "**Figure 6. E6 per-site coverage and answered error.**"; the floats were later renumbered into the Supplementary Information and lost their `E1`/`E6` prefixes in the 2026-08-25 de-labelling. Lines 298/300/310 are review-time anchors into the superseded draft.)
 
 Verified mechanically: the string `Figure N` occurs at lines 300, 302, 304, 306, 308, 310 **and nowhere else**; a search for `![`, `.png`, `.pdf`, `.svg`, `.jpg`, `includegraphics` returns zero matches. Six captions, no images, no in-text callout. Co-discovered by R5-15 (kept separate, see Merged note), R1-42, R2-30, R3-24/R3-46.
 
@@ -170,7 +174,9 @@ Recomputed: 0.22 / 0.095 = **2.3158**. A 2.32-fold change is not a near-tripling
 
 ### DS-30 — CONFIRMED
 
-> "**Table 1. E1 realized exceedance by answered-set size bin ($\alpha = 0.10$), observed versus binomial reference.**" with reference column 0.4063 / 0.4689 / 0.4820 / 0.4915
+> "**Table S2. Realized exceedance by answered-set size bin ($\alpha = 0.10$), observed versus binomial reference.**" with reference column 0.4063 / 0.4689 / 0.4820 / 0.4915
+
+*(Caption carried forward to the current draft; at review time it read "**Table 1. E1 realized exceedance by answered-set size bin …**". The reference column is unchanged.)*
 
 Neither the caption nor §4.2 nor §3.9 states the n or p behind the reference column. The success probability is *inferable* (§4.2 calls it "the exceedance a perfectly valid boundary-case certificate would show", and §3.9 says "at the boundary the exceedance rate approaches 50% as batches grow", so p = α) — the editor should note that mitigation. The per-bin batch size is not recoverable at all, so the column cannot be regenerated, and Springer requires captions to stand alone. Co-discovered by R1-27.
 
@@ -1538,7 +1544,9 @@ Verified verbatim. "gap ranking" is never defined, and the ellipsis does hide fe
 
 ### R3-24 — CONFIRMED *(survivor of the figures cluster)*
 
-> The "# Figures" section (lines 298–310) runs from "**Figure 1. E1 in-distribution validity.**" to "**Figure 6. E6 per-site coverage and answered error.**"
+> The "# Figures" section (lines 298–310) runs from "**Figure S3. In-distribution validity.**" to "**Figure S8. Per-site coverage and answered error by site size.**"
+
+*(Float titles carried forward; review-time wording was "**Figure 1. E1 in-distribution validity.**" and "**Figure 6. E6 per-site coverage and answered error.**". Lines 298–310 are review-time anchors into the superseded draft.)*
 
 I verified independently: `grep -i "!\[|\.png|\.pdf|\.svg"` returns **zero image references**, and `ls paper/` shows only `TODO.md`, `draft.md`, `references.bib` and `review/` — no image files accompany the manuscript. I also confirmed the stronger fact DS-05 reports: the string "Figure" appears **only** at lines 298–310, so no figure is called out anywhere in §1–§6 or the appendices. Figure 5 — the only figure in R3's remit — is unreviewable.
 **Co-discovery:** DS-05, R1-42, R2-30, R3-24/R3-46, R5-15 — five of six referees.
@@ -1548,6 +1556,8 @@ I verified independently: `grep -i "!\[|\.png|\.pdf|\.svg"` returns **zero image
 ### R3-25 — CONFIRMED
 
 > "Right: the answered-minus-declined gap in mean absolute attribution per feature; feature 0 shows the largest gap ($-0.854$; 0.868 answered vs 1.722 declined), identifying it as the dominant systematic abstention driver." (Figure 5 caption, line 308)
+
+*(The caption text quoted here has no current match: the float is now Figure S5, "Attribution study", whose right panel was rebuilt on the $R = 200$ re-run these findings prescribe. Quoted at its review-time wording; line 308 is a review-time anchor into the superseded draft. The same applies to the caption quotes at the R3-06 and DS-14 entries above.)*
 
 Verified verbatim: the caption carries no $n$. Kept separate from R2-19 because the defect is in a different passage — a caption that must stand alone for a reader who does not read §4.6.
 
@@ -1605,7 +1615,7 @@ Verified: two empirical claims about human behaviour with no citation attached. 
 
 ### R4-01 — **CONFIRMED**
 
-Anchor located, §4.1 line 152: *"The cohort follows the specification frozen in `data.py`: 208 collection sites … with the two class means separated by $\mathrm{sep} = 2.2$ along that direction."* Against `experiments/run_synthetic.py:40` `SHIFT_SEP = 1.8  # realistic head so shift bites`, consumed at `:195` (`run_E2`) and `:264` (`run_E3`) as `SimConfig(sep=SHIFT_SEP)`. `certgate/data.py:50` does default `sep: float = 2.2`, and E1/E4/E5/E6 use bare `SimConfig()` — so the split is exactly as alleged.
+Anchor located, §4.1 line 152: *"The cohort follows the specification frozen in `data.py`: 208 collection sites … with the two class means separated by $\mathrm{sep} = 2.2$ along that direction."* Against `experiments/run_synthetic.py:40` `SHIFT_SEP = 1.8  # realistic head so shift bites`, consumed at `:195` (`run_E2`) and `:264` (`run_E3`) as `SimConfig(sep=SHIFT_SEP)`. *(Re-verified 2026-08-25: the constant and both call sites were removed by the prescribed fix — `SHIFT_SEP` survives only as the negative assertion `tests/test_constants.py:129`, and both experiments now read bare `SimConfig()` at `experiments/run_synthetic.py:457` and `:574`.)* `certgate/data.py:50` (now `:57`) does default `sep: float = 2.2`, and E1/E4/E5/E6 use bare `SimConfig()` — so the split is exactly as alleged.
 
 I grepped the whole draft for `sep`: **it occurs once, at line 152.** §4.3 and §4.4 say nothing about the generator. There is no scoping passage anywhere that could invoke kill criterion 5. The two experiments running the undisclosed value are precisely the two producing 48.5% and 83%.
 
@@ -1619,25 +1629,25 @@ Anchor located, §3.2 line 68, verbatim as quoted, including *"a lightweight, ma
 
 ### R4-03 — **CONFIRMED**
 
-Anchor located, §6.1 line 242: *"Missing values pass through the frozen encoder's imputation-and-indicator scheme; we do not add a dedicated positivity (overlap) diagnostic."* I grepped `certgate/`, `examples/`, `experiments/`, `tests/` for `imput|indicator|encoder|missing`: the only hits are `data.py:4` (a docstring saying missingness machinery was *dropped*), `validate.py:60/82/155` and `examples/real_data_example.py:156` (error-message prose), and `test_validate.py:53` (a comment). No encoder, no imputation, no indicator exists. `certgate/validate.py:139` raises `CohortError("make_cohort: x contains non-finite values (NaN/inf)")`; `certgate/pipeline.py:109-112` raises `ValueError(... reason=nonfinite-features)`. The described behaviour is the inverse of the implemented behaviour. Co-discovered independently by **R5-30** from the manuscript alone ("a component described nowhere in the Methods or Results and inapplicable to a generator that produces complete features") — two referees reaching the same defect from opposite directions is strong evidence.
+Anchor located, §6.1 line 242: *"Missing values pass through the frozen encoder's imputation-and-indicator scheme; we do not add a dedicated positivity (overlap) diagnostic."* I grepped `certgate/`, `examples/`, `experiments/`, `tests/` for `imput|indicator|encoder|missing`: the only hits are `data.py:4` (a docstring saying missingness machinery was *dropped*), `validate.py:60/82/155` and `examples/real_data_example.py:156` (error-message prose), and `test_validate.py:53` (a comment). No encoder, no imputation, no indicator exists. `certgate/validate.py:139` (now `:313`) raises `CohortError("make_cohort: x contains non-finite values (NaN/inf)")`; `certgate/pipeline.py:109-112` (now `:234`) raises `ValueError(... reason=nonfinite-features)`. *(Re-verified 2026-08-25: `certgate/data.py:4` is unchanged; the `validate.py` hits are now `:62`, `:129`/`:133` and `:185`/`:194`; `test_validate.py:53` is now the `test_nan_raw_labels_raise` case at `:50`; and `examples/real_data_example.py:156` has no current match — that error-message prose was removed, so the file no longer supplies even an incidental hit.)* The described behaviour is the inverse of the implemented behaviour. Co-discovered independently by **R5-30** from the manuscript alone ("a component described nowhere in the Methods or Results and inapplicable to a generator that produces complete features") — two referees reaching the same defect from opposite directions is strong evidence.
 
 *(Examiner D)*
 
 ### R4-04 — **CONFIRMED**
 
-Anchor located, §4.1 line 156: *"Every experiment runs in mode FULL under protocol seed 20260721 … and replicates over $R = 200$ independent calibration draws."* `run_E5` (`:398-401`) takes `rng = _rng(5)`, one cohort, one deployment; `run_E6` (`:461-465`) takes `rng = _rng(6)`, one cohort, one deployment. Neither has an `R` loop; both accept `quick` and ignore it. §4.6/§4.7 call them "case study" and "a separate deployment" but nowhere state R=1 or that no sampling uncertainty attaches — insufficient to invoke kill criterion 2 against a blanket "Every experiment". Co-discovered by **R3-08** and **R3-43** from the manuscript alone.
+Anchor located, §4.1 line 156: *"Every experiment runs in mode FULL under protocol seed 20260721 … and replicates over $R = 200$ independent calibration draws."* `run_E5` (`:398-401`, now `experiments/run_synthetic.py:738-742`) takes `rng = _rng(5)`, one cohort, one deployment; `run_E6` (`:461-465`, now `:910-914`) takes `rng = _rng(6)`, one cohort, one deployment. Neither has an `R` loop; both accept `quick` and ignore it. §4.6/§4.7 call them "case study" and "a separate deployment" but nowhere state R=1 or that no sampling uncertainty attaches — insufficient to invoke kill criterion 2 against a blanket "Every experiment". Co-discovered by **R3-08** and **R3-43** from the manuscript alone.
 
 *(Examiner D)*
 
 ### R4-05 — **CONFIRMED**
 
-Anchor located, §A.3 line 268: *"each report artifact embeds a provenance block recording package versions, seeds, and input hashes."* `report.provenance()` (`report.py:29-59`) does construct the block and `pipeline.py:130` attaches it — so the sentence is true of the in-memory report object, and `test_pipeline.py:90-99` confirms it. But I grepped all of `experiments/out/` for `provenance|input_hash|timestamp_utc|python.*3\.13`: **zero files match.** `_write_csv` field lists exclude it; `E5_explain.json` and `E6_composition.json` are built from explicit payload dicts; `summary.md` carries only mode/seed/ladder. The finding's factual assertion — no released artifact carries a package version, input hash, or Python version — is verified exactly. The defect is that a reader auditing the *release* cannot check what §A.3 promises.
+Anchor located, §A.3 line 268: *"each report artifact embeds a provenance block recording package versions, seeds, and input hashes."* `report.provenance()` (`report.py:29-59`, now `certgate/report.py:35`) does construct the block and `pipeline.py:130` (now `certgate/pipeline.py:271`) attaches it — so the sentence is true of the in-memory report object, and `test_pipeline.py:90-99` (now `tests/test_pipeline.py:94-108`) confirms it. But I grepped all of `experiments/out/` for `provenance|input_hash|timestamp_utc|python.*3\.13`: **zero files match.** `_write_csv` field lists exclude it; `E5_explain.json` and `E6_composition.json` are built from explicit payload dicts; `summary.md` carries only mode/seed/ladder. The finding's factual assertion — no released artifact carries a package version, input hash, or Python version — is verified exactly. The defect is that a reader auditing the *release* cannot check what §A.3 promises.
 
 *(Examiner D)*
 
 ### R4-06 — **CONFIRMED**
 
-Anchor located, §4.5 line 186, verbatim including *"not by the betting test's information floor. We say so explicitly because the two failure modes have different remedies."* `_cert_eval` populates `out["decline_reason"]` at `run_synthetic.py:79/82/86`, including the structural gate reason. The three `_write_csv` field lists at `:124-127`, `:295-297`, `:347-349` all omit it. I counted occurrences of `insufficient-clusters` across every released artifact: **E1 0, E2 0, E3 0, E4 0, E6 0, summary.md 0.** The `gate_note` in summary.md is derived arithmetically at `:370-375` from `n_sites < 125`, not from any recorded reason. The distinction §4.5 says it is drawing explicitly is unrecoverable from the release.
+Anchor located, §4.5 line 186, verbatim including *"not by the betting test's information floor. We say so explicitly because the two failure modes have different remedies."* `_cert_eval` populates `out["decline_reason"]` at `run_synthetic.py:79/82/86` (now `experiments/run_synthetic.py:144`, `:147`, `:151`), including the structural gate reason. The three `_write_csv` field lists at `:124-127`, `:295-297`, `:347-349` all omit it. *(Re-verified 2026-08-25: the prescribed fix landed — the field lists, now four as E4 gained one, are at `:273`, `:471`, `:620` and `:686`, and each carries `decline_reason`.)* I counted occurrences of `insufficient-clusters` across every released artifact: **E1 0, E2 0, E3 0, E4 0, E6 0, summary.md 0.** The `gate_note` in summary.md is derived arithmetically at `:370-375` (now `experiments/run_synthetic.py:709-713`) from `n_sites < 125`, not from any recorded reason. The distinction §4.5 says it is drawing explicitly is unrecoverable from the release.
 
 *(Examiner D)*
 
@@ -1651,7 +1661,7 @@ Anchor located, §4.3 line 174: *"BBSE declines the remaining 95.5% of draws (de
 | 0.10 | `certified=True` | **9** |
 | 0.05 | `certified=False`, `bbse_reason=failsafe` | **200** |
 
-Zero `bbse-ill-conditioned`, zero `bbse-degenerate-bootstrap`, zero `bbse-misspecified` — the three declines §3.6 devotes a paragraph to fire **never** in any reported experiment. `failsafe` is set at `shift.py:216` when the walk certifies no threshold, the same outcome the baseline would report. `fit_bbse` computes `c0_ci`, `c1_ci`, `pi_s_ci`, `gap_lo`, `n_boot`, `n_attempts` (`shift.py:118-124`) and `rho_lo/rho_hi/rho_point` (`:148`) into `BBSEFit.diagnostics`; `run_synthetic.py` writes none of them.
+Zero `bbse-ill-conditioned`, zero `bbse-degenerate-bootstrap`, zero `bbse-misspecified` — the three declines §3.6 devotes a paragraph to fire **never** in any reported experiment. `failsafe` is set at `shift.py:216` (now `certgate/shift.py:387`) when the walk certifies no threshold, the same outcome the baseline would report. `fit_bbse` computes `c0_ci`, `c1_ci`, `pi_s_ci`, `gap_lo`, `n_boot`, `n_attempts` (`shift.py:118-124`, now `:294-301`) and `rho_lo/rho_hi/rho_point` (`:148`, now `:312`) into `BBSEFit.diagnostics`; `run_synthetic.py` writes none of them.
 
 *(Examiner D)*
 
@@ -1678,14 +1688,14 @@ Anchor located, §4.1 line 158 (*"we accompany the primary rates with exact (Clo
 
 ### R4-09 — **CONFIRMED**
 
-Anchors located at §3.2 line 66 and §4.1 line 154 — I grepped `"touched exactly once"` and it appears in exactly those two places. Against `report.py`: `_bootstrap_estimate(head, cal, tau, ...)` at `:86-115` (a 500-draw cluster bootstrap over `cal` sites), `_rm_vs_unweighted(head, cal, tau, ...)` at `:118-139`, `_capped_influence_share(cal)` at `:142-147`, plus `n_carrying` reads at `pipeline.py:134` and `report.py:185`. The referee concedes these feed the estimated/diagnostic tiers only and alleges no validity leak; the finding is that a flat factual claim about the code, repeated twice and load-bearing for the data-discipline argument, is false as written. It is.
+Anchors located at §3.2 line 66 and §4.1 line 154 — I grepped `"touched exactly once"` and it appears in exactly those two places. Against `report.py`: `_bootstrap_estimate(head, cal, tau, ...)` at `:86-115` (now `certgate/report.py:165-211`; a 500-draw cluster bootstrap over `cal` sites), `_rm_vs_unweighted(head, cal, tau, ...)` at `:118-139` (now `:214`), `_capped_influence_share(cal)` at `:142-147` (now `:238`), plus `n_carrying` reads at `pipeline.py:134` and `report.py:185` (now `certgate/pipeline.py:275` and `certgate/report.py:298`). The referee concedes these feed the estimated/diagnostic tiers only and alleges no validity leak; the finding is that a flat factual claim about the code, repeated twice and load-bearing for the data-discipline argument, is false as written. It is.
 *Note for the editor:* **R1-21** and **R2-32** attack the same sentence by a different mechanism (the 23-threshold walk). Same passage, different defect — three referees converging on one sentence is itself signal, but do not merge them: R4-09 is the only one that could open the code.
 
 *(Examiner D)*
 
 ### R4-10 — **CONFIRMED**
 
-Anchor located, §4.6 line 196 and the Figure 5 caption at line 308, both verbatim. `E5_explain.json` reads `"n_answered": 200, "n_declined": 2`, `"tau_star": 0.55`; `constants.py:19` `TAU_GRID = np.linspace(0.55, 0.99, 23)` so 0.55 is `TAU_GRID[0]`, the grid floor, and `fixed_sequence_walk` deploys `min(certified, key=tau)`. `mean_abs_phi_declined[0] = 1.722355…` — a mean of two numbers quoted to three decimals, carrying the word "systematically".
+Anchor located, §4.6 line 196 and the Figure 5 caption at line 308, both verbatim. `E5_explain.json` reads `"n_answered": 200, "n_declined": 2`, `"tau_star": 0.55`; `constants.py:19` (now `certgate/constants.py:22`) `TAU_GRID = np.linspace(0.55, 0.99, 23)` so 0.55 is `TAU_GRID[0]`, the grid floor, and `fixed_sequence_walk` deploys `min(certified, key=tau)`. `mean_abs_phi_declined[0] = 1.722355…` — a mean of two numbers quoted to three decimals, carrying the word "systematically".
 
 *Mitigation I am obliged to record:* §4.6 does state *"answering 200 cases and declining 2"* two sentences earlier, which R4 acknowledges. That blunts the non-disclosure charge for the body but not for the Figure 5 caption, which travels separately and omits it; and it does not touch the inferential claim, which no n=2 sample supports at any level of disclosure. The finding survives on the inference, not only on the disclosure.
 *Co-discovery:* the most-replicated finding in the pool — **DS-11, DS-50, R1-30, R2-19, R2-66, R3-07, R3-25, R3-35, R3-42, R5-14** and R4's own R4-46(b). Ten independent flags.
@@ -1694,13 +1704,13 @@ Anchor located, §4.6 line 196 and the Figure 5 caption at line 308, both verbat
 
 ### R4-11 — **CONFIRMED**
 
-Anchor located, §3.9 line 138, verbatim. I grepped `tests/` for `harness`, `wilson`, `exceedance`, `SIZE_BINS`, `hard_violation`: the only hit is the word "harness" inside a `test_realdata_path.py:11` docstring about the loader contract. **No test file imports `certgate.harness`; no assertion touches `wilson_lcb`, `hard_violation`, `exceedance_reference` or `SIZE_BINS`.** These three functions (`harness.py:23-58`) produce 0.01, 0.485, 0.0, 0.83 and every binomial reference in Table 1 and Figure 1, and `SIZE_BINS` (`:20`) defines the rows of Tables 1 and 2.
+Anchor located, §3.9 line 138, verbatim. I grepped `tests/` for `harness`, `wilson`, `exceedance`, `SIZE_BINS`, `hard_violation`: the only hit is the word "harness" inside a `test_realdata_path.py:11` (now `:15`) docstring about the loader contract. **No test file imports `certgate.harness`; no assertion touches `wilson_lcb`, `hard_violation`, `exceedance_reference` or `SIZE_BINS`.** These three functions (`harness.py:23-58`, now `certgate/harness.py:30`, `:50`, `:64`) produce 0.01, 0.485, 0.0, 0.83 and every binomial reference in Table 1 and Figure 1, and `SIZE_BINS` (`:20`, now `:27`) defines the rows of Tables 1 and 2. *(Re-verified 2026-08-25: the prescribed fix landed — `tests/test_harness.py:12` imports all three functions.)*
 
 *(Examiner D)*
 
 ### R4-12 — **CONFIRMED**
 
-Anchor located verbatim at `tests/test_shift.py:72-76`. I traced `certify_bbse`'s return range: `reason` is `fit.reason` when `fit.declined` (`shift.py:189`), `"failsafe"` when nothing certifies (`:216`), else `None` (`:221`). `fit.reason` can only be one of the three named declines. The asserted set `{None} ∪ {failsafe, bbse-degenerate-bootstrap, bbse-ill-conditioned, bbse-misspecified}` is therefore the **complete** range, and step 1 of the same test has already asserted `not fit.declined`, narrowing it further to `{None, "failsafe"}`. The assertion cannot fail. The comment above it claims a certify-and-violate check; the test never computes the target-pool risk at the BBSE-certified threshold. Steps 1 and 2 of the same test are genuine — the ρ interval must cover `RHO_TRUE`, and the baseline must be shown to certify *and* violate first.
+Anchor located verbatim at `tests/test_shift.py:72-76`. *(Re-verified 2026-08-25: the vacuous assertion was removed by the fix this finding prescribes — `tests/test_shift.py:79-91` now runs the certify-and-violate check and names the lesson, so the quoted assertion has no current match.)* I traced `certify_bbse`'s return range: `reason` is `fit.reason` when `fit.declined` (`shift.py:189`, now `certgate/shift.py:360`), `"failsafe"` when nothing certifies (`:216`, now `:387`), else `None` (`:221`, now `:392`). `fit.reason` can only be one of the three named declines. The asserted set `{None} ∪ {failsafe, bbse-degenerate-bootstrap, bbse-ill-conditioned, bbse-misspecified}` is therefore the **complete** range, and step 1 of the same test has already asserted `not fit.declined`, narrowing it further to `{None, "failsafe"}`. The assertion cannot fail. The comment above it claims a certify-and-violate check; the test never computes the target-pool risk at the BBSE-certified threshold. Steps 1 and 2 of the same test are genuine — the ρ interval must cover `RHO_TRUE`, and the baseline must be shown to certify *and* violate first.
 
 *(Examiner D)*
 
@@ -1708,28 +1718,28 @@ Anchor located verbatim at `tests/test_shift.py:72-76`. I traced `certify_bbse`'
 
 Anchors located, §4.4 line 178 and §5.1 line 208, verbatim.
 
-*(b)* `run_E3` collects `verified_risk.append(ev["answered_err_rate"])` at `:278` — and `_cert_eval:93` sets `rate = float(err_ans.mean())`, a **realized** answered error rate — only for draws with `ev["certified"]` at α=0.10, then means them at `:284`. So 0.2022 is the mean of up to 200 realized rates, conditioned on certification, evaluated at the certified τ. `summary.md` stores it under the key `verified_mean_answered_risk_alpha0.10`, which is the honest name. §4.4 calls it *"the true mean answered risk"* and §5.1 *"true answered risk"*, in direct conflict with §3.7 clause (3) (*"It bounds the answered-set error parameter, not any single batch's realized error count"*) — the paper's own load-bearing distinction, contradicted in the one experiment whose subject is definitional rigour.
+*(b)* `run_E3` collects `verified_risk.append(ev["answered_err_rate"])` at `:278` (now `experiments/run_synthetic.py:599`) — and `_cert_eval:93` (now `:158`) sets `rate = float(err_ans.mean())`, a **realized** answered error rate — only for draws with `ev["certified"]` at α=0.10, then means them at `:284` (now `:607-608`). So 0.2022 is the mean of up to 200 realized rates, conditioned on certification, evaluated at the certified τ. `summary.md` stores it under the key `verified_mean_answered_risk_alpha0.10`, which is the honest name. §4.4 calls it *"the true mean answered risk"* and §5.1 *"true answered risk"*, in direct conflict with §3.7 clause (3) (*"It bounds the answered-set error parameter, not any single batch's realized error count"*) — the paper's own load-bearing distinction, contradicted in the one experiment whose subject is definitional rigour.
 
-*(c)* The abort path (`:288-293`, `reason=e3-control-not-poisonous`) is untested: no test file imports `experiments` (verified by grep). §4.4 calls it *"enforced, not decorative"* — a claim about code with no test behind it.
+*(c)* The abort path (`:288-293`, now `experiments/run_synthetic.py:610-615`, `reason=e3-control-not-poisonous`) is untested: no test file imports `experiments` (verified by grep). §4.4 calls it *"enforced, not decorative"* — a claim about code with no test behind it.
 
 *(Examiner D)*
 
 ### R4-14 — **CONFIRMED**
 
-Anchor located, §3.7 line 124: *"The guarantee the certificate makes carries five clauses, all of which survive into the deployed guarantee text."* `report._statement` (`report.py:62-83`) does emit all five. `tests/test_pipeline.py:42-45` asserts exactly three substrings: `"per-target-site"`, `"NOT a bound"`, `"OUT OF SCOPE"`. Unpinned: clause (2), emitted as *"all sites certified from one calibration draw share the same 1-0.05 event"*, and clause (5), the asymptotic-bootstrap disclosure, which `report.py:77` emits only when `"bbse" in modes` — and `modes` here is `combined["modes"]`, the modes that certified the deployed τ, not the requested tuple. No test in the suite asserts either substring, and none inspects a BBSE-deployed statement. A regression dropping clause (5) — which §3.7 and §6.1 both make a centrepiece of the disclosure posture — passes green.
+Anchor located, §3.7 line 124: *"The guarantee the certificate makes carries five clauses, all of which survive into the deployed guarantee text."* `report._statement` (`report.py:62-83`, now `certgate/report.py:76`) does emit all five. `tests/test_pipeline.py:42-45` asserts exactly three substrings: `"per-target-site"`, `"NOT a bound"`, `"OUT OF SCOPE"`. *(Re-verified 2026-08-25: those three assertions were removed by the fix this finding prescribes — `per-target-site` is now forbidden vocabulary — and the whole statement is frozen verbatim per mode at `tests/test_report.py:179-207`, which does inspect the BBSE-deployed form.)* Unpinned: clause (2), emitted as *"all sites certified from one calibration draw share the same 1-0.05 event"*, and clause (5), the asymptotic-bootstrap disclosure, which `report.py:77` (now `certgate/report.py:149`) emits only when `"bbse" in modes` — and `modes` here is `combined["modes"]`, the modes that certified the deployed τ, not the requested tuple. No test in the suite asserts either substring, and none inspects a BBSE-deployed statement. A regression dropping clause (5) — which §3.7 and §6.1 both make a centrepiece of the disclosure posture — passes green.
 
 *(Examiner D)*
 
 ### R4-15 — **CONFIRMED**
 
-Anchor located, §3.8 line 130: *"For a linear model these attributions are exact Shapley values, with no approximation or sampling [@lundberg2017shap]"*, restated §4.6 line 192 as *"genuine Shapley values, not sampled approximations"*. Three manuscript- and code-side facts verified: (i) the claim is stated **unqualified** — no independence condition, no value-function named, anywhere in the draft; (ii) `explain.py:48` implements `phi = head.coef * z`, i.e. exactly `w_j(x_j − μ_j)`; (iii) the generator induces marginal dependence among the explained features — `data.py:64-71` gives `μ_y = ±(sep/2)·v` with `v` supported on coordinates 0–3 and `x|y ~ N(μ_y, I_d)`, so for `i ≠ j` in 0–3 the marginal `Cov(x_i, x_j) = μ_iμ_j·Var(1{y=1}) > 0`. The additive decomposition is exact and correctly pinned by `test_explain.py`; the Shapley identification is the overreach.
+Anchor located, §3.8 line 130: *"For a linear model these attributions are exact Shapley values, with no approximation or sampling [@lundberg2017shap]"*, restated §4.6 line 192 as *"genuine Shapley values, not sampled approximations"*. Three manuscript- and code-side facts verified: (i) the claim is stated **unqualified** — no independence condition, no value-function named, anywhere in the draft; (ii) `explain.py:48` (now `certgate/explain.py:70`) implements `phi = head.coef * z`, i.e. exactly `w_j(x_j − μ_j)`; (iii) the generator induces marginal dependence among the explained features — `data.py:64-71` (now `certgate/data.py:71-73`) gives `μ_y = ±(sep/2)·v` with `v` supported on coordinates 0–3 and `x|y ~ N(μ_y, I_d)`, so for `i ≠ j` in 0–3 the marginal `Cov(x_i, x_j) = μ_iμ_j·Var(1{y=1}) > 0`. The additive decomposition is exact and correctly pinned by `test_explain.py`; the Shapley identification is the overreach.
 *One link I did not verify in-session:* the exact wording of Lundberg & Lee's independence condition, which I could not open. I note that **DS-16, R1-18, R2-24, R3-01, R3-44, R5-12 and R5-60** assert it independently — seven flags across five reports, the joint-highest in the pool.
 
 *(Examiner D)*
 
 ### R4-16 — **CONFIRMED** (with one precision correction)
 
-Anchor located, Table 3 line 337, verbatim. `run_E6` (`:463-465`) builds `cfg = SimConfig()` and `draw_cohort(cfg, 40, rng, site_label_prefix="e6t")` — no `label_base_rate`, no `concept_intercept`. Source and target share the generative prevalence, so the true odds ratio is ρ = 1. `E6_composition.json` records `"rho": 0.8296804526028088`, and `run_synthetic.py:501-504` populates `rho` only when `op["deploy_mode"] == "bbse"` — so the presence of the BBSE row is proof that E6's operative deployment at τ* = 0.77 carries the **label-shift** tag, on unshifted data. §4.7 and Table 3 state neither the deploy mode nor its asymptotic-bootstrap caveat.
+Anchor located, Table 3 line 337, verbatim. `run_E6` (`:463-465`, now `experiments/run_synthetic.py:911-914`) builds `cfg = SimConfig()` and `draw_cohort(cfg, 40, rng, site_label_prefix="e6t")` — no `label_base_rate`, no `concept_intercept`. Source and target share the generative prevalence, so the true odds ratio is ρ = 1. `E6_composition.json` records `"rho": 0.8296804526028088`, and `run_synthetic.py:501-504` populates `rho` only when `op["deploy_mode"] == "bbse"` *(re-verified 2026-08-25: that gating was removed by the prescribed fix — `experiments/run_synthetic.py:954` now reads `rho_point` unconditionally, so this mechanism no longer holds)* — so the presence of the BBSE row is proof that E6's operative deployment at τ* = 0.77 carries the **label-shift** tag, on unshifted data. §4.7 and Table 3 state neither the deploy mode nor its asymptotic-bootstrap caveat.
 
 *Precision correction:* the finding says the manuscript "reports neither the deploy mode nor the size of that spurious correction." The size *is* printed — ρ̂ = 0.830 appears in both §4.7 and Table 3. What is absent is the true ρ = 1 against which 0.830 is a 17% spurious movement, and the deploy mode. Forward the finding on those two absences.
 *Co-discovery:* **DS-48, R1-08, R1-58, R5-54** ask the same question from the manuscript alone; R4-16 is the only one that could establish the *deploy mode* from the artifact.
@@ -1738,7 +1748,7 @@ Anchor located, Table 3 line 337, verbatim. `run_E6` (`:463-465`) builds `cfg = 
 
 ### R4-17 — **CONFIRMED**
 
-Anchor located, Data availability line 276, verbatim. Verified against the repository root by direct listing: **no `LICENSE`, no `COPYING`, no `pyproject.toml`, no `setup.py`, no `setup.cfg`, no `.git`** (only `.gitignore`). Dangling paths verified: `README.md:3` → `../audit/readiness-report.md`; README "Relation to v1" → `../testbed/`, `../PROTOCOL.md`; `certgate/certify.py:4` → `../testbed/certify.py`; `certgate/shift.py:8` → `../testbed/modes.py`; `certgate/data.py:3` → `../testbed/generator.py`; `report.py:87` → "v1 report.py:14-35". None resolves inside the release.
+Anchor located, Data availability line 276, verbatim. Verified against the repository root by direct listing: **no `LICENSE`, no `COPYING`, no `pyproject.toml`, no `setup.py`, no `setup.cfg`, no `.git`** (only `.gitignore`). Dangling paths verified: `README.md:3` → `../audit/readiness-report.md`; README "Relation to v1" → `../testbed/`, `../PROTOCOL.md`; `certgate/certify.py:4` → `../testbed/certify.py`; `certgate/shift.py:8` → `../testbed/modes.py`; `certgate/data.py:3` → `../testbed/generator.py`; `report.py:87` → "v1 report.py:14-35". None resolves inside the release. *(Re-verified 2026-08-25: the three README paths were removed by the repair this item prescribes — no current match. The four in-package pointers survive, repaired to `../xAI-projtect-v1/...`, at `certgate/certify.py:4`, `certgate/shift.py:11`, `certgate/data.py:3` and `certgate/report.py:183`.)*
 
 **Kill criterion 4 does not apply.** The exemption covers author / affiliation / ORCID / corresponding-author placeholders. The data-availability statement is a substantive editorial requirement, not an author field — and in any case the finding's substance (no licence, no packaging, no version control, dangling provenance paths) is entirely independent of the missing URL.
 *Co-discovery:* **DS-07, DS-27, R1-36, R2-40, R5-40** flag the placeholder URL; only R4 could establish the licence, packaging and VCS facts.
@@ -1753,7 +1763,7 @@ I opened four PNGs myself.
 - **`E1_validity.png`:** the left panel carries a single x-tick, "0.1". The α = 0.05 category has no tick and its "no certificates" annotation is rendered outside the axes at the far left. Caption line 300 claims *"the $\alpha = 0.05$ rung issues no certificates at 208 sites"* — the panel does not visually show this.
 - **`E2_label_shift.png`:** two "no certificates" annotations, one inside the axes near x = 0.05 and one clipped at the far-left margin. The BBSE bar at α = 0.10 is zero-height, i.e. visually identical to absent — and absence is the same figure's encoding for "no certificates".
 
-Cause verified in code: `ax.text(i, DELTA*0.05, ...)` / `ax.text(xpos[i]+dx, ...)` at `:170-173`, `:246-250`, `:316-319` place annotations in **data** coordinates at categories whose bar is `np.nan`.
+Cause verified in code: `ax.text(i, DELTA*0.05, ...)` / `ax.text(xpos[i]+dx, ...)` at `:170-173`, `:246-250`, `:316-319` — now `experiments/run_synthetic.py:368-372` (run_E1), `:524-529` (run_E2) and `:652-656` (run_E3) — place annotations in **data** coordinates at categories whose bar is `np.nan`.
 
 **Editorial note on the word "embedded":** the manuscript embeds no figures. Its `# Figures` section (lines 298–310) is caption prose with no image markup — the point DS-05 / R1-42 / R2-30 / R3-24 / R3-46 / R5-15 make correctly from the manuscript alone. R4-18 is a finding about the *figure files in the artifact*, which those referees could not see. Both are true; forward both.
 
@@ -1761,27 +1771,27 @@ Cause verified in code: `ax.text(i, DELTA*0.05, ...)` / `ax.text(xpos[i]+dx, ...
 
 ### R4-19 — **CONFIRMED**
 
-Anchor located, §3.6 line 118: *"The modes run as alternatives, each at full $\delta$…"* against §3.5 line 100: *"each is tested at the mode's full betting budget ($\delta$ for the baseline, $\delta_{\text{bet}}$ in the label-shift mode of Section 3.6)"*. Code agrees with §3.5: `pipeline.py:65-66` passes `DELTA` (0.05) to `_baseline_walk`; `shift.py:207` passes `BBSE_DELTA_BET` (0.025). Direct internal contradiction, and §3.6 is the side that is wrong.
+Anchor located, §3.6 line 118: *"The modes run as alternatives, each at full $\delta$…"* against §3.5 line 100: *"each is tested at the mode's full betting budget ($\delta$ for the baseline, $\delta_{\text{bet}}$ in the label-shift mode of Section 3.6)"*. Code agrees with §3.5: `pipeline.py:65-66` (now `certgate/pipeline.py:63` and `:84`) passes `DELTA` (0.05) to `_baseline_walk`; `shift.py:207` (now `certgate/shift.py:378`) passes `BBSE_DELTA_BET` (0.025). Direct internal contradiction, and §3.6 is the side that is wrong.
 *Not a duplicate of* **DS-18 / R1-53 / R5-08**, which flag a *different* §3.5-vs-§3.6 contradiction (maximum-coverage vs most-conservative threshold). Two independent contradictions between the same two sections.
 
 *(Examiner D)*
 
 ### R4-20 — **CONFIRMED**
 
-`pipeline.py:149-155`: `if int(target_x.shape[0]) < MIN_ANSWERABLE:` → all-declined report with `gate_reason="pool-too-small"`; `constants.py:24` `MIN_ANSWERABLE = 10`. I grepped the draft for `MIN_ANSWERABLE`, `pool-too-small`, `10 records`: **zero hits each.** §3.3 and §4.5 document the cluster gate; §3.6 documents BBSE's three declines; this fourth gate — the one a real deployment with small daily batches hits first — appears nowhere.
+`pipeline.py:149-155` (now `certgate/pipeline.py:296-302`): `if int(target_x.shape[0]) < MIN_ANSWERABLE:` → all-declined report with `gate_reason="pool-too-small"`; `constants.py:24` (now `certgate/constants.py:27`) `MIN_ANSWERABLE = 10`. I grepped the draft for `MIN_ANSWERABLE`, `pool-too-small`, `10 records`: **zero hits each.** §3.3 and §4.5 document the cluster gate; §3.6 documents BBSE's three declines; this fourth gate — the one a real deployment with small daily batches hits first — appears nowhere.
 
 *(Examiner D)*
 
 ### R4-21 — **CONFIRMED**
 
-Anchor located, §3.2 line 68, enumeration verbatim. I grepped the draft: `1e-4` → 0 hits, `10^{-4}` → 0, `max_iter` → 0, `MIN_ANSWERABLE` → 0. The only `500` in the draft is inside `[20, 5000]` in §4.1, so `_bootstrap_estimate`'s `n_boot=500` (`report.py:86`) is undocumented. `PI_CLIP = 1e-4` is alluded to obliquely in A.2 as *"the clipped $\rho$"* but never valued; `SD_REL_TOL = 1e-9` and `HEAD_MAX_ITER = 2000` are absent. All are in `constants.py` and all govern the procedure.
+Anchor located, §3.2 line 68, enumeration verbatim. I grepped the draft: `1e-4` → 0 hits, `10^{-4}` → 0, `max_iter` → 0, `MIN_ANSWERABLE` → 0. The only `500` in the draft is inside `[20, 5000]` in §4.1, so `_bootstrap_estimate`'s `n_boot=500` (`report.py:86`, now `certgate/report.py:165`) is undocumented. `PI_CLIP = 1e-4` is alluded to obliquely in A.2 as *"the clipped $\rho$"* but never valued; `SD_REL_TOL = 1e-9` and `HEAD_MAX_ITER = 2000` are absent. All are in `constants.py` and all govern the procedure.
 *Adjacent to R4-20 on `MIN_ANSWERABLE` but not duplicative:* R4-20 concerns an undocumented decline **gate** (§3.3/§3.4/§3.6); R4-21 concerns the constants **enumeration** (§3.2).
 
 *(Examiner D)*
 
 ### R4-23 — **CONFIRMED**
 
-Anchor located, §3.9 line 138: bins written as `$\{<30,\ 30\text{–}100,\ 100\text{–}300,\ >300\}$`. `harness.py:20` `SIZE_BINS = ((0, 30), (30, 100), (100, 300), (300, np.inf))`, and both `run_synthetic.py:150` and `:493` filter with `lo <= size < hi`, so the last bin is **≥ 300**. Tables 1 and 2 render it `[300, $\infty$)`. Off by one endpoint, as alleged. Co-discovered by **R5-43** from the manuscript alone.
+Anchor located, §3.9 line 138: bins written as `$\{<30,\ 30\text{–}100,\ 100\text{–}300,\ >300\}$`. `harness.py:20` (now `certgate/harness.py:27`) `SIZE_BINS = ((0, 30), (30, 100), (100, 300), (300, np.inf))`, and both `run_synthetic.py:150` and `:493` (now `experiments/run_synthetic.py:342` and `:944`) filter with `lo <= size < hi`, so the last bin is **≥ 300**. Tables 1 and 2 render it `[300, $\infty$)`. Off by one endpoint, as alleged. Co-discovered by **R5-43** from the manuscript alone.
 
 *(Examiner D)*
 
@@ -1802,13 +1812,13 @@ The sentence pairs "roughly eighty" (= 83 calibration clusters) with "the ~10⁵
 
 ### R4-25 — **CONFIRMED**
 
-Anchor located, Table 4 caption line 340: *"Certify rate and mean answered-set coverage at certifying points; \"—\" where nothing certifies."* `run_synthetic.py:362-364` computes `mean_coverage=round(float(np.mean(...)) if certs else 0.0, 4)` and plots it unmasked at `:382-383`. Verified in `summary.md`, which records `mean_coverage: 0.0` at all six non-certifying grid cells, and verified visually in `E4_site_sweep.png`: the right panel's α = 0.05 line sits flat on 0.0 through n_sites 60/100/150/208 and the α = 0.10 line through 60/100. The figure shows a measured-looking zero-coverage regime the table declares undefined. (R4's "four grid points" reads correctly as the four x-positions 60, 100, 150, 208; if read as table cells the count is six.)
+Anchor located, Table 4 caption line 340: *"Certify rate and mean answered-set coverage at certifying points; \"—\" where nothing certifies."* `run_synthetic.py:362-364` (now `experiments/run_synthetic.py:698-701`) computes `mean_coverage=round(float(np.mean(...)) if certs else 0.0, 4)` and plots it unmasked at `:382-383` (now `:715-720`). Verified in `summary.md`, which records `mean_coverage: 0.0` at all six non-certifying grid cells, and verified visually in `E4_site_sweep.png`: the right panel's α = 0.05 line sits flat on 0.0 through n_sites 60/100/150/208 and the α = 0.10 line through 60/100. The figure shows a measured-looking zero-coverage regime the table declares undefined. (R4's "four grid points" reads correctly as the four x-positions 60, 100, 150, 208; if read as table cells the count is six.)
 
 *(Examiner D)*
 
 ### R4-26 — **CONFIRMED**
 
-I counted bare `nan` tokens in the released CSVs myself: **E1 200, E2 591, E3 200, E4 1,340 — total 2,331**, matching R4 exactly. `E6_fairness.csv` and `summary.md` are clean (0). Produced by `_cert_eval:78` `answered_err_rate=float("nan")`. Against the artifact's own documented convention at `run_synthetic.py:151-152` (*"empty bins report None (-> JSON null), never NaN: NaN is an invalid JSON token that breaks downstream parsers"*) and `:488-490`. The JSON paths were disciplined; the CSV path was not.
+I counted bare `nan` tokens in the released CSVs myself: **E1 200, E2 591, E3 200, E4 1,340 — total 2,331**, matching R4 exactly. `E6_fairness.csv` and `summary.md` are clean (0). Produced by `_cert_eval:78` (now `experiments/run_synthetic.py:143`) `answered_err_rate=float("nan")`. Against the artifact's own documented convention at `run_synthetic.py:151-152` (*"empty bins report None (-> JSON null), never NaN: NaN is an invalid JSON token that breaks downstream parsers"*) and `:488-490` — now `:343-344`, `:862` and `:941` (the comment wording was rewritten in the 2026-08-24 humanization pass; the convention it states is unchanged). The JSON paths were disciplined; the CSV path was not.
 
 *(Examiner D)*
 
@@ -1825,7 +1835,7 @@ Since the manuscript cites by key and the rendered list shows the year, these su
 
 ### R4-28 — **CONFIRMED**
 
-Anchor located, §3.4 line 94: *"The processing order is a deterministic, SHA-256-seeded permutation of the calibration sites"* — singular. `fixed_sequence_walk` (`certify.py:113-127`) passes **one** `rng` object into every `wsr_reject` call, and `wsr_reject:80-81` does `if rng is not None: z = rng.permutation(z)` — so the walk consumes a fresh permutation per threshold from one advancing stream, and the number drawn is data-dependent because the walk breaks at first failure (`:122-123`). Separately, `shift.py:207` `ok = all(wsr_reject(...) for atoms, r in zip(atom_sets, endpoint_rngs))` iterates a generator and short-circuits, so when the ρ_lo endpoint fails the ρ_hi stream never advances — despite the `shift.py:180-183` docstring claiming per-endpoint streams make the result "order-independent". Neither affects validity (each test is independently level-δ); §3.4's singular description is simply not what runs.
+Anchor located, §3.4 line 94: *"The processing order is a deterministic, SHA-256-seeded permutation of the calibration sites"* — singular. `fixed_sequence_walk` (`certify.py:113-127`, now `certgate/certify.py:132-149`) passes **one** `rng` object into every `wsr_reject` call, and `wsr_reject:80-81` (now `certgate/certify.py:94-95`) does `if rng is not None: z = rng.permutation(z)` — so the walk consumes a fresh permutation per threshold from one advancing stream, and the number drawn is data-dependent because the walk breaks at first failure (`:122-123`, now `:144-145`). Separately, `shift.py:207` (now `certgate/shift.py:378-379`) `ok = all(wsr_reject(...) for atoms, r in zip(atom_sets, endpoint_rngs))` iterates a generator and short-circuits, so when the ρ_lo endpoint fails the ρ_hi stream never advances — despite the `shift.py:180-183` docstring (now `certgate/shift.py:348-350`) claiming per-endpoint streams make the result "order-independent". Neither affects validity (each test is independently level-δ); §3.4's singular description is simply not what runs.
 
 *(Examiner D)*
 
@@ -1837,20 +1847,20 @@ Anchor located, §3.4 line 94: *"The processing order is a deterministic, SHA-25
 
 ### R4-30 — **CONFIRMED**
 
-Verified at `run_synthetic.py:117` (`run_E1`), `:270` (`run_E3`), `:402` (`run_E5`): each calls `draw_cohort(cfg, 1, rng, …)` — a target pool of **one** freshly drawn site. E5's pool holds 202 records (200 answered + 2 declined per `E5_explain.json`). `run_E6:465` draws 40 sites and §4.7 discloses that; E1, E3 and E5 disclose nothing. Since §3.7 clause (1) scopes the guarantee *per target site*, that E1's 200 "pools" are 200 single-site pools is material.
+Verified at `run_synthetic.py:117` (`run_E1`), `:270` (`run_E3`), `:402` (`run_E5`) — now `experiments/run_synthetic.py:249`, `:580` and `:742`: each calls `draw_cohort(cfg, 1, rng, …)` — a target pool of **one** freshly drawn site. E5's pool holds 202 records (200 answered + 2 declined per `E5_explain.json`). `run_E6:465` (now `:914`) draws 40 sites and §4.7 discloses that; E1, E3 and E5 disclose nothing. Since §3.7 clause (1) scopes the guarantee *per target site*, that E1's 200 "pools" are 200 single-site pools is material.
 *Adjacent:* **R2-34** and **R5-62** note from the manuscript that "target pool" is never defined; R4-30 supplies the answer they could not reach.
 
 *(Examiner D)*
 
 ### R4-31 — **CONFIRMED**
 
-I grepped `tests/` for `experiments`: **zero hits.** The 632-line file producing every number in §4 is outside the 69-test suite, including `_rate` (`:53-56`), `_cert_eval` (`:74-99`), the E3 poison-verification abort (`:284-293`) that §4.4 calls "enforced", and `_existing_summary_blocks` (`:536-546`), the regex merge.
+I grepped `tests/` for `experiments`: **zero hits.** The 632-line file producing every number in §4 is outside the 69-test suite, including `_rate` (`:53-56`), `_cert_eval` (`:74-99`), the E3 poison-verification abort (`:284-293`) that §4.4 calls "enforced", and `_existing_summary_blocks` (`:536-546`), the regex merge. *(All four in `experiments/run_synthetic.py`, now `:97-103`, `:139-165`, `:607-615` and `:1784-1801`.)*
 
 *(Examiner D)*
 
 ### R4-32 — **CONFIRMED**
 
-Anchor located verbatim at `tests/test_certify.py:70-76`: docstring *"Level 5%; empirical rate must stay <= 0.08 (documented tolerance)"* with `assert rej / 800 <= 0.08`, one fixed seed (`default_rng(1)`), 800 reps. §A.1(iv) line 258 says *"The test's boundary behaviour (type-I error at $\mathbb{E}[Z] = \alpha$) is additionally pinned by the unit test suite."* A 0.08 ceiling against a 0.05 nominal pins "not grossly anti-conservative at one seed", not level δ. The test is a real check of a real property (`Z ~ Bernoulli(0.05)` sits exactly at the null boundary) — the finding is about the manuscript's word "pinned", and it holds.
+Anchor located verbatim at `tests/test_certify.py:70-76` (now `:73-82`, `test_wsr_boundary_type_I_at_n80`; the docstring was reworded in the 2026-08-24 humanization pass — it now reads *"The test is level 5%. The empirical rate must stay at or below the documented tolerance, 0.08."*): docstring *"Level 5%; empirical rate must stay <= 0.08 (documented tolerance)"* with `assert rej / 800 <= 0.08`, one fixed seed (`default_rng(1)`), 800 reps. §A.1(iv) line 258 says *"The test's boundary behaviour (type-I error at $\mathbb{E}[Z] = \alpha$) is additionally pinned by the unit test suite."* A 0.08 ceiling against a 0.05 nominal pins "not grossly anti-conservative at one seed", not level δ. The test is a real check of a real property (`Z ~ Bernoulli(0.05)` sits exactly at the null boundary) — the finding is about the manuscript's word "pinned", and it holds.
 
 *(Examiner D)*
 
@@ -1887,19 +1897,19 @@ Anchor located, §2.2 line 46, verbatim. I grepped `references.bib` for `barber|
 
 ### R4-36 — **CONFIRMED** (question, properly anchored)
 
-The factual predicate is R4-01, verified above: `SHIFT_SEP = 1.8` at `run_synthetic.py:40`, used only at `:195` and `:264`, against §4.1's single stated `sep = 2.2`. The three asks (why the drop; the E2/E3 rates at 2.2; whether 1.8 was chosen before or after seeing results at 2.2) are answerable and material. Forward.
+The factual predicate is R4-01, verified above: `SHIFT_SEP = 1.8` at `run_synthetic.py:40`, used only at `:195` and `:264`, against §4.1's single stated `sep = 2.2`. *(Re-verified 2026-08-25: constant and both call sites removed by the prescribed fix; see R4-01 above.)* The three asks (why the drop; the E2/E3 rates at 2.2; whether 1.8 was chosen before or after seeing results at 2.2) are answerable and material. Forward.
 
 *(Examiner D)*
 
 ### R4-37 — **CONFIRMED** (question, properly anchored)
 
-Predicate verified: `shift.py:118-124` and `:148` compute `c0_ci`, `c1_ci`, `pi_s_ci`, `gap_lo`, `rho_lo`, `rho_hi`, `rho_point`, `n_boot`, `n_attempts` into `BBSEFit.diagnostics`; `E2_label_shift.csv`'s eleven columns carry none of them; and all 191 declines are `failsafe` (my own tabulation). The single-endpoint-at-full-δ comparison the question asks for is the one measurement that would separate "correctly refusing" from "underpowered". Forward.
+Predicate verified: `shift.py:118-124` and `:148` (now `certgate/shift.py:294-301` and `:312`) compute `c0_ci`, `c1_ci`, `pi_s_ci`, `gap_lo`, `rho_lo`, `rho_hi`, `rho_point`, `n_boot`, `n_attempts` into `BBSEFit.diagnostics`; `E2_label_shift.csv`'s eleven columns carry none of them; and all 191 declines are `failsafe` (my own tabulation). The single-endpoint-at-full-δ comparison the question asks for is the one measurement that would separate "correctly refusing" from "underpowered". Forward.
 
 *(Examiner D)*
 
 ### R4-38 — **CONFIRMED** (question, properly anchored)
 
-Predicate verified: `E6_composition.json` records `rho = 0.8296804526028088` on a cohort built at `run_synthetic.py:463-465` with `SimConfig()` and no shift, so true ρ = 1.
+Predicate verified: `E6_composition.json` records `rho = 0.8296804526028088` on a cohort built at `run_synthetic.py:463-465` (now `experiments/run_synthetic.py:911-914`) with `SimConfig()` and no shift, so true ρ = 1.
 
 I can partly answer the question's second half from the artifact, which strengthens it: across E1's 200 in-distribution draws at α = 0.10, the deployed mode is **baseline 147, bbse 53** — the BBSE tag wins deployment on **26.5%** of in-distribution draws (E3: 34/200). That is recoverable from `E1_validity.csv`'s `deploy_mode` column and appears nowhere in the manuscript. Forward.
 
@@ -1907,7 +1917,7 @@ I can partly answer the question's second half from the artifact, which strength
 
 ### R4-39 — **CONFIRMED** (question, properly anchored)
 
-Predicate verified: `pipeline.py:176-185` runs a separate walk per α, each at its mode's full budget; `report.py:205-217` iterates the ladder strictest-first and sets `operative` at the first certified rung (`:212` `if operative is None:  # strictest (first) certified alpha`). §3.5 line 102 says only *"Both budgets $\alpha \in \{0.05, 0.10\}$ are certified by separate walks"*. The manuscript documents the within-mode fixed-sequence argument (§3.5) and the across-mode OR-rule (§3.6) but never the across-rung selection. A real gap in the stated guarantee. Forward.
+Predicate verified: `pipeline.py:176-185` (now `certgate/pipeline.py:327-338`) runs a separate walk per α, each at its mode's full budget; `report.py:205-217` (now `certgate/report.py:325-336`) iterates the ladder strictest-first and sets `operative` at the first certified rung (`:212`, now `certgate/report.py:331`, `if operative is None:  # strictest (first) certified alpha`). §3.5 line 102 says only *"Both budgets $\alpha \in \{0.05, 0.10\}$ are certified by separate walks"*. The manuscript documents the within-mode fixed-sequence argument (§3.5) and the across-mode OR-rule (§3.6) but never the across-rung selection. A real gap in the stated guarantee. Forward.
 
 *(Examiner D)*
 
@@ -1919,7 +1929,7 @@ Predicate verified under R4-17: no licence, no packaging, no VCS. Second half ve
 
 ### R4-41 — **CONFIRMED** (question, properly anchored)
 
-Predicate verified: `_existing_summary_blocks` (`:536-546`) parses an existing `summary.md` by regex `^## (E\d)\n(```json\n.*?\n```)` and `_write_summary:562-563` substitutes preserved blocks for experiments not recomputed — so a `--only` run genuinely can assemble a `summary.md` across partial runs. §A.3 line 268 says *"The full grid runs from a single command."* With no provenance block written (R4-05), nothing in the artifact lets a reader tell which happened, and §4.5's explicit E1-vs-E4 208-site distinction makes the answer material. Forward.
+Predicate verified: `_existing_summary_blocks` (`:536-546`, now `experiments/run_synthetic.py:1784-1801`) parses an existing `summary.md` by regex `^## (E\d)\n(```json\n.*?\n```)` and `_write_summary:562-563` (now `:1829-1831`) substitutes preserved blocks for experiments not recomputed — so a `--only` run genuinely can assemble a `summary.md` across partial runs. §A.3 line 268 says *"The full grid runs from a single command."* With no provenance block written (R4-05), nothing in the artifact lets a reader tell which happened, and §4.5's explicit E1-vs-E4 208-site distinction makes the answer material. Forward.
 
 *(Examiner D)*
 
@@ -1943,13 +1953,13 @@ Both predicates verified above: R4-01 (sep=1.8 undisclosed in the two headline e
 
 ### R4-44 — **CONFIRMED** (confidential)
 
-Predicate verified under R4-07: 191/191 declines are the generic `failsafe`; the three named BBSE declines fire zero times; and the discriminating quantities (ρ̂, ρ interval, `gap_lo`, failing endpoint) are computed in `BBSEFit.diagnostics` and written to no artifact. The structural claim is also verified: `certify_bbse` must reject at **both** endpoints (`shift.py:207`) at `BBSE_DELTA_BET = 0.025`, i.e. two tests at half the baseline's budget. So "correctly refusing" and "underpowered at two endpoints on half δ" do predict the same observable, and the artifact as released cannot arbitrate. E2 is currently unfalsifiable from the release, as stated.
+Predicate verified under R4-07: 191/191 declines are the generic `failsafe`; the three named BBSE declines fire zero times; and the discriminating quantities (ρ̂, ρ interval, `gap_lo`, failing endpoint) are computed in `BBSEFit.diagnostics` and written to no artifact. The structural claim is also verified: `certify_bbse` must reject at **both** endpoints (`shift.py:207`, now `certgate/shift.py:378-379`) at `BBSE_DELTA_BET = 0.025`, i.e. two tests at half the baseline's budget. So "correctly refusing" and "underpowered at two endpoints on half δ" do predict the same observable, and the artifact as released cannot arbitrate. E2 is currently unfalsifiable from the release, as stated.
 
 *(Examiner D)*
 
 ### R4-45 — **CONFIRMED** (confidential)
 
-Both halves verified. The core *is* well tested: I read `test_certify.py:46-67` (`test_mcap_counterexample_regression` — 140 clean + 10 heavy sites, 17.5% true risk, asserts the truncation reading certifies and the influence path refuses) and `test_shift.py:141-164` / `:190-221` (`test_dual_endpoint_soundness_straddling_rho_one` asserts the sign-carrier is affine **and** that the raw atom mean shows the kink, explicitly guarding against re-documenting the false justification; `test_dual_endpoint_loop_requires_both_endpoints` builds two cohorts where each endpoint is separately poisonous). These are genuine adversarial regressions. Against that, `certgate/harness.py` — which decides whether a certificate counts as violated — has **zero** test imports (R4-11). The contrast is real.
+Both halves verified. The core *is* well tested: I read `test_certify.py:46-67` (`test_mcap_counterexample_regression`, still at `:46` — 140 clean + 10 heavy sites, 17.5% true risk, asserts the truncation reading certifies and the influence path refuses) and `test_shift.py:141-164` / `:190-221` (now `tests/test_shift.py:159` and `:213`) (`test_dual_endpoint_soundness_straddling_rho_one` asserts the sign-carrier is affine **and** that the raw atom mean shows the kink, explicitly guarding against re-documenting the false justification; `test_dual_endpoint_loop_requires_both_endpoints` builds two cohorts where each endpoint is separately poisonous). These are genuine adversarial regressions. Against that, `certgate/harness.py` — which decides whether a certificate counts as violated — has **zero** test imports (R4-11). The contrast is real.
 
 *(Examiner D)*
 
@@ -2060,7 +2070,9 @@ The uncited-introduction limb is fully confirmed: I located line 27 and there is
 
 ### R5-15 — CONFIRMED
 
-> Lines 298–310 contain "**Figure 1. E1 in-distribution validity.**" through "**Figure 6. E6 per-site coverage and answered error.**"
+> Lines 298–310 contain "**Figure S3. In-distribution validity.**" through "**Figure S8. Per-site coverage and answered error by site size.**"
+
+*(Float titles carried forward; review-time wording was "**Figure 1. E1 in-distribution validity.**" and "**Figure 6. E6 per-site coverage and answered error.**". Lines 298–310 are review-time anchors into the superseded draft, and the "Line numbers exact" verdict below is about that draft.)*
 
 Line numbers exact. My independent scan confirms both limbs — no image markup of any kind in the document, and `Figure N` occurs only inside the Figures section. I also confirm `paper/` contains no image files (TODO.md, draft.md, references.bib, review/). Kept separate from DS-05 because R5-15's line-anchored version and DS-05's search-based version are the same claim from different evidence, and the editor benefits from both being on record; the editor may merge at will.
 
@@ -2514,7 +2526,7 @@ The bibliography entry is verified: Lenders, Pugnana, Pellungrini, Calders, Pedr
 
 ### R4-22 — **PLAUSIBLE**
 
-Anchors located and accurate: §4.1 line 156 *"Identical inputs produce byte-identical certificates."* (also §3.10 line 144, §A.3 line 268); `report.py:35-36` docstring *"The timestamp is intentionally the only non-deterministic field, so callers comparing runs for determinism must exclude it"*; `test_pipeline.py:58` `dump = lambda r: json.dumps(r["certified"], sort_keys=True, default=str)`. All three facts hold.
+Anchors located and accurate: §4.1 line 156 *"Identical inputs produce byte-identical certificates."* (also §3.10 line 144, §A.3 line 268); `report.py:35-36` docstring *"The timestamp is intentionally the only non-deterministic field, so callers comparing runs for determinism must exclude it"* (now `certgate/report.py:40-41`; reworded in the 2026-08-24 humanization pass to *"The timestamp is the only non-deterministic field, so a caller comparing runs for determinism must exclude it."*); `test_pipeline.py:58` (now `:59`) `dump = lambda r: json.dumps(r["certified"], sort_keys=True, default=str)`. All three facts hold.
 
 But the finding does not allege the manuscript is false — it asks the authors to "say which", and the manuscript's word is **"certificates"**, which it uses throughout (e.g. §3.7 *"The guarantee the certificate makes…"*) to denote the certified object, i.e. exactly `report["certified"]` — the tier the test compares. Under that reading the sentence is already true. My own re-run confirmed the *released artifacts* are byte-identical (E5/E6 including PNG SHA-256), and nothing in the manuscript claims byte-identity for the full report dict.
 
@@ -2873,11 +2885,11 @@ Four described tests, one of them stated with its full numerical construction. "
 Nothing in this assignment died outright. Every finding was tested against all six criteria; the record of what I tried and what survived:
 
 **R4-13, limb (a) — partial kill under criterion 2 (the manuscript answers it elsewhere).**
-The finding's first limb asserts §4.4's *"the harness first verifies the poison"* misstates the order of operations. The code order is as R4 describes: `run_E3` runs the full 200-draw loop (`:267-279`), then computes `verified` (`:284`), then raises (`:288-293`). **But the manuscript's very next clause discloses the true ordering:** *"a tilt that failed to raise true risk above $\alpha$ aborts the run **before any output is written** (reason `e3-control-not-poisonous`)"* (§4.4, line 178). R4 concedes this clause is accurate. Read against it, "first" means "before the result is reported", which is what happens. Limb (a) should not be forwarded.
+The finding's first limb asserts §4.4's *"the harness first verifies the poison"* misstates the order of operations. The code order is as R4 describes: `run_E3` runs the full 200-draw loop (`:267-279`, now `experiments/run_synthetic.py:578-600`), then computes `verified` (`:284`, now `:607-608`), then raises (`:288-293`, now `:610-615`). **But the manuscript's very next clause discloses the true ordering:** *"a tilt that failed to raise true risk above $\alpha$ aborts the run **before any output is written** (reason `e3-control-not-poisonous`)"* (§4.4, line 178). R4 concedes this clause is accurate. Read against it, "first" means "before the result is reported", which is what happens. Limb (a) should not be forwarded.
 Limbs (b) — 0.2022 is a mean of *realized* rates called "true risk", contradicting §3.7 clause (3) — and (c) — the abort path has no test — are untouched by that clause and are CONFIRMED above. Forward R4-13 on (b) and (c) only.
 
 **Criterion 4 (placeholder fields) tested and rejected for R4-17 and R4-40.**
-Both cite *"publicly available at [CODE REPOSITORY URL — to be added]"*. The exemption is written for author / affiliation / ORCID / corresponding-author placeholders; a data-availability statement is a substantive editorial requirement, not an author field — and R4 anticipates the objection in terms ("This is not an author-placeholder exemption; it is the availability statement itself"). Decisive in any case: both findings carry substance wholly independent of the missing URL, which I verified by direct inspection of the repository root — **no `LICENSE`, no `COPYING`, no `pyproject.toml`, no `setup.py`, no `setup.cfg`, no `.git`** — plus six dangling `../testbed` / `../audit` / `../PROTOCOL.md` references in `README.md`, `certify.py:4`, `shift.py:8`, `data.py:3`, `report.py:87`. Strip the placeholder entirely and both findings stand.
+Both cite *"publicly available at [CODE REPOSITORY URL — to be added]"*. The exemption is written for author / affiliation / ORCID / corresponding-author placeholders; a data-availability statement is a substantive editorial requirement, not an author field — and R4 anticipates the objection in terms ("This is not an author-placeholder exemption; it is the availability statement itself"). Decisive in any case: both findings carry substance wholly independent of the missing URL, which I verified by direct inspection of the repository root — **no `LICENSE`, no `COPYING`, no `pyproject.toml`, no `setup.py`, no `setup.cfg`, no `.git`** — plus six dangling `../testbed` / `../audit` / `../PROTOCOL.md` references in `README.md`, `certify.py:4`, `shift.py:8`, `data.py:3`, `report.py:87`. *(Re-verified 2026-08-25: the `README.md` references were removed by the repair this prescribes — no current match; the four in-package pointers survive, repaired to `../xAI-projtect-v1/...`, at `certgate/certify.py:4`, `certgate/shift.py:11`, `certgate/data.py:3` and `certgate/report.py:183`.)* Strip the placeholder entirely and both findings stand.
 
 **Criterion 6 (access rules) not applicable to any assigned finding.**
 Referee 4 was given `README.md`, `requirements.txt`, `certgate/`, `tests/` and `experiments/` including `experiments/out/`. Every code- and artifact-grounded assertion in R4-01 … R4-47 is within its access grant. Criterion 6 would bar DS/R1/R2/R3/R5 from these assertions, not R4.

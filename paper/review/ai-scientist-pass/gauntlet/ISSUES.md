@@ -8,6 +8,11 @@ rejected). Constraints this list is scoped to: **prose-only** — no published n
 changes, no new experiments, no frozen-text changes (`report.py` guarantee string,
 SPEC, constants), 20–25 pp main envelope.
 
+> *Citations re-verified against the working tree 2026-08-25.* Line numbers, paths
+> and quoted text were re-pointed after the 2026-08-24 comment humanization and the
+> 2026-08-25 paper de-labelling; findings, verdicts, scores and numbers are the
+> originals and are unchanged.
+
 ## Ensemble baseline (Phase 6 comparison target)
 
 | Overall | Decision | Soundness | Presentation | Contribution | Clarity | Originality | Quality | Significance | Confidence |
@@ -39,7 +44,10 @@ E1–E7 before §4, ~42 main-text hits). Each experiment gets a descriptive name
 (validity grid / label-shift stress test / concept-shift control / site-count
 frontier / attribution study / coverage-and-composition study / record-as-unit
 comparator); §4.2–4.8 headings renamed; one mapping note stays in SI A.3 (repo
-artifacts keep E-names). P1–P7 stay only inside §4.10's predictions paragraph,
+artifacts keep E-names) — as applied 2026-08-20; that note was deleted 2026-08-25
+and the mapping moved to the paper's Code availability section, which names the
+`E1_`–`E9_` artifact prefixes against the same descriptive names, so VEN-6's
+underlying complaint is closed at least as firmly on the current text. P1–P7 stay only inside §4.10's predictions paragraph,
 properly introduced as protocol labels; F-A–F-E replaced by descriptive phrases
 (VEN-37: the five failure criteria are named, not coded).
 

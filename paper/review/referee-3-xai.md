@@ -4,6 +4,8 @@
 **Venue:** *Discover Computing*, Collection "Intelligent Medicine: Machine Learning and Explainable AI for Next-Generation Healthcare"
 **Reviewer remit:** attribution method, abstention explanation, evaluation of explanation quality, XAI prior art, collection fit.
 
+> Citations re-verified against the working tree 2026-08-25. Line numbers and quoted comment text were re-pointed after the 2026-08-24 comment humanization and the 2026-08-25 paper de-labelling; findings, verdicts and numbers are the originals and are unchanged. Quotations of `paper/draft.md` prose are left at their review-time wording and line numbers: they record a draft state the revision deliberately superseded.
+
 ---
 
 ## Summary
@@ -82,6 +84,8 @@ The delivered sentence names no feature, no direction and no contrast. It says o
 
 > "At the cohort level, feature 0 is the dominant abstention driver: its mean absolute attribution is 0.868 on answered cases but 1.722 on declined cases, the largest answered-to-declined gap of any feature" (§4.6)
 > "identifying it as the dominant systematic abstention driver" (Figure 5 caption)
+
+(The caption text quoted here was removed by the $R = 200$ re-run this finding prescribes; the float is now Figure S5, "Attribution study", and no current caption makes the driver claim. Quoted at its review-time wording.)
 
 A case is declined precisely when $|\text{base} + \sum_j \phi_j|$ is *small* — that is, when the signed contributions cancel. A feature with a *large* mean $|\phi_j|$ on declined cases is, by construction, a feature that had to be cancelled by something else. Calling it "the driver" is a causal reading that the statistic does not license: it cannot distinguish (a) "this feature causes contested cases", (b) "declined cases happen to take extreme values on this feature", and (c) "this feature has the largest variance, so it dominates any absolute-magnitude comparison". Whatever the underlying cause, the abstention is a property of the *configuration*, not of a feature, and additive attributions are the wrong instrument for locating it.
 
@@ -217,11 +221,13 @@ $\mu_j$ is never defined (training-split feature mean, presumably — $\text{sd}
 
 ### R3-24 — The Figures section contains captions only; no figure images are embedded or referenced.
 
-The manuscript's "# Figures" section (lines following "**Figure 1. E1 in-distribution validity.**") consists of six caption paragraphs. There is no image syntax, no file path, and no `.png`/`.pdf`/`.svg` reference anywhere in the document. I could not inspect Figure 5, which is the only figure in my remit, and my assessment of it rests entirely on its caption text. If figures were meant to be part of this submission, they are not in it; if they are supplied separately, the manuscript should reference them by file.
+The manuscript's "# Figures" section (lines following "**Figure S3. In-distribution validity.**" — quoted at review time as "**Figure 1. E1 in-distribution validity.**", before the float was renumbered into the Supplementary Information and de-labelled) consists of six caption paragraphs. There is no image syntax, no file path, and no `.png`/`.pdf`/`.svg` reference anywhere in the document. I could not inspect Figure 5, which is the only figure in my remit, and my assessment of it rests entirely on its caption text. If figures were meant to be part of this submission, they are not in it; if they are supplied separately, the manuscript should reference them by file.
 
 ### R3-25 — Figure 5's caption omits the sample size behind its right panel.
 
 > "Right: the answered-minus-declined gap in mean absolute attribution per feature; feature 0 shows the largest gap ($-0.854$; 0.868 answered vs 1.722 declined), identifying it as the dominant systematic abstention driver." (Figure 5)
+
+(The caption text quoted here no longer exists: the float is now Figure S5, "Attribution study", whose right panel was rebuilt on the $R = 200$ re-run these rows prescribe. Quoted at its review-time wording.)
 
 The caption does not disclose that the declined side is two cases (§4.6). A reader seeing only the figure would take this for a cohort statistic. The caption must carry $n_{\text{answered}} = 200$, $n_{\text{declined}} = 2$.
 

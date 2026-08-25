@@ -3,6 +3,13 @@
 Date: 2026-07-25. Auditor: independent verdict pass over six dimension sweeps and four prosecution passes.
 Scope: `certgate/` (package), `tests/`, `experiments/`, `SPEC.md`, `METHODS.md`, `README.md`, `paper/draft.md`.
 
+> Citations re-verified against the working tree 2026-08-25. Line numbers and quoted comment
+> text were re-pointed after the 2026-08-24 comment humanization and the 2026-08-25 paper
+> de-labelling; findings, verdicts and numbers are the originals and are unchanged. Note that
+> most fixes this audit prescribes have since landed, so a re-pointed citation usually names the
+> *corrected* code rather than the defect the row describes — several quoted strings were deleted
+> by the very fix their row prescribes and are annotated as having no current match.
+
 ---
 
 ## Verdict
@@ -60,7 +67,7 @@ Bonferroni term. Both must land before this is used on patients, and the first m
 paper is submitted, because the overclaimed sentence *is* the paper's contribution.
 
 **On `SPEC.md`.** The brief says the spec is binding but not infallible. Here it is wrong.
-`SPEC.md:228` mandates the guarantee text as *"per-target-site; all sites from one calibration draw share
+`SPEC.md:817-851` mandates the guarantee text as *"per-target-site; all sites from one calibration draw share
 the 1-delta event."* Both clauses are false — the first because the estimand is a population aggregate,
 the second because the permutation is seeded from the target label. The code faithfully implements a
 specification that misstates the mathematics. Fixing the code alone would not fix this; `SPEC.md` must
@@ -100,13 +107,14 @@ auditors, which I note explicitly because independent rediscovery is the stronge
 
 #### V1 — The certified inequality bounds a cross-site population average; the certificate states it as a bound at the target site
 *(= CC-1 / CG-R1 / CW-1 — found independently by three dimensions)*
-**Location:** `certgate/report.py:66-69` (text) vs `certgate/certify.py:29-31` (estimand); `SPEC.md:228`;
-`METHODS.md:7,17,21,23,58`; `paper/draft.md:60,124,208`; validated wrongly at `certgate/harness.py:40`.
+**Location:** `certgate/report.py:76-162` (text) vs `certgate/certify.py:29-34` (estimand); `SPEC.md:817-851`;
+`METHODS.md:7,19,21-23,25,62-65`; `paper/draft.md:52,101,247`; validated wrongly at `certgate/harness.py:50-61`
+(the V1 relabelling is now recorded at `harness.py:6-21`).
 **Empirically demonstrated.**
 
 `influence_atoms` builds `Z_c = (g_c/(M·n_c))·Σ_i ans_i(err_i − α) + α`. `wsr_reject` tests `E[Z] ≤ α`
 where the expectation is over the **site draw**. That is exactly `R_M = Σ_c g_c a_c e_c / Σ_c g_c a_c`,
-which `METHODS.md:17` itself defines as a sum over sites. For a *single* site, `g_c` and `a_c` cancel and
+which `METHODS.md:19` itself defines as a sum over sites. For a *single* site, `g_c` and `a_c` cancel and
 the quantity is just that site's own error rate `e_c`. A population mean does not bound an individual draw,
 and the probability in the statement is over the calibration draw only — there is no residual randomness
 left for a per-site reading to average over.
@@ -116,6 +124,10 @@ The emitted text (generated from the shipped code, verbatim):
 > Under the tagged assumption (exchangeability), with probability >= 0.95 over the draw of calibration
 > sites, the M=100 influence-weighted answered-set risk **at this target site** is <= 0.1. This guarantee
 > is per-target-site; all sites certified from one calibration draw share the same 1-0.05 event.
+
+*[Exhibit of the 2026-07-25 text, kept verbatim. The shipped statement today is
+`certgate/report.py:76-162`; the "at this target site" wording was removed by the fix this finding
+prescribes and has no current match.]*
 
 **Probe A** — E1's exact protocol (fresh 208-site calibration draw per replicate, one fresh target site,
 in-distribution so exchangeability holds exactly), R=200, varying **only** `SimConfig.s_u`, the documented
@@ -153,22 +165,24 @@ to discount dispersion, and it still fires — these are parameter-level exceeda
 ("NOT a bound on this batch's realized error count, which exceeds alpha at binomial-dispersion rates") names
 only that mode and does not cover this one.
 
-The "design-conditional estimand" defence (`METHODS.md:23`) does not rescue it: conditioning on the target's
-features makes them observed, but does not convert a population-average bound into a per-site bound. Note
-also that in baseline mode the target's data never enters the test at all — `pipeline.py:58-70` builds atoms
-from `cal` only — so a genuinely site-specific claim is structurally impossible on that path.
+The "design-conditional estimand" defence (`METHODS.md:25`, the Scope paragraph; the phrase itself no
+longer appears in `METHODS.md` and survives only in `paper/review/`) does not rescue it: conditioning on
+the target's features makes them observed, but does not convert a population-average bound into a per-site
+bound. Note also that in baseline mode the target's data never enters the test at all —
+`pipeline.py:71-89` builds atoms from `cal` only, at `:79-82` — so a genuinely site-specific claim is
+structurally impossible on that path.
 
-**Why the harness cannot catch it:** `experiments/run_synthetic.py:108-125` draws one target site per
+**Why the harness cannot catch it:** `experiments/run_synthetic.py:244-255` draws one target site per
 calibration draw from `SimConfig` defaults, whose only between-site variation is `u_c ~ N(0, 0.5²)`. Per-site
 true risk is nearly uniform there.
 
-**Fix.** Two coupled changes, `SPEC.md:228` first since it is binding and currently mandates the wrong text.
-(a) `report.py:65-76`: state the certified estimand — *"the expected M=100 influence-weighted answered-set
+**Fix.** Two coupled changes, `SPEC.md:817-851` first since it is binding and currently mandates the wrong text.
+(a) `report.py:76-162`: state the certified estimand — *"the expected M=100 influence-weighted answered-set
 risk over sites drawn from the calibration population is ≤ α"* — and add a fourth mandatory clause with the
 same force as the binomial one: *"This is a population average across sites. It does not bound any individual
 site's answered error rate; under between-site heterogeneity the fraction of target sites exceeding α is
 governed by that dispersion, which this certificate does not measure or bound."* (b) Restate `METHODS.md:7,
-21, 23, 58` and `paper/draft.md:60, 124, 208` to match, and either rescore E1's conformance metric against
+21-23, 25, 62-65` and `paper/draft.md:52, 101, 247` to match, and either rescore E1's conformance metric against
 the aggregate estimand or keep the per-site column relabelled honestly as a dispersion diagnostic with no
 δ target attached. Report the `s_u` sensitivity in the paper — the published 0.01 is not robust to it.
 If a genuine per-site guarantee is wanted, `E[Z]` is the wrong statistic: it must become a tolerance bound
@@ -178,20 +192,25 @@ on an upper quantile of the per-site risk distribution, which is a different tes
 
 #### V2 — BBSE treats the target predicted-positive rate `q_t` as known; its sampling error is never propagated, and false certificates result at up to 3× δ
 *(= BBSE-1)*
-**Location:** `certgate/shift.py:87` (also `42-43, 114, 130, 138`); `certgate/constants.py:17`.
+**Location:** `certgate/shift.py:258-259` (also `19-22, 59-60, 186, 287-289, 307`); `certgate/constants.py:20`.
 **Empirically demonstrated, with a control isolating causality.**
 
 ```python
 q_t = float(head.predict(target_x).mean())        # exact on the pool
 ```
 
-`BBSE_BONFERRONI = 3  # box covers (c0, c1, pi_source)`. `q_t` gets no share of `BBSE_DELTA_CONF` and no
-interval anywhere in the chain, yet it enters the inversion at `shift.py:138`
-(`pi_t = clip((q_t − c0)/(c1 − c0), …)`) where the `BBSE_GAP_FLOOR = 0.10` gate permits its error to be
-amplified up to 10×. The only `q_t` guard (`shift.py:130`) fires only for `q_t` outside `[c0_lo, c1_hi]`.
+*[Exhibit of the 2026-07-25 source, kept verbatim. Today `shift.py:258-259`; the "exact on the pool"
+comment was deleted by the fix this finding prescribes and has no current match. `constants.py:20` now
+reads `BBSE_BONFERRONI = 4   # box covers (c0, c1, pi_source, q_target) — audit V2`.]*
 
-The docstring's justification is that `q_target` is *"exact under the design-conditional estimand."* This is
-the false premise. Conditioning on the target features makes `q_t` exactly **observed**, but it simultaneously
+`BBSE_BONFERRONI = 3  # box covers (c0, c1, pi_source)`. `q_t` gets no share of `BBSE_DELTA_CONF` and no
+interval anywhere in the chain, yet it enters the inversion at `shift.py:186`
+(`pi_t = clip((q_t − c0)/(c1 − c0), …)`) where the `BBSE_GAP_FLOOR = 0.10` gate permits its error to be
+amplified up to 10×. The only `q_t` guard (`shift.py:307`) fires only for `q_t` outside `[c0_lo, c1_hi]`.
+
+The docstring's justification is that `q_target` is *"exact under the design-conditional estimand."*
+(That docstring text is gone — no current match; `shift.py:19-22` and `:59-60` now state the opposite.)
+This is the false premise. Conditioning on the target features makes `q_t` exactly **observed**, but it simultaneously
 destroys the population identity `q = c0(1−π_t) + c1·π_t` that makes `q_t` informative about `π_t` — because
 `ŷ(x)` is then a deterministic function of `x`. `q_t` is an unbiased-but-noisy estimate of the population `q`,
 carrying entirely unbudgeted error.
@@ -247,12 +266,12 @@ headline scale, but the **reason** it survives is wrong: it declines from lack o
 uncertainty propagation.
 
 **Fix.** `SPEC.md`'s `shift.py` block first: state that `q_t` estimates the target *population* predicted-positive
-rate and carries sampling error, and that the box covers four parameters. Then `constants.py:17` →
-`BBSE_BONFERRONI = 4`. Then `shift.py` after line 87: build a finite-sample interval for `q` at
+rate and carries sampling error, and that the box covers four parameters. Then `constants.py:20` →
+`BBSE_BONFERRONI = 4`. Then `shift.py` after `:259`: build a finite-sample interval for `q` at
 `lvl = BBSE_DELTA_CONF/BBSE_BONFERRONI` — exact Clopper-Pearson on `k = predict(target_x).sum()` for a
 single-site pool; a cluster bootstrap over target sites for a multi-site pool, which requires adding a
 `target_site_id` parameter (`run_certgate` has it available) and treating unknown clustering as one cluster.
-Widen the misspecification gate at `shift.py:130` to `if not (lo[0] <= q_lo and q_hi <= hi[1])`. Make `rho_of`
+Widen the misspecification gate at `shift.py:307` to `if not (lo[0] <= q_lo and q_hi <= hi[1])`. Make `rho_of`
 take `q` as an argument and enumerate **16** corners. Add the regression test the current code fails: with head
 and `S_aux` fixed and ≥200 independent target pools of n=100, assert the fraction of intervals missing `ρ_true`
 is ≤ `BBSE_DELTA_CONF` + MC tolerance — today it is ~0.57. Expect BBSE to decline more often on small pools;
@@ -266,13 +285,14 @@ that is the correct behaviour, as the control shows.
 
 #### V3 — The WSR permutation is seeded from the caller-supplied target label, so target sites do not share one 1−δ event and the deployed threshold moves with a respelling
 *(= CC-2 / CG-R2 / CW-6)*
-**Location:** `certgate/certify.py:130-141` (seed rule), `certgate/pipeline.py:64`, `certgate/shift.py:200-203`;
-falsifies `certgate/report.py:70-71`, `SPEC.md:228`, `METHODS.md:23`, `paper/draft.md:94,124`.
+**Location:** `certgate/certify.py:152-174` (seed rule), `certgate/pipeline.py:83`, `certgate/shift.py:371-374`;
+falsifies `certgate/report.py:136-139`, `SPEC.md:817-851`, `METHODS.md:25`, `paper/draft.md:84,101`.
 **Empirically demonstrated.**
 
-In baseline mode nothing about the target enters the calibration atoms (`pipeline.py:62-63` uses `cal` only;
+In baseline mode nothing about the target enters the calibration atoms (`pipeline.py:79-82` uses `cal` only;
 walk order from `aux`). The sole target dependence is `certification_rng(alpha, MODE_BASELINE, target_label)`,
-and `certify.py:138` is `h = hashlib.sha256(str(target_label).encode()).digest()`. `certify.py:81` permutes `z`
+and `certify.py:171` is `h = hashlib.sha256(str(target_label).encode()).digest()` (today
+`str(stream)` — `target_label` was dropped by the fix this row prescribes). `certify.py:95` permutes `z`
 with that stream, and `wsr_reject`'s decision is a sup over prefixes of an **order-dependent** wealth product.
 So each target site receives a separately randomized test of identical calibration data.
 
@@ -286,8 +306,8 @@ of the same site. 3 of 6 configurations were label-dependent, including at the p
 ```
 
 The deployed operating point, the answered set and the reported coverage all move with the spelling of a
-free-text identifier on byte-identical data. `paper/draft.md:94` claims the permutation *"cannot be chosen to
-flatter the outcome."*
+free-text identifier on byte-identical data. `paper/draft.md:84` claims the permutation *"cannot be chosen to
+flatter the outcome."* (Current wording there: *"unchoosable to flatter the outcome"*.)
 
 **Probe B** — the shared-event claim, at the exact H0 boundary (`E[Z] = α`), where every certification is false
 by construction. `f` = fraction of 400 distinct labels certifying on the *same* atom vector:
@@ -309,7 +329,7 @@ printed on every certificate and the unchoosability claim in the paper.
 
 **Fix.** Drop `target_label` from the permutation seed: `certification_rng(alpha, mode_idx)` seeded from
 `SeedSequence([SEED, ALPHA_LADDER.index(alpha), mode_idx])`. Nothing is lost in baseline mode — the atoms are
-already target-independent — and one calibration draw then yields literally the single shared event `report.py:70-71`
+already target-independent — and one calibration draw then yields literally the single shared event `report.py:136-139`
 promises. BBSE endpoints keep distinct streams via a `'lo'`/`'hi'` discriminator rather than `f"{target_label}|lo"`.
 Leave `_bbse_seed_rng` alone; it legitimately depends on the target because `fit_bbse` consumes `target_x`. Add a
 test asserting `run_certgate` output is byte-identical across a list of target-label spellings — that test fails today.
@@ -321,13 +341,16 @@ achievable for baseline only; for BBSE the clause must be deleted.
 
 #### V4 — Site identity is unvalidated `str()`; cosmetic noise in one column fabricates independent clusters, buys a rung the honest clustering refuses, and defeats the minimum-cluster gate
 *(= VB1, absorbing VB2)*
-**Location:** `certgate/validate.py:109-119` (`densify_sites`); consumed at `pipeline.py:134`, `certify.py:48`.
-**Empirically demonstrated.**
+**Location:** `certgate/validate.py:253-287` (`densify_sites`); consumed at `pipeline.py:275`, `certify.py:55`.
+Canonicalization now lives at `validate.py:161-212` (`_canonical_site_id`). **Empirically demonstrated.**
 
 ```python
 labels_str = np.array([str(s) for s in raw_site_ids], dtype=object)
 uniq = np.unique(labels_str)
 ```
+
+*[Exhibit of the 2026-07-25 source, kept verbatim; the corresponding lines today are
+`validate.py:271-273`, which call `_canonical_site_id` — the fix this finding prescribes.]*
 
 No `.strip()`, no numeric canonicalization, no consistency check. Verified directly:
 
@@ -368,12 +391,13 @@ A cohort the library correctly refuses becomes a certificate under cosmetic nois
 (audit F03) — compares these same strings. I verified that two cohorts over the *same three sites*, one from an int
 column and one from a float column, get labels `('0','1','2')` and `('0.0','1.0','2.0')`, and
 `assert_site_disjoint` **passes**. If `S_aux` and `S_cal` are literally the same sites, the walk order is computed
-on `S_cal` itself, voiding `certify.py:108-110`'s *"Data-independent of S_cal, so it spends no multiplicity budget."*
+on `S_cal` itself, voiding `certify.py:122-128`'s *"The order never looks at S_cal, which is why it costs no
+multiplicity budget."*
 
 *Honest mitigation:* the report surfaces `n_cal` and `n_cal_carrying`, so an attentive user could notice 166 where
 they expected 83. Nothing forces them to look.
 
-**Fix.** `validate.py:109-119`: canonicalize before `np.unique` — reject None/NaN/empty (V11), strip surrounding
+**Fix.** `validate.py:253-287`: canonicalize before `np.unique` — reject None/NaN/empty (V11), strip surrounding
 whitespace, map integral floats to their integer string so `0` and `0.0` collide. Then raise `CohortError`, not a
 warning, when the raw forms collapse to fewer clusters than they produced — that is the caller's signal that their
 site column is dirty, and it must be loud because the count feeds `MIN_CAL_CLUSTERS`. Add a regression test asserting
@@ -384,7 +408,7 @@ calibration cluster count and min/median/max cluster size in the diagnostic tier
 
 #### V5 — `make_cohort` ignores a caller's declaration that two clusters are the same physical site
 *(= CW-2)*
-**Location:** `certgate/validate.py:158-164`. **Empirically demonstrated.**
+**Location:** `certgate/validate.py:340-349`. **Empirically demonstrated.**
 
 The entire `site_labels` contract checks only the **length**:
 
@@ -394,7 +418,10 @@ if len(site_labels) != n_sites:
     raise CohortError(...)
 ```
 
-`SPEC.md:57` documents `site_labels` as *"original identifiers, index-aligned to dense ids"* — so a repeated
+*[Exhibit of the 2026-07-25 source, kept verbatim; those lines are `validate.py:340-343` today, now
+followed by the uniqueness check this finding prescribes at `:344-349`.]*
+
+`SPEC.md:68` documents `site_labels` as *"original identifiers, index-aligned to dense ids"* — so a repeated
 identifier is the caller explicitly declaring that two dense clusters are one physical site. The library holds
 that declaration and discards it. Verified: `make_cohort(x, y, [0,0,1,1,2,2], site_labels=('H-A','H-A','H-B'))`
 is accepted, `n_sites = 3`, three atoms from two hospitals.
@@ -421,20 +448,20 @@ I copied the tree and mutated it. Every one of these left the suite at **69 pass
 
 | # | Mutation | What it breaks |
 |---|---|---|
-| 1 | `np.minimum(sizes, M)` → `sizes` (`certify.py:50`) | the [0,1] atom bound **Ville's inequality requires** |
-| 2 | baseline walk spends `δ = 0.5` (`pipeline.py:65`) | the δ in the paper's title |
-| 3 | BBSE bet spends full `DELTA` (`shift.py:207`) | `δ_conf + δ_bet = δ` union bound |
-| 4 | box drops Bonferroni-over-3 (`shift.py:114`) | ρ-interval width |
-| 5 | walk order derived from `S_cal` (`pipeline.py:165`) | selection on the testing data — the reason `S_aux` exists |
-| 6 | `wilson_lcb` returns the **upper** bound (`harness.py:36`) | every violation number in the paper |
-| 7 | `hard_violation` uses the raw rate (`harness.py:47`) | the two-number violation protocol |
-| 8 | BBSE walk `break` → `continue` (`shift.py:211`) | fixed-sequence FWER across 23 thresholds |
-| 9 | provenance hashes → literal `"deadbeef"` (`report.py:47`) | content binding (audit F49) |
-| 10 | bootstrap may quantile a reduced count (`shift.py:107`) | audit F40/B-8 hardening |
-| 11 | atoms use `>` while deploy uses `>=` (`certify.py:63`) | tie handling between statistic and answered mask |
-| 12 | `certification_rng` ignores `alpha` (`certify.py:140`) | ladder rungs share a permutation stream |
+| 1 | `np.minimum(sizes, M)` → `sizes` (`certify.py:58`) | the [0,1] atom bound **Ville's inequality requires** |
+| 2 | baseline walk spends `δ = 0.5` (`pipeline.py:84-85`) | the δ in the paper's title |
+| 3 | BBSE bet spends full `DELTA` (`shift.py:378`) | `δ_conf + δ_bet = δ` union bound |
+| 4 | box drops Bonferroni-over-3 (`shift.py:287-289`) | ρ-interval width |
+| 5 | walk order derived from `S_cal` (`pipeline.py:313`) | selection on the testing data — the reason `S_aux` exists |
+| 6 | `wilson_lcb` returns the **upper** bound (`harness.py:46-47`) | every violation number in the paper |
+| 7 | `hard_violation` uses the raw rate (`harness.py:61`) | the two-number violation protocol |
+| 8 | BBSE walk `break` → `continue` (`shift.py:383`) | fixed-sequence FWER across 23 thresholds |
+| 9 | provenance hashes → literal `"deadbeef"` (`report.py:58-62`) | content binding (audit F49) |
+| 10 | bootstrap may quantile a reduced count (`shift.py:279`) | audit F40/B-8 hardening |
+| 11 | atoms use `>` while deploy uses `>=` (`certify.py:70`) | tie handling between statistic and answered mask |
+| 12 | `certification_rng` ignores `alpha` (`certify.py:172-174`) | ladder rungs share a permutation stream |
 | 13 | **invert** the out-of-scope clause to "Nothing is OUT OF SCOPE" | the disclosure E3 exists to justify |
-| 14 | delete the BBSE asymptotic clause (`report.py:77`) | a named `CLAUDE.md` invariant |
+| 14 | delete the BBSE asymptotic clause (`report.py:149-161`) | a named `CLAUDE.md` invariant |
 
 **What the suite does protect** — I checked, so the picture is fair. These four were **caught**:
 WSR sup-crossing threshold `1/δ → 1/√δ`; removal of the λ cap; dropping the atom recentering offset; and removing
@@ -455,14 +482,18 @@ UNCAPPED (mutation that survives 69/69):
   wsr_reject certifies? True  <-- FALSE CERTIFICATE
 ```
 
-**Two assertions are outright vacuous.** `tests/test_shift.py:74-76` asserts
+**Two assertions are outright vacuous.** `tests/test_shift.py:78-91` asserts
 `rb["reason"] is None or rb["reason"] in {"failsafe","bbse-degenerate-bootstrap","bbse-ill-conditioned","bbse-misspecified"}`
-under the comment *"never a silent certify-and-violate."* That set **is** `certify_bbse`'s complete return domain
-(`shift.py:188-222`), so the predicate is identically true. `tests/test_pipeline.py:42-45` checks only that three
+under the comment *"never a silent certify-and-violate."* (That comment text was removed by the fix this row
+prescribes and has no current match; the comment at `:78-81` now records the vacuity lesson explicitly.) That set
+**is** `certify_bbse`'s complete return domain (`shift.py:332-393`), so the predicate is identically true.
+`tests/test_pipeline.py:42-45` checks only that three
 tokens — `"per-target-site"`, `"NOT a bound"`, `"OUT OF SCOPE"` — appear *somewhere* in the guarantee string, which
-is why mutation #13 survives while asserting the exact opposite of the intended clause.
+is why mutation #13 survives while asserting the exact opposite of the intended clause. (That three-token check no
+longer exists; the exact-string freeze this finding prescribes lives at `tests/test_report.py:179-191`.)
 
 `certgate/harness.py` has **zero** tests; no test file imports it. `SPEC.md`'s Tests section lists no `test_harness.py`.
+(`tests/test_harness.py` now exists — fix (1) of this row.)
 I verified the module is nevertheless *correct* — `wilson_lcb` matches the closed form and `exceedance_reference`
 matches brute-force enumeration including the integer-boundary cases — so this is a complete coverage hole over the
 paper's measurement instrument with no error behind it today.
@@ -473,7 +504,7 @@ recording wrapper, run `run_certgate` per mode, assert the recorded δ arguments
 `{BBSE_DELTA_BET}` — kills #2, #3. (3) An M-cap test with sizes spanning 20 and 3000 against `M=100`, asserting
 `z.min() >= 0 and z.max() <= 1`, plus the counterexample above — kills #1. (4) Freeze the guarantee statement by
 exact string comparison for a known `(alpha, modes)` pair — kills #13, #14. (5) Give `_manual_fit`
-(`tests/test_shift.py:183-187`) a multi-element walk order; today it supplies `np.array([0])`, under which `break`
+(`tests/test_shift.py:205-210`) a multi-element walk order; today it supplies `np.array([0])`, under which `break`
 and `continue` are provably indistinguishable — kills #8. (6) A walk-order provenance test: permute `cal` labels
 within sites and assert the walk order is unchanged — kills #5. (7) Flip one calibration label and assert
 `prov["input_hashes"]` differs — kills #9, and is the same assertion V13's fix needs.
@@ -482,18 +513,24 @@ within sites and assert the walk order is unchanged — kills #5. (7) Flip one c
 
 #### V7 — E2 and E3 run at an undeclared `sep = 1.8` while every document states 2.2
 *(= TS-06)*
-**Location:** `experiments/run_synthetic.py:40`, used at `:195` (E2) and `:264` (E3).
+**Location:** `experiments/run_synthetic.py:40`, used at `:195` (E2) and `:264` (E3) — the constant no longer
+exists; those two call sites are `run_synthetic.py:457` and `:574` today.
 **Empirically demonstrated (by prior passes; mechanism verified by me).**
 
 ```python
 SHIFT_SEP = 1.8                             # realistic head so shift bites
 ```
 
-Used only by E2 and E3. E1 (`:112`), E4 (`:333`), E5 (`:399`) and E6 (`:462`) all use `SimConfig()` → `sep = 2.2`.
+*[Exhibit of the 2026-07-25 source, kept verbatim. The constant was deleted by the fix this finding
+prescribes and has no current match: E2 and E3 now build `SimConfig()` at `run_synthetic.py:457` and `:574`,
+each emitting `sep` into its summary block at `:494` and `:623`.]*
+
+Used only by E2 and E3. E1 (`:245`), E4 (`:670`), E5 (`:739`) and E6 (`:911`) all use `SimConfig()` → `sep = 2.2`.
 I confirmed by grep that **no document mentions 1.8 anywhere**; the only `sep` hit across `SPEC.md`, `METHODS.md`,
-`README.md` and `paper/draft.md` is `SPEC.md:100` (`sep=2.2`). `paper/draft.md:152` — the Experimental setup section
-governing all six experiments — states *"the two class means separated by sep = 2.2"*, and §4.3/§4.4 report the
-E2/E3 numbers without qualification.
+`README.md` and `paper/draft.md` is `SPEC.md:147` (`sep=2.2`). `paper/draft.md:152` — the Experimental setup section
+governing all six experiments — states *"the two class means separated by sep = 2.2"* (the setup paragraph is
+`paper/draft.md:125` today and no longer states `sep` numerically; the quoted sentence has no current match), and
+§4.3/§4.4 (`paper/draft.md:133-135`, `:137-139`) report the E2/E3 numbers without qualification.
 
 Re-run at R=40 under each value (prior passes, consistent across two independent reproductions):
 
@@ -519,7 +556,8 @@ Otherwise declare `sep = 1.8` in `SPEC.md`'s Experiments block and `paper/draft.
 ---
 
 #### V8 — The BBSE bootstrap box under-covers at the design's own cluster scale *(= BBSE-2)*
-`certgate/shift.py:113-124`; `constants.py:15,29`. **Empirically demonstrated by two independent passes; I did not
+`certgate/shift.py:271-289`; `constants.py:18,31-32` (the audit's `:29` is under-determined at HEAD; the
+bootstrap-box constants now span both lines). **Empirically demonstrated by two independent passes; I did not
 re-run it** (each replicate costs 2000 bootstrap fits) and I record it on their consistent numbers.
 
 The Bonferroni arithmetic is correct (3 × 0.008333 = 0.025), so the shortfall is the naive percentile method's
@@ -542,16 +580,17 @@ and no invalid certificate was isolated to this cause — unlike V2, whose contr
 better, a finite-sample cluster bound: `c0`, `c1`, `π_s` are all ratios of bounded per-site quantities, so the WSR
 machinery already in `certify.py` can be inverted to give finite-sample intervals at `BBSE_DELTA_CONF/BBSE_BONFERRONI`
 — which also retires the asymptotic caveat entirely. Add a coverage regression test at `n_aux = 42`. Until then,
-`METHODS.md:39` and `paper/draft.md:114` must report the measured realized coverage, not only the nominal `δ_conf`.
+`METHODS.md:43` and `paper/draft.md:94` (restated at `:237`) must report the measured realized coverage, not only
+the nominal `δ_conf`.
 
 ---
 
 #### V9 — The target pool is never checked for site-overlap with `S_cal` / `S_aux` / `S_train` *(= CW-3)*
-`certgate/pipeline.py:106`. **Empirically demonstrated.**
+`certgate/pipeline.py:184`. **Empirically demonstrated.**
 
 The whole data-discipline gate is `assert_site_disjoint(train=train, aux=aux, cal=cal)`. The target enters as a bare
-`target_x` plus a free-text `target_label` and is never compared to anything, even though `METHODS.md:7,23` scope the
-guarantee to *"a NEW target site"* and `pipeline.py:132` already passes `str(target_label)` into provenance:
+`target_x` plus a free-text `target_label` and is never compared to anything, even though `METHODS.md:7,25` scope the
+guarantee to *"a NEW target site"* and `pipeline.py:271` already passes `str(target_label)` into provenance:
 
 ```
   target = calibration site 's-0000' (its own records), label = the same string
@@ -563,10 +602,10 @@ The certificate is issued with the full per-target-site guarantee text for a sit
 calibration atoms that produced it. No warning; nothing distinguishes it from an honest fresh-site run. Medium rather
 than high: the guarantee is not mathematically invalidated for the site population, but the walk stops at a τ chosen
 partly on this site's own atom, so the reported coverage and estimated-tier risk are selected on the target itself —
-the exact leak the F03 assertion exists to prevent, on the one split it does not cover. `examples/real_data_example.py:116`
+the exact leak the F03 assertion exists to prevent, on the one split it does not cover. `examples/real_data_example.py:122-126`
 tells practitioners that `run_certgate` asserts site-disjointness at entry without qualifying that the target is excluded.
 
-**Fix.** After `pipeline.py:106`, raise if `str(target_label)` is in the union of the three cohorts' `site_labels`.
+**Fix.** After `pipeline.py:184`, raise if `str(target_label)` is in the union of the three cohorts' `site_labels`.
 Add an optional `target_site_labels=None` keyword and assert full disjointness when supplied — `target_label` alone
 cannot catch a target pool whose records come from a cal site under a different label. Update `SPEC.md`'s gate list
 and the example's comment.
@@ -574,14 +613,15 @@ and the example's comment.
 ---
 
 #### V10 — Missing site ids are coerced into a bona fide pseudo-site *(= VB4)*
-`certgate/validate.py:115`. **Empirically demonstrated:** `densify_sites(['A', None, float('nan')])` →
+`certgate/validate.py:183-190`. **Empirically demonstrated:** `densify_sites(['A', None, float('nan')])` →
 `('A', 'None', 'nan')` — three legitimate clusters, two fabricated from missing data.
 
 The damage is two-sided: records with no known cluster are welded into one fake independent unit, while every affected
 real hospital simultaneously has its records split between its own cluster and the `'None'` cluster — the
 anti-conservative direction demonstrated under V4. The contract violation is sharp and internal to the same file:
-`coerce_labels` (`validate.py:76-84`) explicitly rejects NaN and None in the **label** column, with a comment that the
-code never guesses at a caller's intent, while the **site** column — which the whole method designates as the unit of
+`coerce_labels` (`validate.py:103-158`) explicitly rejects NaN and None in the **label** column, with a comment that the
+code never guesses at a caller's intent (`validate.py:5`, still verbatim; `coerce_labels`' own echo is
+*"It never guesses."* at `validate.py:108`), while the **site** column — which the whole method designates as the unit of
 statistical independence — gets no such check thirty lines earlier. `CLAUDE.md` lists loud boundary validation as a
 non-regressable invariant.
 
@@ -591,7 +631,7 @@ strings, mirroring `coerce_labels`' wording. Add the rule to `SPEC.md`'s `densif
 ---
 
 #### V11 — The provenance block does not bind the calibration labels or the site partition *(= CG-R4)*
-`certgate/report.py:29-59`, `certgate/pipeline.py:130-132`, pinned incomplete at `tests/test_pipeline.py:97-98`.
+`certgate/report.py:35-73`, `certgate/pipeline.py:252-273`, pinned incomplete at `tests/test_pipeline.py:98-107`.
 **Empirically demonstrated:**
 
 ```
@@ -602,8 +642,8 @@ strings, mirroring `coerce_labels`' wording. Add the rule to `SPEC.md`'s `densif
 ```
 
 One run certifies, the other refuses, and the reproducibility record cannot tell them apart. Only the four feature
-matrices are hashed — no `y`, no `site_id` — and `tests/test_pipeline.py:97` pins exactly that key set, freezing the
-omission into the suite. Separately, `report.py:47-48` hashes raw bytes with no shape or dtype in the digest, so a
+matrices are hashed — no `y`, no `site_id` — and `tests/test_pipeline.py:103-106` pins exactly that key set, freezing the
+omission into the suite. Separately, `report.py:57-62` hashes raw bytes with no shape or dtype in the digest, so a
 reshaped or transposed matrix is provenance-indistinguishable from the original. This cannot produce a wrong
 certificate, but it defeats the stated purpose of the block (audit F49) and it is the one artifact a reviewer or
 regulator would rely on to reproduce a certificate.
@@ -620,28 +660,28 @@ statement, and fix. All empirically demonstrated except where noted.
 
 | ID | Statement | Location | Fix |
 |---|---|---|---|
-| **V12** *(CC-4)* | The record-carrying cluster gate can never differ from `n_sites` on any sanctioned input path — `make_cohort` rejects gappy `site_id`, so `(site_sizes > 0).sum() == n_sites` always. A guard that cannot fire, credited by `SPEC.md`/`CLAUDE.md` as load-bearing audit-B-5 hardening. The `np.where(sizes > 0, …)` at `certify.py:50-52` is likewise unreachable arithmetic (the divisor is already `np.maximum(sizes, 1.0)`). | `validate.py:153-156` vs `pipeline.py:134,140` | Either make the guard real (an explicit `n_sites` parameter threaded through `subset_sites`) or delete the dead distinction and amend the conformance checklist. Do not leave it as false assurance. |
-| **V13** *(BBSE-3)* | The certified guarantee text asserts the bootstrap box is *"the single non-finite-sample step in the chain."* False given V2: the `q_t` plug-in is a second unmodelled step which, unlike the bootstrap, receives no confidence allowance at all. The sentence structure claims completeness — it enumerates its randomness sources, and the target-pool draw appears in neither. | `report.py:78-82`; `METHODS.md:39,74`; `paper/draft.md:108,114,124,244`; `shift.py:42-43,87` | Amend `SPEC.md:233-235` first, then the text. Delete the "exact on the pool" comment and the "exact under the design-conditional estimand" clause — they are the false premise. Restate after V2 lands. |
-| **V14** *(BBSE-4)* | Both `fit_bbse` decline gates are NaN-blind: an empty `target_x` gives `q_t = NaN`, both comparisons evaluate False, and the call dies later inside `influence_atoms` with an error naming *weights* rather than the empty pool. `max(1.0, nan)` silently returns 1.0. | `shift.py:87,126,130` | Return a new `bbse-empty-target` decline after line 87; invert the gate to `if not (lo[0] <= q_t <= hi[1])` so NaN declines. Reachable only via the public `fit_bbse`; `run_certgate` catches it at `MIN_ANSWERABLE`. |
-| **V15** *(CW-4)* | `Cohort` is a plain frozen dataclass exported in `__all__` with no `__post_init__`, and `run_certgate` re-checks only feature width — so cohorts `make_cohort` explicitly refuses (non-dense `site_id`, float `y`, non-finite `x`) flow straight through to a certificate. The repo's own tests rely on this bypass. Direction happens to be conservative in every case I tried; nothing in the design makes that general. | `validate.py:24-53` | Give `Cohort` a `__post_init__` running the same checks; move the five contract-violating test fixtures to a named test helper. |
-| **V16** *(CW-7)* | `_feasibility` initialises `best = -np.inf` and never restores a finite value when no τ achieves coverage, emitting `margin=-inf, ratio=-inf` into the report diagnostic — not strict-JSON serialisable. Verified: `json.dumps(..., allow_nan=False)` raises. The certified path is safe (it declines to failsafe). | `pipeline.py:44-55` | Track feasibility explicitly with `None` rather than a sentinel; `None` serialises as JSON `null` and cannot be mistaken for a very bad but real margin. Same latent issue in the `floor` branch. |
-| **V17** *(VB3)* | `make_cohort` checks `y.dtype.kind == "b"` but never `y.ndim == 1`, so an `(n,1)` bool column is accepted and broadcasts `predict(x) != y` into an `(n,n)` matrix — a 30+ GiB `MemoryError` deep in the pipeline instead of a typed `CohortError` at the boundary. Same omission for `site_id`. | `validate.py:142-149` | Add `ndim != 1` checks before the dtype checks, so `np.bincount` is never reached with a 2-D array. |
-| **V18** *(VB5)* | `require_both_classes=False`, which `SPEC.md:79-83` restricts to target pools, is an unrestricted public keyword; nothing tags a Cohort's role and `run_certgate` never re-checks. An all-negative **calibration** cohort is admitted and certifies, with BBSE's reweighting silently inert (`w = where(cal.y, rho, 1.0)` is constant) yet still listed as a covering mode. Direction is conservative. | `validate.py:171-172`; no counterpart in `pipeline.py` | Enforce at the boundary where roles are known: in `run_certgate`, require both classes in each of train/aux/cal. Suppress `bbse` from the covering-modes list when the fitted weight vector is constant. |
-| **V19** *(VB6)* | `oracle_target_y` is the only `run_certgate` input with no validation anywhere and is coerced with `np.asarray(…, dtype=bool)`. A length-1 array broadcasts to a fabricated all-negative composition; a float probability array coerces to all-positive. Both produce plausible-looking but fabricated `oracle_true_class` figures — the field reported as E6's composition row. Never touches the certificate. | `pipeline.py:87`; `explain.py:145-147` | Validate at the boundary in `run_certgate`: 1-D bool of length `target_x.shape[0]`. |
-| **V20** *(CG-R3)* | "Exact Shapley values" is unqualified but exact only for the **interventional** value function with the training-mean background — an unnamed choice. The shipped generator's features are correlated by construction (max off-diagonal correlation ~0.10-0.13), so conditional Shapley values differ. The stated justification (`sum(phi) + intercept == logit`) is a non-sequitur: efficiency is one axiom, and both decompositions satisfy it identically, which is why `tests/test_explain.py:25-31` does not test the claim at all. Magnitude disputed between passes (median 3.1%-14%); the *kind* is not. | `explain.py:3-6`; `METHODS.md:50`; `SPEC.md:195`; `paper/draft.md:130,192` | Name the value function and background in all four places; cite the Linear SHAP interventional result instead of the efficiency identity. Claim-precision only — no computed number is wrong. |
-| **V21** *(CG-R5)* | `_bootstrap_estimate` discards every resample whose answered mass is zero and quantiles over the survivors — the exact pattern `SPEC.md:164` forbids for the BBSE box ("never quantile over a reduced count — audit F40/B-8"), with no top-up and no decline. The dropped resamples are precisely the low-mass ones, so the surviving quantiles are biased. Also returns `point=0.0` (not NaN) when nothing is answered. **Latent:** I could not reach either regime through `run_certgate`, and believe it unreachable — at a τ answering nothing, every atom equals α exactly and the wealth process cannot move. | `report.py:103,105-113` | Return NaN for an empty answered set; adopt `shift.py:102-112`'s top-up-or-decline discipline; surface `n_boot` in `render_text`. |
-| **V22** *(CG-R6)* | When every target case is answered (or every one declined), `cohort_abstention_profile` produces an all-NaN gap whose `np.argsort` returns the **identity** permutation, and E5 then reports feature 0 as the top abstention driver with no basis in the data. Also writes bare NaN into `E5_explain.json`, which the harness elsewhere explicitly forbids. Latent: the shipped run has `n_declined = 2`. | `explain.py:92-100`; `run_synthetic.py:437,456` | Return an empty ranking rather than `argsort` of NaN; guard both consumers to emit `None`. |
-| **V23** *(CG-R7)* | `run_certgate` validates `alphas` loudly against the frozen ladder but performs **no** validation of `modes`, so a misspelled mode yields a full all-declined report with `reasons={}` — indistinguishable from a genuine statistical decline. An empty `modes` tuple behaves identically. Fail-safe in direction. | `pipeline.py:96-102` vs `:168-185` | Mirror the `alphas` gate: raise on any mode outside `('baseline','bbse')` or an empty tuple. |
-| **V24** *(CG-R8)* | `_statement`'s `deploy_mode` parameter is never read in the body. Verified: output is identical for `'baseline'`, `'bbse'` and a garbage value. The emitted statement never names which assumption mode backs the deployed threshold. | `report.py:62`, called at `:210-211` | Delete the parameter, or make it load-bearing by naming the deployed mode in the text. Deleting is smaller and removes the silent-garbage-accepted behaviour. |
-| **V25** *(CG-R10)* | The gated-exit path returns a diagnostic dict missing five keys `SPEC.md` lists unconditionally (`composition`, `abstention_profile`, `capped_influence_share`, `rm_vs_unweighted`, `bbse`), so a consumer indexing them raises `KeyError` on any gated report. Mitigating: the gated path has `head=None`, so three are genuinely uncomputable. *(The sub-claim that declined rows carry `tier="certified"` is cosmetic — `status` disambiguates — and I would not have filed it alone.)* | `report.py:189-197` vs `:254-266` | Emit a stable key set with explicit `None` values; `capped_influence_share` can actually be computed there. |
-| **V26** *(TS-12)* | `_write_summary` carries forward blocks for experiments not recomputed, but the header records only the current invocation's mode and no marker distinguishes recomputed from preserved sections — so `summary.md` can read `mode: FULL` while its E1 block is an R=10 QUICK result. E5/E6 emit neither `R` nor mode, so a preserved block from an earlier code revision is indistinguishable from a fresh one. Related: `run_E3` raises its poison-verification error before `_write_summary`, so an aborted full run leaves fresh CSVs beside a stale summary. | `run_synthetic.py:536-570` | Stamp mode and timestamp per block; prefix preserved sections with a visible marker; write the summary in a `finally` block. |
+| **V12** *(CC-4)* | The record-carrying cluster gate can never differ from `n_sites` on any sanctioned input path — `make_cohort` rejects gappy `site_id`, so `(site_sizes > 0).sum() == n_sites` always. A guard that cannot fire, credited by `SPEC.md`/`CLAUDE.md` as load-bearing audit-B-5 hardening. The `np.where(sizes > 0, …)` at `certify.py:57-59` is likewise unreachable arithmetic (the divisor is already `np.maximum(sizes, 1.0)`). | `validate.py:332-334` (`make_cohort`'s density check; the deliberate allowance is documented at `validate.py:42-45` and `site_sizes` at `:97-100`) vs `pipeline.py:275,286` | Either make the guard real (an explicit `n_sites` parameter threaded through `subset_sites`) or delete the dead distinction and amend the conformance checklist. Do not leave it as false assurance. |
+| **V13** *(BBSE-3)* | The certified guarantee text asserts the bootstrap box is *"the single non-finite-sample step in the chain."* False given V2: the `q_t` plug-in is a second unmodelled step which, unlike the bootstrap, receives no confidence allowance at all. The sentence structure claims completeness — it enumerates its randomness sources, and the target-pool draw appears in neither. | `report.py:149-161`; `METHODS.md:43,84`; `paper/draft.md:94,101,237`; `shift.py:19-22,59-60,258-259` | Amend `SPEC.md:844-851` first, then the text. Delete the "exact on the pool" comment and the "exact under the design-conditional estimand" clause — they are the false premise (both were deleted by this fix; neither has a current match). Restate after V2 lands. |
+| **V14** *(BBSE-4)* | Both `fit_bbse` decline gates are NaN-blind: an empty `target_x` gives `q_t = NaN`, both comparisons evaluate False, and the call dies later inside `influence_atoms` with an error naming *weights* rather than the empty pool. `max(1.0, nan)` silently returns 1.0. | `shift.py:258-259,303,307` | Return a new `bbse-empty-target` decline after line 87 (now `shift.py:236-239`); invert the gate to `if not (lo[0] <= q_t <= hi[1])` so NaN declines. Reachable only via the public `fit_bbse`; `run_certgate` catches it at `MIN_ANSWERABLE`. |
+| **V15** *(CW-4)* | `Cohort` is a plain frozen dataclass exported in `__all__` with no `__post_init__`, and `run_certgate` re-checks only feature width — so cohorts `make_cohort` explicitly refuses (non-dense `site_id`, float `y`, non-finite `x`) flow straight through to a certificate. The repo's own tests rely on this bypass. Direction happens to be conservative in every case I tried; nothing in the design makes that general. | `validate.py:30-100` (`__post_init__` now at `:55-83`) | Give `Cohort` a `__post_init__` running the same checks; move the five contract-violating test fixtures to a named test helper. |
+| **V16** *(CW-7)* | `_feasibility` initialises `best = -np.inf` and never restores a finite value when no τ achieves coverage, emitting `margin=-inf, ratio=-inf` into the report diagnostic — not strict-JSON serialisable. Verified: `json.dumps(..., allow_nan=False)` raises. The certified path is safe (it declines to failsafe). | `pipeline.py:36-68` (`best = None` at `:54`) | Track feasibility explicitly with `None` rather than a sentinel; `None` serialises as JSON `null` and cannot be mistaken for a very bad but real margin. Same latent issue in the `floor` branch. |
+| **V17** *(VB3)* | `make_cohort` checks `y.dtype.kind == "b"` but never `y.ndim == 1`, so an `(n,1)` bool column is accepted and broadcasts `predict(x) != y` into an `(n,n)` matrix — a 30+ GiB `MemoryError` deep in the pipeline instead of a typed `CohortError` at the boundary. Same omission for `site_id`. | `validate.py:315-334` | Add `ndim != 1` checks before the dtype checks, so `np.bincount` is never reached with a 2-D array. |
+| **V18** *(VB5)* | `require_both_classes=False`, which `SPEC.md:123-127` restricts to target pools, is an unrestricted public keyword; nothing tags a Cohort's role and `run_certgate` never re-checks. An all-negative **calibration** cohort is admitted and certifies, with BBSE's reweighting silently inert (`w = where(cal.y, rho, 1.0)` is constant) yet still listed as a covering mode. Direction is conservative. | `validate.py:357-358`; no counterpart in `pipeline.py` | Enforce at the boundary where roles are known: in `run_certgate`, require both classes in each of train/aux/cal. Suppress `bbse` from the covering-modes list when the fitted weight vector is constant. |
+| **V19** *(VB6)* | `oracle_target_y` is the only `run_certgate` input with no validation anywhere and is coerced with `np.asarray(…, dtype=bool)`. A length-1 array broadcasts to a fabricated all-negative composition; a float probability array coerces to all-positive. Both produce plausible-looking but fabricated `oracle_true_class` figures — the field reported as E6's composition row. Never touches the certificate. | `pipeline.py:172-181`; `explain.py:342-344` | Validate at the boundary in `run_certgate`: 1-D bool of length `target_x.shape[0]`. |
+| **V20** *(CG-R3)* | "Exact Shapley values" is unqualified but exact only for the **interventional** value function with the training-mean background — an unnamed choice. The shipped generator's features are correlated by construction (max off-diagonal correlation ~0.10-0.13), so conditional Shapley values differ. The stated justification (`sum(phi) + intercept == logit`) is a non-sequitur: efficiency is one axiom, and both decompositions satisfy it identically, which is why `tests/test_explain.py:28-34` does not test the claim at all. Magnitude disputed between passes (median 3.1%-14%); the *kind* is not. | `explain.py:3-10`; `METHODS.md:54`; `SPEC.md:303-306`; `paper/draft.md:107,199` | Name the value function and background in all four places; cite the Linear SHAP interventional result instead of the efficiency identity. Claim-precision only — no computed number is wrong. |
+| **V21** *(CG-R5)* | `_bootstrap_estimate` discards every resample whose answered mass is zero and quantiles over the survivors — the exact pattern `SPEC.md:241` forbids for the BBSE box ("never quantile over a reduced count — audit F40/B-8"), with no top-up and no decline. The dropped resamples are precisely the low-mass ones, so the surviving quantiles are biased. Also returns `point=0.0` (not NaN) when nothing is answered. **Latent:** I could not reach either regime through `run_certgate`, and believe it unreachable — at a τ answering nothing, every atom equals α exactly and the wealth process cannot move. | `report.py:195,200-209` | Return NaN for an empty answered set; adopt `shift.py:271-284`'s top-up-or-decline discipline; surface `n_boot` in `render_text`. |
+| **V22** *(CG-R6)* | When every target case is answered (or every one declined), `cohort_abstention_profile` produces an all-NaN gap whose `np.argsort` returns the **identity** permutation, and E5 then reports feature 0 as the top abstention driver with no basis in the data. Also writes bare NaN into `E5_explain.json`, which the harness elsewhere explicitly forbids. Latent: the shipped run has `n_declined = 2`. | `explain.py:218-250` (ranking guard now `:239-242`); `run_synthetic.py:800-802,899-900` | Return an empty ranking rather than `argsort` of NaN; guard both consumers to emit `None`. |
+| **V23** *(CG-R7)* | `run_certgate` validates `alphas` loudly against the frozen ladder but performs **no** validation of `modes`, so a misspelled mode yields a full all-declined report with `reasons={}` — indistinguishable from a genuine statistical decline. An empty `modes` tuple behaves identically. Fail-safe in direction. | `pipeline.py:137-141` vs `:329-338` (the modes gate this row prescribes is now `pipeline.py:143-149`) | Mirror the `alphas` gate: raise on any mode outside `('baseline','bbse')` or an empty tuple. |
+| **V24** *(CG-R8)* | `_statement`'s `deploy_mode` parameter is never read in the body. Verified: output is identical for `'baseline'`, `'bbse'` and a garbage value. The emitted statement never names which assumption mode backs the deployed threshold. | `report.py:76` (signature now `_statement(alpha, modes)` — `deploy_mode` deleted), called at `report.py:330` | Delete the parameter, or make it load-bearing by naming the deployed mode in the text. Deleting is smaller and removes the silent-garbage-accepted behaviour. |
+| **V25** *(CG-R10)* | The gated-exit path returns a diagnostic dict missing five keys `SPEC.md` lists unconditionally (`composition`, `abstention_profile`, `capped_influence_share`, `rm_vs_unweighted`, `bbse`), so a consumer indexing them raises `KeyError` on any gated report. Mitigating: the gated path has `head=None`, so three are genuinely uncomputable. *(The sub-claim that declined rows carry `tier="certified"` is cosmetic — `status` disambiguates — and I would not have filed it alone.)* | `report.py:306-312` vs `:376-391` | Emit a stable key set with explicit `None` values; `capped_influence_share` can actually be computed there. |
+| **V26** *(TS-12)* | `_write_summary` carries forward blocks for experiments not recomputed, but the header records only the current invocation's mode and no marker distinguishes recomputed from preserved sections — so `summary.md` can read `mode: FULL` while its E1 block is an R=10 QUICK result. E5/E6 emit neither `R` nor mode, so a preserved block from an earlier code revision is indistinguishable from a fresh one. Related: `run_E3` raises its poison-verification error before `_write_summary`, so an aborted full run leaves fresh CSVs beside a stale summary. | `run_synthetic.py:1803-1837` (`_existing_summary_blocks` at `:1784-1800`; the `finally` this row prescribes is now `:1866-1869`) | Stamp mode and timestamp per block; prefix preserved sections with a visible marker; write the summary in a `finally` block. |
 
 ---
 
 ### PLAUSIBLE
 
 #### V27 — The operative rung is a post-hoc selection across the α ladder, but its statement still claims 1−δ
-*(= CG-R9)* · `report.py:205-217`; `constants.py:13`. **Reasoned only — no counterexample constructed.**
+*(= CG-R9)* · `report.py:322-336`; `constants.py:16`. **Reasoned only — no counterexample constructed.**
 
 `build_report` designates the strictest **certified** α as operative and derives the deployed answered mask,
 estimated tier and diagnostics from it. Each rung is walked at full `DELTA` with no ladder-level correction.
@@ -667,7 +707,7 @@ These were investigated and found sound. This list is a deliverable: it records 
 
 - **CC-3 — "the OR-rule spends δ twice on the same calibration split."** *Refuted.* The union bound is not needed
   because the two modes do not make claims about the same estimand: baseline certifies the unweighted `R_M`, BBSE
-  the ρ-reweighted one (`shift.py:194-199`). There is no single event whose probability needs splitting. The emitted
+  the ρ-reweighted one (`shift.py:366-370`). There is no single event whose probability needs splitting. The emitted
   claim is a *per-assumption conditional* ("Under the tagged assumption (exchangeability **or** label shift)"), and
   `_combine_alpha` lists a mode only if that mode's own certified set contains the deployed index — so for each
   assumption named, the mode carrying it ran its own level-δ procedure and certified that exact index. Fixed-sequence
@@ -746,22 +786,23 @@ such a sample is inside Ville's budget. I did not rely on it; V3 demonstrates th
 
 ### Before the paper is submitted
 
-1. **`SPEC.md:228` — change the mandated guarantee text first.** It is the binding contract and it currently mandates
+1. **`SPEC.md:817-851` — change the mandated guarantee text first.** It is the binding contract and it currently mandates
    two false clauses. Nothing else in this list can be done correctly before it. *(V1, V3)*
-2. **`certgate/report.py:65-83` — state the estimand the test certifies.** Replace "at this target site" with the
-   population-average wording and add the between-site-dispersion clause. Then `METHODS.md:7,21,23,58` and
-   `paper/draft.md:60,124,208`. *(V1)*
+2. **`certgate/report.py:76-162` — state the estimand the test certifies.** Replace "at this target site" with the
+   population-average wording and add the between-site-dispersion clause. Then `METHODS.md:7,21-23,25,62-65` and
+   `paper/draft.md:52,101,247`. *(V1)*
 3. **`experiments/run_synthetic.py` — rescore or relabel E1's conformance metric, and report the `s_u` sensitivity.**
    The published 0.01 is a property of `s_u = 0.5`; at `s_u = 2.0` it is 0.10. A reviewer who varies one documented
    generator parameter will find this. *(V1)*
-4. **`certgate/shift.py:87` — give `q_t` a confidence share** (`BBSE_BONFERRONI = 4`, Clopper-Pearson or cluster
+4. **`certgate/shift.py:258-259` — give `q_t` a confidence share** (`BBSE_BONFERRONI = 4`, Clopper-Pearson or cluster
    bootstrap, 16 corners). Then re-run E2. Expect more declines; that is the correct behaviour. *(V2)*
-5. **`certgate/certify.py:130-141` — drop `target_label` from the permutation seed**, and strike the "cannot be chosen
-   to flatter the outcome" claim at `paper/draft.md:94`. Delete the shared-event clause for BBSE, which cannot be
+5. **`certgate/certify.py:152-174` — drop `target_label` from the permutation seed**, and strike the "cannot be chosen
+   to flatter the outcome" claim at `paper/draft.md:84`. Delete the shared-event clause for BBSE, which cannot be
    restored. *(V3)*
 6. **`experiments/run_synthetic.py:40` — resolve the `sep = 1.8` discrepancy**, preferably by running E2/E3 at the
-   documented 2.2. Two headline numbers in the manuscript come from a generator the manuscript does not describe. *(V7)*
-7. **`report.py:78-82`, `METHODS.md:39` — stop claiming a single non-finite-sample step**, and report the box's
+   documented 2.2 (the constant is gone; E2/E3 now build `SimConfig()` at `run_synthetic.py:457,574`). Two headline
+   numbers in the manuscript come from a generator the manuscript does not describe. *(V7)*
+7. **`report.py:149-161`, `METHODS.md:43` — stop claiming a single non-finite-sample step**, and report the box's
    measured realized coverage at the deployed cluster count. *(V8, V13)*
 8. **`tests/` — close the three test gaps that guard paper claims:** `test_harness.py`; the δ-accounting spy; the
    exact-string guarantee-text assertion. *(V6)*
@@ -770,16 +811,16 @@ such a sample is inside Ville's budget. I did not rely on it; V3 demonstrates th
 
 Everything above, plus:
 
-9. **`certgate/validate.py:109-119` — canonicalize site identity and reject missing site ids loudly.** This is the
+9. **`certgate/validate.py:253-287` (canonicalization now at `:161-212`) — canonicalize site identity and reject missing site ids loudly.** This is the
    single highest-risk item for real data: a routine data-quality defect in one column silently redefines the unit of
    statistical independence and buys a strictness rung the honest clustering refuses. A real extract will have dirty
    site ids. *(V4, V10)*
 10. **`certgate/validate.py` — reject duplicate `site_labels` in `make_cohort`.** *(V5)*
-11. **`certgate/pipeline.py:106` — assert the target pool is site-disjoint from train/aux/cal**, and add
-    `target_site_labels`. Correct `examples/real_data_example.py:116`. *(V9)*
-12. **`certgate/validate.py:24` — give `Cohort` a `__post_init__`** so the documented input contract is not optional
+11. **`certgate/pipeline.py:184` — assert the target pool is site-disjoint from train/aux/cal**, and add
+    `target_site_labels`. Correct `examples/real_data_example.py:122-126`. *(V9)*
+12. **`certgate/validate.py:31` — give `Cohort` a `__post_init__`** (now at `:55`) so the documented input contract is not optional
     through the public API. *(V15)*
-13. **`certgate/validate.py:142-149` — enforce 1-D `y` and `site_id`**; a column-shaped label array from a loader
+13. **`certgate/validate.py:315-334` — enforce 1-D `y` and `site_id`**; a column-shaped label array from a loader
     currently detonates as a 30 GiB allocation rather than a typed error. *(V17)*
 14. **`certgate/pipeline.py` — validate `modes`, `oracle_target_y`, and single-class fitting cohorts at the
     boundary.** *(V18, V19, V23)*

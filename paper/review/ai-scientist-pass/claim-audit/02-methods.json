@@ -1,5 +1,6 @@
 {
   "section": "S3 Methods (3.1-3.10)",
+  "citations_reverified": "Citations re-verified against the working tree 2026-08-25. Line numbers and quoted comment text were re-pointed after the 2026-08-24 comment humanization and the 2026-08-25 paper de-labelling; findings, verdicts and numbers are the originals and are unchanged. Scope: many quote fields and draft line references also predate the 2026-08-21 manuscript trim, which rewrote prose this pass did not re-point; where such a quote also carried an E1-E9 codename it is annotated in place rather than rewritten. line_range and the per-claim line fields are left at the audit's original values as its own record of what it covered.",
   "line_range": [48, 119],
   "audit_date": "2026-08-15",
   "method_note": "Every claim in draft.md lines 48-119 traced against experiments/out/summary.md, experiments/out/EICU-SUMMARY.md + EICU_*.json/csv, certgate/constants.py + tests/test_constants.py, certgate/{certify,shift,model,harness,report,data}.py, tests/test_certify.py, and the read-only replay `python -m experiments.panel_s2_tables` (stdout only; run 2026-08-15 into the scratchpad, byte-identical to a prior run; self-check 194/194 tau matches vs E1_validity.csv). No project file was modified.",
@@ -32,7 +33,7 @@
       "line": 52,
       "quote": "a bounded score $s(x) \\in [0.5, 1]$ -- the max-softmax",
       "value": "[0.5, 1]",
-      "source": "certgate/model.py:56 score = max(p1, 1-p1) in [0.5, 1]",
+      "source": "certgate/model.py:56-59 score = max(p1, 1-p1) in [0.5, 1]",
       "status": "ANALYTIC",
       "note": "Range identity of max(p, 1-p) for a binary posterior; code docstring agrees."
     },
@@ -48,15 +49,15 @@
       "line": 54,
       "quote": "The head's hard label is $\\hat{y}_i = \\mathbb{1}[\\hat{p}(x_i) \\ge 1/2]$",
       "value": "threshold 1/2",
-      "source": "certgate/model.py:52-53 predict = predict_proba(x) >= 0.5",
+      "source": "certgate/model.py:52-54 predict = predict_proba(x) >= 0.5",
       "status": "TRACED",
       "note": ""
     },
     {
       "line": 54,
-      "quote": "most answered errors are false negatives (77% in E1)",
+      "quote": "most answered errors are false negatives (77% on the validity grid of Section 4.2)",
       "value": "77%",
-      "source": "panel_s2_tables stdout: E1.table7_answered.fn_share_of_errors = 0.769 (fn=1,218,592 / (fp 366,089 + fn 1,218,592)); draft section 4.2 line 132 states 76.9%",
+      "source": "panel_s2_tables stdout: E1.table7_answered.fn_share_of_errors = 0.769 (fn=1,218,592 / (fp 366,089 + fn 1,218,592)); draft section 4.2 line 131 states 76.9%",
       "status": "TRACED",
       "note": "Display rounding of 0.769 -> 77%. Source is the read-only replay command (writes no file); the value lives in SI Table S5 / section 4.2, not in experiments/out/."
     },
@@ -136,7 +137,7 @@
       "line": 82,
       "quote": "$\\lambda_t = \\min(\\sqrt{2\\ln(1/\\delta)/(\\hat{\\sigma}^2_{t-1} n)}, 0.9/(1-\\alpha))$",
       "value": "cap 0.9/(1-alpha)",
-      "source": "certgate/constants.py WSR_LAMBDA_CAP=0.9; certgate/certify.py:86-89",
+      "source": "certgate/constants.py WSR_LAMBDA_CAP=0.9; certgate/certify.py:100-103",
       "status": "TRACED",
       "note": "Formula matches code line-for-line."
     },
@@ -160,7 +161,7 @@
       "line": 84,
       "quote": "we certify if and only if $\\sup_t K_t \\ge 1/\\delta$",
       "value": "1/delta crossing",
-      "source": "certgate/certify.py:91 log_wealth >= log(1/delta)",
+      "source": "certgate/certify.py:105 log_wealth >= log(1/delta)",
       "status": "TRACED",
       "note": "Ville's inequality bound by delta is ANALYTIC."
     },
@@ -208,7 +209,7 @@
       "line": 88,
       "quote": "each rung is individually valid at $1-\\delta$, and the selected claim holds jointly at $1-2\\delta = 0.90$",
       "value": "0.90",
-      "source": "constants.py DELTA=0.05; certgate/report.py:134-137 prints 1 - len(ALPHA_LADDER)*DELTA = 0.90 (frozen string in tests/test_report.py)",
+      "source": "constants.py DELTA=0.05; certgate/report.py:142-145 prints 1 - len(ALPHA_LADDER)*DELTA = 0.90 (frozen string in tests/test_report.py)",
       "status": "TRACED",
       "note": "1 - 2(0.05) = 0.90; also restated at line 102."
     },
@@ -226,7 +227,7 @@
       "value": "alpha=0.10 operative at 208",
       "source": "summary.md E1: 0.05 certify_rate 0.0, 0.1 certify_rate 1.0; E4 grid n_sites=208: 0.05 certify_rate 0.0, 0.1 certify_rate 1.0",
       "status": "TRACED",
-      "note": ""
+      "note": "[2026-08-25 re-verification: this quote predates the 2026-08-21 manuscript trim and is no longer verbatim; the sentence is gone from Section 3.5, and the frontier it pointed at is Section 4.5 (draft.md:143). The E4 artifact prefix it names still exists. Verdict and numbers unchanged.]"
     },
     {
       "line": 94,
@@ -248,7 +249,7 @@
       "line": 94,
       "quote": "cluster bootstrap (ten or more declared sites) for $q$",
       "value": "10",
-      "source": "certgate/constants.py BBSE_MIN_TARGET_SITES=10; shift.py:98,221",
+      "source": "certgate/constants.py BBSE_MIN_TARGET_SITES=10; shift.py:113,252",
       "status": "TRACED",
       "note": ""
     },
@@ -256,7 +257,7 @@
       "line": 94,
       "quote": "held at Bonferroni level $\\delta_{\\text{conf}}/4$",
       "value": "0.025/4 = 0.00625",
-      "source": "certgate/shift.py:256 lvl = BBSE_DELTA_CONF / BBSE_BONFERRONI",
+      "source": "certgate/shift.py:287 lvl = BBSE_DELTA_CONF / BBSE_BONFERRONI",
       "status": "TRACED",
       "note": ""
     },
@@ -264,7 +265,7 @@
       "line": 94,
       "quote": "propagated to a weight interval $[\\rho_{\\text{lo}}, \\rho_{\\text{hi}}]$ over the box's sixteen corners",
       "value": "16 = 2^4",
-      "source": "certgate/shift.py:150-173 '16 box corners'; METHODS.md section 5",
+      "source": "certgate/shift.py:167-196 '16 box corners' (the comment itself is at :194); METHODS.md section 5",
       "status": "TRACED",
       "note": ""
     },
@@ -280,7 +281,7 @@
       "line": 94,
       "quote": "the three percentile bootstrap intervals are asymptotic",
       "value": "3 (c0, c1, pi_source)",
-      "source": "certgate/shift.py S_aux cluster bootstrap over (c0, c1, pi_s); report.py:149",
+      "source": "certgate/shift.py S_aux cluster bootstrap over (c0, c1, pi_s); report.py:157",
       "status": "TRACED",
       "note": "Count of bootstrap-derived box parameters; the fourth (q) is Clopper-Pearson or a target-site bootstrap."
     },
@@ -304,7 +305,7 @@
       "line": 94,
       "quote": "two to nine declared target sites",
       "value": "2 <= K < 10",
-      "source": "certgate/shift.py:221 `if 2 <= n_ts < BBSE_MIN_TARGET_SITES` -> decline; constants BBSE_MIN_TARGET_SITES=10",
+      "source": "certgate/shift.py:252 `if 2 <= n_ts < BBSE_MIN_TARGET_SITES` -> decline; constants BBSE_MIN_TARGET_SITES=10",
       "status": "TRACED",
       "note": ""
     },
@@ -312,7 +313,7 @@
       "line": 94,
       "quote": "an ill-conditioned confusion gap $(c_1 - c_0) < 0.10$",
       "value": "0.10",
-      "source": "certgate/constants.py BBSE_GAP_FLOOR=0.10; shift.py:272 worst-case lo_c1 - hi_c0",
+      "source": "certgate/constants.py BBSE_GAP_FLOOR=0.10; shift.py:303 worst-case lo_c1 - hi_c0",
       "status": "TRACED",
       "note": ""
     },
@@ -330,7 +331,7 @@
       "value": "verified true; rm_exceed 1.0",
       "source": "summary.md E3: tilt_pushes_risk_above_alpha=true, verified_mean_answered_risk_alpha0.10=0.161, 0.1 rm_exceed_rate=1.0",
       "status": "TRACED",
-      "note": "Qualitative claim backed by the E3 block."
+      "note": "Qualitative claim backed by the E3 block. [2026-08-25 re-verification: this quote predates the 2026-08-21 manuscript trim and is no longer verbatim; the negative control is described at Section 4.4 (draft.md:139), where the same verified-poison claim stands without the E-codename. The E3 artifact prefix it names still exists. Verdict and numbers unchanged.]"
     },
     {
       "line": 100,
@@ -346,13 +347,13 @@
       "value": "-> 1/2",
       "source": "Binomial median at p=alpha; summary.md E1 exceedance_by_size binomial_reference 0.3937/0.4822/0.4838/0.4898 by size bin",
       "status": "ANALYTIC",
-      "note": "report.py:118-119 carries the binomial-dispersion clause; the 'one in two' limit is the analytic reading, consistent with the E1 references."
+      "note": "report.py:126-127 carries the binomial-dispersion clause; the 'one in two' limit is the analytic reading, consistent with the E1 references."
     },
     {
       "line": 102,
       "quote": "one $1-\\delta$ event is shared by every target pool",
       "value": "1-delta = 0.95",
-      "source": "certgate/report.py:128-131 (baseline rows only)",
+      "source": "certgate/report.py:136-139 (baseline rows only)",
       "status": "TRACED",
       "note": ""
     },
@@ -360,7 +361,7 @@
       "line": 102,
       "quote": "a data-driven selection over the $\\{0.05, 0.10\\}$ ladder, so the selected claim holds jointly at $1 - 2\\delta = 0.90$",
       "value": "{0.05, 0.10}; 0.90",
-      "source": "certgate/report.py:134-137; constants ALPHA_LADDER, DELTA",
+      "source": "certgate/report.py:142-145; constants ALPHA_LADDER, DELTA",
       "status": "TRACED",
       "note": ""
     },
@@ -368,7 +369,7 @@
       "line": 102,
       "quote": "covers four estimated parameters ... at Bonferroni $\\delta_{\\text{conf}} = 0.025$",
       "value": "4; 0.025",
-      "source": "certgate/report.py:145-147; constants BBSE_BONFERRONI=4, BBSE_DELTA_CONF=0.025",
+      "source": "certgate/report.py:153-155; constants BBSE_BONFERRONI=4, BBSE_DELTA_CONF=0.025",
       "status": "TRACED",
       "note": ""
     },
@@ -384,7 +385,7 @@
       "line": 106,
       "quote": "The deployed head is L2-regularized logistic regression ($C = 1.0$)",
       "value": "C=1.0",
-      "source": "certgate/constants.py HEAD_C=1.0; certgate/model.py:75 LogisticRegression(C=HEAD_C, max_iter=HEAD_MAX_ITER)",
+      "source": "certgate/constants.py HEAD_C=1.0; certgate/model.py:78 LogisticRegression(C=HEAD_C, max_iter=HEAD_MAX_ITER)",
       "status": "TRACED",
       "note": ""
     },
@@ -470,15 +471,15 @@
     },
     {
       "line": 118,
-      "quote": "(Figures 2-4 and Table 1 in the main text; Supplementary Figures S3-S6 and Tables S2-S3 and S6)",
+      "quote": "(Figures 4-5, Supplementary Figures S3-S9 and Supplementary Tables S2-S3, S6 and S9)",
       "value": "figure/table scope of the one-command claim",
-      "source": "CLAUDE.md 'Still not wired' (section 3.10/SI A.3 scope: Figures 2-4, Table 1, SI Figures S3-S6, Tables S2-S3 and S6); experiments/panel_s2_tables.py NOTE (Tables S4-S5 excluded)",
+      "source": "CLAUDE.md 'Still not wired' (section 3.10/SI A.3 scope: Figures 4-5, SI Figures S3-S9 and SI Tables S2-S3, S6 and S9); experiments/panel_s2_tables.py NOTE (Tables S4-S5 excluded)",
       "status": "TRACED",
-      "note": "Structural cross-reference; consistent with the project map after the 2026-08-11 renumbering."
+      "note": "Structural cross-reference; consistent with the project map after the 2026-08-11 renumbering. [2026-08-25 re-verification: the figure/table numbers in the quote and source were re-pointed to the current draft.md:265 and CLAUDE.md 'Still not wired' after the 2026-08-21 venue-fit renumbering; the scope claim itself is unchanged.]"
     },
     {
       "line": 118,
-      "quote": "Supplementary Tables S4-S5 come from a second read-only command ... verifies itself against the released E1 artifact",
+      "quote": "Supplementary Tables S4 and S5 ... are produced by a second read-only command ... asserts against the released validity-grid artifact",
       "value": "self-check 194/194",
       "source": "experiments/panel_s2_tables.py (writes nothing; hard-asserts replay vs E1_validity.csv); replay 2026-08-15: self_check compared=194, tau_mismatches=0",
       "status": "TRACED",

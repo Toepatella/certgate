@@ -3,10 +3,18 @@
 A Sakana AI-Scientist-style end-to-end verification pass over the finished
 CertGate project: v1's reviewer ensemble and novelty check plus v2's figure
 review, harvested verbatim (Apache-2.0; provenance in
-`../../../ai-scientist-harvest/HARVESTED/README.md`, commits `1de1dbc` v1 /
+`../../../../ai-scientist-harvest/HARVESTED/README.md`, commits `1de1dbc` v1 /
 `96bd516` v2) and rebuilt as a *check* of frozen work — nothing generated,
 no experiment re-run, no frozen text or constant touched. All LLM calls ran
 through Claude in-session (`OPENAI_API_KEY` unset by user direction).
+
+> *Citations re-verified against the working tree 2026-08-25.* Line numbers, paths
+> and quoted caption text were re-pointed after the 2026-08-24 comment humanization
+> and the 2026-08-25 paper de-labelling; findings, verdicts, scores and numbers are
+> the originals and are unchanged. Two renumberings post-date this report and are not
+> reflected in the body below: main Figures 2–5 of the reviewed build are today
+> Figures S9, S7, S8 and 2 (Figure 1 and S1–S6 unchanged), and Tables 1–3 are today
+> Table S1, Table 1 and Table 2.
 
 ## Phase results
 
@@ -26,11 +34,16 @@ through Claude in-session (`OPENAI_API_KEY` unset by user direction).
 
 - **Codenames**: 42 bare E/P main-text hits → 0 bare E-codes; P1–P7 confined to
   §4.10 as introduced protocol labels; §4.2–4.8 renamed descriptively; one
-  label-mapping paragraph added to SI A.3.
+  label-mapping paragraph added to SI A.3 — deleted 2026-08-25, the mapping now
+  living in the paper's Code availability section as the sentence naming the
+  `E1_`–`E9_` artifact prefixes against the same descriptive names; VEN-6 is
+  closed at least as firmly on the current text.
 - **Register**: every term of art glossed at first use (rung, WSR, BBSE, box,
   failsafe/misspecified, coverage, information floor, wealth process); abstract
   rewritten; §4.10's ETL/software register translated; Table 2's 200-word
-  caption argument moved to SI A.3.
+  caption argument moved to SI A.3 (that table is Table 1 after the 2026-08-21
+  renumbering; the argument is SI A.3's "Cohort filters deliberately omitted"
+  paragraph).
 - **Dedup**: dispersion caveat ~11→~5 (survivors audit-mandated/frozen),
   re-splits caveat 6→3, composition disclosure 4→2 + conclusion echo,
   "honest/declines-rather-than" family ≥7→2, "currencies" 3→1,
@@ -82,7 +95,15 @@ than the target collection's. Post-rewrite re-trace: 306 claims, 0 hard drift.
    title decision on "label-shift robustness".
 2. **Figure regeneration pass** (S6 legend occlusion is the one major; plot
    titles still carry E-codes; full list in `coldread-figures/raw-results.json`)
-   — touches released artifacts, so it needs its own decision.
+   — touches released artifacts, so it needs its own decision. Partly overtaken at
+   2026-08-25: the `experiments/out/E1_`–`E4_` PNGs were re-rendered that day and no
+   longer carry the codes on their titles (E3 and E4 confirmed on the image), but
+   `E5_explain.png` was not re-rendered, because only its left-panel title was
+   de-labelled in source while the $R = 200$ branch f-string at
+   `run_synthetic.py:889` still reads "E5 answered-vs-declined |phi| gap"; and the
+   typeset copies under `paper/build/out/sn/figs/` are still the pre-08-25 E2/E3/E4
+   images, so the build directory has not been re-synced. S6's legend occlusion is
+   untouched.
 3. **wang2026lec** PMLR volume/pages unindexed (note field now "To appear");
    the 8 new bib entries await the author's own spot-check per TODO §6 standard.
 4. Prose items accepted as-is: remaining caveat repetitions (audit-mandated),

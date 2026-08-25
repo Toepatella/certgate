@@ -1,5 +1,6 @@
 {
   "section": "Backmatter + Figures section",
+  "citations_reverified": "Citations re-verified against the working tree 2026-08-25. Line numbers and quoted comment text were re-pointed after the 2026-08-24 comment humanization and the 2026-08-25 paper de-labelling; findings, verdicts and numbers are the originals and are unchanged. Scope: some quote fields and draft line references also predate the 2026-08-21 manuscript trim and venue-fit renumbering, which rewrote prose this pass did not re-point; where a quote's own sentence was reshaped it is annotated in place rather than rewritten. The E1-E9 names kept in source and note fields are summary.md artifact keys, which the 2026-08-25 pass did not remove. line_range is left at the audit's original value as its own record of what it covered.",
   "line_range": [354, 397],
   "claims": [
     {
@@ -7,7 +8,7 @@
       "value": "Figures 2-4, Table 1, SI Figs S3-S6, SI Tables S2-S3+S6",
       "source": "document structure; matches the documented run_synthetic scope (CLAUDE.md 'Still not wired' note, draft SI A.3)",
       "status": "OUT_OF_SCOPE",
-      "note": "Reproducibility-scope cross-reference, not a result number; consistent with the panel_s2_tables carve-out for S4-S5."
+      "note": "Reproducibility-scope cross-reference, not a result number; consistent with the panel_s2_tables carve-out for S4-S5. [2026-08-25 re-verification: this quote predates the 2026-08-21 venue-fit renumbering and is no longer verbatim; Data availability now reads 'the experiment grid regenerates Figures 4-5 and the synthetic Supplementary figures and tables from a single command' at draft.md:452, and no longer enumerates the individual Supplementary items, so the quote and its value list are left as the audit recorded them rather than re-derived. Verdict unchanged.]"
     },
     {
       "quote": "Supplementary Tables S4-S5 from a second read-only command (`python -m experiments.panel_s2_tables`)",
@@ -276,7 +277,7 @@
       "note": "Exact."
     },
     {
-      "quote": "the pattern Figure 3's frontier anticipates at 74 calibration clusters",
+      "quote": "the pattern the site-count frontier (Figure S7) anticipates at 74 calibration clusters",
       "value": "74",
       "source": "EICU-SUMMARY.md EICU-PREFLIGHT reference_check.split_projection.n_cal = 74",
       "status": "TRACED",

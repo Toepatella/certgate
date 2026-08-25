@@ -1,6 +1,13 @@
 # CertGate manuscript — TODO (open items for the human author)
 
 Draft: `paper/draft.md` · References: `paper/references.bib`
+Status 2026-08-25 (citation re-point): citations re-verified against the working tree. Line
+numbers, figure/table numbers and quoted text were re-pointed after the 2026-08-24 comment
+humanization and the 2026-08-25 paper de-labelling; findings, verdicts and numbers are the
+originals and are unchanged. Old→new map used below: Figures 1–8 → S3, S9, S4, S7, S5, S8, S6,
+main 2; Tables 1–9 → S2, S3, S9, S6, S1, S4, S5, main 1, main 2; §2.1–§2.4 → the four italic
+run-in paragraphs of §2; §5.1 / §5.5 → the opening / closing paragraphs of §5.
+Status 2026-08-21 (later, venue-fit pass): the collection-fit condition (decision-letter item 9 / S1-12) is now answered with evidence the repo already held plus one cheap post-hoc check — §4.11 "Explainable abstention on real clinical data" (GCS motor top driver 20/20, FiO₂ 13/20, day-1 intubation 10/20; main Figure 3 rendered read-only from the released diagnostics), SI Table S10 (interventional-vs-Gaussian-conditional Shapley contrast on the ten drivers: top driver invariant, ordering beneath it Spearman 0.58; `experiments/out-faithfulness/`), Table S8 named as the fairness reading, the two-register explanation page cited, plain-language leads on §3.6/§3.7, explanation-facing limitation in §6.1, keywords carrying the collection's terms, abstract rewritten (248 words), cover letter naming the CFP topic and requesting one distribution-free-UQ referee. Old §4.11–4.13 → §4.12–4.14; old Figures 3–4 → 4–5. Suite 276 passed / 3 skipped. What S1-12 still lacks and the paper now says so: a human evaluation of the deferral report.
 Status 2026-08-21: slim pass landed and `revision-2` merged to `main` — suite 267 passed / 3 skipped; paper trimmed in place to the Discover Computing bar (no venue page limit; abstract 248 words, structured; build 25 pp main + 18 pp SI); claim-trace guard green at 84 traced tokens. The dated status paragraphs below are historical records.
 Status 2026-07-30 (truth-sync): `draft.md` resynced to the 2026-07-25 correctness audit
 (CODE-AUDIT.md V1–V27) and the 2026-07-25 experiment rerun. Retired the per-target-site estimand
@@ -8,8 +15,9 @@ in favour of the site-population average with its mandatory dispersion clause (V
 exact" premise (V2) and the "single asymptotic link" claim (V13); added the operative-rung
 1−2δ clause (V27) and the four-parameter/16-corner BBSE box; replaced every experiment number
 with the sep=2.2 rerun values. Sections touched: Abstract; §1 (¶4, ¶5, contributions 1/2/4);
-§3.1, §3.2, §3.3, §3.4, §3.5, §3.6, §3.7, §3.9, §3.10; §4.1–§4.7; §5.1; §6 and §6.1; A.1, A.2,
-A.3; Figures 1–6; Tables 1–4. Two notes for the human author — *[OBSOLETE 2026-08-10: both
+§3.1, §3.2, §3.3, §3.4, §3.5, §3.6, §3.7, §3.9, §3.10; §4.1–§4.7; §5.1 (now §5); §6 and §6.1; A.1, A.2,
+A.3; Figures 1–6; Tables 1–4 *(2026-07-30 numbering; now Supplementary Figures S3, S9, S4, S7,
+S5, S8 and Supplementary Tables S2, S3, S9, S6)*. Two notes for the human author — *[OBSOLETE 2026-08-10: both
 resolved long since. The suite is 266 passed / 3 skipped as of 2026-08-10 (it was 136/1 when
 this note was written); A.3 no longer states any absolute count (it says what the suite pins,
 closing DS-28/R1-35/R2-41); CLAUDE.md's status line is current. Kept only as the historical
@@ -29,14 +37,15 @@ verified against a primary source.
 ## 0-pre. Panel S2 writing pass, 2026-07-30 — what closed and what is still open
 
 *(Compressed 2026-08-10 under the single-source policy: the numbers this section used to
-restate live in draft.md §3.1/§3.3/§4.9, Tables 5–7, and `experiments/out/`; the full closure
+restate live in draft.md §3.1/§3.3/§4.9, Tables S1, S4 and S5 (then numbered 5–7), and
+`experiments/out/`; the full closure
 narrative is in the git history of this file.)*
 
 **CLOSED this pass:** **S2-2** (the three deployment rules act at different levels and never
-conflicted — §3.5/§3.6 now say so; answers `R1-59`); **S2-13** + **S2-25** (Table 5 constants
-justification; §4.9/Table 6 M-sweep shows the frozen cap is not tuned — every larger M
+conflicted — §3.5/§3.6 now say so; answers `R1-59`); **S2-13** + **S2-25** (Table S1 constants
+justification; §4.9/Table S4 M-sweep shows the frozen cap is not tuned — every larger M
 certifies no more; also fixed `R5-26`, `R1-14`); **S2-28** (§3.1 clinical-target block, §4.1
-outcome-and-time disclosure, Table 7 operating characteristics — the FN asymmetry and the
+outcome-and-time disclosure, Table S5 operating characteristics — the FN asymmetry and the
 near-trivial-rule honesty are stated in the draft, not here). *PLAUSIBLE findings settled:*
 `DS-45` (silent sites don't move R_M's value; §3.3 says what they do change), `R1-13` (minimum
 certified coverage rules out the abstain-to-pass limb; §4.2 states it), `R2-27`
@@ -48,7 +57,8 @@ decision across modes and rungs); **S2-26** (no calibration diagnostic in the ce
 the post-hoc panel is descriptive and §4.7 labels it so); S2-13's decline-thresholds sweep
 (only M is swept; §6.1 says so).
 
-**Reproducibility gap you should close.** Tables 6 and 7 come from a new read-only module,
+**Reproducibility gap you should close.** Tables S4 and S5 (then numbered 6 and 7 — the module's
+stdout keys are still `table6`/`table7`) come from a new read-only module,
 `experiments/panel_s2_tables.py` (`python -m experiments.panel_s2_tables [R]`, ~2 min at
 R=200, prints JSON, writes nothing to `experiments/out/`). It reseeds the same draws through
 `run_synthetic`'s own rule and **hard-asserts** that its replay reproduces every
@@ -64,12 +74,13 @@ into `summary.md`) is the follow-up, and belongs with panel item **S2-24**.
 the extract ran 2026-07-31 and the manuscript carries it. Compressed 2026-08-10; the landing's
 full enumeration is in this file's git history and in `draft.md` itself.)*
 
-`draft.md` carries **§4.10**, Tables 8–9, Figure 8, the rewritten Abstract and §5.5 (retiring
+`draft.md` carries **§4.10**, Tables 1–2, Figure 2 (then numbered Tables 8–9 and Figure 8), the
+rewritten Abstract and §5's closing paragraph (then §5.5) (retiring
 the "real data cannot supply that ground truth" sentence four referees flagged —
 `decision-letter.md` item 13), the new §6.1 limitations, and the eICU bibliography block
 (verified — see the blockquote below). The parked real-data panel paragraph went in **VERBATIM**,
 landing in **Appendix A.4** after the length pass; §4.10 paraphrases two of its numbers and
-points to A.4 for the rest. The synthetic half was already done (§4.7 panel paragraph, Table 5
+points to A.4 for the rest. The synthetic half was already done (§4.7 panel paragraph, Table S1
 post-hoc sub-block, §6.1 ECE-bias sentence).
 
 **A three-agent adversarial verification pass was run on the new material and found six BLOCKING
@@ -86,7 +97,7 @@ defects, all now fixed.** Recording them, because four were mine and the pattern
    is the estimated tier's bootstrap over the 74 *calibration* hospitals. Replicate 0's *target*
    pool answered error is 0.0419. Both are now named for what they are.
 4. **P2's comparison used a statistic the paper names differently elsewhere.** The eICU 0.027 was
-   compared against the 0.02 the paper quotes in Figure 1 and §5.1 — but that 0.02 is E1's
+   compared against the 0.02 the paper quotes in Figure S3 and §5 (then Figure 1 and §5.1) — but that 0.02 is E1's
    per-site *hard-violation* rate, a different statistic. Against the same statistic
    (`mean_per_site_exceed_frac` = 0.055) the comparison holds and is now stated that way.
 5. **A pre-extract projection stated as measured fact.** The "500-stay threshold leaves roughly 46
@@ -117,7 +128,8 @@ connecting it to the explainability contribution — the collection's deciding a
 > subsection. The verifier flagged the disproportion fairly — the section that can settle least
 > occupies the most space. Material that structurally belonged elsewhere has been moved (the
 > post-hoc panel to Appendix A.4, the compliance exposures to §6.1, the cohort-filter argument
-> into Table 8's caption); what remains is content no other subsection carries. Cutting further
+> into Table 1's caption — since relocated to Supplementary Information A.3, which that caption
+> points to); what remains is content no other subsection carries. Cutting further
 > means dropping disclosures. Left as is, flagged for the author.
 
 The paragraph as parked is retained below for provenance — it is the text that was dropped in.
@@ -274,40 +286,46 @@ Alternatives:
 
 *[Numbers refreshed 2026-08-10 against the released artifacts — several wishes below were
 written before the R=200 rerun and carried stale values; the corrected values are in-line.
-There are EIGHT figures now (E7 and eICU added), not six.]*
+There are EIGHT figures now (E7 and eICU added), not six. Re-pointed 2026-08-25: the build now
+carries main Figures 1–5 plus Supplementary S1–S9, and the wish list below is renumbered to
+match.]*
 
 **[APPLIED 2026-08-10 — the S1-6 repair pass landed in `run_synthetic.py` and the grid was
 re-run at R=200 with every CSV/JSON artifact byte-identical (plotting-only change).** E1/E2/E3
 now use numeric category axes (a nan bar no longer eats its tick), in-axes "no certificates"
 markers, and value-labeled bars so a true 0.0 reads as a labeled zero rather than an absence;
 E2 carries an on-figure BBSE annotation computed from the run's own summary (never hardcoded)
-plus a null-shift guide on the sweep panel; E3's title is shortened and renders in full; Fig 4
-has the 208-site operating-point guide; Fig 6 gained the per-site-coverage panel. Fig 5's
-single-draw annotation stays retired as decided below; Table 4 kept.]
+plus a null-shift guide on the sweep panel; E3's title is shortened and renders in full;
+Figure S7 has the 208-site operating-point guide; Figure S8 gained the per-site-coverage panel.
+Figure S5's single-draw annotation stays retired as decided below; Table S6 kept.]
 
 The eight figures are mapped to captions in `draft.md` (and the figure → artifact table now
 lives in `README.md` § Paper); regenerating the PNGs is a repo (code)
 task and out of scope for the paper directory. Wishes flagged while writing the captions:
 
-- **Fig 3 (E3):** the PNG title is truncated (`…certificate shou…`); regenerate with a shorter
-  title or tighter layout so the full text shows.
-- **Fig 2 (E2):** the BBSE bar sits at 0.0 and is nearly invisible; add an on-figure annotation
+- **Figure S4 (E3):** the PNG title is truncated (`…certificate shou…`); regenerate with a shorter
+  title or tighter layout so the full text shows. *(Applied — the title now reads
+  `Concept-shift negative control (should FAIL)`; the quoted truncation is the historical
+  observation, not the current text.)*
+- **Figure S9 (E2):** the BBSE bar sits at 0.0 and is nearly invisible; add an on-figure annotation
   (correct values: "BBSE at the anchor shift: declined 200/200, certify-and-violate 0/200; the
   9% certify rate belongs to the NULL-shift sweep point") so the decline story reads without
   the caption. *(The old suggested text "0/9 violations, certified 9/200, declined 95.5%"
   conflated the anchor run with the null-shift sweep point — do not use it.)*
-- **Figs 1/2/3:** the α=0.05 "no certificates" marker is a faint rotated label in a large empty
+- **Figures S3 / S9 / S4 (E1/E2/E3):** the α=0.05 "no certificates" marker is a faint rotated label in a large empty
   margin; make it a clear labeled bar.
-- **Fig 5 (E5):** the single-draw feature-0 annotation idea is RETIRED — the R=200 replication
+- **Figure S5 (E5), "Attribution study":** the single-draw feature-0 annotation idea is RETIRED — the R=200 replication
   returned the null (modal top-gap share 0.274 ≈ chance), and §4.6 reports the null as a null;
   annotating feature 0 as "the driver" would contradict the paper's own finding.
-- **Fig 6 (E6):** only mean answered error is plotted; per-site coverage (0.980–0.990, Table 2)
+- **Figure S8 (E6):** only mean answered error is plotted; per-site coverage (0.980–0.990, Table S3)
   lives only in the table — consider a second panel/twin axis so "no coverage collapse" is
   visible in the figure.
-- **Fig 4 (E4):** mark the 208-site operating point (e.g. a vertical guide) so the operative rung
+- **Figure S7 (E4):** mark the 208-site operating point (e.g. a vertical guide) so the operative rung
   reads directly.
-- Table 4 (E4 grid) is optional: every value is stated in-text, so drop it if length is tight.
-- **In-text figure callouts:** DONE 2026-08-10 — every figure (1–8) is now called out at its
+- Table S6 (E4 grid, "Cluster-count sweep grid") is optional: every value is stated in-text, so
+  drop it if length is tight.
+- **In-text figure callouts:** DONE 2026-08-10 — every figure (then 1–8; now main 1–5 and
+  Supplementary S1–S9) is now called out at its
   discussion point in the body. What remains for typesetting is EMBEDDING the images in the
   submission package (revision-plan S1-6's other half).
 
@@ -337,16 +355,17 @@ asked for. The pre-registration (§3.2) and budget-ladder (§3.5) paragraphs wer
 further cut is wanted without touching rigor, the remaining compressible spots are: §3.10 (software/
 reproducibility — could shorten the pinned-version list to a one-line pointer to `requirements.txt`),
 §3.6's three decline conditions (could tabulate), and the concept-shift statement, which still appears
-in §3.6, §3.7 clause (4), §4.4, §5.1 and §6.1 — each in a distinct role (mode boundary, guarantee
-clause, experiment, discussion, limitation), so they were kept, but §5.1's restatement could reference
-§4.4 instead. Say the word and I'll do a targeted pass on any of these.
+in §3.6, §3.7 clause (6) (then clause (4)), §4.4, §5 (then §5.1) and §6.1 — each in a distinct role
+(mode boundary, guarantee clause, experiment, discussion, limitation), so they were kept, but §5's
+(then §5.1's) restatement could reference §4.4 instead. Say the word and I'll do a targeted pass on any of these.
 
 ## 6. Unverified / excluded citations (do NOT cite until verified)
 
 - **`scireports2026deferral`** — RESOLVED 2026-08-10: confirmed on BOTH Crossref
   (api.crossref.org/works/10.1038/s41598-026-40637-w) and the nature.com article page.
   Authors **Kwon, Hyun and Kim, Dae-Jin**; Sci. Rep. 16:10016, published 2026-02-20; the
-  published title spells "cost aware" unhyphenated. Now in `references.bib` and cited in §2.4
+  published title spells "cost aware" unhyphenated. Now in `references.bib` and cited in §2's
+  *Multi-site clinical validation and explainable abstention* paragraph (then §2.4)
   (neutrally — we verified metadata, not its methods, so the sentence makes no claim about its
   unit of exchangeability).
 - **`pollard2019eicudb`** — VERIFIED 2026-08-10 against https://physionet.org/content/eicu-crd/2.0/.
@@ -396,12 +415,14 @@ policy wants a permanent DOI, not a bare GitHub link), which adds the Zenodo ite
 All four were re-verified against primary sources (PMLR page, arXiv/ICLR, Crossref + publisher
 pages) and are now cited:
 
-- **`alexandari2020labelshift`** (ICML 2020, PMLR v119 pp. 222–232) — cited in §2.3 as the
-  maximum-likelihood variant in the label-shift stream.
-- **`farinhas2024nonexchangeable`** (published ICLR 2024, not just the arXiv) — cited in §2.2
+- **`alexandari2020labelshift`** (ICML 2020, PMLR v119 pp. 222–232) — cited in §2's *Label shift*
+  paragraph (then §2.3) as the maximum-likelihood variant in the label-shift stream.
+- **`farinhas2024nonexchangeable`** (published ICLR 2024, not just the arXiv) — cited in §2's
+  *Conformal prediction and cluster exchangeability* paragraph (then §2.2)
   as the closest precedent for departing from record exchangeability (in-expectation risk).
 - **`shahbazi2026hierarchical`** (Sci. Rep. 16:6564, DOI 10.1038/s41598-026-37450-w) — cited in
-  §2.2 as multi-hospital hierarchical conformal *coverage*.
+  §2's *Conformal prediction and cluster exchangeability* paragraph (then §2.2) as multi-hospital
+  hierarchical conformal *coverage*.
 - **`artelt2023rejectjournal`** (Neurocomputing 558:126722) — swapped in for `artelt2022reject`
   everywhere (the journal version supersedes the ESANN paper; old entry removed, all-cited /
   no-dangling preserved).
@@ -440,7 +461,8 @@ discrepancies** (88 numbers, 31 citations, 14 math statements — including the 
 validity step (ii); §3.1 aligned to the certified parameter $R_M$; the walk's per-mode betting
 budget ($\delta$ vs $\delta_{bet}$); E1 tightness rhetoric softened to "consistent with";
 abstract rebuilt at a consistent altitude (238 words, jargon glossed); "documented cohort"
-softened to an indefinite distributional-profile claim; E6 retitled "coverage uniformity" with
+softened to an indefinite distributional-profile claim; E6 retitled "coverage uniformity"
+(§4.7 now reads "Per-site coverage and composition") with
 an explicit scope sentence and the 4-site-bin caveat; the E1-vs-E4 0.9722/0.9715 coverage pair
 explained (separate runs, independent seeds) *[those were the pre-rerun values; the R=200 rerun
 moved the pair to 0.9828/0.9818, which the draft now states — same explanation, new numbers]*;

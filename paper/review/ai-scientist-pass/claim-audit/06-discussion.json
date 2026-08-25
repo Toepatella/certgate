@@ -1,5 +1,6 @@
 {
   "section": "S5 Discussion + S6 Conclusion + limitations",
+  "citations_reverified": "Citations re-verified against the working tree 2026-08-25. Line numbers and quoted comment text were re-pointed after the 2026-08-24 comment humanization and the 2026-08-25 paper de-labelling; findings, verdicts and numbers are the originals and are unchanged. Scope: many quote fields and draft line references also predate the 2026-08-21 manuscript trim, which rewrote prose this pass did not re-point; where such a quote also carried an E1-E9 codename it is annotated in place rather than rewritten. Cross-references into CODE-AUDIT.md and paper/review/revision-plan.md were left alone: neither file was touched by either pass, so any drift there predates this re-verification. line_range and the per-claim line fields are left at the audit's original values as its own record of what it covered.",
   "line_range": [192, 207],
   "audited_utc": "2026-08-15",
   "method": "Read paper/draft.md lines 192-207 only; traced every quantitative claim to experiments/out/summary.md, experiments/out/EICU-SUMMARY.md, EICU_certificate.json, EICU_pooled.csv, EICU_diagnostics.json, out/EICU_reliability_panel.json, out-sens/, certgate/constants.py, and the read-only replay experiments/panel_s2_tables.py (stdout only; nothing written to the repo).",
@@ -16,7 +17,7 @@
       "value": "0 R_M exceedances at every s_u",
       "source": "experiments/out/summary.md E1: su_sensitivity[s_u=0.5/1.0/2.0].rm_exceed_rate = 0.0/0.0/0.0; total_rm_exceed = 0",
       "status": "TRACED",
-      "note": "Exact."
+      "note": "Exact. [2026-08-25 re-verification: this quote predates the 2026-08-21 manuscript trim, so it is not verbatim today; Section 5 now reads 'the heterogeneity arm shows aggregate conformance holding while the per-site diagnostic rises five-fold' at draft.md:221 — the E-codename and the 'at zero exceedances' tail are gone from the sentence, though the artifact still records 0 exceedances. Verdict and numbers unchanged.]"
     },
     {
       "quote": "while the per-site diagnostic rises five-fold",
@@ -30,7 +31,7 @@
       "value": "draft: roughly 80; artifact: 74",
       "source": "experiments/out/EICU_certificate.json diagnostic.n_cal = 74, n_cal_carrying = 74; experiments/out/EICU_pooled.csv n_cal_carrying = 74 on all 40 rows; EICU-SUMMARY.md EICU-PREFLIGHT reference_check.split_projection.n_cal = 74",
       "status": "DRIFT",
-      "note": "Soft drift / loose rounding: the artifact value is 74 calibration hospitals in every re-split, and the draft itself states 74 in Section 4.10 and the Figure 5 / Table 3 captions (draft.md lines 170, 172, 396, 422). '~80' appears to be inherited from METHODS.md:11 ('~80 site-level observations'). Recommend 'roughly 75' or '74'."
+      "note": "Soft drift / loose rounding: the artifact value is 74 calibration hospitals in every re-split, and the draft itself states 74 in Section 4.10 and the Figure 2 / Table 2 captions (draft.md lines 171, 173, 482, 506). '~80' appears to be inherited from METHODS.md:11 (which now reads '~84 site-level observations'; the '~80' phrasing is no longer in that file). Recommend 'roughly 75' or '74'."
     },
     {
       "quote": "not the $\\sim\\!10^5$ records they contain",
@@ -51,7 +52,7 @@
       "value": "alpha=0.05 certify_rate 0/0/0/0/0.285/1.0 at 60/100/150/208/300/400 sites",
       "source": "experiments/out/summary.md E4 grid['0.05']",
       "status": "TRACED",
-      "note": "Qualitative restatement of the E4 frontier; numbers not restated in this range."
+      "note": "Qualitative restatement of the E4 frontier; numbers not restated in this range. [2026-08-25 re-verification: this quote predates the 2026-08-21 manuscript trim and is not verbatim today; Section 5 now reads 'Sections 4.5 and 4.12 price the stricter rung in hospitals' at draft.md:221, with the E-codename gone. The E4 artifact prefix it names still exists. Verdict and numbers unchanged.]"
     },
     {
       "quote": "subject to clause (2)",
@@ -65,14 +66,14 @@
       "value": "BBSE decline_rate 1.0 at target_base 0.22 (R=200); 0.91-1.0 across the shift sweep",
       "source": "experiments/out/summary.md E2 bbse['0.1'].decline_rate = 1.0, certify_rate = 0.0; shift_sweep_alpha0.10 bbse decline_rate 0.91/0.95/1.0/0.99/1.0",
       "status": "TRACED",
-      "note": "Qualitative; note BBSE does certify 9/100 at the null-shift point (target_base 0.095), consistent with 'at the pool sizes tested ... declines rather than certifies' as a headline."
+      "note": "Qualitative; note BBSE does certify 9/100 at the null-shift point (target_base 0.095), consistent with 'at the pool sizes tested ... declines rather than certifies' as a headline. [2026-08-25 re-verification: this quote predates the 2026-08-21 manuscript trim and is not verbatim today; Section 5 now reads 'takes the label-shift tag, with Sections 4.3 and 4.14 the relevant evidence' at draft.md:223, with the E-codename gone. The E2 artifact prefix it names still exists. Verdict and numbers unchanged.]"
     },
     {
       "quote": "neither tag applies and the certificate is void (E3)",
       "value": "E3 concept-shift control: certificate fails as excluded",
       "source": "experiments/out/summary.md E3: rm_exceed_rate = 1.0 at alpha 0.1, verified_mean_answered_risk_alpha0.10 = 0.161, tilt_pushes_risk_above_alpha = true",
       "status": "TRACED",
-      "note": "Qualitative restatement."
+      "note": "Qualitative restatement. [2026-08-25 re-verification: this quote predates the 2026-08-21 manuscript trim and is not verbatim today; Section 5 now reads 'takes neither, and the certificate is void' at draft.md:223, with the E-codename gone. The E3 artifact prefix named in value and source still exists. Verdict and numbers unchanged.]"
     },
     {
       "quote": "on the published split the answered set's observed mortality is 0.046",
@@ -140,7 +141,7 @@
     {
       "quote": "roughly three quarters of answered errors are false negatives at this prevalence",
       "value": "~0.75 (E1 pooled fresh pools: 0.769; E6: 0.756)",
-      "source": "experiments/panel_s2_tables.py stdout (read-only replay of experiments/out/E1_validity.csv, SI Table S5): E1.table7_answered.fn_share_of_errors = 0.769 (fn 1218592 / (fp 366089 + fn 1218592)); E6.table7_answered.fn_share_of_errors = 0.756; draft line 54 states '77% in E1' and line 132 '76.9%'",
+      "source": "experiments/panel_s2_tables.py stdout (read-only replay of experiments/out/E1_validity.csv, SI Table S5): E1.table7_answered.fn_share_of_errors = 0.769 (fn 1218592 / (fp 366089 + fn 1218592)); E6.table7_answered.fn_share_of_errors = 0.756; draft line 54 states '77% on the validity grid of Section 4.2' and line 131 '76.9%'",
       "status": "TRACED",
       "note": "Traces to the SYNTHETIC grid at prevalence 0.0968. Caution: on the eICU answered sets the same quantity derived from out/EICU_reliability_panel.json (n_observed_positive, n_predicted_positive, model_error_rate per replicate) is ~0.96 (replicate 0: FN 537 / FP 6 = 0.989; pooled over 20 replicates 0.956). The sentence does not name the cohort; if 'this prevalence' is read as eICU's ~9%, the number understates. Recommend qualifying '(E1)' as line 54 does."
     },
@@ -189,7 +190,7 @@
     {
       "quote": "three of the four BBSE intervals are asymptotic",
       "value": "3 of 4 (c0, c1, pi_source percentile bootstraps; q_target Clopper-Pearson for single-site pools)",
-      "source": "certgate/constants.py BBSE_BONFERRONI = 4; SPEC.md:832-838 and certgate/report.py:150 guarantee text (pinned by tests/test_report.py:138,161)",
+      "source": "certgate/constants.py BBSE_BONFERRONI = 4; SPEC.md:832-838 and certgate/report.py:153-155 guarantee text (pinned by tests/test_report.py:144-145,168)",
       "status": "TRACED",
       "note": "Design fact. Nuance: for multi-site target pools (eICU's 24-site pool: EICU_certificate.json diagnostic.bbse.n_boot = 2000) the q interval is also a cluster bootstrap, so all four are asymptotic there; draft Section 3.6 (line 94) states the split precisely."
     },
@@ -198,7 +199,7 @@
       "value": "0.038 realized joint miscoverage of the (c0, c1, pi_s) box",
       "source": "METHODS.md:43 only ('0.038 against a nominal <= 0.019 (joint coverage 0.962 vs 0.981 nominal; 400 replicates at both 42 and 83 auxiliary sites ...)'); SPEC.md:836 defers to 'METHODS reports the measured value'",
       "status": "UNVERIFIABLE",
-      "note": "No generated artifact, CSV/JSON, or test pins this probe; the number exists only in hand-maintained prose (METHODS.md, present since the pre-extract freeze commit 9f25b49) and the draft (lines 94, 206). CODE-AUDIT.md:527-535 records an older probe of the 3-parameter box at nominal 0.975 (joint 0.942/0.945 at 42 aux sites), a different nominal. Consistent between METHODS and draft, but not traceable to a machine artifact under the single-source policy."
+      "note": "No generated artifact, CSV/JSON, or test pins this probe; the number exists only in hand-maintained prose (METHODS.md, present since the pre-extract freeze commit 9f25b49) and the draft (lines 94, 237). CODE-AUDIT.md:527-535 records an older probe of the 3-parameter box at nominal 0.975 (joint 0.942/0.945 at 42 aux sites), a different nominal. Consistent between METHODS and draft, but not traceable to a machine artifact under the single-source policy."
     },
     {
       "quote": "against a nominal $\\le 0.019$",

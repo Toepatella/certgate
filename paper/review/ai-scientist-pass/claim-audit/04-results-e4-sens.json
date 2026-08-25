@@ -1,5 +1,6 @@
 {
   "section": "S4.5 E4 + S4.6 E5 + S4.7 E6 + S4.8 E7 + S4.9 sensitivity",
+  "citations_reverified": "Citations re-verified against the working tree 2026-08-25. Line numbers and quoted comment text were re-pointed after the 2026-08-24 comment humanization and the 2026-08-25 paper de-labelling; findings, verdicts and numbers are the originals and are unchanged. Scope: many quote fields and draft line references also predate the 2026-08-21 manuscript trim, which rewrote prose this pass did not re-point; where such a quote also carried an E1-E9 codename it is annotated in place rather than rewritten. The E1-E9 names kept in section and source fields are artifact prefixes (E5_explain.json, E6_composition.json, summary.md blocks), which the 2026-08-25 pass did not remove. line_range and the per-claim line fields are left at the audit's original values as its own record of what it covered.",
   "line_range": [142, 163],
   "claims": [
     {
@@ -94,7 +95,7 @@
       "note": "-0.208 -> -0.21 and -0.2624 -> -0.26 at 2 dp; negative gap = declined larger, matching the prose direction"
     },
     {
-      "quote": "E6 deploys a single draw (tau* = 0.55; 40 target sites)",
+      "quote": "The coverage-and-composition study deploys a single draw (tau* = 0.55; 40 target sites)",
       "value": "tau*=0.55; 40 sites",
       "source": "experiments/out/summary.md E6 tau_star=0.55; experiments/out/E6_reliability.json counts.n_sites=40; panel_s2_tables replay E6.n_sites=40, tau=0.55",
       "status": "TRACED",
@@ -262,7 +263,7 @@
       "note": "0.0807 -> 0.081 and 0.0522 -> 0.052 display rounding"
     },
     {
-      "quote": "E1's exchangeable arm is re-run at M in {25, 50, 100, 200, 500, 1000, 5000}",
+      "quote": "the validity grid's exchangeable arm is re-run at M in {25, 50, 100, 200, 500, 1000, 5000}",
       "value": "(25, 50, 100, 200, 500, 1000, 5000); arm s_u=0.5",
       "source": "experiments/panel_s2_tables.py M_SWEEP=(25,50,100,200,500,1000,5000), cfg=SimConfig(s_u=0.5); replay stdout table6 keys M=25..M=5000",
       "status": "TRACED",

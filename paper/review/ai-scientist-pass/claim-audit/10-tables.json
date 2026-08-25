@@ -1,9 +1,10 @@
 {
   "section": "Tables section",
+  "citations_reverified": "Citations re-verified against the working tree 2026-08-25. Line numbers and quoted comment text were re-pointed after the 2026-08-24 comment humanization and the 2026-08-25 paper de-labelling; findings, verdicts and numbers are the originals and are unchanged. The two table-caption quotes were re-read against paper/draft.md:421 and :492 and now carry the current numbering and de-labelled wording; every count and rate is untouched. Scope: some quote fields and draft line references also predate the 2026-08-21 manuscript trim and venue-fit renumbering, which rewrote prose this pass did not re-point. The E1-E9 names kept in source and note fields are artifact keys (E6_composition.json), which the 2026-08-25 pass did not remove. line_range is left at the audit's original value as its own record of what it covered.",
   "line_range": [398, 436],
   "claims": [
     {
-      "quote": "Table 1. E6 three-way answered-set composition ($n_{\\text{answered}} = 25{,}314$)",
+      "quote": "Table S9. Three-way answered-set composition in the coverage-and-composition study ($n_{\\text{answered}} = 25{,}314$)",
       "value": "25314",
       "source": "experiments/out/E6_composition.json composition.*.n_answered = 25314.0",
       "status": "TRACED",
@@ -12,7 +13,7 @@
     {
       "quote": "sits just under the ~9.5% cohort prevalence",
       "value": "0.095",
-      "source": "certgate/data.py:51 SimConfig.base_rate = 0.095 (frozen synthetic generator default)",
+      "source": "certgate/data.py:58 SimConfig.base_rate = 0.095 (frozen synthetic generator default)",
       "status": "TRACED",
       "note": "Generator base rate; also appears as the 0.095 source rate in run_synthetic.py (E2 sweep null-shift arm). Oracle 0.0915 < 0.095 is consistent with 'just under'."
     },
@@ -73,7 +74,7 @@
       "note": ""
     },
     {
-      "quote": "Table 2. eICU-CRD v2.0 attrition ledger",
+      "quote": "Table 1. eICU-CRD v2.0 attrition ledger (Section 4.10)",
       "value": "v2.0",
       "source": "dataset version metadata",
       "status": "OUT_OF_SCOPE",
@@ -103,14 +104,14 @@
     {
       "quote": "about 30 calibration clusters under this section's split",
       "value": "~30",
-      "source": "derived: (99 sites - 24 target held out) x 0.40 cal fraction = 30; certgate/constants.py:12 SPLIT_FRACTIONS = (0.40, 0.20, 0.40); n_target = 24 per EICU_preflight.json reference_check.split_projection",
+      "source": "derived: (99 sites - 24 target held out) x 0.40 cal fraction = 30; certgate/constants.py:15 SPLIT_FRACTIONS = (0.40, 0.20, 0.40); n_target = 24 per EICU_preflight.json reference_check.split_projection",
       "status": "TRACED",
       "note": "Derivation from a traced count and frozen split constants; matches the 207-site projection's proportions (rest 183 -> cal 74)."
     },
     {
       "quote": "still below the 50 the gate requires",
       "value": "50",
-      "source": "certgate/constants.py:23 MIN_CAL_CLUSTERS = 50; also EICU_preflight.json split_projection.min_cal_clusters = 50",
+      "source": "certgate/constants.py:26 MIN_CAL_CLUSTERS = 50; also EICU_preflight.json split_projection.min_cal_clusters = 50",
       "status": "TRACED",
       "note": "Frozen constant (audit B-5)."
     },
@@ -215,7 +216,7 @@
     {
       "quote": "| $\\alpha = 0.05$ | $\\alpha = 0.10$ |",
       "value": "0.05, 0.10",
-      "source": "certgate/constants.py:13 ALPHA_LADDER = (0.05, 0.10); EICU-SUMMARY.md alpha ladder (0.05, 0.1)",
+      "source": "certgate/constants.py:16 ALPHA_LADDER = (0.05, 0.10); EICU-SUMMARY.md alpha ladder (0.05, 0.1)",
       "status": "TRACED",
       "note": "Frozen constant."
     },

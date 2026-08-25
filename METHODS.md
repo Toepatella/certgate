@@ -1,6 +1,6 @@
 # METHODS — paper-ready specification
 
-Written to become the paper's Methods section with minimal editing. Notation: sites (clusters) indexed c; records i; binary outcome y ∈ {0,1}; features x; risk score s(x) ∈ [0.5, 1] (max-softmax of a probabilistic classifier); threshold τ; error budget α; confidence 1−δ.
+Written to become the paper's Methods section with minimal editing. One caveat: the E1–E9 experiment labels used in section 8 are INTERNAL only. The manuscript carries none of them; it names each study descriptively and maps the `E1_`–`E9_` artifact prefixes in its Code availability section. Strip the labels when pasting. Notation: sites (clusters) indexed c; records i; binary outcome y ∈ {0,1}; features x; risk score s(x) ∈ [0.5, 1] (max-softmax of a probabilistic classifier); threshold τ; error budget α; confidence 1−δ.
 
 ## 1. Problem setting
 

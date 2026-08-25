@@ -5,6 +5,10 @@ actionable finding (skeptics default to *refuted*; 2 votes on critical/major, 1 
 14 agents, ~1.34M tokens · This is the "internal red-team pass" from PAPER-OUTLINE.md's week 6–7,
 pulled forward.
 
+**Citations re-verified against the working tree 2026-08-25.** Line numbers and quoted comment text
+were re-pointed after the 2026-08-24 comment humanization and the 2026-08-25 paper de-labelling;
+findings, verdicts and numbers are the originals and are unchanged.
+
 **Verdict: 1 confirmed (major, documentation/justification — the guarantee itself holds), 1 contested
 (same defect found independently by a second lens), 3 refuted, 5 notes.** The lenses attacking the
 estimand algebra (`influence_atoms`, neutral atoms, M-cap, Hole-1 regression) and the WSR core
@@ -27,13 +31,17 @@ nothing actionable.
   finite-sample level, not the harness.
 - **R4 — salvaged.** The PI_CLIP comment (shift.py) and SPEC.md parenthetical now say the range gate
   guards only the widest corner and any inner-corner clip only *widens* [ρ_lo, ρ_hi] (conservative),
-  replacing the false "containment only" claim.
+  replacing the false "containment only" claim. *(2026-08-25 pointer: certgate/shift.py:167-184 and
+  SPEC.md:267-275. Both were later reworded to REVIEW-FABLE B-3's corner-coverage phrasing, so
+  neither still contains "widens" or "containment only".)*
 - **R5 — salvaged.** Every conditional rate in the E1–E3 summaries now carries `n_certified`, and a
   zero-certificate rung reports `null` (not 0.0) with a "no certificates" figure annotation.
-- **N2 — FIXED.** BBSE guarantee text (report.py) now attributes δ_conf=0.025 to the S_aux bootstrap
+- **N2 — FIXED.** BBSE guarantee text (report.py:152-161) now attributes δ_conf=0.025 to the S_aux bootstrap
   box coverage, not the calibration draw.
 - **N3 — FIXED** (same change as R5). **N4 — FIXED**: dead `true_risk` parameter removed from
   `exceedance_reference`. **N5 — FIXED**: README E6 coverage quoted as 0.897–0.919.
+  *(2026-08-25 pointer: README.md no longer quotes the figure at all — the 2026-08-10 single-source
+  policy moved every result number to `experiments/out/summary.md` and the draft; no current match.)*
 - **N1 — left as a note** (negligible in the operating regime; degenerate-bootstrap decline covers
   the regime where it wouldn't be). No code change.
 
@@ -53,7 +61,7 @@ dual-endpoint walk by: the certified statistic is *affine in ρ*, so the worst c
 is at an endpoint — "verified numerically in the test suite, including intervals straddling ρ=1."
 
 **What is actually true.** `certify_bbse` builds each endpoint's atoms with its **own**
-normalization `wmax = max(1, ρ)` (shift.py:191). Under that per-endpoint normalization the computed
+normalization `wmax = max(1, ρ)` (shift.py:366-370). Under that per-endpoint normalization the computed
 atom mean is *piecewise*: m(ρ)−α = Ā + ρ·B̄ for ρ≤1 but Ā/ρ + B̄ for ρ≥1 — a kink at ρ=1. When
 Ā>0 and B̄>0 the maximum is the **interior** point ρ=1, not an endpoint. Both skeptics and both
 finders reproduced this numerically on the real `influence_atoms` path (e.g. m−α = 0.212 at ρ=0.2 →
@@ -68,7 +76,7 @@ for *all* ρ>0, so both endpoints also sit above α and certification correctly 
 atoms stay in [0,1] under its own wmax, so each WSR test is individually valid. Verified numerically:
 (m(ρ)−α)·max(1,ρ) has second-difference ~1e-15. **No experiment, number, or certificate changes.**
 
-**The test gap.** `test_statistic_affine_in_rho` (tests/test_shift.py:117-133) uses a **fixed**
+**The test gap.** `test_statistic_affine_in_rho` (tests/test_shift.py:135-156) uses a **fixed**
 wmax=5.0 and ρ ∈ {1,2,3} — no straddle of ρ=1 and not the per-endpoint-wmax production path. It
 verifies affine-at-fixed-normalization, a different statement. No test in the suite exercises a
 straddling interval on the production path, so METHODS's "verified numerically … including intervals
@@ -115,6 +123,9 @@ false test-citation parenthetical. Either way the action items are identical to 
   all 158 successful BBSE fits across the shipped generators: **0 bindings**, and any binding only
   widens the ρ interval (conservative). *Salvage:* one-line rewording of the comment + SPEC
   parenthetical ("clip only widens the corner interval; range gate protects the widest corner").
+  *(2026-08-25 pointer: the comment is now the `rho_box_interval` docstring, certgate/shift.py:167-184,
+  clip paragraph :178-181, with SPEC.md:267-275. Both were later reworded to REVIEW-FABLE B-3's
+  corner-coverage phrasing, so neither still contains "widens" or "containment only".)*
 - **R5 — E2 BBSE "0.0 violations" rests on 9 certified draws** (harness lens, filed minor,
   refuted). Wrong quantity: the guarantee bounds the *joint* event P(certify AND violate); over all
   200 draws that's 0/200 (rule-of-three UB ≈ 0.015 < δ). Declines satisfy the guarantee vacuously.

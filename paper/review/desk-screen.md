@@ -5,6 +5,8 @@
 **Screener:** DS (handling editor)
 **Files screened:** `paper/draft.md`, `paper/references.bib`
 
+> Citations re-verified against the working tree 2026-08-25. Line numbers and quoted comment text were re-pointed after the 2026-08-24 comment humanization and the 2026-08-25 paper de-labelling; findings, verdicts and numbers are the originals and are unchanged. Quotations of `paper/draft.md` prose are left at their review-time wording and line numbers: they record a draft state the revision deliberately superseded.
+
 ---
 
 ## Summary
@@ -49,7 +51,9 @@ Every other rate in §4.2–§4.4 carries a Clopper–Pearson interval. The cond
 
 **DS-05 — No figures are present in the manuscript, and no figure is called out in the text.**
 
-> "# Figures / **Figure 1. E1 in-distribution validity.** Left: ..." (§Figures)
+> "# Figures / **Figure S3. In-distribution validity.** Left: ..." (§Figures)
+
+(This float was **Figure 1. E1 in-distribution validity.** at screening time; it was renumbered into the Supplementary Information by the later envelope surgery and lost its `E1` prefix in the 2026-08-25 de-labelling. The finding below records the screening-time state.)
 
 The `# Figures` section contains six captions and nothing else. I searched the file for image embeds (`![...]`) and found zero. I then searched the entire body — everything before the `# Figures` heading — for the strings "Figure" and "Fig." and found zero occurrences. So: the figures do not exist in the submitted file, and even if the image files were supplied separately, not one of the six is referenced from the narrative. Tables fare better (Table 1 called at §4.2, Table 2 and 3 at §4.7, Table 4 at §4.5 and §5.2) but Figures 1–6 are orphaned entirely. Every figure must be embedded and called out at the point it supports the argument. This alone would normally stop a submission at the office.
 
