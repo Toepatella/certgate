@@ -299,7 +299,7 @@ def build_report(*, target_label, head, cal, target_x, mode_results,
 
     # ---- gated exits (record-carrying cluster gate / target-pool floor) ----
     if gate_reason is not None:
-        partition = _partition(n_target, 0, 0, gate_reason)
+        partition = _partition(n_target, structural_reason=gate_reason)
         # same diagnostic key set as a full report, so a consumer indexing a
         # gated report gets None rather than KeyError. Only
         # capped_influence_share is computable without a head (audit V25)
@@ -338,14 +338,15 @@ def build_report(*, target_label, head, cal, target_x, mode_results,
     # ---- answered mask + decline partition at the operative rung ----
     if operative is not None:
         answered = score_t >= operative["tau"]
-        partition = _partition(n_target, int(answered.sum()),
-                               int((~answered).sum()), None)
+        partition = _partition(n_target, answered=int(answered.sum()),
+                               below_tau=int((~answered).sum()))
     else:
         answered = np.zeros(n_target, dtype=bool)
-        partition = _partition(n_target, 0, 0, "failsafe")
+        partition = _partition(n_target, structural_reason="failsafe")
 
-    # ---- estimated tier (deploy-mode-weighted cluster bootstrap on S_cal) ----
+    # ---- estimated tier + R_M gap, both under the deploy-mode weights ----
     estimated = None
+    rm_gap = None
     if operative is not None:
         weights = None
         if operative["deploy_mode"] == "bbse" and not bbse_fit.declined:
@@ -353,15 +354,8 @@ def build_report(*, target_label, head, cal, target_x, mode_results,
         estimated = _bootstrap_estimate(head, cal, operative["tau"],
                                         weights=weights)
         estimated["weighting"] = operative["deploy_mode"]
-
-    # ---- diagnostic tier ----
-    if operative is not None:
-        w_dep = None
-        if operative["deploy_mode"] == "bbse" and not bbse_fit.declined:
-            w_dep = np.where(cal.y, bbse_fit.rho_point, 1.0)
-        rm_gap = _rm_vs_unweighted(head, cal, operative["tau"], weights=w_dep)
-    else:
-        rm_gap = None
+        rm_gap = _rm_vs_unweighted(head, cal, operative["tau"],
+                                   weights=weights)
     # the BBSE-implied composition view is estimated, not part of the
     # certificate. Supply rho_point whenever the fit did not decline, whichever
     # mode won deployment. Gating it on deploy_mode silently degrades the
@@ -397,11 +391,13 @@ def build_report(*, target_label, head, cal, target_x, mode_results,
                 provenance=provenance_block)
 
 
-def _partition(n_target, answered, below_tau, structural_reason) -> dict:
+def _partition(n_target, *, answered=0, below_tau=0,
+               structural_reason=None) -> dict:
     """Exact decline partition (SPEC report.py).
 
-    Every key is always present and exactly one structural bucket is populated.
-    Asserts that the parts sum to n_target."""
+    Either a structural_reason takes the whole pool, or answered/below_tau
+    split it. Every key is always present. Asserts that the parts sum to
+    n_target."""
     part = {"answered": 0, "below_tau": 0, "failsafe": 0,
             "pool-too-small": 0, "insufficient-clusters": 0}
     if structural_reason is not None:

@@ -20,8 +20,8 @@ Two shift paths:
                  rate. P(x|y) stays invariant, which is the BBSE assumption
                  holding exactly.
   concept shift  Marginal-then-posterior: draw the site mixture, then tilt the
-                 posterior logit by concept_intercept + concept_slope . x.
-                 Neither exchangeability nor label shift survives this.
+                 posterior logit by concept_intercept. Neither exchangeability
+                 nor label shift survives this.
 
 Asking for both at once is the unidentifiable regime, and raises ValueError by
 design.
@@ -35,13 +35,8 @@ from dataclasses import dataclass
 import numpy as np
 
 from certgate.constants import SPLIT_FRACTIONS
+from certgate.model import _sigmoid
 from certgate.validate import Cohort, CohortError, make_cohort
-
-
-def _sigmoid(z):
-    z = np.asarray(z, dtype=np.float64)
-    with np.errstate(over="ignore"):
-        return np.where(z >= 0, 1.0 / (1.0 + np.exp(-z)), np.exp(z) / (1.0 + np.exp(z)))
 
 
 def _logit(p):
@@ -79,7 +74,7 @@ class SimConfig:
 
 
 def draw_cohort(cfg: SimConfig, n_sites: int, rng, *, label_base_rate=None,
-                concept_intercept: float = 0.0, concept_slope=None,
+                concept_intercept: float = 0.0,
                 site_label_prefix: str = "s",
                 require_both_classes: bool = True) -> Cohort:
     """Draw a multi-site Cohort.
@@ -97,7 +92,7 @@ def draw_cohort(cfg: SimConfig, n_sites: int, rng, *, label_base_rate=None,
 
     Refs: SPEC "data.py".
     """
-    concept = (concept_intercept != 0.0) or (concept_slope is not None)
+    concept = concept_intercept != 0.0
     if label_base_rate is not None and concept:
         raise ValueError(
             "label_base_rate composes only with the class-conditional (label-shift) path; "
@@ -123,8 +118,6 @@ def draw_cohort(cfg: SimConfig, n_sites: int, rng, *, label_base_rate=None,
         mix = rng.random(n) < pi_site_rec
         x = rng.normal(0.0, 1.0, (n, cfg.d)) + np.where(mix[:, None], cfg.mu(1), cfg.mu(0))
         lg = cfg.posterior_logit(x, pi_site_rec) + concept_intercept
-        if concept_slope is not None:
-            lg = lg + x @ np.asarray(concept_slope, dtype=np.float64)
         y = rng.random(n) < _sigmoid(lg)
 
     labels = tuple(f"{site_label_prefix}-{i:04d}" for i in range(n_sites))

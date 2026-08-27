@@ -58,7 +58,7 @@ def hard_violation(err_answered, alpha):
     err_answered = np.asarray(err_answered)
     n = int(err_answered.shape[0])
     k = int(np.count_nonzero(err_answered))
-    return bool(wilson_lcb(k, n, 0.95) > alpha)
+    return bool(wilson_lcb(k, n) > alpha)
 
 
 def exceedance_reference(n_answered, alpha):

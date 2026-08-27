@@ -151,8 +151,7 @@ def assert_site_disjoint(**named) -> None
 #       pi_c = sigmoid(logit(base) + u_c)
 
 def draw_cohort(cfg, n_sites, rng, *, label_base_rate=None, concept_intercept=0.0,
-                concept_slope=None, site_label_prefix="s",
-                require_both_classes=True) -> Cohort
+                site_label_prefix="s", require_both_classes=True) -> Cohort
     # require_both_classes passes through to make_cohort; experiments drawing single-site
     # TARGET pools set it False (an all-negative target batch is a legitimate scenario).
     # label-shift path (class-conditional, exact) when no concept tilt;
@@ -233,7 +232,8 @@ def certification_rng(alpha, mode_idx, stream="") -> np.random.Generator
 
 def bbse_diagnostics(**known) -> dict     # stable-key template; unknown keys raise
 
-def fit_bbse(head, aux: Cohort, target_x, rng, target_site_id=None) -> BBSEFit
+def fit_bbse(head, aux: Cohort, target_x, rng, target_site_id=None,
+             *, score_aux=None, err_aux=None) -> BBSEFit   # precomputed by run_certgate
     # per-site stats (n, pos, pred1&pos, pred1&neg) via bincount weights (y bool guaranteed).
     # point (c0, c1, pi_s) from pooled aux. Bootstrap: loop drawing site-index resamples;
     # a resample is VALID iff pooled pos>=1 and neg>=1; collect until BBSE_BOOT valid or
@@ -277,7 +277,10 @@ def fit_bbse(head, aux: Cohort, target_x, rng, target_site_id=None) -> BBSEFit
     # w=(1 if ~y else rho_point), wmax=max(1, rho_point).
     # diagnostics additionally records q_ci, n_target, n_target_sites.
 
-def certify_bbse(head, fit, cal: Cohort, alpha) -> dict   # target_label removed (audit V3)
+def certify_bbse(head, fit, cal: Cohort, alpha, *, score=None, err=None) -> dict
+    # target_label removed (audit V3). score/err: optional precomputed head.score(cal.x)
+    # and head.predict(cal.x) != cal.y -- run_certgate computes them once per run and
+    # passes them down; standalone callers omit them and they are computed here.
     # decline passthrough; else dual-endpoint walk at BBSE_DELTA_BET: per threshold, reject
     # must hold at BOTH rho_lo and rho_hi atom sets. Soundness (R1, REDTEAM.md): under the
     # per-endpoint normalization wmax=max(1,rho) the atom mean is PIECEWISE in rho (kink at
@@ -291,8 +294,10 @@ def certify_bbse(head, fit, cal: Cohort, alpha) -> dict   # target_label removed
     # order-independent, target-label-free — audit V3; the fit itself remains legitimately
     # target-dependent through the q_t interval, which is why the shared-event clause is
     # claimed for baseline mode only).
-    # Result dict: alpha, tau, tau_idx, certified(list), reason(None|str), n_cal,
-    # n_cal_carrying, diagnostics.
+    # Result dict: certified(list), tau_idx, tau, reason(None|str) -- exactly the four
+    # keys the pipeline and the report read (2026-08-25 simplification: alpha/n_cal/
+    # n_cal_carrying/diagnostics were emitted and never read; diagnostics lives on the
+    # BBSEFit the caller already holds).
 ```
 
 ## `explain.py`

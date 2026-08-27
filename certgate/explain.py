@@ -22,19 +22,9 @@ Refs: SPEC "explain.py"; METHODS 6; audit V20.
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import numpy as np
 
-if TYPE_CHECKING:                      # annotation only
-    from certgate.model import Head
-
-
-def _sigmoid_scalar(z: float) -> float:
-    if z >= 0:
-        return float(1.0 / (1.0 + np.exp(-z)))
-    ez = np.exp(z)
-    return float(ez / (1.0 + ez))
+from certgate.model import _sigmoid
 
 
 def _standardize(head: "Head", x_row) -> np.ndarray:
@@ -70,7 +60,7 @@ def local_attribution(head: "Head", x_row) -> dict:
     phi = head.coef * z
     base = float(head.intercept)
     logit = base + float(phi.sum())
-    return {"base": base, "phi": phi, "logit": logit, "p1": _sigmoid_scalar(logit)}
+    return {"base": base, "phi": phi, "logit": logit, "p1": float(_sigmoid(logit))}
 
 
 def abstention_explanation(head: "Head", x_row, tau_star) -> dict:

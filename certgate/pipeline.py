@@ -28,7 +28,7 @@ from certgate.validate import (Cohort, CohortError, assert_site_disjoint,
 from certgate.model import fit_head
 from certgate.certify import (influence_atoms, walk_order, margin_floor,
                               fixed_sequence_walk, certification_rng)
-from certgate.shift import (BBSEFit, bbse_diagnostics, fit_bbse,
+from certgate.shift import (_decline, bbse_diagnostics, fit_bbse,
                             certify_bbse)
 from certgate.report import build_report, provenance
 
@@ -68,16 +68,15 @@ def _feasibility(head, aux, alpha, n_carrying) -> dict:
                 floor=floor, ratio=ratio)
 
 
-def _baseline_walk(head, cal, order, alpha) -> dict:
+def _baseline_walk(cal, order, alpha, score, err) -> dict:
     """Baseline (exchangeable) certification walk for one alpha at full DELTA.
 
-    The permutation stream is target-label-free (audit V3). Baseline atoms are
-    target-independent, so one calibration draw yields one certificate shared
-    by every target pool it is applied to. That is what makes the
-    shared-1-delta-event clause in the guarantee text true.
+    score and err are the frozen head's outputs on cal, computed once in
+    run_certgate. The permutation stream is target-label-free (audit V3).
+    Baseline atoms are target-independent, so one calibration draw yields one
+    certificate shared by every target pool it is applied to. That is what
+    makes the shared-1-delta-event clause in the guarantee text true.
     """
-    score = head.score(cal.x)
-    err = head.predict(cal.x) != cal.y
     atoms = influence_atoms(score, err, cal.site_id, cal.n_sites, TAU_GRID,
                             alpha, M_INFLUENCE)
     rng = certification_rng(alpha, MODE_BASELINE)
@@ -118,22 +117,15 @@ def _bbse_seed_rng(target_x, dense_target_sites=None):
          int.from_bytes(d[4:8], "big")]))
 
 
-def run_certgate(train, aux, cal, target_x, *, target_label="target",
-                 target_site_id=None, alphas=ALPHA_LADDER,
-                 oracle_target_y=None, modes=("baseline", "bbse")) -> dict:
-    """Certify a target pool end to end and return the tiered report (SPEC).
+def _validate_call(train, aux, cal, target_x, target_label,
+                   target_site_id, oracle_target_y, alphas, modes):
+    """The loud gates, in SPEC order, before anything is fitted.
 
-      - modes: the assumption modes to run, OR-combined per alpha
-      - target_site_id: per-record raw site labels for a multi-site pool,
-        feeding the BBSE q_t interval and the disjointness assertion. None
-        declares a single-site pool
-      - oracle_target_y: harness only, feeds the diagnostic composition
-
-    A gated exit -- insufficient-clusters or pool-too-small -- still returns a
-    full report carrying the reason and an all-declined partition.
+    Steps 0-2b: argument shapes, site-disjointness including the target,
+    finite features, feature-width alignment. Returns the coerced target
+    arrays and the dense target site partition. Raises on any violation;
+    nothing here computes a statistic.
     """
-    modes = tuple(modes)
-    alphas = tuple(alphas)
     bad = [a for a in alphas if a not in ALPHA_LADDER]
     if bad or not alphas:
         raise ValueError(
@@ -248,7 +240,13 @@ def run_certgate(train, aux, cal, target_x, *, target_label="target",
             f"run_certgate: aux and cal feature width must match train.d={d_train}, "
             f"got aux.d={aux.d}, cal.d={cal.d} "
             "(reason=feature-width-mismatch)")
+    return (target_x, oracle_target_y, n_target_rows,
+            dense_target_sites, target_site_labels)
 
+
+def _bind_provenance(train, aux, cal, target_x, dense_target_sites,
+                     target_site_labels, target_label, modes, alphas):
+    """Bind every array and run setting the certificate depends on."""
     # provenance binds every array the certificate depends on: x, y and the
     # site partition of all three cohorts, plus the target. Flipping one
     # calibration label must change the recorded hashes (audit V11).
@@ -268,9 +266,34 @@ def run_certgate(train, aux, cal, target_x, *, target_label="target",
             "\x00".join(target_site_labels).encode(), dtype=np.uint8)
     # the run configuration binds too, so two runs with different certified
     # tiers never share a byte-identical record (verification N8)
-    prov = provenance(target_label=str(target_label),
+    return provenance(target_label=str(target_label),
                       modes=list(modes), alphas=[float(a) for a in alphas],
                       **prov_arrays)
+
+
+def run_certgate(train, aux, cal, target_x, *, target_label="target",
+                 target_site_id=None, alphas=ALPHA_LADDER,
+                 oracle_target_y=None, modes=("baseline", "bbse")) -> dict:
+    """Certify a target pool end to end and return the tiered report (SPEC).
+
+      - modes: the assumption modes to run, OR-combined per alpha
+      - target_site_id: per-record raw site labels for a multi-site pool,
+        feeding the BBSE q_t interval and the disjointness assertion. None
+        declares a single-site pool
+      - oracle_target_y: harness only, feeds the diagnostic composition
+
+    A gated exit -- insufficient-clusters or pool-too-small -- still returns a
+    full report carrying the reason and an all-declined partition.
+    """
+    modes = tuple(modes)
+    alphas = tuple(alphas)
+    (target_x, oracle_target_y, n_target_rows,
+     dense_target_sites, target_site_labels) = _validate_call(
+        train, aux, cal, target_x, target_label, target_site_id,
+        oracle_target_y, alphas, modes)
+    prov = _bind_provenance(train, aux, cal, target_x, dense_target_sites,
+                            target_site_labels, target_label, modes,
+                            alphas)
 
     n_carrying = int((cal.site_sizes > 0).sum())
     # the not-run placeholder carries the same diagnostics key set as a real
@@ -278,8 +301,7 @@ def run_certgate(train, aux, cal, target_x, *, target_label="target",
     # ran. Gated exits are the one exception: they emit diagnostic['bbse'] =
     # None wholesale, per audit V25's None-for-uncomputable rule.
     # Ref: fixture audit 2026-07-25.
-    empty_bbse = BBSEFit(True, "not-run", float("nan"), float("nan"),
-                         float("nan"), bbse_diagnostics(), {})
+    empty_bbse = _decline("not-run", bbse_diagnostics())
 
     # 3. record-carrying calibration-cluster floor: count only sites that
     #    actually carry records (audit B-5).
@@ -304,8 +326,13 @@ def run_certgate(train, aux, cal, target_x, *, target_label="target",
 
     # 5. fit head; S_aux ordering + feasibility per alpha; fit BBSE once.
     head = fit_head(train)
+    # one frozen head, each cohort scored once; every consumer below --
+    # feasibility, walk orders, baseline walk, BBSE endpoints -- reads these
+    # same four arrays
     score_aux = head.score(aux.x)
     err_aux = head.predict(aux.x) != aux.y
+    score_cal = head.score(cal.x)
+    err_cal = head.predict(cal.x) != cal.y
     walk_orders, feasibility = {}, {}
     for alpha in alphas:
         atoms_aux = influence_atoms(score_aux, err_aux, aux.site_id,
@@ -320,7 +347,8 @@ def run_certgate(train, aux, cal, target_x, *, target_label="target",
     if run_bbse:
         bbse_fit = fit_bbse(head, aux, target_x,
                             _bbse_seed_rng(target_x, dense_target_sites),
-                            target_site_id=dense_target_sites)
+                            target_site_id=dense_target_sites,
+                            score_aux=score_aux, err_aux=err_aux)
     else:
         bbse_fit = empty_bbse
 
@@ -329,12 +357,11 @@ def run_certgate(train, aux, cal, target_x, *, target_label="target",
     for alpha in alphas:
         per = {}
         if "baseline" in modes:
-            per["baseline"] = _baseline_walk(head, cal, walk_orders[alpha],
-                                             alpha)
+            per["baseline"] = _baseline_walk(cal, walk_orders[alpha], alpha,
+                                             score_cal, err_cal)
         if run_bbse:
-            r = certify_bbse(head, bbse_fit, cal, alpha)
-            per["bbse"] = dict(certified=r["certified"], tau_idx=r["tau_idx"],
-                               tau=r["tau"], reason=r["reason"])
+            per["bbse"] = certify_bbse(head, bbse_fit, cal, alpha,
+                                       score=score_cal, err=err_cal)
         mode_results[alpha] = per
 
     # 7. tiered report (operative rung + partition + explain artifacts inside).

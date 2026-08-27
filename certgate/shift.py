@@ -102,6 +102,12 @@ def bbse_diagnostics(**known) -> dict:
     return d
 
 
+def _decline(reason: str, diag: dict) -> BBSEFit:
+    """A declined fit: NaN odds-ratio interval, empty walk orders."""
+    nan = float("nan")
+    return BBSEFit(True, reason, nan, nan, nan, diag)
+
+
 def _q_interval(pred, target_site_id, lvl, rng):
     """Two-sided level-lvl interval for the target predicted-positive rate q.
 
@@ -197,7 +203,7 @@ def rho_box_interval(q_lo, q_hi, q_point, lo, hi, point):
 
 
 def fit_bbse(head: "Head", aux: "Cohort", target_x, rng,
-             target_site_id=None) -> BBSEFit:
+             target_site_id=None, *, score_aux=None, err_aux=None) -> BBSEFit:
     """Fit the BBSE confidence box and propagate it to an odds-ratio interval.
 
     The box is fit on S_aux plus the target pool; the interval is the worst
@@ -234,9 +240,7 @@ def fit_bbse(head: "Head", aux: "Cohort", target_x, rng,
     n_sites = stats.shape[1]
     n_target = int(np.asarray(target_x).shape[0])
     if n_target == 0:
-        return BBSEFit(True, "bbse-empty-target",
-                       float("nan"), float("nan"), float("nan"),
-                       bbse_diagnostics(n_target=0))
+        return _decline("bbse-empty-target", bbse_diagnostics(n_target=0))
     # q cluster-bootstrap floor. A percentile bootstrap over 2..K-1 target
     # sites cannot approach nominal coverage: measured rho-miss up to 46% at
     # K=2 against a nominal 2.5%, and certify-and-violate at 3.4x delta where
@@ -250,11 +254,9 @@ def fit_bbse(head: "Head", aux: "Cohort", target_x, rng,
                 "target_x (reason=bad-target-site-id)")
         n_ts = int(len(np.unique(sid)))
         if 2 <= n_ts < BBSE_MIN_TARGET_SITES:
-            return BBSEFit(True, "bbse-target-clustering",
-                           float("nan"), float("nan"), float("nan"),
-                           bbse_diagnostics(
-                               n_target=n_target, n_target_sites=n_ts,
-                               min_target_sites=BBSE_MIN_TARGET_SITES))
+            return _decline("bbse-target-clustering", bbse_diagnostics(
+                n_target=n_target, n_target_sites=n_ts,
+                min_target_sites=BBSE_MIN_TARGET_SITES))
     pred_t = head.predict(target_x)
     q_t = float(np.asarray(pred_t, dtype=float).mean())
 
@@ -277,11 +279,9 @@ def fit_bbse(head: "Head", aux: "Cohort", target_x, rng,
         if b is not None:
             valid.append(b)
     if point is None or len(valid) < BBSE_BOOT:
-        return BBSEFit(True, "bbse-degenerate-bootstrap",
-                       float("nan"), float("nan"), float("nan"),
-                       bbse_diagnostics(n_target=n_target, q_target=q_t,
-                                        n_boot=len(valid),
-                                        n_attempts=n_attempts))
+        return _decline("bbse-degenerate-bootstrap", bbse_diagnostics(
+            n_target=n_target, q_target=q_t,
+            n_boot=len(valid), n_attempts=n_attempts))
 
     boots = np.array(valid)                            # (BBSE_BOOT, 3)
     lvl = BBSE_DELTA_CONF / BBSE_BONFERRONI            # Bonferroni over 4 params
@@ -301,12 +301,10 @@ def fit_bbse(head: "Head", aux: "Cohort", target_x, rng,
         n_boot=len(valid), n_attempts=n_attempts)
 
     if lo[1] - hi[0] < BBSE_GAP_FLOOR:                 # worst-case c1 - c0
-        return BBSEFit(True, "bbse-ill-conditioned",
-                       float("nan"), float("nan"), float("nan"), diag)
+        return _decline("bbse-ill-conditioned", diag)
 
     if not (lo[0] <= q_lo and q_hi <= hi[1]):          # q interval in box range
-        return BBSEFit(True, "bbse-misspecified",
-                       float("nan"), float("nan"), float("nan"), diag)
+        return _decline("bbse-misspecified", diag)
 
     rho_lo, rho_hi, rho_point = rho_box_interval(q_lo, q_hi, q_t, lo, hi,
                                                  point)
@@ -315,8 +313,10 @@ def fit_bbse(head: "Head", aux: "Cohort", target_x, rng,
     # Walk orders from point-rho-weighted S_aux atoms. These are
     # S_cal-independent, so in-sample flattery here costs power, never
     # validity.
-    score_aux = head.score(aux.x)
-    err_aux = head.predict(aux.x) != aux.y
+    if score_aux is None:
+        score_aux = head.score(aux.x)
+    if err_aux is None:
+        err_aux = head.predict(aux.x) != aux.y
     w_pt = np.where(aux.y, rho_point, 1.0)
     wmax_pt = max(1.0, rho_point)
     orders = {}
@@ -329,12 +329,19 @@ def fit_bbse(head: "Head", aux: "Cohort", target_x, rng,
     return BBSEFit(False, "", rho_lo, rho_hi, rho_point, diag, orders)
 
 
-def certify_bbse(head: "Head", fit: BBSEFit, cal: "Cohort", alpha) -> dict:
+def certify_bbse(head: "Head", fit: BBSEFit, cal: "Cohort", alpha, *,
+                 score=None, err=None) -> dict:
     """BBSE certification for one alpha rung.
 
     A declined fit passes straight through. Otherwise this is a dual-endpoint
     fixed-sequence walk at BBSE_DELTA_BET: a threshold passes only if the
     betting test rejects on both the rho_lo and the rho_hi atom sets.
+
+    Returns exactly the four keys the pipeline reads: certified, tau_idx, tau,
+    reason. Diagnostics live on the BBSEFit the caller already holds. score
+    and err are optional precomputed head.score(cal.x) and
+    head.predict(cal.x) != cal.y; run_certgate passes them in so the frozen
+    head scores each cohort once.
 
     Why two endpoints are enough. Under the per-endpoint normalization
     wmax=max(1,rho) the atom mean is piecewise in rho, with a kink at 1, so an
@@ -353,15 +360,14 @@ def certify_bbse(head: "Head", fit: BBSEFit, cal: "Cohort", alpha) -> dict:
 
     Refs: SPEC "shift.py"; METHODS 5; audit V3.
     """
-    n_cal_sites = cal.n_sites
-    n_carrying = int((cal.site_sizes > 0).sum())
     if fit.declined:
-        return dict(alpha=alpha, tau=None, tau_idx=None, certified=[],
-                    reason=fit.reason, n_cal=n_cal_sites,
-                    n_cal_carrying=n_carrying, diagnostics=fit.diagnostics)
+        return dict(certified=[], tau_idx=None, tau=None, reason=fit.reason)
 
-    score = head.score(cal.x)
-    err = head.predict(cal.x) != cal.y
+    n_cal_sites = cal.n_sites
+    if score is None:
+        score = head.score(cal.x)
+    if err is None:
+        err = head.predict(cal.x) != cal.y
     atom_sets = []
     for rho in (fit.rho_lo, fit.rho_hi):
         w = np.where(cal.y, rho, 1.0)
@@ -383,11 +389,8 @@ def certify_bbse(head: "Head", fit: BBSEFit, cal: "Cohort", alpha) -> dict:
             break
 
     if not certified:
-        return dict(alpha=alpha, tau=None, tau_idx=None, certified=[],
-                    reason="failsafe", n_cal=n_cal_sites,
-                    n_cal_carrying=n_carrying, diagnostics=fit.diagnostics)
+        return dict(certified=[], tau_idx=None, tau=None, reason="failsafe")
 
     deployed = min(certified, key=lambda t: TAU_GRID[t])
-    return dict(alpha=alpha, tau=float(TAU_GRID[deployed]), tau_idx=deployed,
-                certified=certified, reason=None, n_cal=n_cal_sites,
-                n_cal_carrying=n_carrying, diagnostics=fit.diagnostics)
+    return dict(certified=certified, tau_idx=deployed,
+                tau=float(TAU_GRID[deployed]), reason=None)
