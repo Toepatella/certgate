@@ -29,7 +29,7 @@ def hoeffding_ucb(z, delta):
     """One-sided Hoeffding UCB for the mean of [0,1] variables."""
     z = np.asarray(z, dtype=float)
     n = len(z)
-    if n < 1:
+    if n < 2:
         return float("inf")
     return float(z.mean() + np.sqrt(np.log(1.0 / delta) / (2.0 * n)))
 
@@ -46,7 +46,9 @@ def mpeb_ucb(z, delta):
     """
     z = np.asarray(z, dtype=float)
     n = len(z)
-    v = z.var(ddof=1) if n > 1 else 0.25
+    if n < 2:
+        return float("inf")
+    v = z.var(ddof=1)
     L = np.log(2.0 / delta)
     return z.mean() + np.sqrt(2.0 * v * L / n) + 7.0 * L / (3.0 * (n - 1))
 

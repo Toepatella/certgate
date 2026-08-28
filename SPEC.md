@@ -987,7 +987,7 @@ per file below; regressions to any of them are regressions to V6.
   [0,1] — removing np.minimum(sizes, M) drives atoms negative and breaks the [0,1]
   boundedness Ville's inequality requires, and this test fails; WSR boundary type-I at
   (n=80, 800 reps, fixed seed) <= 0.08 and power > 0.9 under a clear margin; walk stops at
-  first failure; NaN weight raises; NaN score raises; certification_rng: identical streams
+  first failure; NaN weight raises (the NaN-score arm was cut in the 2026-08-20 slim pass: unreachable through the boundary); certification_rng: identical streams
   for repeated calls, distinct streams across alphas / mode indices / "lo" vs "hi",
   and NO dependence on any target identifier (audit V3).
 - `test_shift.py` — pure label shift (base 0.095 -> 0.22): rho interval covers true rho and
@@ -1073,9 +1073,10 @@ per file below; regressions to any of them are regressions to V6.
   WALK-ORDER PROVENANCE — the order handed to fixed_sequence_walk equals the S_aux-derived
   walk_order recomputed independently (V6 #5). Boundary killers: unknown/empty modes raise;
   single-class fitting cohort raises; malformed oracle_target_y raises; a target_label
-  colliding with a calibration site raises (V9); GUARANTEE-TEXT FREEZE — the emitted
-  statement for a known (alpha, modes) pair is compared as an EXACT string, so any silent
-  weakening of a mandated clause fails (V6 #13/#14). Fixture-audit killers (2026-07-25):
+  colliding with a calibration site raises (V9). The GUARANTEE-TEXT FREEZE — the emitted
+  statement for a known (alpha, modes) pair compared as an EXACT string, so any silent
+  weakening of a mandated clause fails (V6 #13/#14) — moved to `test_report.py` in the
+  2026-08-20 slim pass and lives there now. Fixture-audit killers (2026-07-25):
   target_x passed as a Cohort raises "(reason=target-is-cohort)"; feasibility is keyed by
   str(alpha) and JSON-round-trips unchanged; diagnostic['bbse'] carries bbse_diagnostics()'s
   exact key set under both modes=("baseline","bbse") and modes=("baseline",).

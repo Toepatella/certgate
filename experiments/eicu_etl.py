@@ -463,23 +463,15 @@ def _read_reason(exc):
             else "truncated-table")
 
 
-def _read_failure(func, table, path, exc, fh=None):
-    """Typed re-raise naming the table, the path, and the byte offset if known."""
-    where = ""
-    try:                                    # best effort; never masks `exc`
-        buf = getattr(fh, "buffer", None)
-        if buf is not None:
-            where = f" at byte offset {buf.tell()}"
-    except Exception:                       # noqa: BLE001 - diagnostic only
-        where = ""
+def _read_failure(func, table, path, exc):
+    """Typed re-raise naming the table and the path."""
     return _err(func,
                 f"table {table!r} at {path} could not be decoded/decompressed"
-                f"{where}: {type(exc).__name__}: {exc}", reason=_read_reason(exc))
+                f": {type(exc).__name__}: {exc}", reason=_read_reason(exc))
 
 
 def _read_header(path, table):
     """Return (raw_header, lower_header) without consuming the table."""
-    fh = None
     try:
         with gzip.open(path, "rt", encoding="utf-8-sig", newline="") as fh:
             r = csv.reader(fh)
@@ -489,7 +481,7 @@ def _read_header(path, table):
                 raise _err("read_table", f"table {table!r} has no header row",
                            path, reason="missing-column") from None
     except _READ_ERRORS as e:
-        raise _read_failure("read_table", table, path, e, fh) from e
+        raise _read_failure("read_table", table, path, e) from e
     return raw, _lower_header(raw, table, path)
 
 
@@ -534,7 +526,6 @@ def read_table(data_dir, table):
         neither the table nor the file
     """
     path = _resolve_table_path(data_dir, table)
-    fh = None
     try:
         with gzip.open(path, "rt", encoding="utf-8-sig", newline="") as fh:
             r = csv.reader(fh)
@@ -553,7 +544,7 @@ def read_table(data_dir, table):
                     row = row + [""] * (ncols - len(row))
                 yield {header[i]: row[i] for i in range(ncols)}
     except _READ_ERRORS as e:
-        raise _read_failure("read_table", table, path, e, fh) from e
+        raise _read_failure("read_table", table, path, e) from e
 
 
 # ========================================================= cell parsers =====
@@ -702,7 +693,8 @@ def _parse_apache_cell(col, raw, key, sent, unit, win, tokens=None):
     return v
 
 
-def _parse_windowed(raw, key, window, sent, win, transform=None, tokens=None):
+def _parse_windowed(raw, key, window, sent=None, win=None, transform=None,
+                    tokens=None):
     """Parse a patient numeric under a frozen plausibility window (T-11).
 
     0 is the missing encoding for height and weight (not -1) and falls out of
@@ -715,26 +707,32 @@ def _parse_windowed(raw, key, window, sent, win, transform=None, tokens=None):
     does, so the null-token gate covers every allowlisted numeric. That matters
     here because hospitaladmitoffset doubles as the first-stay tie-breaker: a
     silent zeroing would also silently reorder cohort selection.
+    sent/win/tokens are optional: preflight parses for the value alone and
+    counts nothing.
     Ref: audits E-15, E-22 (2026-07-31 arrival day).
     """
-    s = sent[key]
+    s = None if sent is None else sent[key]
     t = (raw or "").strip()
     if not t:
-        s["empty"] += 1
+        if s is not None:
+            s["empty"] += 1
         return math.nan
     v = _maybe_float(t)
     if v is None:
-        s["unparseable"] += 1
+        if s is not None:
+            s["unparseable"] += 1
         _note_null_token(tokens, key, t)
         return math.nan
     if transform is not None:
         v = transform(v)
         if not math.isfinite(v):
-            s["unparseable"] += 1
+            if s is not None:
+                s["unparseable"] += 1
             return math.nan
     lo, hi = window
     if not (lo <= v <= hi):
-        win[key] += 1
+        if win is not None:
+            win[key] += 1
         return math.nan
     return v
 
@@ -2014,10 +2012,9 @@ def build_matrix(data_dir, *, arm="primary", strict_levels=True, replicate=0,
     'split_idx' (dict of int arrays), 'split_sites' (dict of str sets) and
     'impute_fill'.
 
-    Used by run_eicu for a single replicate, and by the tests. The
-    multi-replicate runner instead calls build_raw once and loops site_split
-    plus impute: re-reading a 200k-row extract 20 times is a build error, not a
-    style preference (threat T-16).
+    Used by the tests. The multi-replicate runner instead calls build_raw once
+    and loops site_split plus impute: re-reading a 200k-row extract 20 times
+    is a build error, not a style preference (threat T-16).
     """
     x_raw, names, meta = build_raw(data_dir, arm=arm,
                                    strict_levels=strict_levels, verbose=verbose)
@@ -2295,7 +2292,7 @@ def _coverage_by_site(linked_stays, stay_site, cohort_site_stays):
     out["n_sites_zero"] = int((arr == 0.0).sum()) if arr.size else 0
     out["n_sites_below_0.2"] = int((arr < 0.2).sum()) if arr.size else 0
     out["n_linked_stays"] = int(sum(linked.values()))
-    return out, linked
+    return out
 
 
 def preflight(data_dir, *, expect_reference=False, verbose=True) -> dict:
@@ -2422,9 +2419,6 @@ def preflight(data_dir, *, expect_reference=False, verbose=True) -> dict:
                     for c in EICU_PATIENT_NUMERIC}
     n_cohort = 0
     n_min_visit_not_1 = 0
-    sink = _new_sentinel_counter()
-    sinks = {c: sink for c in EICU_PATIENT_NUMERIC}
-    drop_win = Counter()
     los_by_stay = {}
     for row in read_table(data_dir, "patient"):
         stay_id = _maybe_int(row["patientunitstayid"])
@@ -2456,16 +2450,14 @@ def preflight(data_dir, *, expect_reference=False, verbose=True) -> dict:
             "age": age_v,
             "admissionheight": _parse_windowed(row["admissionheight"],
                                                "admissionheight",
-                                               EICU_WINDOW_HEIGHT_CM, sinks,
-                                               drop_win),
+                                               EICU_WINDOW_HEIGHT_CM),
             "admissionweight": _parse_windowed(row["admissionweight"],
                                                "admissionweight",
-                                               EICU_WINDOW_WEIGHT_KG, sinks,
-                                               drop_win),
+                                               EICU_WINDOW_WEIGHT_KG),
             "pre_icu_hours": _parse_windowed(row["hospitaladmitoffset"],
                                              "pre_icu_hours",
-                                             EICU_WINDOW_PRE_ICU_HRS, sinks,
-                                             drop_win, lambda v: -v / 60.0),
+                                             EICU_WINDOW_PRE_ICU_HRS,
+                                             transform=lambda v: -v / 60.0),
         }
         for c, v in vals.items():
             cell = pat_per_site[c][site]
@@ -2597,9 +2589,9 @@ def preflight(data_dir, *, expect_reference=False, verbose=True) -> dict:
             f"primary-cohort to {prev_aps:.4f} at apache-aps-linked; APACHE-row "
             f"absence is OUTCOME-correlated, not only site-correlated")
 
-    aps_cov, _ = _coverage_by_site(aps["linked_stays"], stay_site, cohort_site_stays)
-    apv_cov, _ = _coverage_by_site(apv["linked_stays"], stay_site, cohort_site_stays)
-    res_cov, _ = _coverage_by_site(res_linked, stay_site, cohort_site_stays)
+    aps_cov = _coverage_by_site(aps["linked_stays"], stay_site, cohort_site_stays)
+    apv_cov = _coverage_by_site(apv["linked_stays"], stay_site, cohort_site_stays)
+    res_cov = _coverage_by_site(res_linked, stay_site, cohort_site_stays)
     if res_cov["n_sites_zero"]:
         warnings.append(
             f"[MEASURE] T-4: {res_cov['n_sites_zero']} hospitals have ZERO "
@@ -2613,6 +2605,9 @@ def preflight(data_dir, *, expect_reference=False, verbose=True) -> dict:
     for c in EICU_PATIENT_NUMERIC:
         rates = [cell[1] / cell[0] for cell in pat_per_site[c].values() if cell[0]]
         d = _spread(rates)
+        # The two 0.0 minus-one fields are shape-only: patient columns have no
+        # -1 sentinel convention, so the rate is 0.0 by construction, kept so
+        # every dispersion entry in EICU_preflight.json carries one key set.
         pat_dispersion[c] = {"mean_site_minus_one_rate": 0.0,
                              "sd_site_minus_one_rate": 0.0,
                              "p10": d["p10"], "p50": d["p50"], "p90": d["p90"],

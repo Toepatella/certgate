@@ -441,7 +441,7 @@ class TableWriter:
 
 
 class NullWriter:
-    """Stands in for a table the caller excluded via --tables."""
+    """Stands in for an excluded table; write/close are no-ops."""
 
     rows = 0
 

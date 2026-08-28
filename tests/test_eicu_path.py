@@ -61,6 +61,7 @@ from certgate.validate import (Cohort, assert_site_disjoint, densify_sites,
 from examples import explain_dashboard_eicu as dash_eicu
 from experiments import eicu_etl as etl
 from experiments import eicu_mock as mock
+from experiments import panel_s2_tables
 from experiments import run_eicu
 from experiments import run_synthetic
 
@@ -2089,9 +2090,12 @@ def test_rm_helpers_are_the_synthetic_ones():
     assert run_eicu._per_site_exceed_frac is run_synthetic._per_site_exceed_frac
     assert run_eicu._rate is run_synthetic._rate
     assert run_eicu._write_csv is run_synthetic._write_csv
+    assert run_eicu._row_for is run_synthetic._row_for
     # the rank AUC was a byte-equivalent clone of the ETL's, the one house
     # helper that had escaped this net
     assert run_eicu._auc is etl._rank_auc
+    # the Table 6/7 replay scores its certificates with the same estimand
+    assert panel_s2_tables._rm_on_pool is run_synthetic._rm_on_pool
 
 
 def test_etl_imports_no_undeclared_dependency():

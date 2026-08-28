@@ -40,6 +40,8 @@ import sys
 
 import numpy as np
 
+from experiments.panel_s2_tables import _op_chars as _s2_op_chars
+
 OUT = os.path.join(os.path.dirname(__file__), "out")
 PANEL_PATH = os.path.join(OUT, "EICU_reliability_panel.json")
 SCOPES = ("answered", "declined", "all")
@@ -48,10 +50,6 @@ INT_TOL = 0.05           # reconstruction slack; true worst case is ~0.01
 # composition and skill blocks. If the derivation ever stops reproducing it,
 # nothing else here is trustworthy.
 SELF_CHECK = dict(replicate=0, scope="answered", tp=57, fp=6, fn=537, tn=12364)
-
-
-def _r(num, den, dp=4):
-    return round(num / den, dp) if den else None
 
 
 def _reconstruct(comp, skill):
@@ -83,19 +81,12 @@ def _reconstruct(comp, skill):
 
 
 def _op_chars(c, skill):
-    """Operating characteristics, same row shape as panel_s2_tables Table 7.
-
-    Adds fnr, and carries the panel's own constant-rule reference through.
-    """
-    tp, fp, fn, tn = c["tp"], c["fp"], c["fn"], c["tn"]
-    n = tp + fp + fn + tn
-    return dict(
-        records=n, **c,
-        positive_fraction=_r(tp + fn, n), error=_r(fp + fn, n),
-        sensitivity=_r(tp, tp + fn), specificity=_r(tn, tn + fp),
-        ppv=_r(tp, tp + fp), npv=_r(tn, tn + fn),
-        fnr=_r(fn, tp + fn), fn_share_of_errors=_r(fn, fp + fn),
-        constant_predictor_error_rate=skill.get("constant_predictor_error_rate"))
+    """panel_s2_tables' Table 7 row with fnr, plus the panel's own
+    constant-rule reference carried through."""
+    row = _s2_op_chars(c, fnr=True)
+    row["constant_predictor_error_rate"] = skill.get(
+        "constant_predictor_error_rate")
+    return row
 
 
 def _agg(rows, key):

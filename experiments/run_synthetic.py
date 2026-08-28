@@ -170,7 +170,7 @@ def _draw_split(cfg, n_sites, rng):
     return train, aux, cal, fit_head(train)
 
 
-def _rm_on_pool(head, pool, tau):
+def _rm_on_pool(head, pool, tau, M=M_INFLUENCE):
     """Influence-weighted answered-set risk R_M on a fresh multi-site pool.
 
     This is the quantity the certificate actually bounds:
@@ -188,7 +188,7 @@ def _rm_on_pool(head, pool, tau):
     n_sites = pool.n_sites
     sizes = pool.site_sizes.astype(float)
     g_over_n = np.where(sizes > 0,
-                        np.minimum(sizes, M_INFLUENCE)
+                        np.minimum(sizes, M)
                         / np.maximum(sizes, 1.0), 0.0)
     num_c = np.bincount(pool.site_id, weights=(ans & err).astype(float),
                         minlength=n_sites)
@@ -220,6 +220,97 @@ def _per_site_exceed_frac(head, pool, tau, alpha):
         return float("nan")
     rates = num_c[answering] / den_c[answering]
     return float((rates > alpha).mean())
+
+
+def _plot(vals):
+    """None -> NaN for matplotlib: a missing rate plots as a gap, never 0."""
+    return [np.nan if v is None else v for v in vals]
+
+
+def _alpha_bar(ax, xs, vals, none_fontsize, val_fontsize):
+    """Label one per-alpha bar series on ax.
+
+    A None value means the rung never certified: no bar, and the text says
+    so. A true 0.0 bar has zero height -- label it or it reads as absence.
+    """
+    for x, v in zip(xs, vals):
+        if v is None:
+            ax.text(x, 0.03, "no certificates", ha="center", va="bottom",
+                    rotation=90, fontsize=none_fontsize, color="dimgray",
+                    transform=ax.get_xaxis_transform())
+        else:
+            ax.text(x, v, f"{v:.3f}", ha="center", va="bottom",
+                    fontsize=val_fontsize)
+
+
+def _rescore(head, evalp, dep, alpha, risk=_rm_on_pool, risk_key="rm_fresh",
+             exceed_key="rm_exceed", tau=None):
+    """Rescore one certified rung against a fresh eval pool.
+
+    dep is the deployed TAU_GRID index; E9 arm A passes tau directly instead,
+    because the pipeline row carries the deployed tau but not its index.
+    Returns the fields the callers row.update() with: tau at 4 dp, coverage
+    at 4 dp, the fresh risk at 6 dp and its exceed flag, keyed by
+    risk_key/exceed_key (E9 arm B's FNR walk renames both).
+    """
+    tau = float(TAU_GRID[dep]) if tau is None else float(tau)
+    rm = risk(head, evalp, tau)
+    return {
+        "tau": round(tau, 4),
+        "coverage": round(float((head.score(evalp.x) >= tau).mean()), 4),
+        risk_key: round(rm, 6),
+        exceed_key: bool(rm > alpha),
+    }
+
+
+def _rollup(certs, n_draws, fields, none_certify=False, risk_key="rm_fresh",
+            exceed_key="rm_exceed", coverage_empty=None):
+    """Aggregate certified rows into one summary cell.
+
+    fields names the emitted keys in emit order, so every caller keeps its
+    exact key set and dict order in the byte-compared summary blocks.
+    none_certify=True reports certify_rate as None (the caller's cell had no
+    draws at all); coverage_empty is what mean_coverage reports over zero
+    certificates. The hard and exceed counts are computed once per call.
+    """
+    n_c = len(certs)
+    k_hard = k_exc = None
+    out = {}
+    for f in fields:
+        if f == "certify_rate":
+            out[f] = None if none_certify else round(n_c / n_draws, 4)
+        elif f == "n_certified":
+            out[f] = n_c
+        elif f in ("hard_violation_rate", "hard_violation_rate_ci95",
+                   "hard_violation_rate_diag",
+                   "hard_violation_rate_diag_ci95"):
+            if k_hard is None:
+                k_hard = sum(x["hard"] for x in certs)
+            out[f] = (_rate_ci95(k_hard, n_c) if f.endswith("_ci95")
+                      else _rate(k_hard, n_c))
+        elif f in ("exceedance_rate", "exceedance_rate_diag"):
+            out[f] = _rate(sum(x["exceed"] for x in certs), n_c)
+        elif f in (exceed_key + "_rate", exceed_key + "_rate_ci95"):
+            if k_exc is None:
+                k_exc = sum(bool(x.get(exceed_key)) for x in certs)
+            out[f] = (_rate_ci95(k_exc, n_c) if f.endswith("_ci95")
+                      else _rate(k_exc, n_c))
+        elif f == "mean_" + risk_key:
+            out[f] = (round(float(np.mean([x[risk_key] for x in certs])), 4)
+                      if certs else None)
+        elif f == "mean_tau":
+            out[f] = (round(float(np.mean([x["tau"] for x in certs])), 4)
+                      if certs else None)
+        elif f == "mean_coverage":
+            out[f] = (round(float(np.mean([x["coverage"] for x in certs])), 4)
+                      if certs else coverage_empty)
+        elif f == "mean_per_site_exceed_frac":
+            out[f] = (round(float(np.mean([x["per_site_exceed_frac"]
+                                           for x in certs])), 4)
+                      if certs else None)
+        else:
+            raise KeyError(f"_rollup: unknown field {f!r}")
+    return out
 
 
 # ------------------------------------------------------------------ E1
@@ -273,35 +364,22 @@ def run_E1(out, quick):
                 "deploy_mode", "decline_reason"])
 
     def _arm(sub, R_arm):
-        """Per-alpha summary for one s_u arm."""
+        """Per-alpha summary for one s_u arm.
+
+        Key order: CONFORMANCE first (the certified aggregate, target <=
+        DELTA), then the per-site dispersion DIAGNOSTICS (no delta target).
+        """
         arm = {}
         for alpha in ALPHA_LADDER:
             certs = [x for x in sub if x["alpha"] == alpha and x["certified"]]
-            n_c = len(certs)
-            arm[alpha] = dict(
-                certify_rate=round(n_c / R_arm, 4),
-                n_certified=n_c,
-                # CONFORMANCE (target <= DELTA): the certified aggregate.
-                rm_exceed_rate_ci95=_rate_ci95(
-                    sum(bool(x["rm_exceed"]) for x in certs), n_c),
-                rm_exceed_rate=_rate(sum(bool(x["rm_exceed"]) for x in certs),
-                                     n_c),
-                mean_rm_fresh=round(float(np.mean([x["rm_fresh"]
-                                                   for x in certs])), 4)
-                if certs else None,
-                # DIAGNOSTICS (no delta target): per-site dispersion.
-                hard_violation_rate_diag_ci95=_rate_ci95(
-                    sum(x["hard"] for x in certs), n_c),
-                hard_violation_rate_diag=_rate(sum(x["hard"] for x in certs),
-                                               n_c),
-                exceedance_rate_diag=_rate(sum(x["exceed"] for x in certs),
-                                           n_c),
-                mean_per_site_exceed_frac=round(
-                    float(np.mean([x["per_site_exceed_frac"] for x in certs])),
-                    4) if certs else None,
-                mean_coverage=round(float(np.mean([x["coverage"]
-                                                   for x in certs]))
-                                    if certs else 0.0, 4))
+            arm[alpha] = _rollup(
+                certs, R_arm,
+                ("certify_rate", "n_certified", "rm_exceed_rate_ci95",
+                 "rm_exceed_rate", "mean_rm_fresh",
+                 "hard_violation_rate_diag_ci95", "hard_violation_rate_diag",
+                 "exceedance_rate_diag", "mean_per_site_exceed_frac",
+                 "mean_coverage"),
+                coverage_empty=0.0)
         return arm
 
     base_rows = [x for x in rows if x["s_u"] == E1_SU_SWEEP[0]]
@@ -357,36 +435,27 @@ def run_E1(out, quick):
     alphas = list(ALPHA_LADDER)
     rm_bars = [summary[a]["rm_exceed_rate"] for a in alphas]
     xpos = np.arange(len(alphas))   # numeric x: a nan bar must not eat its tick
-    ax[0].bar(xpos, [np.nan if v is None else v for v in rm_bars],
-              color="#4477aa")
+    ax[0].bar(xpos, _plot(rm_bars), color="#4477aa")
     ax[0].set_xticks(xpos); ax[0].set_xticklabels([str(a) for a in alphas])
     ax[0].set_xlim(-0.6, len(alphas) - 0.4)   # autoscale ignores the nan bars
     real = [v for v in rm_bars if v is not None]
     ax[0].set_ylim(0.0, max(real + [DELTA]) * 1.3)
-    for i, v in enumerate(rm_bars):
-        if v is None:                     # rung never certified: no bar, say so
-            ax[0].text(i, 0.03, "no certificates", ha="center",
-                       va="bottom", rotation=90, fontsize=8, color="dimgray",
-                       transform=ax[0].get_xaxis_transform())
-        else:                             # a true 0.0 bar has zero height --
-            ax[0].text(i, v, f"{v:.3f}",  # label it or it reads as absence
-                       ha="center", va="bottom", fontsize=7)
+    _alpha_bar(ax[0], range(len(rm_bars)), rm_bars, 8, 7)
     ax[0].axhline(DELTA, color="crimson", ls="--", label=f"DELTA={DELTA}")
     ax[0].set_title("Certified-aggregate R_M exceed rate")
     ax[0].set_xlabel("alpha"); ax[0].set_ylabel("rate"); ax[0].legend()
     labels = [b["size_bin"] for b in bins]
-    _pnum = lambda v: np.nan if v is None else v      # empty bin -> gap in line
-    ax[1].plot(labels, [_pnum(b["observed_exceedance"]) for b in bins], "o-",
+    ax[1].plot(labels, _plot([b["observed_exceedance"] for b in bins]), "o-",
                label="observed")
-    ax[1].plot(labels, [_pnum(b["binomial_reference"]) for b in bins], "s--",
+    ax[1].plot(labels, _plot([b["binomial_reference"] for b in bins]), "s--",
                label="binomial ref")
     ax[1].set_title("Exceedance vs reference (alpha=0.10)")
     ax[1].set_xlabel("answered-set size bin"); ax[1].set_ylabel("exceedance")
     ax[1].legend()
     su_vals = [s["s_u"] for s in sens]
-    ax[2].plot(su_vals, [_pnum(s["rm_exceed_rate"]) for s in sens], "o-",
+    ax[2].plot(su_vals, _plot([s["rm_exceed_rate"] for s in sens]), "o-",
                label="aggregate R_M exceed (certified)")
-    ax[2].plot(su_vals, [_pnum(s["hard_violation_rate_diag"]) for s in sens],
+    ax[2].plot(su_vals, _plot([s["hard_violation_rate_diag"] for s in sens]),
                "s--", label="per-site hard rate (diagnostic)")
     ax[2].axhline(DELTA, color="crimson", ls=":", label=f"DELTA={DELTA}")
     ax[2].set_title("Heterogeneity: aggregate vs per-site (alpha=0.10)")
@@ -394,6 +463,12 @@ def run_E1(out, quick):
     ax[2].legend(fontsize=8)
     fig.tight_layout(); fig.savefig(os.path.join(out, "E1_validity.png"),
                                     dpi=110); plt.close(fig)
+    summary["_headline"] = (
+        f"total_rm_exceed={summary['total_rm_exceed']}, "
+        f"a=0.10 certify={summary[0.10]['certify_rate']} "
+        f"rm_exceed={summary[0.10]['rm_exceed_rate']} "
+        f"per_site_diag={summary[0.10]['hard_violation_rate_diag']} "
+        f"coverage={summary[0.10]['mean_coverage']}")
     return summary
 
 
@@ -475,20 +550,15 @@ def run_E2(out, quick):
     def _mode_stats(sub, n_draws):
         certs = [x for x in sub if x["certified"]]
         n_c = len(certs)
-        return dict(
-            certify_rate=round(n_c / n_draws, 4),
-            n_certified=n_c,
-            hard_violation_rate=_rate(sum(x["hard"] for x in certs), n_c),
-            hard_violation_rate_ci95=_rate_ci95(
-                sum(x["hard"] for x in certs), n_c),
-            exceedance_rate=_rate(sum(x["exceed"] for x in certs), n_c),
-            rm_exceed_rate=_rate(sum(bool(x.get("rm_exceed"))
-                                     for x in certs), n_c),
-            rm_exceed_rate_ci95=_rate_ci95(
-                sum(bool(x.get("rm_exceed")) for x in certs), n_c),
+        out = _rollup(certs, n_draws,
+                      ("certify_rate", "n_certified", "hard_violation_rate",
+                       "hard_violation_rate_ci95", "exceedance_rate",
+                       "rm_exceed_rate", "rm_exceed_rate_ci95"))
+        out.update(
             joint_certify_and_hard_rate=round(
                 sum(1 for x in certs if x["hard"]) / n_draws, 4),
             decline_rate=round((len(sub) - n_c) / len(sub), 4) if sub else 0.0)
+        return out
 
     anchor = [x for x in rows if x["target_base"] == SHIFT_BASE]
     summary = {"R": R, "target_base_rate": SHIFT_BASE, "sep": SimConfig().sep,
@@ -517,17 +587,8 @@ def run_E2(out, quick):
     for mode, dx, color in (("baseline", -width / 2, "#cc6677"),
                             ("bbse", width / 2, "#4477aa")):
         vals = [summary[mode][a]["hard_violation_rate"] for a in alphas]
-        ax[0].bar(xpos + dx, [np.nan if v is None else v for v in vals],
-                  width, label=mode, color=color)
-        for i, v in enumerate(vals):
-            if v is None:                 # rung never certified: no bar, say so
-                ax[0].text(xpos[i] + dx, 0.03, "no certificates",
-                           ha="center", va="bottom", rotation=90, fontsize=7,
-                           color="dimgray",
-                           transform=ax[0].get_xaxis_transform())
-            else:                         # a true 0.0 bar has zero height --
-                ax[0].text(xpos[i] + dx, v, f"{v:.3f}",   # label it or it reads
-                           ha="center", va="bottom", fontsize=6)  # as absence
+        ax[0].bar(xpos + dx, _plot(vals), width, label=mode, color=color)
+        _alpha_bar(ax[0], xpos + dx, vals, 7, 6)
     ax[0].axhline(DELTA, color="black", ls="--", label=f"DELTA={DELTA}")
     ax[0].set_xticks(xpos); ax[0].set_xticklabels([str(a) for a in alphas])
     ax[0].set_xlim(-0.6, len(alphas) - 0.4)   # autoscale ignores the nan bars
@@ -545,9 +606,8 @@ def run_E2(out, quick):
                transform=ax[0].transAxes, ha="left", va="top", fontsize=7,
                color="#4477aa")
     bases = [e["target_base"] for e in sweep]
-    _p = lambda v: np.nan if v is None else v
-    ax[1].plot(bases, [_p(e["baseline"]["hard_violation_rate"])
-                       for e in sweep], "o-", color="#cc6677",
+    ax[1].plot(bases, _plot([e["baseline"]["hard_violation_rate"]
+                             for e in sweep]), "o-", color="#cc6677",
                label="baseline hard-viol")
     ax[1].plot(bases, [e["baseline"]["certify_rate"] for e in sweep], "o--",
                color="#cc6677", alpha=0.5, label="baseline certify")
@@ -564,6 +624,11 @@ def run_E2(out, quick):
     ax[1].set_ylabel("rate"); ax[1].legend(fontsize=7)
     fig.tight_layout(); fig.savefig(os.path.join(out, "E2_label_shift.png"),
                                     dpi=110); plt.close(fig)
+    b, s = summary["baseline"][0.10], summary["bbse"][0.10]
+    summary["_headline"] = (
+        f"baseline a=0.10 hard_viol={b['hard_violation_rate']} "
+        f"exceed={b['exceedance_rate']}; bbse decline_rate="
+        f"{s['decline_rate']} hard_viol={s['hard_violation_rate']}")
     return summary
 
 
@@ -625,40 +690,31 @@ def run_E3(out, quick):
                "tilt_pushes_risk_above_alpha": poisonous}
     for alpha in ALPHA_LADDER:
         certs = [x for x in rows if x["alpha"] == alpha and x["certified"]]
-        n_c = len(certs)
-        summary[alpha] = dict(
-            certify_rate=round(n_c / R, 4),
-            n_certified=n_c,
-            hard_violation_rate=_rate(sum(x["hard"] for x in certs), n_c),
-            hard_violation_rate_ci95=_rate_ci95(
-                sum(x["hard"] for x in certs), n_c),
-            exceedance_rate=_rate(sum(x["exceed"] for x in certs), n_c),
-            rm_exceed_rate=_rate(sum(bool(x.get("rm_exceed"))
-                                     for x in certs), n_c),
-            rm_exceed_rate_ci95=_rate_ci95(
-                sum(bool(x.get("rm_exceed")) for x in certs), n_c))
+        summary[alpha] = _rollup(
+            certs, R,
+            ("certify_rate", "n_certified", "hard_violation_rate",
+             "hard_violation_rate_ci95", "exceedance_rate",
+             "rm_exceed_rate", "rm_exceed_rate_ci95"))
 
     fig, ax = plt.subplots(figsize=(7, 4))
     alphas = list(ALPHA_LADDER)
     hv_bars = [summary[a]["hard_violation_rate"] for a in alphas]
     xpos = np.arange(len(alphas))   # numeric x: a nan bar must not eat its tick
-    ax.bar(xpos, [np.nan if v is None else v for v in hv_bars], color="#ee8866")
+    ax.bar(xpos, _plot(hv_bars), color="#ee8866")
     ax.set_xticks(xpos); ax.set_xticklabels([str(a) for a in alphas])
     ax.set_xlim(-0.6, len(alphas) - 0.4)      # autoscale ignores the nan bars
     real = [v for v in hv_bars if v is not None]
     ax.set_ylim(0.0, max(real + [DELTA]) * 1.15)
-    for i, v in enumerate(hv_bars):
-        if v is None:                     # rung never certified: no bar, say so
-            ax.text(i, 0.03, "no certificates", ha="center",
-                    va="bottom", rotation=90, fontsize=8, color="dimgray",
-                    transform=ax.get_xaxis_transform())
-        else:
-            ax.text(i, v, f"{v:.3f}", ha="center", va="bottom", fontsize=8)
+    _alpha_bar(ax, range(len(hv_bars)), hv_bars, 8, 8)
     ax.axhline(DELTA, color="black", ls="--", label=f"DELTA={DELTA}")
     ax.set_title("Concept-shift negative control (should FAIL)")
     ax.set_xlabel("alpha"); ax.set_ylabel("hard-violation rate"); ax.legend()
     fig.tight_layout(); fig.savefig(os.path.join(out, "E3_concept_shift.png"),
                                     dpi=110); plt.close(fig)
+    summary["_headline"] = (
+        f"verified_risk={summary['verified_mean_answered_risk_alpha0.10']} "
+        f">alpha={summary['tilt_pushes_risk_above_alpha']}; "
+        f"a=0.10 hard_viol={summary[0.10]['hard_violation_rate']}")
     return summary
 
 
@@ -695,10 +751,8 @@ def run_E4(out, quick):
             certs = [x for x in sub if x["certified"]]
             grid[alpha].append(dict(
                 n_sites=n_sites,
-                certify_rate=round(len(certs) / R, 4),
-                mean_coverage=round(float(np.mean([x["coverage"]
-                                                   for x in certs]))
-                                    if certs else 0.0, 4)))
+                **_rollup(certs, R, ("certify_rate", "mean_coverage"),
+                          coverage_empty=0.0)))
     summary["grid"] = grid
 
     # Cluster counts whose calibration share falls under the 50-carrying-
@@ -730,6 +784,10 @@ def run_E4(out, quick):
     ax[1].set_xlabel("n_sites"); ax[1].set_ylabel("coverage"); ax[1].legend()
     fig.tight_layout(); fig.savefig(os.path.join(out, "E4_site_sweep.png"),
                                     dpi=110); plt.close(fig)
+    g = {a: [d['certify_rate'] for d in summary['grid'][a]]
+         for a in ALPHA_LADDER}
+    summary["_headline"] = (f"certify-rate-by-nsites {summary['sweep']}: "
+                            f"0.05={g[0.05]} 0.10={g[0.10]}")
     return summary
 
 
@@ -898,11 +956,15 @@ def run_E5(out, quick):
     # fabricated feature index (audit V22).
     top_gap = (int(profile["gap_ranking"][0])
                if len(profile["gap_ranking"]) else None)
-    return dict(tau_star=round(float(tau_star), 4),
-                n_answered=profile["n_answered"],
-                n_declined=profile["n_declined"],
-                top_gap_feature=top_gap,
-                replication=replication)
+    res = dict(tau_star=round(float(tau_star), 4),
+               n_answered=profile["n_answered"],
+               n_declined=profile["n_declined"],
+               top_gap_feature=top_gap,
+               replication=replication)
+    res["_headline"] = (
+        f"tau*={res['tau_star']} answered={res['n_answered']} "
+        f"declined={res['n_declined']} top_gap_feat={res['top_gap_feature']}")
+    return res
 
 
 # ------------------------------------------------------------------ E6
@@ -1004,27 +1066,32 @@ def run_E6(out, quick):
     ax[1].set_xlabel("site-size bin"); ax[1].set_ylabel("coverage")
     fig.tight_layout(); fig.savefig(os.path.join(out, "E6_fairness.png"),
                                     dpi=110); plt.close(fig)
-    return dict(tau_star=round(float(tau_star), 4),
-                size_bins=bin_rows,
-                predicted_positive_fraction=round(
-                    comp["predicted_class"]["positive_fraction"], 4),
-                # The marker travels with the numbers. summary.md is what the
-                # paper is written from, and the copy in E6_reliability.json
-                # never reaches that reader. So these three keys must not land
-                # in a published-grid block without saying they came after
-                # E1-E7 and are descriptive only. Synthetic-side counterpart of
-                # POST_HOC_LABEL travelling into EICU-SUMMARY.md.
-                panel_post_hoc=rp.E6_POST_HOC_NOTE,
-                # Post-hoc panel headline, never re-rounded. The panel rounds
-                # once at emit time (rp.ROUND_DP = 6); a second pass here would
-                # make the last decimal irreproducible. So these carry 6 dp
-                # while E6's own keys carry 4 -- that asymmetry is the
-                # round-once invariant, not an inconsistency.
-                panel_ece_answered=hl["ece_answered"],
-                panel_calibration_slope_answered=hl[
-                    "calibration_slope_answered"],
-                panel_skill_margin_answered_minus_all=hl[
-                    "skill_margin_answered_minus_all"])
+    res = dict(tau_star=round(float(tau_star), 4),
+               size_bins=bin_rows,
+               predicted_positive_fraction=round(
+                   comp["predicted_class"]["positive_fraction"], 4),
+               # The marker travels with the numbers. summary.md is what the
+               # paper is written from, and the copy in E6_reliability.json
+               # never reaches that reader. So these three keys must not land
+               # in a published-grid block without saying they came after
+               # E1-E7 and are descriptive only. Synthetic-side counterpart of
+               # POST_HOC_LABEL travelling into EICU-SUMMARY.md.
+               panel_post_hoc=rp.E6_POST_HOC_NOTE,
+               # Post-hoc panel headline, never re-rounded. The panel rounds
+               # once at emit time (rp.ROUND_DP = 6); a second pass here would
+               # make the last decimal irreproducible. So these carry 6 dp
+               # while E6's own keys carry 4 -- that asymmetry is the
+               # round-once invariant, not an inconsistency.
+               panel_ece_answered=hl["ece_answered"],
+               panel_calibration_slope_answered=hl[
+                   "calibration_slope_answered"],
+               panel_skill_margin_answered_minus_all=hl[
+                   "skill_margin_answered_minus_all"])
+    res["_headline"] = (
+        f"tau*={res['tau_star']} "
+        f"pred_pos_frac={res['predicted_positive_fraction']} "
+        f"skill_margin={res['panel_skill_margin_answered_minus_all']}")
+    return res
 
 
 def _e6_reliability_figure(out, panel):
@@ -1050,8 +1117,7 @@ def _e6_reliability_figure(out, panel):
 
     scopes = ("answered", "declined", "all")
     margins = [panel["skill"][s]["skill_margin"] for s in scopes]
-    axR.bar(scopes, [np.nan if m is None else m for m in margins],
-            color="#66ccee")
+    axR.bar(scopes, _plot(margins), color="#66ccee")
     axR.axhline(0.0, color="black", lw=1)
     axR.set_title("Skill margin vs constant-majority baseline")
     axR.set_ylabel("constant error - model error")
@@ -1123,14 +1189,9 @@ def run_E7(out, quick):
                                          coverage=None, rm_fresh=None,
                                          rm_exceed=None))
                         continue
-                    tau = float(TAU_GRID[dep])
-                    rm = _rm_on_pool(head, evalp, tau)
-                    cov = float((head.score(evalp.x) >= tau).mean())
                     rows.append(dict(s_u=s_u, draw=r, alpha=alpha, unit=unit,
-                                     certified=True, tau=round(tau, 4),
-                                     coverage=round(cov, 4),
-                                     rm_fresh=round(rm, 6),
-                                     rm_exceed=bool(rm > alpha)))
+                                     certified=True,
+                                     **_rescore(head, evalp, dep, alpha)))
     _write_csv(os.path.join(out, "E7_comparator.csv"), rows,
                ["s_u", "draw", "alpha", "unit", "certified", "tau",
                 "coverage", "rm_fresh", "rm_exceed"])
@@ -1150,14 +1211,9 @@ def run_E7(out, quick):
                 sub = [x for x in rows if x["s_u"] == s_u
                        and x["alpha"] == alpha and x["unit"] == unit]
                 certs = [x for x in sub if x["certified"]]
-                per[unit] = dict(
-                    certify_rate=round(len(certs) / R, 4),
-                    rm_exceed_rate=_rate(
-                        sum(bool(x["rm_exceed"]) for x in certs), len(certs)),
-                    mean_rm_fresh=round(float(np.mean(
-                        [x["rm_fresh"] for x in certs])), 4) if certs else None,
-                    mean_tau=round(float(np.mean(
-                        [x["tau"] for x in certs])), 4) if certs else None)
+                per[unit] = _rollup(certs, R,
+                                    ("certify_rate", "rm_exceed_rate",
+                                     "mean_rm_fresh", "mean_tau"))
             arm[alpha] = per
         summary["arms"][s_u] = arm
 
@@ -1174,8 +1230,7 @@ def run_E7(out, quick):
                    for s in E7_SU_ARM]
             a.bar(xpos + (2 * j - 1.5) * width, cert, width,
                   label=f"{unit} certify", color=color, alpha=0.45)
-            a.bar(xpos + (2 * j - 0.5) * width,
-                  [np.nan if v is None else v for v in exc], width,
+            a.bar(xpos + (2 * j - 0.5) * width, _plot(exc), width,
                   label=f"{unit} R_M-exceed", color=color)
         a.axhline(DELTA, color="black", ls="--", label=f"DELTA={DELTA}")
         a.set_xticks(xpos)
@@ -1184,6 +1239,12 @@ def run_E7(out, quick):
         a.set_ylabel("rate"); a.legend(fontsize=7)
     fig.tight_layout(); fig.savefig(os.path.join(out, "E7_comparator.png"),
                                     dpi=110); plt.close(fig)
+    arm0 = summary["arms"][E7_SU_ARM[0]]
+    summary["_headline"] = (
+        f"a=0.05 record certify={arm0[0.05]['record']['certify_rate']} "
+        f"exceed={arm0[0.05]['record']['rm_exceed_rate']} vs site "
+        f"certify={arm0[0.05]['site']['certify_rate']}; "
+        f"a=0.10 record exceed={arm0[0.10]['record']['rm_exceed_rate']}")
     return summary
 
 
@@ -1199,6 +1260,13 @@ class _FnHead:
 
     def __init__(self, score, predict):
         self.score, self.predict = score, predict
+
+
+def _zero_prefix(x, k):
+    """Copy x with its first k feature columns zeroed (the degraded head)."""
+    xz = x.copy()
+    xz[:, :k] = 0.0
+    return xz
 
 
 def _bound_walk(atoms, order, alpha, delta, tau_grid, ucb):
@@ -1265,6 +1333,13 @@ def run_E8(out, quick):
             sc_cal, er_cal = head.score(cal.x), head.predict(cal.x) != cal.y
             sc_aux, er_aux = head.score(aux.x), head.predict(aux.x) != aux.y
             boot_rng = _rng(8, 0, n_idx, r, 1)
+            ucbs = {
+                "hoeffding": hoeffding_ucb,
+                "mpeb": mpeb_ucb,
+                "t": t_ucb,
+                "site_boot": lambda z, d: site_bootstrap_ucb(
+                    z, d, n_boot, boot_rng),
+            }
             for alpha in ALPHA_LADDER:
                 a_aux = influence_atoms(sc_aux, er_aux, aux.site_id,
                                         aux.n_sites, TAU_GRID, alpha,
@@ -1273,13 +1348,6 @@ def run_E8(out, quick):
                                         cal.n_sites, TAU_GRID, alpha,
                                         M_INFLUENCE)
                 order = walk_order(a_aux)
-                ucbs = {
-                    "hoeffding": lambda z, d: hoeffding_ucb(z, d),
-                    "mpeb": lambda z, d: mpeb_ucb(z, d),
-                    "t": lambda z, d: t_ucb(z, d),
-                    "site_boot": lambda z, d: site_bootstrap_ucb(
-                        z, d, n_boot, boot_rng),
-                }
                 for method in E8_COMPARATORS:
                     if method == "wsr":
                         _, dep = fixed_sequence_walk(
@@ -1294,14 +1362,7 @@ def run_E8(out, quick):
                                tau=None, coverage=None, rm_fresh=None,
                                rm_exceed=None)
                     if dep is not None:
-                        tau = float(TAU_GRID[dep])
-                        rm = _rm_on_pool(head, evalp, tau)
-                        row.update(
-                            tau=round(tau, 4),
-                            coverage=round(float(
-                                (head.score(evalp.x) >= tau).mean()), 4),
-                            rm_fresh=round(rm, 6),
-                            rm_exceed=bool(rm > alpha))
+                        row.update(_rescore(head, evalp, dep, alpha))
                     rows_a.append(row)
     _write_csv(os.path.join(out, "E8_comparators.csv"), rows_a,
                ["n_sites", "draw", "alpha", "method", "certified", "tau",
@@ -1338,13 +1399,7 @@ def run_E8(out, quick):
                            rm_fresh=None, rm_exceed=None,
                            risk_at_lowest_tau=round(risk_floor, 6))
                 if dep is not None:
-                    tau = float(TAU_GRID[dep])
-                    rm = _rm_on_pool(head, evalp, tau)
-                    row.update(tau=round(tau, 4),
-                               coverage=round(float(
-                                   (head.score(evalp.x) >= tau).mean()), 4),
-                               rm_fresh=round(rm, 6),
-                               rm_exceed=bool(rm > alpha))
+                    row.update(_rescore(head, evalp, dep, alpha))
                 rows_b.append(row)
     _write_csv(os.path.join(out, "E8_noise.csv"), rows_b,
                ["eta", "draw", "alpha", "certified", "tau", "coverage",
@@ -1374,19 +1429,16 @@ def run_E8(out, quick):
 
                 alt = _FnHead(_sc, _pr)
             else:                                      # "degraded"
-                xz = train.x.copy()
-                xz[:, :E8_DEGRADED_ZERO_FEATURES] = 0.0
-                dhead = fit_head(dataclasses.replace(train, x=xz))
+                dhead = fit_head(dataclasses.replace(
+                    train,
+                    x=_zero_prefix(train.x, E8_DEGRADED_ZERO_FEATURES)))
 
                 def _sc(x, h=dhead):
-                    xz = x.copy()
-                    xz[:, :E8_DEGRADED_ZERO_FEATURES] = 0.0
-                    return h.score(xz)
+                    return h.score(_zero_prefix(x, E8_DEGRADED_ZERO_FEATURES))
 
                 def _pr(x, h=dhead):
-                    xz = x.copy()
-                    xz[:, :E8_DEGRADED_ZERO_FEATURES] = 0.0
-                    return h.predict(xz)
+                    return h.predict(_zero_prefix(x,
+                                                  E8_DEGRADED_ZERO_FEATURES))
 
                 alt = _FnHead(_sc, _pr)
             heads = {head_name: alt}
@@ -1414,14 +1466,7 @@ def run_E8(out, quick):
                                certified=dep is not None, tau=None,
                                coverage=None, rm_fresh=None, rm_exceed=None)
                     if dep is not None:
-                        tau = float(TAU_GRID[dep])
-                        rm = _rm_on_pool(hd, evalp, tau)
-                        row.update(
-                            tau=round(tau, 4),
-                            coverage=round(float(
-                                (hd.score(evalp.x) >= tau).mean()), 4),
-                            rm_fresh=round(rm, 6),
-                            rm_exceed=bool(rm > alpha))
+                        row.update(_rescore(hd, evalp, dep, alpha))
                     rows_c.append(row)
     _write_csv(os.path.join(out, "E8_heads.csv"), rows_c,
                ["head", "draw", "alpha", "certified", "tau", "coverage",
@@ -1434,16 +1479,11 @@ def run_E8(out, quick):
         for alpha in ALPHA_LADDER:
             s = [x for x in sub if x["alpha"] == alpha]
             certs = [x for x in s if x["certified"]]
-            out_by_alpha[alpha] = dict(
-                certify_rate=round(len(certs) / len(s), 4) if s else None,
-                rm_exceed_rate=_rate(
-                    sum(bool(x["rm_exceed"]) for x in certs), len(certs)),
-                mean_tau=round(float(np.mean(
-                    [x["tau"] for x in certs])), 4) if certs else None,
-                mean_coverage=round(float(np.mean(
-                    [x["coverage"] for x in certs])), 4) if certs else None,
-                mean_rm_fresh=round(float(np.mean(
-                    [x["rm_fresh"] for x in certs])), 4) if certs else None)
+            out_by_alpha[alpha] = _rollup(
+                certs, len(s),
+                ("certify_rate", "rm_exceed_rate", "mean_tau",
+                 "mean_coverage", "mean_rm_fresh"),
+                none_certify=not s)
         return out_by_alpha
 
     comp = {}
@@ -1504,8 +1544,7 @@ def run_E8(out, quick):
     a.plot(etas, [noise[e][0.10]["certify_rate"] for e in etas], "-o",
            color="#4477aa", label="certify rate (a=0.10)")
     exc = [noise[e][0.10]["rm_exceed_rate"] for e in etas]
-    a.plot(etas, [np.nan if v is None else v for v in exc], "-s",
-           color="#cc6677", label="R_M-exceed rate")
+    a.plot(etas, _plot(exc), "-s", color="#cc6677", label="R_M-exceed rate")
     a.axhline(DELTA, color="black", ls="--", lw=0.8, label=f"DELTA={DELTA}")
     a.set_xlabel("label-noise rate eta")
     a.set_title("Stress frontier")
@@ -1515,10 +1554,9 @@ def run_E8(out, quick):
     xpos = np.arange(len(names))
     cov = [heads_summary[n][0.10]["mean_coverage"] for n in names]
     cert = [heads_summary[n][0.10]["certify_rate"] for n in names]
-    a.bar(xpos - 0.15, [np.nan if v is None else v for v in cert], 0.3,
-          color="#4477aa", label="certify rate")
-    a.bar(xpos + 0.15, [np.nan if v is None else v for v in cov], 0.3,
-          color="#66ccee", label="coverage")
+    a.bar(xpos - 0.15, _plot(cert), 0.3, color="#4477aa",
+          label="certify rate")
+    a.bar(xpos + 0.15, _plot(cov), 0.3, color="#66ccee", label="coverage")
     a.set_xticks(xpos)
     a.set_xticklabels(names)
     a.set_title("Heads (a=0.10)")
@@ -1526,6 +1564,15 @@ def run_E8(out, quick):
     fig.tight_layout()
     fig.savefig(os.path.join(out, "E8_suite.png"), dpi=110)
     plt.close(fig)
+    h_wsr = comp["wsr"][0.10]
+    h_mpe = comp["mpeb"][0.10]
+    h_noise = {e: v[0.10]["certify_rate"] for e, v in noise.items()}
+    h_deg = heads_summary["degraded"][0.10]
+    summary["_headline"] = (
+        f"comp a=0.10 wsr={h_wsr['certify_by_nsites']} "
+        f"mpeb={h_mpe['certify_by_nsites']}; noise certify={h_noise}; "
+        f"degraded cov={h_deg['mean_coverage']} "
+        f"exceed={h_deg['rm_exceed_rate']}")
     return summary
 
 
@@ -1629,14 +1676,8 @@ def run_E9(out, quick):
                                    box_width=width, rm_fresh=None,
                                    rm_exceed=None)
                     if certified:
-                        tau = float(row["tau"])
-                        rm = _rm_on_pool(head, evalp, tau)
-                        out_row.update(
-                            tau=round(tau, 4),
-                            coverage=round(float(
-                                (head.score(evalp.x) >= tau).mean()), 4),
-                            rm_fresh=round(rm, 6),
-                            rm_exceed=bool(rm > alpha))
+                        out_row.update(_rescore(head, evalp, None, alpha,
+                                                tau=row["tau"]))
                     elif row is not None:
                         out_row["decline_reason"] = \
                             row.get("reasons", {}).get("bbse")
@@ -1677,13 +1718,10 @@ def run_E9(out, quick):
                            fnr_fresh=None, fnr_exceed=None,
                            true_fnr_at_lowest_tau=round(true_fnr, 6))
                 if dep is not None:
-                    tau = float(TAU_GRID[dep])
-                    fnr = _fnr_on_pool(head, evalp, tau)
-                    row.update(tau=round(tau, 4),
-                               coverage=round(float(
-                                   (head.score(evalp.x) >= tau).mean()), 4),
-                               fnr_fresh=round(fnr, 6),
-                               fnr_exceed=bool(fnr > budget))
+                    row.update(_rescore(head, evalp, dep, budget,
+                                        risk=_fnr_on_pool,
+                                        risk_key="fnr_fresh",
+                                        exceed_key="fnr_exceed"))
                 rows_b.append(row)
     _write_csv(os.path.join(out, "E9_fnr.csv"), rows_b,
                ["n_sites", "draw", "fnr_budget", "certified", "tau",
@@ -1704,15 +1742,16 @@ def run_E9(out, quick):
                     reasons[key] = reasons.get(key, 0) + 1
             widths = [x["box_width"] for x in sub
                       if x["box_width"] is not None]
+            agg = _rollup(certs, R,
+                          ("certify_rate", "mean_tau", "rm_exceed_rate"),
+                          none_certify=not sub)
             frontier[f"{n_sites}|{mode}"] = dict(
-                certify_rate=round(len(certs) / R, 4) if sub else None,
+                certify_rate=agg["certify_rate"],
                 decline_reasons=reasons,
                 median_box_width=round(float(np.median(widths)), 4)
                 if widths else None,
-                mean_tau=round(float(np.mean(
-                    [x["tau"] for x in certs])), 4) if certs else None,
-                rm_exceed_rate=_rate(
-                    sum(bool(x["rm_exceed"]) for x in certs), len(certs)))
+                mean_tau=agg["mean_tau"],
+                rm_exceed_rate=agg["rm_exceed_rate"])
     fnr = {}
     for budget in E9_FNR_LADDER:
         per = {}
@@ -1720,14 +1759,12 @@ def run_E9(out, quick):
             sub = [x for x in rows_b if x["fnr_budget"] == budget
                    and x["n_sites"] == n_sites]
             certs = [x for x in sub if x["certified"]]
-            per[n_sites] = dict(
-                certify_rate=round(len(certs) / fnr_R, 4) if sub else None,
-                mean_tau=round(float(np.mean(
-                    [x["tau"] for x in certs])), 4) if certs else None,
-                mean_fnr_fresh=round(float(np.mean(
-                    [x["fnr_fresh"] for x in certs])), 4) if certs else None,
-                fnr_exceed_rate=_rate(
-                    sum(bool(x["fnr_exceed"]) for x in certs), len(certs)))
+            per[n_sites] = _rollup(
+                certs, fnr_R,
+                ("certify_rate", "mean_tau", "mean_fnr_fresh",
+                 "fnr_exceed_rate"),
+                none_certify=not sub, risk_key="fnr_fresh",
+                exceed_key="fnr_exceed")
         fnr[budget] = per
     truth = [x["true_fnr_at_lowest_tau"] for x in rows_b
              if x["fnr_budget"] == E9_FNR_LADDER[0]]
@@ -1771,6 +1808,14 @@ def run_E9(out, quick):
     fig.tight_layout()
     fig.savefig(os.path.join(out, "E9_frontiers.png"), dpi=110)
     plt.close(fig)
+    hl_fr = {k: v["certify_rate"] for k, v in frontier.items()
+             if k.endswith("k40-boot")}
+    hl_f5, hl_f55 = fnr[0.5], fnr[0.55]
+    summary["_headline"] = (
+        f"bbse k40 certify={hl_fr}; fnr b=0.5 by sites="
+        f"{[hl_f5[n]['certify_rate'] for n in E9_FNR_SWEEP]} "
+        f"b=0.55={[hl_f55[n]['certify_rate'] for n in E9_FNR_SWEEP]} "
+        f"(truth~{summary['true_fnr_at_lowest_tau_mean']})")
     return summary
 
 
@@ -1861,8 +1906,9 @@ def main(argv=None):
         for name in EXPERIMENTS:
             if name in selected:
                 results[name] = _RUNNERS[name](args.out, args.quick)
+                # pop: the digest is CLI-only and must never reach summary.md
                 print(f"[certgate] {name} done: "
-                      f"{_headline(name, results[name])}")
+                      f"{results[name].pop('_headline')}")
     finally:
         # An aborted run (e.g. E3's poison-verification gate) must never leave
         # fresh CSVs beside a silently stale summary (audit V26).
@@ -1875,60 +1921,6 @@ def main(argv=None):
         print(f"[certgate] wrote CSVs, PNGs, summary.md and provenance.json "
               f"to {args.out}")
     return results
-
-
-def _headline(name, res):
-    """One-line human-readable digest of an experiment result (for the CLI tail)."""
-    if name == "E1":
-        return (f"total_rm_exceed={res['total_rm_exceed']}, "
-                f"a=0.10 certify={res[0.10]['certify_rate']} "
-                f"rm_exceed={res[0.10]['rm_exceed_rate']} "
-                f"per_site_diag={res[0.10]['hard_violation_rate_diag']} "
-                f"coverage={res[0.10]['mean_coverage']}")
-    if name == "E2":
-        b, s = res["baseline"][0.10], res["bbse"][0.10]
-        return (f"baseline a=0.10 hard_viol={b['hard_violation_rate']} "
-                f"exceed={b['exceedance_rate']}; bbse decline_rate="
-                f"{s['decline_rate']} hard_viol={s['hard_violation_rate']}")
-    if name == "E3":
-        return (f"verified_risk={res['verified_mean_answered_risk_alpha0.10']} "
-                f">alpha={res['tilt_pushes_risk_above_alpha']}; "
-                f"a=0.10 hard_viol={res[0.10]['hard_violation_rate']}")
-    if name == "E4":
-        g = {a: [d['certify_rate'] for d in res['grid'][a]] for a in ALPHA_LADDER}
-        return f"certify-rate-by-nsites {res['sweep']}: 0.05={g[0.05]} 0.10={g[0.10]}"
-    if name == "E5":
-        return (f"tau*={res['tau_star']} answered={res['n_answered']} "
-                f"declined={res['n_declined']} top_gap_feat={res['top_gap_feature']}")
-    if name == "E6":
-        return (f"tau*={res['tau_star']} "
-                f"pred_pos_frac={res['predicted_positive_fraction']} "
-                f"skill_margin={res['panel_skill_margin_answered_minus_all']}")
-    if name == "E7":
-        a = res["arms"][E7_SU_ARM[0]]
-        return (f"a=0.05 record certify={a[0.05]['record']['certify_rate']} "
-                f"exceed={a[0.05]['record']['rm_exceed_rate']} vs site "
-                f"certify={a[0.05]['site']['certify_rate']}; "
-                f"a=0.10 record exceed={a[0.10]['record']['rm_exceed_rate']}")
-    if name == "E8":
-        wsr = res["comparators"]["wsr"][0.10]
-        mpe = res["comparators"]["mpeb"][0.10]
-        noise = {e: v[0.10]["certify_rate"] for e, v in res["noise"].items()}
-        deg = res["heads"]["degraded"][0.10]
-        return (f"comp a=0.10 wsr={wsr['certify_by_nsites']} "
-                f"mpeb={mpe['certify_by_nsites']}; noise certify={noise}; "
-                f"degraded cov={deg['mean_coverage']} "
-                f"exceed={deg['rm_exceed_rate']}")
-    if name == "E9":
-        fr = {k: v["certify_rate"] for k, v in res["bbse_frontier"].items()
-              if k.endswith("k40-boot")}
-        f5 = res["fnr_frontier"][0.5]
-        f55 = res["fnr_frontier"][0.55]
-        return (f"bbse k40 certify={fr}; fnr b=0.5 by sites="
-                f"{[f5[n]['certify_rate'] for n in E9_FNR_SWEEP]} "
-                f"b=0.55={[f55[n]['certify_rate'] for n in E9_FNR_SWEEP]} "
-                f"(truth~{res['true_fnr_at_lowest_tau_mean']})")
-    return ""
 
 
 if __name__ == "__main__":

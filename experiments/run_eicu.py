@@ -75,13 +75,15 @@ from certgate.explain import (cohort_abstention_profile,
 from certgate import reliability as rp
 from experiments import eicu_etl as etl
 from experiments.run_synthetic import (_rm_on_pool, _per_site_exceed_frac,
-                                       _write_csv, _rate)
+                                       _write_csv, _rate, _row_for)
 
 # _write_csv is imported because the SPEC's import surface names it. The eICU
 # tables deliberately do not use it -- see _write_table, where locale-default
 # encoding would write a mojibake cell instead of crashing.
 # Do not let an F401 autofix strip it. tests/test_eicu_path.py pins the identity
 # run_eicu._write_csv is run_synthetic._write_csv.
+# _row_for (the certified-tier row for one rung, or None on a gated report) is
+# the same lookup the synthetic tables use; that identity is pinned too.
 
 EICU_OUT_PREFIX = "EICU"
 EICU_MAX_OUTPUT_LEN = 512        # > 208 sites, < any record-level array
@@ -118,6 +120,56 @@ EICU_SUBGROUP_LABEL = ("[MEASURE] POST-HOC SUBGROUP DESCRIPTIVES (2026-08-20): "
                        "it. Rates in cells below the frozen "
                        "EICU_MIN_OUTCOME_STRATUM record floor are suppressed "
                        "as null, never 0.0.")
+
+# Static fields of the EICU-RELIABILITY summary block, hoisted so
+# _reliability_summary carries only the computed ones. Key order here IS the
+# block's emitted key order from "scope" onward -- it reaches JSON.
+_RELIABILITY_NOTES = {
+    "scope": ("pooled target arm only (K = "
+              f"{etl.EICU_N_TARGET_SITES} hospitals >= "
+              f"MIN_SITES_FOR_CI = {rp.MIN_SITES_FOR_CI}); the "
+              "per-hospital arm is K = 1, where every interval would be "
+              "floor-suppressed at 24x the cost"),
+    "settings": {"schema_version": rp.SCHEMA_VERSION,
+                 "seed": rp.PANEL_SEED,
+                 "n_boot": rp.N_BOOT,
+                 "ci_level": rp.CI_LEVEL,
+                 "bin_edges": list(rp.DEFAULT_BIN_EDGES),
+                 "decision_threshold": rp.DECISION_THRESHOLD,
+                 "bootstrap_unit": "site"},
+    "brier_difference_note": (
+        "brier.reference.brier_difference is a SINGLE paired statistic "
+        "from ONE resample stream (reference minus primary on the "
+        "IDENTICAL availability mask). It must never be reconstructed by "
+        "differencing brier.primary_answered, whose denominator is the "
+        "wider answered set (panel notes[4])."),
+    "skill_margin_note": (
+        "skill_margin = constant-majority baseline error rate MINUS model "
+        "error rate. At single-digit prevalence a low answered error rate "
+        "is also what a constant always-negative rule achieves, so the "
+        "margin -- not the error rate -- is what says whether the gate "
+        "earned its answered set or merely selected an easy one."),
+    # RP-9: the panel's own disclosures travel inside each payload of
+    # EICU_reliability_panel.json, one copy per replicate. EICU-SUMMARY.md
+    # is the human-facing artifact, and a reader of it would otherwise get
+    # the numbers without the estimand text that governs them. notes[1]
+    # matters most -- marginal intervals, never difference two endpoints --
+    # since this block prints brier_reference, brier_primary_matched and
+    # brier_difference side by side.
+    "notes": list(rp.NOTES),
+    # The replicates are re-splits of one hospital population on one
+    # extract, so the _summary_stats spread below is split-to-split
+    # variation, not sampling uncertainty. _failure_criteria states the same
+    # non-independence for F-A. Saying it in one place only would let a
+    # p10-p90 band beside the panel's own bootstrap intervals read as a
+    # second uncertainty quantification.
+    "replicate_spread_note": (
+        "sd / p10 / p50 / p90 below are taken ACROSS REPLICATES, which are "
+        "re-splits of ONE hospital population on ONE extract and are "
+        "therefore NOT independent draws. That spread is split-to-split "
+        "variation, not sampling uncertainty. The cluster-bootstrap `ci` "
+        "fields are the only intervals here with a coverage claim."),
+}
 
 # Post-hoc attribution value-function contrast. The deployed attributions are
 # interventional Shapley values (explain.py). This block measures how far the
@@ -373,33 +425,25 @@ def _site_sort_key(label):
     return (1, 0, text)
 
 
-def _row_for(report, alpha):
-    """The certified-tier row for one rung, or None on a gated report."""
-    for r in report["certified"]:
-        if r["alpha"] == alpha:
-            return r
-    return None
+def _mode_text(d, *, skip=None, default=None):
+    """{mode: outcome} -> a compact ASCII cell, ordered by mode name.
 
-
-def _reasons_text(reasons):
-    """{mode: reason} -> a compact ASCII cell, ordered by mode name."""
-    if not reasons:
-        return None
-    return "|".join(f"{m}:{r or 'declined'}" for m, r in sorted(reasons.items()))
-
-
-def _noncontributing_text(mode_outcomes):
-    """Why a mode did not back the deployed threshold, on a certified row.
-
-    On real data a silent BBSE non-contribution is the interesting signal. A
-    certified row whose BBSE arm declined must still say so, or prediction P3
-    is unsettleable from the released tables.
+    A falsy outcome renders as `default` when one is given; entries whose
+    outcome equals `skip` are omitted. None when the dict is empty or nothing
+    survives the skip. With skip="covering" on a certified row the survivors
+    are the modes that did not back the deployed threshold -- the silent BBSE
+    non-contribution signal prediction P3 needs from the released tables.
 
     Refs: report.py _combine_alpha's mode_outcomes; fixture audit 2026-07-25."""
-    if not mode_outcomes:
+    if not d:
         return None
-    parts = [f"{m}:{o}" for m, o in sorted(mode_outcomes.items())
-             if o != "covering"]
+    parts = []
+    for m, o in sorted(d.items()):
+        if skip is not None and o == skip:
+            continue
+        if default is not None:
+            o = o or default
+        parts.append(f"{m}:{o}")
     return "|".join(parts) if parts else None
 
 
@@ -418,7 +462,8 @@ def _eval_rung(head, report, alpha, pool_x, pool_y):
     if row is None:                      # gated exit: reason already carried
         return out
     if row["status"] != "certified":
-        out["decline_reason"] = _reasons_text(row.get("reasons", {}))
+        out["decline_reason"] = _mode_text(row.get("reasons", {}),
+                                           default="declined")
         return out
     tau = float(row["tau"])
     n_pool = int(np.asarray(pool_x).shape[0])
@@ -430,7 +475,8 @@ def _eval_rung(head, report, alpha, pool_x, pool_y):
                coverage=_rate(n_ans, n_pool), n_answered=n_ans,
                answered_err_rate=_rate(int(err[ans].sum()), n_ans),
                hard=bool(hard_violation(err[ans], alpha)),
-               decline_reason=_noncontributing_text(row.get("mode_outcomes")))
+               decline_reason=_mode_text(row.get("mode_outcomes"),
+                                         skip="covering"))
     return out
 
 
@@ -713,14 +759,8 @@ def _hospital_strata(data_dir, warnings):
     degrade to None cells plus a warning, because a diagnostic must not abort a
     certification run."""
     out = {}
-    reader = getattr(etl, "read_table", None)
-    if reader is None:                   # explicit, so a real AttributeError
-        warnings.append(                 # from inside the reader still surfaces
-            "eicu_etl exposes no read_table; the per-site hospital strata "
-            "(numbedscategory/teachingstatus/region) are reported empty")
-        return out
     try:
-        for row in reader(data_dir, "hospital"):
+        for row in etl.read_table(data_dir, "hospital"):
             raw = (row.get("hospitalid") or "").strip()
             try:
                 key = f"{etl.EICU_SITE_PREFIX}{int(raw)}"
@@ -739,22 +779,15 @@ def _hospital_strata(data_dir, warnings):
     return out
 
 
-def _site_stratum(meta, site, hospital_strata):
+def _site_stratum(site, hospital_strata):
     """The three site-constant covariates for one site, or None cells.
 
-    The hospital table is the source of record. meta['site_meta'] is consulted
-    second, in case a future ETL carries them there. Nothing is guessed: a site
-    with no row in either yields empty cells and increments the miss count, so
-    an all-empty stratum column shows up in the diagnostics rather than reading
+    The hospital table is the sole source -- eicu_etl's site_meta never
+    carries these keys, so nothing else is consulted and nothing is guessed: a
+    site with no row yields empty cells and increments the miss count, so an
+    all-empty stratum column shows up in the diagnostics rather than reading
     as silently blank."""
     rec = hospital_strata.get(site)
-    if rec is None:
-        sm = meta.get("site_meta") or {}
-        cand = sm.get(site)
-        if isinstance(cand, dict) and any(
-                k in cand for k in ("numbedscategory", "teachingstatus",
-                                    "region")):
-            rec = cand
     if not isinstance(rec, dict):
         return dict(numbedscategory=None, teachingstatus=None, region=None,
                     found=False)
@@ -910,6 +943,57 @@ def _comparator_row(head, report, alpha, target, comparator_p, replicate):
     return row, subset_err
 
 
+# Static prose of the F-A..F-E payloads, hoisted so _failure_criteria below
+# carries only the computed fields. Every entry is emitted verbatim into the
+# EICU-POOLED block; F-A's note stays inline in the function because it
+# interpolates the run's replicate count.
+_FAILURE_NOTES = {
+    "F-B": ("feasibility failure: no rung certifies on the pooled arm, "
+            "or the operative rung answers fewer than a fifth of cases "
+            "-- a certificate at 5% coverage is a decline wearing a hat."),
+    "F-C-checked": ["leak-denylist (assert_no_leak_columns)",
+                    "feature width == EICU_N_FEATURES",
+                    "categorical drift gate (build_raw strict_levels=True)",
+                    "finite x after impute (etl.impute)",
+                    "assert_site_disjoint(train, aux, cal)",
+                    "assert_aggregate_only on every write"],
+    "F-C": ("protocol failure aborts the run and writes no certificate; "
+            "reaching this payload means every gate above passed."),
+    "F-D-discrimination": ("the head's OWN out-of-sample AUC on the "
+                           "site-disjoint calibration split. APACHE-IVa, a "
+                           "purpose-built day-1 score, reaches ~0.87 on this "
+                           "outcome; a 161-column logistic head that beats the "
+                           "ceiling FROM THE SAME INPUTS is a leak before it is "
+                           "a result."),
+    "F-D-ablation": ("AUC lost by ablating the 49 missingness/presence "
+                     "columns. APACHE day-1 rows do not exist for a stay "
+                     "that ends because the patient died, so whole-row "
+                     "absence is a partial OUTCOME proxy with no column "
+                     "name -- invisible to a name denylist. Measured on "
+                     "the mock: clean -0.016; outcome-correlated absence "
+                     "at p=0.30 +0.082; at p=0.75 +0.248."),
+    "F-D-unfalsifiable": ("the original leg: alpha=0.05 certifying at 208 "
+                          "hospitals with coverage > 0.90 and near-zero "
+                          "fresh-pool R_M contradicts E4's frontier."),
+    "F-D": ("the UNFALSIFIABLE-SUCCESS failure, in THREE legs. The first "
+            "two depend on NEITHER alpha NOR coverage: the old "
+            "single-leg form was demonstrated to pass underneath an "
+            "outcome-correlated-missingness leak that certified "
+            "alpha=0.10 at coverage 0.86 (2026-07-31 audit, E-10). If "
+            "ANY leg fires the run is FAILED until the denylist, the "
+            "first-stay/dedup logic and the APACHE presence channel are "
+            "re-audited; it is never reported as a headline. Prediction "
+            "P4 (presence flags in the top-3 abstention drivers) is the "
+            "LEAK'S SIGNATURE, so P4 is settled as confirmed only when "
+            "every leg here is clear."),
+    "F-E": ("REPORTING obligation, not an abort: below this the "
+            "certificate's site-population-average estimand refers to "
+            "'hospitals that survived our filters', not 'US hospitals in "
+            "eICU', and every guarantee sentence must be re-scoped to "
+            "the surviving population BY NAME."),
+}
+
+
 def _failure_criteria(pooled_rows, site_counts, n_replicates):
     """Failure criteria F-A..F-E, evaluated in code (EICU-PROTOCOL section 10).
 
@@ -968,19 +1052,11 @@ def _failure_criteria(pooled_rows, site_counts, n_replicates):
                                        and mean_cov < EICU_FB_MIN_COVERAGE)),
             n_certified_replicates=n_cert, mean_operative_coverage=mean_cov,
             min_coverage=EICU_FB_MIN_COVERAGE,
-            note=("feasibility failure: no rung certifies on the pooled arm, "
-                  "or the operative rung answers fewer than a fifth of cases "
-                  "-- a certificate at 5% coverage is a decline wearing a hat.")),
+            note=_FAILURE_NOTES["F-B"]),
         "F-C": dict(
             fired=False,
-            checked=["leak-denylist (assert_no_leak_columns)",
-                     "feature width == EICU_N_FEATURES",
-                     "categorical drift gate (build_raw strict_levels=True)",
-                     "finite x after impute (etl.impute)",
-                     "assert_site_disjoint(train, aux, cal)",
-                     "assert_aggregate_only on every write"],
-            note=("protocol failure aborts the run and writes no certificate; "
-                  "reaching this payload means every gate above passed.")),
+            checked=_FAILURE_NOTES["F-C-checked"],
+            note=_FAILURE_NOTES["F-C"]),
         "F-D": dict(
             fired=bool(fd_hits or auc_hits or abl_hits),
             legs=dict(
@@ -988,52 +1064,25 @@ def _failure_criteria(pooled_rows, site_counts, n_replicates):
                     fired=bool(auc_hits), n_hits=len(auc_hits),
                     ceiling=EICU_LEAK_AUC_CEILING,
                     max_head_auc_oos=max(aucs) if aucs else None,
-                    what=("the head's OWN out-of-sample AUC on the "
-                          "site-disjoint calibration split. APACHE-IVa, a "
-                          "purpose-built day-1 score, reaches ~0.87 on this "
-                          "outcome; a 161-column logistic head that beats the "
-                          "ceiling FROM THE SAME INPUTS is a leak before it is "
-                          "a result.")),
+                    what=_FAILURE_NOTES["F-D-discrimination"]),
                 missingness_ablation=dict(
                     fired=bool(abl_hits), n_hits=len(abl_hits),
                     max_drop=EICU_LEAK_ABLATION_MAX_DROP,
                     observed_max_drop=max(drops) if drops else None,
-                    what=("AUC lost by ablating the 49 missingness/presence "
-                          "columns. APACHE day-1 rows do not exist for a stay "
-                          "that ends because the patient died, so whole-row "
-                          "absence is a partial OUTCOME proxy with no column "
-                          "name -- invisible to a name denylist. Measured on "
-                          "the mock: clean -0.016; outcome-correlated absence "
-                          "at p=0.30 +0.082; at p=0.75 +0.248.")),
+                    what=_FAILURE_NOTES["F-D-ablation"]),
                 unfalsifiable_success=dict(
                     fired=bool(fd_hits), n_hits=len(fd_hits), alpha=strict,
                     coverage_alarm=EICU_FD_COVERAGE_ALARM,
                     rm_alarm=EICU_FD_RM_ALARM,
-                    what=("the original leg: alpha=0.05 certifying at 208 "
-                          "hospitals with coverage > 0.90 and near-zero "
-                          "fresh-pool R_M contradicts E4's frontier."))),
+                    what=_FAILURE_NOTES["F-D-unfalsifiable"])),
             n_hits=len(fd_hits) + len(auc_hits) + len(abl_hits),
-            note=("the UNFALSIFIABLE-SUCCESS failure, in THREE legs. The first "
-                  "two depend on NEITHER alpha NOR coverage: the old "
-                  "single-leg form was demonstrated to pass underneath an "
-                  "outcome-correlated-missingness leak that certified "
-                  "alpha=0.10 at coverage 0.86 (2026-07-31 audit, E-10). If "
-                  "ANY leg fires the run is FAILED until the denylist, the "
-                  "first-stay/dedup logic and the APACHE presence channel are "
-                  "re-audited; it is never reported as a headline. Prediction "
-                  "P4 (presence flags in the top-3 abstention drivers) is the "
-                  "LEAK'S SIGNATURE, so P4 is settled as confirmed only when "
-                  "every leg here is clear.")),
+            note=_FAILURE_NOTES["F-D"]),
         "F-E": dict(
             fired=bool(n_primary_sites is not None
                        and n_primary_sites < EICU_FE_MIN_SITES),
             n_sites_primary_cohort=n_primary_sites,
             min_sites=EICU_FE_MIN_SITES,
-            note=("REPORTING obligation, not an abort: below this the "
-                  "certificate's site-population-average estimand refers to "
-                  "'hospitals that survived our filters', not 'US hospitals in "
-                  "eICU', and every guarantee sentence must be re-scoped to "
-                  "the surviving population BY NAME.")),
+            note=_FAILURE_NOTES["F-E"]),
     }
 
 
@@ -1394,50 +1443,7 @@ def _reliability_summary(panel_payloads, *, arm, replicates, pooled_rows):
         "arm": arm,
         "replicates": int(replicates),
         "n_panels": len(panel_payloads),
-        "scope": ("pooled target arm only (K = "
-                  f"{etl.EICU_N_TARGET_SITES} hospitals >= "
-                  f"MIN_SITES_FOR_CI = {rp.MIN_SITES_FOR_CI}); the "
-                  "per-hospital arm is K = 1, where every interval would be "
-                  "floor-suppressed at 24x the cost"),
-        "settings": {"schema_version": rp.SCHEMA_VERSION,
-                     "seed": rp.PANEL_SEED,
-                     "n_boot": rp.N_BOOT,
-                     "ci_level": rp.CI_LEVEL,
-                     "bin_edges": list(rp.DEFAULT_BIN_EDGES),
-                     "decision_threshold": rp.DECISION_THRESHOLD,
-                     "bootstrap_unit": "site"},
-        "brier_difference_note": (
-            "brier.reference.brier_difference is a SINGLE paired statistic "
-            "from ONE resample stream (reference minus primary on the "
-            "IDENTICAL availability mask). It must never be reconstructed by "
-            "differencing brier.primary_answered, whose denominator is the "
-            "wider answered set (panel notes[4])."),
-        "skill_margin_note": (
-            "skill_margin = constant-majority baseline error rate MINUS model "
-            "error rate. At single-digit prevalence a low answered error rate "
-            "is also what a constant always-negative rule achieves, so the "
-            "margin -- not the error rate -- is what says whether the gate "
-            "earned its answered set or merely selected an easy one."),
-        # RP-9: the panel's own disclosures travel inside each payload of
-        # EICU_reliability_panel.json, one copy per replicate. EICU-SUMMARY.md
-        # is the human-facing artifact, and a reader of it would otherwise get
-        # the numbers without the estimand text that governs them. notes[1]
-        # matters most -- marginal intervals, never difference two endpoints --
-        # since this block prints brier_reference, brier_primary_matched and
-        # brier_difference side by side.
-        "notes": list(rp.NOTES),
-        # The replicates are re-splits of one hospital population on one
-        # extract, so the _summary_stats spread below is split-to-split
-        # variation, not sampling uncertainty. _failure_criteria states the same
-        # non-independence for F-A. Saying it in one place only would let a
-        # p10-p90 band beside the panel's own bootstrap intervals read as a
-        # second uncertainty quantification.
-        "replicate_spread_note": (
-            "sd / p10 / p50 / p90 below are taken ACROSS REPLICATES, which are "
-            "re-splits of ONE hospital population on ONE extract and are "
-            "therefore NOT independent draws. That spread is split-to-split "
-            "variation, not sampling uncertainty. The cluster-bootstrap `ci` "
-            "fields are the only intervals here with a coverage claim."),
+        **_RELIABILITY_NOTES,
     }
     if not panel_payloads:
         # Two paths reach n_panels == 0 and the count alone does not separate
@@ -1584,8 +1590,9 @@ def _subgroup_rows(head, target, feature_names, tau, replicate, arm):
     if tau is not None:
         ans = head.score(target.x) >= tau
         err = head.predict(target.x) != target.y
+    masks = _subgroup_masks(target.x, feature_names)
     for dim in EICU_SUBGROUP_DIMS:
-        levels = _subgroup_masks(target.x, feature_names)[dim]
+        levels = masks[dim]
         for level in sorted(levels):
             m = levels[level]
             n = int(m.sum())
@@ -1784,56 +1791,14 @@ def _certification_blocks(payload):
             "EICU-FAITHFULNESS": payload.get("faithfulness")}
 
 
-def run_certification(data_dir, out, *, arm="primary", replicates=1,
-                      quick=False, verbose=True) -> dict:
-    """Full certification run over `replicates` independent by-site re-splits.
+def _build_and_gate(data_dir, arm, replicates, warnings, verbose):
+    """One streaming build, then the loud protocol gates (F-C).
 
-    Everything below runs per replicate on ONE build_raw: re-reading a 200k-row
-    extract 20 times is a build error, not a style preference (threat T-16).
-
-      1. etl.site_split(site_raw, replicate=r) -- records never cross a split.
-      2. etl.impute(x_raw, idx['train']) on S_train only. Pooled means would let
-         the target pool's covariates into the training features, a
-         transductive leak no downstream gate catches.
-      3. Cohorts via from_raw, with require_both_classes=False for target only.
-      4. assert_site_disjoint(train, aux, cal).
-      5. Pooled arm: one run_certgate over all 24 held-out hospitals, with
-         target_site_id supplied. K = 24 >= BBSE_MIN_TARGET_SITES, so q_t takes
-         the cluster bootstrap.
-      6. Per-hospital arm: one run_certgate per held-out hospital, with
-         target_site_id supplied even at K == 1. That is statistically the same
-         exact Clopper-Pearson q_t path None takes, plus full id validation,
-         record-level disjointness against train/aux/cal, and provenance
-         binding of the dense array and its canonical labels.
-      7. Oracle scoring at the deployed tau against the held-out pool:
-         _rm_on_pool, _per_site_exceed_frac and hard_violation.
-      8. APACHE-IVa comparator on the answered set, aggregate rates only.
-      9. Post-hoc selective reliability panel on the pooled arm only, via
-         rp.panel_from_head so the caller never constructs p. It is
-         descriptive: it alters no certified quantity, settles no frozen
-         prediction, and everything it writes carries rp.POST_HOC_LABEL.
-
-    quick=True caps replicates at 2 and skips figures. Returns the summary
-    payload; every artifact written has passed assert_aggregate_only.
+    Everything run_certification consumes per replicate descends from this ONE
+    build_raw: re-reading a 200k-row extract 20 times is a build error, not a
+    style preference (threat T-16). A gate failure raises EicuError before any
+    certificate exists; softer findings append to `warnings` in place.
     """
-    if arm not in etl.EICU_ARMS:
-        raise etl.EicuError(
-            f"run_eicu.run_certification: arm must be one of {etl.EICU_ARMS}, "
-            f"got {arm!r} (reason=unknown-arm)")
-    replicates = int(replicates)
-    if replicates < 1:
-        # run_eicu has its own reason tags -- record-level-output,
-        # non-ascii-output, bad-replicates -- beside eicu_etl's closed set. A
-        # truthful tag beats reusing a neighbour's tag for the wrong fault.
-        raise etl.EicuError(
-            f"run_eicu.run_certification: replicates must be >= 1, got "
-            f"{replicates} (reason=bad-replicates)")
-    if quick:
-        replicates = min(replicates, 2)
-    os.makedirs(out, exist_ok=True)
-    warnings = []
-
-    # ---- one streaming build, then the loud protocol gates (F-C) ----------
     x_raw, feature_names, meta = etl.build_raw(data_dir, arm=arm,
                                                strict_levels=True,
                                                verbose=verbose)
@@ -1902,6 +1867,240 @@ def run_certification(data_dir, out, *, arm="primary", replicates=1,
     _say(verbose, f"arm={arm}: {n_records} records x {len(feature_names)} "
                   f"features over {len(coverage_by_site)} hospitals; "
                   f"{replicates} replicate(s), seed={SEED}")
+    return (x_raw, feature_names, meta, n_records, ref, y_raw, site_raw,
+            comparator, attrition_rows, site_counts, coverage_by_site,
+            missing_by_site, hospital_strata, screen_block)
+
+
+def _write_artifacts(out, *, data_dir, arm, replicates, quick, verbose,
+                     n_records, ref, meta, site_counts, coverage_by_site,
+                     missing_by_site, hospital_strata, sites_without_strata,
+                     screen_block, impute_fill, attrition_rows, pooled_rows,
+                     per_site_rows, comparator_rows, composition_rows,
+                     bbse_rows, abstention, leak_rows, panel_payloads,
+                     panel_curve_rows, subgroup_rows, faith_rows,
+                     faith_scalars, certificate, warnings):
+    """Tables, diagnostics, certificate, panel artifacts, figures, summary.
+
+    The write half of run_certification, split out at the author's own comment
+    seams. Every write goes through the gated writers; the return value is the
+    summary payload run_certification returns."""
+    # ---- tables ----------------------------------------------------------
+    _write_table(os.path.join(out, f"{EICU_OUT_PREFIX}_attrition.csv"),
+                 attrition_rows,
+                 ["step", "n_stays", "n_sites", "n_positive", "prevalence",
+                  "arm"], "EICU_attrition.csv")
+    _write_table(os.path.join(out, f"{EICU_OUT_PREFIX}_pooled.csv"),
+                 pooled_rows,
+                 ["replicate", "arm", "alpha", "certified", "tau", "tau_idx",
+                  "deploy_mode", "modes", "coverage", "n_target", "n_answered",
+                  "answered_err_rate", "rm_fresh", "rm_exceed",
+                  "per_site_exceed_frac", "hard", "n_cal_carrying",
+                  "head_auc_oos", "head_auc_ablated", "ablation_drop",
+                  "leak_alarm", "decline_reason"], "EICU_pooled.csv")
+    _write_table(os.path.join(out, f"{EICU_OUT_PREFIX}_per_site.csv"),
+                 per_site_rows,
+                 ["replicate", "arm", "site", "alpha", "n_target", "reason",
+                  "certified", "tau", "coverage", "n_answered",
+                  "answered_err_rate", "hard", "numbedscategory",
+                  "teachingstatus", "region", "aps_coverage", "apv_coverage"],
+                 "EICU_per_site.csv")
+    _write_table(os.path.join(out, f"{EICU_OUT_PREFIX}_comparator.csv"),
+                 comparator_rows,
+                 ["replicate", "alpha", "n_answered", "certgate_answered_err",
+                  "apache_iva_brier_answered", "apache_iva_auc_answered",
+                  "n_apache_available"], "EICU_comparator.csv")
+
+    # ---- diagnostics + certificate ---------------------------------------
+    diagnostics = {
+        "arm": arm, "replicates": replicates,
+        "n_records": n_records, "n_sites": len(coverage_by_site),
+        "reference_check": ref,
+        "site_missingness_dispersion": dict(
+            _summary_stats(list(missing_by_site.values())),
+            what=("per-hospital mean share of NaN across the imputable "
+                  "feature columns, measured on the RAW matrix before "
+                  "imputation erases it. Site-informative missingness is a "
+                  "covariate-shift channel CertGate v2 scope-cut (threat "
+                  "T-3): it is MEASURED here, never imputed away.")),
+        "apache_coverage_by_site": {
+            "aps": _coverage_bands(coverage_by_site, "aps_coverage"),
+            "apv": _coverage_bands(coverage_by_site, "apv_coverage")},
+        "categorical_drift": {
+            "other_shares": meta.get("categorical_other_shares"),
+            "cap": etl.EICU_MAX_OTHER_SHARE,
+            "note": ("build_raw ran with strict_levels=True, so a share over "
+                     "the cap would have RAISED categorical-level-drift "
+                     "before any certificate existed.")},
+        # E-9/E-10/E-19: the outcome-informative half of the missingness
+        # channel, the runtime leak alarm, and the per-feature timing screen.
+        # These three exist because absence has no column name and so is
+        # invisible to EICU_LEAK_DENYLIST.
+        "outcome_missingness": meta.get("outcome_missingness"),
+        "leak_probe": leak_rows,
+        "outcome_screen": screen_block,
+        "attrition_prevalence": [
+            {k: d.get(k) for k in ("step", "n_stays", "n_positive",
+                                   "prevalence")}
+            for d in (meta.get("attrition") or [])],
+        "sentinel_counts": meta.get("sentinel_counts"),
+        "unit_conversions": meta.get("unit_conversions"),
+        "unparseable_tokens": meta.get("unparseable_tokens"),
+        "window_clipped_counts": meta.get("window_clipped_counts"),
+        "dedup_counts": meta.get("dedup_counts"),
+        "drop_counts": meta.get("drop_counts"),
+        "cross_site_patients": meta.get("cross_site_patients"),
+        "impute_fill_replicate0": impute_fill,
+        "abstention_gap_ranking": abstention,
+        "composition_three_way": composition_rows,
+        "bbse": bbse_rows,
+        "n_target_sites_without_hospital_strata": len(sites_without_strata),
+        "n_hospital_strata_rows": len(hospital_strata),
+        "warnings": warnings,
+    }
+    _write_json(os.path.join(out, f"{EICU_OUT_PREFIX}_diagnostics.json"),
+                diagnostics, "EICU_diagnostics.json")
+    if certificate is not None:
+        _write_json(os.path.join(out, f"{EICU_OUT_PREFIX}_certificate.json"),
+                    certificate, "EICU_certificate.json")
+
+    # ---- post-hoc panel artifacts, through the gated writers --------------
+    # The panel is aggregate-only by construction -- the longest sequence
+    # anywhere is the 8-element bin_edges echo -- but construction does not
+    # exempt the writer, so both go through assert_aggregate_only.
+    #
+    # `panels` is gated per payload (per_item_keys), the way _write_table gates
+    # CSV rows: it holds one aggregate payload per replicate, so its length is a
+    # replicate count, not a record-level array. Gated as one sequence it
+    # tripped EICU_MAX_OUTPUT_LEN at --replicates 600 and aborted the run on a
+    # purely descriptive artifact, after every certification arm was paid for.
+    #
+    # That covers the panel only. EICU_diagnostics.json above carries
+    # per-replicate lists of the same shape (bbse, composition_three_way), is
+    # written first, and is still gated whole -- so at that scale it aborts
+    # there instead. Named here rather than left to look covered.
+    _write_json(os.path.join(out,
+                             f"{EICU_OUT_PREFIX}_reliability_panel.json"),
+                {"post_hoc": rp.POST_HOC_LABEL,
+                 "arm": arm, "replicates": int(replicates),
+                 "scope": ("pooled target arm only (K = "
+                           f"{etl.EICU_N_TARGET_SITES} hospitals); the "
+                           "per-hospital arm is K = 1 and every interval "
+                           "would be floor-suppressed"),
+                 "panels": panel_payloads},
+                "EICU_reliability_panel.json", per_item_keys=("panels",))
+    # The leading post_hoc column is deliberate (RP-9). This CSV carries
+    # real-extract per-bin observed rates and is the panel artifact most easily
+    # detached from the directory that explains it, and a per-row column is the
+    # only carrier that survives that. The repetition is the cost of the A6
+    # discipline, not an oversight.
+    _write_table(os.path.join(out, f"{EICU_OUT_PREFIX}_reliability.csv"),
+                 panel_curve_rows,
+                 ["post_hoc", "replicate", "arm"]
+                 + list(rp.PANEL_RELIABILITY_FIELDS),
+                 "EICU_reliability.csv")
+    # Post-hoc subgroup rows: same leading-label discipline as the panel CSV
+    # above (RP-9).
+    _write_table(os.path.join(out, f"{EICU_OUT_PREFIX}_subgroups.csv"),
+                 subgroup_rows,
+                 ["post_hoc", "replicate", "arm", "dim", "level", "n",
+                  "n_answered", "coverage", "answered_err_rate",
+                  "answered_pos_rate", "declined_err_rate",
+                  "declined_pos_rate", "status"], "EICU_subgroups.csv")
+    _write_table(os.path.join(out, f"{EICU_OUT_PREFIX}_faithfulness.csv"),
+                 faith_rows,
+                 ["post_hoc", "replicate", "arm", "feature", "coef",
+                  "mean_abs_phi_answered_int", "mean_abs_phi_declined_int",
+                  "gap_int", "rank_int", "mean_abs_phi_answered_cond",
+                  "mean_abs_phi_declined_cond", "gap_cond", "rank_cond"],
+                 "EICU_faithfulness.csv")
+
+    if not quick:
+        _figures(out, pooled_rows, per_site_rows, panel_payloads, verbose)
+
+    # ---- summary payload --------------------------------------------------
+    payload = {
+        "pooled": _pooled_summary(pooled_rows, arm=arm, replicates=replicates,
+                                  n_records=n_records,
+                                  n_sites=len(coverage_by_site),
+                                  site_counts=site_counts, warnings=warnings),
+        "per_site": _per_site_summary(per_site_rows, arm=arm),
+        "comparator": _comparator_summary(comparator_rows, arm=arm),
+        "reliability": _reliability_summary(panel_payloads, arm=arm,
+                                            replicates=replicates,
+                                            pooled_rows=pooled_rows),
+        "subgroups": _subgroup_summary(subgroup_rows, arm=arm),
+        "faithfulness": _faithfulness_summary(faith_rows, faith_scalars,
+                                              abstention, arm=arm)}
+    _write_summary(out, _certification_blocks(payload), mode=(
+        "QUICK" if quick else "FULL"), replicates=replicates, arm=arm,
+        data_sha=_data_sha(data_dir))
+
+    fc = payload["pooled"]["failure_criteria"]
+    for name in ("F-A", "F-B", "F-D", "F-E"):
+        if fc[name]["fired"]:
+            _say(True, f"PRE-DECLARED FAILURE {name} FIRED: {fc[name]['note']}",
+                 err=True)
+    _say(verbose, f"wrote CSVs, diagnostics, certificate and "
+                  f"EICU-SUMMARY.md to {out}")
+    return payload
+
+
+def run_certification(data_dir, out, *, arm="primary", replicates=1,
+                      quick=False, verbose=True) -> dict:
+    """Full certification run over `replicates` independent by-site re-splits.
+
+    Everything below runs per replicate on ONE build_raw: re-reading a 200k-row
+    extract 20 times is a build error, not a style preference (threat T-16).
+
+      1. etl.site_split(site_raw, replicate=r) -- records never cross a split.
+      2. etl.impute(x_raw, idx['train']) on S_train only. Pooled means would let
+         the target pool's covariates into the training features, a
+         transductive leak no downstream gate catches.
+      3. Cohorts via from_raw, with require_both_classes=False for target only.
+      4. assert_site_disjoint(train, aux, cal).
+      5. Pooled arm: one run_certgate over all 24 held-out hospitals, with
+         target_site_id supplied. K = 24 >= BBSE_MIN_TARGET_SITES, so q_t takes
+         the cluster bootstrap.
+      6. Per-hospital arm: one run_certgate per held-out hospital, with
+         target_site_id supplied even at K == 1. That is statistically the same
+         exact Clopper-Pearson q_t path None takes, plus full id validation,
+         record-level disjointness against train/aux/cal, and provenance
+         binding of the dense array and its canonical labels.
+      7. Oracle scoring at the deployed tau against the held-out pool:
+         _rm_on_pool, _per_site_exceed_frac and hard_violation.
+      8. APACHE-IVa comparator on the answered set, aggregate rates only.
+      9. Post-hoc selective reliability panel on the pooled arm only, via
+         rp.panel_from_head so the caller never constructs p. It is
+         descriptive: it alters no certified quantity, settles no frozen
+         prediction, and everything it writes carries rp.POST_HOC_LABEL.
+
+    quick=True caps replicates at 2 and skips figures. Returns the summary
+    payload; every artifact written has passed assert_aggregate_only.
+    """
+    if arm not in etl.EICU_ARMS:
+        raise etl.EicuError(
+            f"run_eicu.run_certification: arm must be one of {etl.EICU_ARMS}, "
+            f"got {arm!r} (reason=unknown-arm)")
+    replicates = int(replicates)
+    if replicates < 1:
+        # run_eicu has its own reason tags -- record-level-output,
+        # non-ascii-output, bad-replicates -- beside eicu_etl's closed set. A
+        # truthful tag beats reusing a neighbour's tag for the wrong fault.
+        raise etl.EicuError(
+            f"run_eicu.run_certification: replicates must be >= 1, got "
+            f"{replicates} (reason=bad-replicates)")
+    if quick:
+        replicates = min(replicates, 2)
+    os.makedirs(out, exist_ok=True)
+    warnings = []
+
+    # ---- one streaming build, then the loud protocol gates (F-C) ----------
+    (x_raw, feature_names, meta, n_records, ref, y_raw, site_raw, comparator,
+     attrition_rows, site_counts, coverage_by_site, missing_by_site,
+     hospital_strata, screen_block) = _build_and_gate(data_dir, arm,
+                                                      replicates, warnings,
+                                                      verbose)
 
     pooled_rows, per_site_rows, comparator_rows = [], [], []
     composition_rows, bbse_rows, abstention = [], [], {}
@@ -2126,7 +2325,7 @@ def run_certification(data_dir, out, *, arm="primary", replicates=1,
             rep_h = run_certgate(train, aux, cal, x_h, target_label=site,
                                  target_site_id=[site] * int(pos.size),
                                  oracle_target_y=y_h)
-            strat = _site_stratum(meta, site, hospital_strata)
+            strat = _site_stratum(site, hospital_strata)
             if not strat["found"]:
                 sites_without_strata.add(site)
             cov = coverage_by_site.get(site, {})
@@ -2147,167 +2346,21 @@ def run_certification(data_dir, out, *, arm="primary", replicates=1,
                     aps_coverage=cov.get("aps_coverage"),
                     apv_coverage=cov.get("apv_coverage")))
 
-    # ---- tables ----------------------------------------------------------
-    _write_table(os.path.join(out, f"{EICU_OUT_PREFIX}_attrition.csv"),
-                 attrition_rows,
-                 ["step", "n_stays", "n_sites", "n_positive", "prevalence",
-                  "arm"], "EICU_attrition.csv")
-    _write_table(os.path.join(out, f"{EICU_OUT_PREFIX}_pooled.csv"),
-                 pooled_rows,
-                 ["replicate", "arm", "alpha", "certified", "tau", "tau_idx",
-                  "deploy_mode", "modes", "coverage", "n_target", "n_answered",
-                  "answered_err_rate", "rm_fresh", "rm_exceed",
-                  "per_site_exceed_frac", "hard", "n_cal_carrying",
-                  "head_auc_oos", "head_auc_ablated", "ablation_drop",
-                  "leak_alarm", "decline_reason"], "EICU_pooled.csv")
-    _write_table(os.path.join(out, f"{EICU_OUT_PREFIX}_per_site.csv"),
-                 per_site_rows,
-                 ["replicate", "arm", "site", "alpha", "n_target", "reason",
-                  "certified", "tau", "coverage", "n_answered",
-                  "answered_err_rate", "hard", "numbedscategory",
-                  "teachingstatus", "region", "aps_coverage", "apv_coverage"],
-                 "EICU_per_site.csv")
-    _write_table(os.path.join(out, f"{EICU_OUT_PREFIX}_comparator.csv"),
-                 comparator_rows,
-                 ["replicate", "alpha", "n_answered", "certgate_answered_err",
-                  "apache_iva_brier_answered", "apache_iva_auc_answered",
-                  "n_apache_available"], "EICU_comparator.csv")
-
-    # ---- diagnostics + certificate ---------------------------------------
-    aps_vals = [d["aps_coverage"] for d in coverage_by_site.values()]
-    apv_vals = [d["apv_coverage"] for d in coverage_by_site.values()]
-    diagnostics = {
-        "arm": arm, "replicates": replicates,
-        "n_records": n_records, "n_sites": len(coverage_by_site),
-        "reference_check": ref,
-        "site_missingness_dispersion": dict(
-            _summary_stats(list(missing_by_site.values())),
-            what=("per-hospital mean share of NaN across the imputable "
-                  "feature columns, measured on the RAW matrix before "
-                  "imputation erases it. Site-informative missingness is a "
-                  "covariate-shift channel CertGate v2 scope-cut (threat "
-                  "T-3): it is MEASURED here, never imputed away.")),
-        "apache_coverage_by_site": {
-            "aps": _coverage_bands(coverage_by_site, "aps_coverage"),
-            "apv": _coverage_bands(coverage_by_site, "apv_coverage")},
-        "categorical_drift": {
-            "other_shares": meta.get("categorical_other_shares"),
-            "cap": etl.EICU_MAX_OTHER_SHARE,
-            "note": ("build_raw ran with strict_levels=True, so a share over "
-                     "the cap would have RAISED categorical-level-drift "
-                     "before any certificate existed.")},
-        # E-9/E-10/E-19: the outcome-informative half of the missingness
-        # channel, the runtime leak alarm, and the per-feature timing screen.
-        # These three exist because absence has no column name and so is
-        # invisible to EICU_LEAK_DENYLIST.
-        "outcome_missingness": meta.get("outcome_missingness"),
-        "leak_probe": leak_rows,
-        "outcome_screen": screen_block,
-        "attrition_prevalence": [
-            {k: d.get(k) for k in ("step", "n_stays", "n_positive",
-                                   "prevalence")}
-            for d in (meta.get("attrition") or [])],
-        "sentinel_counts": meta.get("sentinel_counts"),
-        "unit_conversions": meta.get("unit_conversions"),
-        "unparseable_tokens": meta.get("unparseable_tokens"),
-        "window_clipped_counts": meta.get("window_clipped_counts"),
-        "dedup_counts": meta.get("dedup_counts"),
-        "drop_counts": meta.get("drop_counts"),
-        "cross_site_patients": meta.get("cross_site_patients"),
-        "impute_fill_replicate0": impute_fill,
-        "abstention_gap_ranking": abstention,
-        "composition_three_way": composition_rows,
-        "bbse": bbse_rows,
-        "n_target_sites_without_hospital_strata": len(sites_without_strata),
-        "n_hospital_strata_rows": len(hospital_strata),
-        "warnings": warnings,
-    }
-    _write_json(os.path.join(out, f"{EICU_OUT_PREFIX}_diagnostics.json"),
-                diagnostics, "EICU_diagnostics.json")
-    if certificate is not None:
-        _write_json(os.path.join(out, f"{EICU_OUT_PREFIX}_certificate.json"),
-                    certificate, "EICU_certificate.json")
-
-    # ---- post-hoc panel artifacts, through the gated writers --------------
-    # The panel is aggregate-only by construction -- the longest sequence
-    # anywhere is the 8-element bin_edges echo -- but construction does not
-    # exempt the writer, so both go through assert_aggregate_only.
-    #
-    # `panels` is gated per payload (per_item_keys), the way _write_table gates
-    # CSV rows: it holds one aggregate payload per replicate, so its length is a
-    # replicate count, not a record-level array. Gated as one sequence it
-    # tripped EICU_MAX_OUTPUT_LEN at --replicates 600 and aborted the run on a
-    # purely descriptive artifact, after every certification arm was paid for.
-    #
-    # That covers the panel only. EICU_diagnostics.json above carries
-    # per-replicate lists of the same shape (bbse, composition_three_way), is
-    # written first, and is still gated whole -- so at that scale it aborts
-    # there instead. Named here rather than left to look covered.
-    _write_json(os.path.join(out,
-                             f"{EICU_OUT_PREFIX}_reliability_panel.json"),
-                {"post_hoc": rp.POST_HOC_LABEL,
-                 "arm": arm, "replicates": int(replicates),
-                 "scope": ("pooled target arm only (K = "
-                           f"{etl.EICU_N_TARGET_SITES} hospitals); the "
-                           "per-hospital arm is K = 1 and every interval "
-                           "would be floor-suppressed"),
-                 "panels": panel_payloads},
-                "EICU_reliability_panel.json", per_item_keys=("panels",))
-    # The leading post_hoc column is deliberate (RP-9). This CSV carries
-    # real-extract per-bin observed rates and is the panel artifact most easily
-    # detached from the directory that explains it, and a per-row column is the
-    # only carrier that survives that. The repetition is the cost of the A6
-    # discipline, not an oversight.
-    _write_table(os.path.join(out, f"{EICU_OUT_PREFIX}_reliability.csv"),
-                 panel_curve_rows,
-                 ["post_hoc", "replicate", "arm"]
-                 + list(rp.PANEL_RELIABILITY_FIELDS),
-                 "EICU_reliability.csv")
-    # Post-hoc subgroup rows: same leading-label discipline as the panel CSV
-    # above (RP-9).
-    _write_table(os.path.join(out, f"{EICU_OUT_PREFIX}_subgroups.csv"),
-                 subgroup_rows,
-                 ["post_hoc", "replicate", "arm", "dim", "level", "n",
-                  "n_answered", "coverage", "answered_err_rate",
-                  "answered_pos_rate", "declined_err_rate",
-                  "declined_pos_rate", "status"], "EICU_subgroups.csv")
-    _write_table(os.path.join(out, f"{EICU_OUT_PREFIX}_faithfulness.csv"),
-                 faith_rows,
-                 ["post_hoc", "replicate", "arm", "feature", "coef",
-                  "mean_abs_phi_answered_int", "mean_abs_phi_declined_int",
-                  "gap_int", "rank_int", "mean_abs_phi_answered_cond",
-                  "mean_abs_phi_declined_cond", "gap_cond", "rank_cond"],
-                 "EICU_faithfulness.csv")
-
-    if not quick:
-        _figures(out, pooled_rows, per_site_rows, panel_payloads, verbose)
-
-    # ---- summary payload --------------------------------------------------
-    payload = {
-        "pooled": _pooled_summary(pooled_rows, arm=arm, replicates=replicates,
-                                  n_records=n_records,
-                                  n_sites=len(coverage_by_site),
-                                  site_counts=site_counts, warnings=warnings),
-        "per_site": _per_site_summary(per_site_rows, arm=arm),
-        "comparator": _comparator_summary(comparator_rows, arm=arm),
-        "reliability": _reliability_summary(panel_payloads, arm=arm,
-                                            replicates=replicates,
-                                            pooled_rows=pooled_rows),
-        "subgroups": _subgroup_summary(subgroup_rows, arm=arm),
-        "faithfulness": _faithfulness_summary(faith_rows, faith_scalars,
-                                              abstention, arm=arm)}
-    _write_summary(out, _certification_blocks(payload), mode=(
-        "QUICK" if quick else "FULL"), replicates=replicates, arm=arm,
-        data_sha=_data_sha(data_dir))
-
-    fc = payload["pooled"]["failure_criteria"]
-    for name in ("F-A", "F-B", "F-D", "F-E"):
-        if fc[name]["fired"]:
-            _say(True, f"PRE-DECLARED FAILURE {name} FIRED: {fc[name]['note']}",
-                 err=True)
-    _say(verbose, f"wrote CSVs, diagnostics, certificate and "
-                  f"EICU-SUMMARY.md to {out}")
-    return payload
+    # ---- artifacts + summary payload, through the gated writers -----------
+    return _write_artifacts(
+        out, data_dir=data_dir, arm=arm, replicates=replicates, quick=quick,
+        verbose=verbose, n_records=n_records, ref=ref, meta=meta,
+        site_counts=site_counts, coverage_by_site=coverage_by_site,
+        missing_by_site=missing_by_site, hospital_strata=hospital_strata,
+        sites_without_strata=sites_without_strata, screen_block=screen_block,
+        impute_fill=impute_fill, attrition_rows=attrition_rows,
+        pooled_rows=pooled_rows, per_site_rows=per_site_rows,
+        comparator_rows=comparator_rows, composition_rows=composition_rows,
+        bbse_rows=bbse_rows, abstention=abstention, leak_rows=leak_rows,
+        panel_payloads=panel_payloads, panel_curve_rows=panel_curve_rows,
+        subgroup_rows=subgroup_rows, faith_rows=faith_rows,
+        faith_scalars=faith_scalars, certificate=certificate,
+        warnings=warnings)
 
 
 # ------------------------------------------------------- summary + driver ---
@@ -2446,17 +2499,18 @@ def main(argv=None) -> dict:
     finally:
         blocks = (_preflight_blocks(result) if args.preflight
                   else _certification_blocks(result))
+        data_sha = _data_sha(args.data)
         _write_summary(args.out, blocks, mode=mode,
                        replicates=(0 if args.preflight else args.replicates),
                        arm=(None if args.preflight else args.arm),
-                       data_sha=_data_sha(args.data))
+                       data_sha=data_sha)
         _write_json(os.path.join(args.out,
                                  f"{EICU_OUT_PREFIX}_provenance.json"),
                     provenance(mode=mode, arm=args.arm,
                                replicates=int(args.replicates),
                                quick=bool(args.quick),
                                preflight=bool(args.preflight),
-                               data_sha=_data_sha(args.data),
+                               data_sha=data_sha,
                                protocol="EICU-PROTOCOL.md",
                                n_features=int(etl.EICU_N_FEATURES),
                                # POST-HOC panel provenance: its own schema, its

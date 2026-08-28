@@ -583,6 +583,9 @@ class MockConfig:
 # ---------------------------------------------------------------------------
 # Value helpers
 # ---------------------------------------------------------------------------
+# _num/_integer/_hhmmss below, and make_counter/TableWriter/NullWriter further
+# down, are duplicated from synth_fixture by design -- eicu_mock is
+# stdlib-only (test_etl_imports_no_undeclared_dependency).
 
 def _num(value, dp: int) -> str:
     """Fixed-point render; None becomes an empty field (a CSV NULL)."""
@@ -700,7 +703,7 @@ class TableWriter:
 
 
 class NullWriter:
-    """Stands in for a table --tables excluded, so the loop never branches."""
+    """Stands in for an excluded table; write/close are no-ops."""
 
     rows = 0
 

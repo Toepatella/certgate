@@ -91,9 +91,8 @@ def counts(rankings):
     return top1, topk, gaps
 
 
-def render(rankings, png):
+def render(rankings, topk, gaps, png):
     n_rep = len(rankings)
-    top1, topk, gaps = counts(rankings)
     # left panel: features ordered by how often they appear in the emitted
     # top-10, then by mean gap. The gap is answered-minus-declined mean |phi|,
     # so a negative value means the feature pulls harder on declined cases.
@@ -155,8 +154,8 @@ def main(argv=None):
     diag = argv[0] if argv else DIAG_DEFAULT
     png = argv[1] if len(argv) > 1 else PNG_DEFAULT
     rankings = load_rankings(diag)
-    order, members = render(rankings, png)
     top1, topk, gaps = counts(rankings)
+    order, members = render(rankings, topk, gaps, png)
     out = {
         "source": diag, "png": png, "n_replicates": len(rankings),
         "top1_counts": dict(sorted(top1.items(), key=lambda kv: -kv[1])),

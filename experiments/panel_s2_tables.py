@@ -52,19 +52,19 @@ from certgate.constants import (ALPHA_LADDER, DELTA, M_INFLUENCE,
 from certgate.data import SimConfig, draw_cohort, split_sites
 from certgate.model import fit_head
 from certgate.pipeline import run_certgate
+from experiments.run_synthetic import (ANCHOR_SITES, E1_EVAL_SITES,
+                                       _rm_on_pool, _rng)
 
 OUT = os.path.join(os.path.dirname(__file__), "out")
-ANCHOR_SITES = 208
-E1_EVAL_SITES = 200
 # 5000 is the generator's upper size clip, so g_c = n_c at every site -- the
 # record-proportional estimand. M also normalises the atoms, so raising it
 # shrinks every atom toward alpha, which is why the certificate dies there.
 M_SWEEP = (25, 50, 100, 200, 500, 1000, 5000)
 
 
-def _rng(*parts):
-    """Same seeding rule as run_synthetic._rng."""
-    return np.random.default_rng(np.random.SeedSequence([SEED, *parts]))
+def _r(num, den):
+    """Round-4 conditional rate; None (JSON null) on an empty denominator."""
+    return round(num / den, 4) if den else None
 
 
 def _confusion(y, yhat):
@@ -73,17 +73,23 @@ def _confusion(y, yhat):
                 fn=int((y & ~yhat).sum()), tn=int((~y & ~yhat).sum()))
 
 
-def _op_chars(c):
-    """Operating characteristics from confusion counts (Table 7 row)."""
+def _op_chars(c, fnr=False):
+    """Operating characteristics from confusion counts (Table 7 row).
+
+    panel_confusion_tables reuses this row for its eICU tables; fnr=True
+    inserts the FNR column those tables carry.
+    """
     tp, fp, fn, tn = c["tp"], c["fp"], c["fn"], c["tn"]
     n = tp + fp + fn + tn
-    r = lambda num, den: (round(num / den, 4) if den else None)   # noqa: E731
-    return dict(
+    row = dict(
         records=n, **c,
-        positive_fraction=r(tp + fn, n), error=r(fp + fn, n),
-        sensitivity=r(tp, tp + fn), specificity=r(tn, tn + fp),
-        ppv=r(tp, tp + fp), npv=r(tn, tn + fn),
-        fn_share_of_errors=r(fn, fp + fn))
+        positive_fraction=_r(tp + fn, n), error=_r(fp + fn, n),
+        sensitivity=_r(tp, tp + fn), specificity=_r(tn, tn + fp),
+        ppv=_r(tp, tp + fp), npv=_r(tn, tn + fn))
+    if fnr:
+        row["fnr"] = _r(fn, tp + fn)
+    row["fn_share_of_errors"] = _r(fn, fp + fn)
+    return row
 
 
 def _always_negative_error(*sets):
@@ -96,21 +102,6 @@ def _always_negative_error(*sets):
     pos = sum(s["tp"] + s["fn"] for s in sets)
     n = sum(s["records"] for s in sets)
     return round(pos / n, 4) if n else None
-
-
-def _rm(head, pool, tau, M):
-    """Influence-weighted answered risk at cap M (Section 3.3)."""
-    ans = head.score(pool.x) >= tau
-    err = head.predict(pool.x) != pool.y
-    sizes = pool.site_sizes.astype(float)
-    g_over_n = np.where(sizes > 0,
-                        np.minimum(sizes, M) / np.maximum(sizes, 1.0), 0.0)
-    num = np.bincount(pool.site_id, weights=(ans & err).astype(float),
-                      minlength=pool.n_sites)
-    den = np.bincount(pool.site_id, weights=ans.astype(float),
-                      minlength=pool.n_sites)
-    a, b = float((g_over_n * num).sum()), float((g_over_n * den).sum())
-    return (a / b) if b > 0 else float("nan")
 
 
 def _recorded_e1():
@@ -161,7 +152,7 @@ def e1_arm(R):
                 if dep is None:
                     continue
                 tau = float(TAU_GRID[dep])
-                rm = _rm(head, ev, tau, M)
+                rm = _rm_on_pool(head, ev, tau, M)
                 k = acc[(M, alpha)]
                 k["n"] += 1
                 k["tau"].append(tau)
@@ -185,7 +176,7 @@ def e1_arm(R):
                 for k2, v in _confusion(ev.y[mask], yh[mask]).items():
                     tgt[k2] += v
             rec_err.append(float((yh[a] != ev.y[a]).mean()))
-            rm_dep.append(_rm(head, ev, tau, M_INFLUENCE))
+            rm_dep.append(_rm_on_pool(head, ev, tau, M_INFLUENCE))
             a_by_site = np.bincount(cal.site_id,
                                     weights=(s_cal >= tau).astype(float),
                                     minlength=cal.n_sites)
@@ -268,7 +259,7 @@ def e6_arm():
         table7_declined=dec_o,
         record_vs_rm=dict(
             record_level_answered_error=round(float((yh[a] != tgt.y[a]).mean()), 4),
-            rm=round(_rm(head, tgt, tau, M_INFLUENCE), 4)),
+            rm=round(_rm_on_pool(head, tgt, tau, M_INFLUENCE), 4)),
         zero_coverage_sites=int(((sizes > 0) & (ans_by_site == 0)).sum()),
         n_sites=int(tgt.n_sites))
 
