@@ -5,6 +5,13 @@ authors:
   - family-names: "Zhang"
     given-names: "Tony"
 repository-code: "https://github.com/Toepatella/certgate"
+doi: "10.5281/zenodo.22148739"
+version: "submission-candidate-3"
+date-released: "2026-08-27"
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.22148740"
+    description: "Version DOI for the submission-candidate-3 release"
 license: MIT
 keywords:
   - selective prediction
