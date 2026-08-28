@@ -1317,7 +1317,7 @@ run_eicu.py   -> eicu_etl, run_synthetic (_rm_on_pool/_per_site_exceed_frac/_wri
                  pipeline, validate, model, harness, report, explain, reliability
 ```
 
-The imported helpers above are bound by IDENTITY, never re-implemented — `tests/test_eicu_path.py`
+The imported helpers above are bound by IDENTITY, never re-implemented — `tests/test_eicu_run.py`
 asserts `run_eicu._write_csv is run_synthetic._write_csv` so a clone cannot drift silently. The
 same rule covers the rank AUC (amended 2026-08-10): `run_eicu._auc = eicu_etl._rank_auc` is an
 identity binding, pinned by the same test — it was previously a byte-equivalent 22-line clone,
@@ -1334,7 +1334,7 @@ NOT in `requirements.txt`; importing either is a hard test failure. All third-pa
 imports at module top level. Because `eicu_mock.py` may not import `eicu_etl` (that would
 pull numpy into a stdlib-only module), the five `EICU_LEVELS_*` tuples and
 `EICU_MIN_TOTAL_SITES` are DUPLICATED there as `EICU_MOCK_LEVELS_*` /
-`EICU_MOCK_MIN_TOTAL_SITES`, and `tests/test_eicu_path.py` asserts the copies equal the
+`EICU_MOCK_MIN_TOTAL_SITES`, and `tests/test_eicu_mock.py` asserts the copies equal the
 ETL's. The duplication is sanctioned because it is tested.
 
 **Protocol constants** live at module top of `experiments/eicu_etl.py` (mock generator
@@ -1557,7 +1557,7 @@ gates at three sensitivities replace it, and all three are pre-registered:
    instruments on purpose: whole-row absence moves the presence flags and is caught here,
    at build time, before a matrix exists; CELL-level outcome-correlated missingness leaves
    the flags untouched by construction and is caught by gate 3's ablation leg, which is why
-   that leg exists and why `tests/test_eicu_path.py` plants a cell-level corpus
+   that leg exists and why `tests/test_eicu_etl.py` plants a cell-level corpus
    (`mock_leak_subcap`) that this abort provably cannot see. A `[MEASURE]` warning naming a
    `__missing` sibling over the cap beside an EMPTY `reference_check.invalid_conditions` is
    therefore conformant output, not a gate that failed to fire — and the released extract
@@ -1809,10 +1809,13 @@ extract); `camel` iff at least one does and every name is alphanumeric (a case-v
 rendering of the same names); `mixed` iff at least one name carries an uppercase character
 AND at least one carries a separator (`_`), i.e. a re-export from a different tool. The
 raw header and `n_names_with_uppercase` are reported beside the verdict so the operator
-sees the evidence, and `tests/test_eicu_path.py` pins the expected value PER TABLE for
+sees the evidence, and `tests/test_eicu_etl.py` pins the expected value PER TABLE for
 both mock header modes rather than accepting any of the three.
 
-**Tests** (`tests/test_eicu_path.py`, mirroring `test_fixture_integration.py`): an
+**Tests** (`tests/test_eicu_mock.py` / `tests/test_eicu_etl.py` / `tests/test_eicu_run.py`
+over the shared `tests/_eicu_helpers.py`, mirroring `test_fixture_integration.py`).
+The single `tests/test_eicu_path.py` was split into those three files on 2026-08-25, every
+test relocated verbatim. The suite is: an
 always-on small arm (180 mock hospitals / 9000 stays) asserting an HONEST outcome — a
 certificate whose oracle-checked answered risk respects its own alpha, or a decline —
 never asserting that certification happens; plus a full-scale arm (208 hospitals /

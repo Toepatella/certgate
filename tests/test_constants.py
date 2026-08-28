@@ -663,7 +663,7 @@ def test_panel_emit_constants():
     assert len(set(RP.CI_STATUSES)) == len(RP.CI_STATUSES) == 6
     # The released EICU_reliability.csv column order, pinned literally. Every
     # prior assertion was self-referential -- a set-compare here and a
-    # list(rp.PANEL_RELIABILITY_FIELDS) header assert in test_eicu_path.py --
+    # list(rp.PANEL_RELIABILITY_FIELDS) header assert in test_eicu_run.py --
     # so a reorder could ship a rearranged published CSV with the suite green.
     assert RP.PANEL_RELIABILITY_FIELDS == (
         "scope", "index", "lo", "hi", "n", "n_sites_carrying",

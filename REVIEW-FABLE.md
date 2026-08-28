@@ -7,6 +7,7 @@ REDTEAM.md (2026-07-22) and the real-data readiness audit (2026-07-23).
 *Citations re-verified against the working tree 2026-08-25. Line numbers and quoted comment text were
 re-pointed after the 2026-08-24 comment humanization and the 2026-08-25 paper de-labelling; findings,
 verdicts and numbers are the originals and are unchanged.*
+*A later 2026-08-25 simplification pass restructured certgate/pipeline.py, certgate/shift.py, experiments/run_synthetic.py and experiments/run_eicu.py (behavior proven byte-identical) and split tests/test_eicu_path.py into test_eicu_mock.py / test_eicu_etl.py / test_eicu_run.py, so line citations into those files are as of the re-verification date, before the moves.*
 
 ## Verdict
 

@@ -9,6 +9,7 @@ Scope: `certgate/` (package), `tests/`, `experiments/`, `SPEC.md`, `METHODS.md`,
 > most fixes this audit prescribes have since landed, so a re-pointed citation usually names the
 > *corrected* code rather than the defect the row describes — several quoted strings were deleted
 > by the very fix their row prescribes and are annotated as having no current match.
+> A later 2026-08-25 simplification pass restructured certgate/pipeline.py, certgate/shift.py, experiments/run_synthetic.py and experiments/run_eicu.py (behavior proven byte-identical) and split tests/test_eicu_path.py into test_eicu_mock.py / test_eicu_etl.py / test_eicu_run.py, so line citations into those files are as of the re-verification date, before the moves.
 
 ---
 

@@ -12,7 +12,7 @@ generator parameter, so this file ships freely and the extract never has to.
 Its job is to be hostile in exactly the ways eICU is hostile, so that
 experiments/eicu_etl.py meets the traps before the credentialed download
 exists. Each planted wart is a named, testable contract (W1-W16 below), and
-tests/test_eicu_path.py asserts them one by one.
+tests/test_eicu_mock.py and tests/test_eicu_etl.py assert them one by one.
 
   W1  age is VARCHAR with the literal ceiling token '> 89' (note the space)
       and blanks; a naive int(age) raises. Kept, not dropped (protocol A.5.1).
@@ -155,7 +155,7 @@ EICU_MOCK_HEADER_CASES = ("camel", "lower")
 
 # Mirrors eicu_etl.EICU_MIN_TOTAL_SITES. Duplicated for the same reason the
 # level tuples below are: importing eicu_etl would pull numpy into a
-# stdlib-only module. tests/test_eicu_path.py pins the duplication.
+# stdlib-only module. tests/test_eicu_mock.py pins the duplication.
 EICU_MOCK_MIN_TOTAL_SITES = 149
 
 # Secondary rates, all generator parameters (not protocol).
@@ -172,7 +172,7 @@ EICU_MOCK_RECENT_PID_POOL = 512            # bounded pool backing W14
 # --- categorical level tuples ---------------------------------------------
 # A deliberate, tested duplication of eicu_etl's EICU_LEVELS_*. Importing them
 # would pull numpy into this stdlib-only module, so
-# tests/test_eicu_path.py::test_mock_level_tuples_match_the_etl_tuples asserts
+# tests/test_eicu_mock.py::test_mock_level_tuples_match_the_etl_tuples asserts
 # the two copies are equal.
 # The terminal "OTHER" entry is the ETL's drift bucket, never a raw value --
 # this generator never emits it.
@@ -241,7 +241,7 @@ EICU_MOCK_SIGNAL_INTERCEPT = (
 # 1/n_carrying, so the floor drops below 0.0354 at n_carrying = 77
 # (~217 hospitals), and a 900- or 1500-hospital mock certifies alpha = 0.10
 # with this constant untouched -- which is what
-# tests/test_eicu_path.py::test_large_mock_reaches_the_certified_branch
+# tests/test_eicu_mock.py::test_large_mock_reaches_the_certified_branch
 # (CERTGATE_EICU_LARGE=1, 900 hospitals) exercises. Raising EICU_MOCK_SIGNAL_B
 # to 2.0 (synth_fixture.SIGNAL_B, matching certgate SimConfig.sep = 2.2) lifts
 # the oracle margin to 0.0585 and would reach the certified branch at the

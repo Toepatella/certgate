@@ -80,7 +80,7 @@ from experiments.run_synthetic import (_rm_on_pool, _per_site_exceed_frac,
 # _write_csv is imported because the SPEC's import surface names it. The eICU
 # tables deliberately do not use it -- see _write_table, where locale-default
 # encoding would write a mojibake cell instead of crashing.
-# Do not let an F401 autofix strip it. tests/test_eicu_path.py pins the identity
+# Do not let an F401 autofix strip it. tests/test_eicu_run.py pins the identity
 # run_eicu._write_csv is run_synthetic._write_csv.
 # _row_for (the certified-tier row for one rung, or None on a gated report) is
 # the same lookup the synthetic tables use; that identity is pinned too.
@@ -482,7 +482,7 @@ def _eval_rung(head, report, alpha, pool_x, pool_y):
 
 # Identity binding, not a re-implementation: the ETL's tie-averaged
 # Mann-Whitney AUC, bound by name so a clone cannot drift from it.
-# tests/test_eicu_path.py asserts that identity.
+# tests/test_eicu_run.py asserts that identity.
 # Ref: SPEC module DAG note.
 _auc = etl._rank_auc
 
