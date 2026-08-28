@@ -143,7 +143,7 @@ def test_simconfig_generator_defaults_pinned():
 
 def test_e8_constants_pinned():
     """The revision-2 E8 arms, appended so earlier pins stay byte-untouched
-    (SPEC "E8"; design record paper/review/revision2/PHASE0-PROBES.md)."""
+    (SPEC "E8"; design record PHASE0-PROBES.md, in git history)."""
     from experiments import run_synthetic as rs
     assert rs.E8_COMPARATORS == ("wsr", "hoeffding", "mpeb", "t", "site_boot")
     assert rs.E8_BOOT == 1000
@@ -156,7 +156,7 @@ def test_e8_constants_pinned():
 
 def test_e9_constants_pinned():
     """The revision-2 E9 arms, frozen from the P0.2/P0.3 pilots (SPEC "E9",
-    "Outcome-weighted atoms"; paper/review/revision2/PHASE0-PROBES.md)."""
+    "Outcome-weighted atoms"; PHASE0-PROBES.md, in git history)."""
     from experiments import run_synthetic as rs
     assert rs.E9_SOURCE_SWEEP == (208, 600, 900, 1200)
     assert rs.E9_TARGET_MODES == ("single-site-cp", "k40-boot")

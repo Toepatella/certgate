@@ -10,7 +10,7 @@ against divergent mode results, so a regression that listed a mode
 unconditionally -- silently attaching an assumption tag it never earned --
 fails here.
 
-Refs: REVIEW-FABLE A-1 (skeptic-confirmed).
+Refs: REVIEW-FABLE A-1, skeptic-confirmed (record in git history).
 """
 import pytest
 

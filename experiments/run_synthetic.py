@@ -68,7 +68,7 @@ E2_SHIFT_SWEEP = (0.095, 0.13, 0.16, 0.19, 0.22)   # magnitude sweep; 0.22 = anc
                                             # 0.095 = the null-shift arm (panel S2-6/S2-7)
 E7_RECORD_SAMPLE = 2000                     # record-as-unit subsample of S_cal / S_aux
 E7_SU_ARM = (0.5, 2.0)                      # heterogeneity arms for the comparator
-# revision-2 (SPEC "E8"; design probes in paper/review/revision2/PHASE0-PROBES.md)
+# revision-2 (SPEC "E8"; design probes in PHASE0-PROBES.md, in git history)
 E8_COMPARATORS = ("wsr", "hoeffding", "mpeb", "t", "site_boot")
 E8_BOOT = 1000                              # site-bootstrap resamples (arm A)
 E8_NOISE_SWEEP = (0.01, 0.02, 0.03, 0.035, 0.04)   # aleatoric label-flip floor (arm B)
@@ -76,7 +76,8 @@ E8_NOISE_R = 300                            # draws per eta (exceedance resoluti
 E8_HEAD_ARMS = ("gbm", "degraded")          # alternative heads (arm C)
 E8_GBM_MAX_ITER = 200
 E8_DEGRADED_ZERO_FEATURES = 2               # informative features denied to the head
-# revision-2 (SPEC "E9"; frozen from the P0.2/P0.3 pilots in PHASE0-PROBES.md)
+# revision-2 (SPEC "E9"; frozen from the P0.2/P0.3 pilots in PHASE0-PROBES.md,
+# in git history)
 E9_SOURCE_SWEEP = (208, 600, 900, 1200)     # BBSE power frontier source-site counts
 E9_TARGET_MODES = ("single-site-cp", "k40-boot")
 E9_TARGET_K = 40                            # declared target sites, bootstrap mode
@@ -667,7 +668,7 @@ def run_E3(out, quick):
     # that is enforced, not merely reported. A de-poisoned tilt aborts before
     # anything is written. A negative control that fails verification must
     # never emit passing-looking violation rates.
-    # Ref: SPEC E3; REVIEW-FABLE D3.
+    # Ref: SPEC E3; REVIEW-FABLE D3 (in git history).
     verified = (float(np.mean(verified_risk)) if verified_risk
                 else float("nan"))
     poisonous = bool(verified > 0.10)

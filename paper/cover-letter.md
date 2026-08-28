@@ -1,6 +1,6 @@
 # Cover letter — Discover Computing
 
-*(Submit through Snapp with the manuscript; select article type "Research" and the topical collection named below. Replace the `[[TBC:*]]` tokens before submission.)*
+*(Submit through Snapp with the manuscript; select article type "Research" and the topical collection named below.)*
 
 ---
 

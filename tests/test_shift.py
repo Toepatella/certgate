@@ -220,7 +220,7 @@ def test_dual_endpoint_loop_requires_both_endpoints():
 
     Collapsing the interval onto the favorable endpoint certifies, so the
     decline comes from the other endpoint, not lack of power. Fixed rng streams
-    and identical sites keep it deterministic (REVIEW-FABLE B-1).
+    and identical sites keep it deterministic (REVIEW-FABLE B-1, in git history).
     """
     head = Head(coef=np.array([1.0]), intercept=0.0, mu=np.zeros(1),
                 sd=np.ones(1))

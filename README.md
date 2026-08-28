@@ -68,7 +68,6 @@ All success criteria are met. Every figure below is stated once, canonically, in
 certgate/
   README.md            ← this file (scope & objectives)
   METHODS.md           ← paper-ready methods section
-  PAPER-OUTLINE.md     ← section plan mapped to the collection's topics + reviewer risks
   SPEC.md              ← engineering contract: interfaces, frozen constants, audit-lesson checklist
   EICU-PROTOCOL.md     ← frozen real-data protocol (cohort, allowlist, denylist, P1–P7, F-A–F-E)
   CODE-AUDIT.md        ← adversarial correctness audit of the method + resolution
@@ -111,7 +110,7 @@ certgate/
                               gitignored — never commit it (DUA 1.5.0)
     DASHBOARD-DESIGN.md     ← the dashboard's design system + do-not-regress list
     DASHBOARD-PRODUCT.md    ← its audiences and truth constraints
-  paper/               ← manuscript draft, references, editorial-panel review
+  paper/               ← manuscript draft, references, build script
 ```
 
 ## Quickstart

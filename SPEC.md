@@ -997,7 +997,7 @@ per file below; regressions to any of them are regressions to V6.
   q_t forced outside box -> "bbse-misspecified"; linearity: statistic affine in rho at fixed
   wmax to ~1e-12; dual-endpoint soundness on the production wmax=max(1,rho) path across an
   interval straddling rho=1 ((mean-alpha)*max(1,rho) affine; raw atom mean visibly kinked).
-  The certify_bbse dual-endpoint LOOP is pinned directly (REVIEW-FABLE B-1): with one endpoint
+  The certify_bbse dual-endpoint LOOP is pinned directly (REVIEW-FABLE B-1, in git history): with one endpoint
   favorable and the other poisonous the walk must decline in BOTH orientations (catches a
   single-endpoint regression on either side), while collapsing the interval onto the favorable
   endpoint certifies (power check -- the decline is attributable to the other endpoint);
@@ -1024,7 +1024,7 @@ per file below; regressions to any of them are regressions to V6.
   and None flip fields; the all-zero head reports distance inf with flip_verified
   False; opposite_side_distance_z equals (L* + |logit|)/||coef|| to 1e-12 (formula
   pinned, not just the ordering).
-- `test_report.py` — unit-pins `_combine_alpha`'s OR-rule delta accounting (REVIEW-FABLE A-1)
+- `test_report.py` — unit-pins `_combine_alpha`'s OR-rule delta accounting (REVIEW-FABLE A-1, in git history)
   against DIVERGENT mode results: deploy = max tau across modes' own deployed thresholds; a
   mode appears in `modes` ONLY if the deployed tau_idx is in its own certified list (subset-
   prefix -> both covered; declined-with-None -> excluded; disjoint-prefix -> deploy mode alone
@@ -1185,7 +1185,7 @@ the deliverable is certify rate + R_M-exceed rate per unit x rung x s_u arm.
 · E8 certificate stress & comparator suite (revision-2; every stream begins `_rng(8, arm, ...)`
 and every walk permutation uses a NEW `certification_rng` stream string, so no E1–E7 draw or
 permutation is consumed and every published number stays byte-identical; design probes recorded
-in `paper/review/revision2/PHASE0-PROBES.md`). ARM A comparator bounds (review weakness 1):
+in `PHASE0-PROBES.md`, kept in git history; removed from HEAD at submission). ARM A comparator bounds (review weakness 1):
 draws `_rng(8, 0, n_idx, r)` over the E4 sweep at R=200; per rung, compute the IDENTICAL
 cal/aux atoms once and walk them five ways — WSR (stream "e8-comp") and the four
 `experiments/comparators.py` bounds — under the same `walk_order` and the same
