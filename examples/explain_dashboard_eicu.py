@@ -79,14 +79,19 @@ def _check_out_path(out):
             f"gitignored pattern {_OUT_PREFIX}*{_OUT_SUFFIX} "
             f"(reason=record-level-output)")
     out = os.path.abspath(out)
-    # "out" alone misses the tracked sidecar output dirs out-panel/ and
-    # out-sens/, which .gitignore declares tracked-by-design -- exactly where a
-    # record-level page must never land.
-    for d in ("out", "out-panel", "out-sens"):
-        if os.path.sep + d + os.path.sep in out + os.path.sep:
-            _fail(f"refusing to write {out!r}: this module never writes into "
-                  f"an experiment output directory "
-                  f"(reason=record-level-output)")
+    # "out" alone misses the tracked sidecar output dirs -- out-panel/,
+    # out-sens/, out-subgroups/, out-faithfulness/, and every out-* added
+    # since -- which .gitignore declares tracked-by-design, exactly where a
+    # record-level page must never land. A fixed list went stale twice, so
+    # since 2026-09-04 the rule is the prefix: no directory component of the
+    # destination may begin with "out". The check is on the directories only;
+    # the file's own basename is governed by the pattern above.
+    parts = [c for c in os.path.normpath(os.path.dirname(out)).split(os.path.sep)
+             if c]
+    if any(c.lower().startswith("out") for c in parts):
+        _fail(f"refusing to write {out!r}: this module never writes into "
+              f"an experiment output directory (any directory whose name "
+              f"begins with 'out') (reason=record-level-output)")
     return out
 
 

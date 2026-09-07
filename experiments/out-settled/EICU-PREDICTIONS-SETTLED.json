@@ -1,0 +1,861 @@
+{
+  "_run": {
+    "utc": "2026-09-07T01:29:12+00:00",
+    "git_sha": "f48d3b4ec5b7f7d92021e4ec75f8127bf83de34d",
+    "inputs": {
+      "experiments/out/EICU_preflight.json": "5b36918850ff4545580f56110ac425fd5b729670ae7756c953164a30cfab4c1a",
+      "experiments/out/EICU_pooled.csv": "3036ae120d70a8bf1d048f998ab710d36b6bdd0f3148893d109185778ff58f18",
+      "experiments/out/EICU_per_site.csv": "c85ea2c17fb878a14dd02837cfd8c22b42dc7d6862c03e82d1a9fca4ebadb00a",
+      "experiments/out/EICU_diagnostics.json": "c357e8a7e873f7b1d974df055790f07aad062894d3ac11d8c57559e0dd12f04d",
+      "experiments/out/EICU_attrition.csv": "51784a55d02d5d03580f4e50b270ecc156c760307a8f6c9e6619b191c34a2ea9"
+    }
+  },
+  "post_hoc": "[MEASURE] POST-HOC (2026-09-04): clause-level settlement of the seven registered predictions, derived from the released artifacts after the fact; certifies nothing and changes no certified quantity. The registered wording is quoted from EICU_preflight.json verbatim.",
+  "rule": "A prediction whose protocol entry states its own falsification rule is confirmed unless that rule fires; its other clauses are reported beside it. Otherwise: confirmed when every clause holds; falsified when the clause on the registered settling quantity fails; partly when that clause holds but another registered count does not. Per-re-split quantities are scored on the majority of the twenty; the published split (replicate 0) is shown separately.",
+  "tally": {
+    "confirmed": 3,
+    "partly": 1,
+    "falsified": 3
+  },
+  "tally_text": "3 confirmed / 1 partly / 3 falsified",
+  "headline": "3 confirmed / 1 partly / 3 falsified; partly = P7; falsified = P2, P4, P5",
+  "manuscript_before_fix": "four confirmed (P1, P3, P6, P7), three falsified (P2, P4, P5); P7's site clause was not scored",
+  "predictions": [
+    {
+      "id": "P1",
+      "registered": "At 208 hospitals (75 calibration sites), alpha = 0.10 certifies on the pooled arm and alpha = 0.05 does not, in >= 15 of the 20 replicates. Basis: E4's synthetic frontier -- alpha=0.10 certifies from ~150 sites, alpha=0.05 first appears ~300 and is reliable only by 400.",
+      "settled_by": "EICU_pooled.csv `certified` by `alpha`",
+      "verdict": "confirmed",
+      "clauses": [
+        {
+          "clause": "alpha = 0.10 certifies on the pooled arm",
+          "registered": ">= 15 of 20",
+          "observed": "20 of 20",
+          "met": true
+        },
+        {
+          "clause": "alpha = 0.05 does not certify on the pooled arm",
+          "registered": ">= 15 of 20",
+          "observed": "20 of 20",
+          "met": true
+        },
+        {
+          "clause": "both hold in the same re-split",
+          "registered": ">= 15 of 20",
+          "observed": "20 of 20",
+          "met": true
+        }
+      ]
+    },
+    {
+      "id": "P2",
+      "registered": "The per-site dispersion diagnostic on the pooled target pool at the deployed tau (_per_site_exceed_frac) is > 0.02 and lands in [0.05, 0.30] -- real hospitals are more heterogeneous than the synthetic generator at s_u = 0.5 (which gave 0.02) and closer to its s_u = 2.0 arm (0.10).",
+      "settled_by": "EICU_pooled.csv `per_site_exceed_frac`",
+      "verdict": "falsified",
+      "clauses": [
+        {
+          "clause": "per-site dispersion diagnostic at the deployed tau, pooled arm, exceeds 0.02",
+          "registered": "> 0.02 (direction)",
+          "observed": "11 of 20 re-splits; mean 0.0271; published split 0.0417",
+          "met": true
+        },
+        {
+          "clause": "... and lands inside the registered interval",
+          "registered": "[0.05, 0.30] (settling quantity)",
+          "observed": "2 of 20 re-splits; range [0.0000, 0.0833]",
+          "met": false
+        }
+      ],
+      "per_replicate": [
+        0.0417,
+        0.0417,
+        0.0417,
+        0.0,
+        0.0,
+        0.0,
+        0.0833,
+        0.0417,
+        0.0417,
+        0.0,
+        0.0417,
+        0.0833,
+        0.0,
+        0.0,
+        0.0417,
+        0.0,
+        0.0417,
+        0.0,
+        0.0,
+        0.0417
+      ],
+      "note": "real hospitals were LESS dispersed at the deployed tau than the registered floor; the synthetic s_u = 0.5 arm gave 0.02"
+    },
+    {
+      "id": "P3",
+      "registered": "BBSE contributes no certificate: it declines on >= 90% of the 25 pools per replicate, with bbse-misspecified or bbse-ill-conditioned the modal reason. Basis: E2's 200/200 declines, plus the coarse 2000-draw q_t tail widening the 16-corner box. Falsified if BBSE certifies a tau the baseline walk does not.",
+      "settled_by": "`decline_reason` / `mode_outcomes` columns",
+      "verdict": "confirmed",
+      "clauses": [
+        {
+          "clause": "BBSE declines on the pools of each re-split",
+          "registered": ">= 90% of the 25 pools per re-split",
+          "observed": "20 of 20 re-splits at >= 0.90 (min share 1.0)",
+          "met": true
+        },
+        {
+          "clause": "the modal BBSE decline reason",
+          "registered": "bbse-misspecified or bbse-ill-conditioned",
+          "observed": "modal reason met in 7 of 20 re-splits; failsafe is modal in 13 (characterisation clause)",
+          "met": false
+        },
+        {
+          "clause": "falsification rule: BBSE certifies a tau the baseline walk does not",
+          "registered": "0 pools",
+          "observed": "0 pools over 20 re-splits",
+          "met": true
+        }
+      ],
+      "per_replicate": [
+        {
+          "replicate": 0,
+          "n_pools": 25,
+          "bbse_declined_share": 1.0,
+          "reasons": {
+            "bbse-misspecified": 13,
+            "failsafe": 12
+          },
+          "modal_reason": "bbse-misspecified"
+        },
+        {
+          "replicate": 1,
+          "n_pools": 25,
+          "bbse_declined_share": 1.0,
+          "reasons": {
+            "bbse-misspecified": 13,
+            "failsafe": 12
+          },
+          "modal_reason": "bbse-misspecified"
+        },
+        {
+          "replicate": 2,
+          "n_pools": 25,
+          "bbse_declined_share": 1.0,
+          "reasons": {
+            "bbse-misspecified": 7,
+            "failsafe": 18
+          },
+          "modal_reason": "failsafe"
+        },
+        {
+          "replicate": 3,
+          "n_pools": 25,
+          "bbse_declined_share": 1.0,
+          "reasons": {
+            "failsafe": 16,
+            "bbse-misspecified": 9
+          },
+          "modal_reason": "failsafe"
+        },
+        {
+          "replicate": 4,
+          "n_pools": 25,
+          "bbse_declined_share": 1.0,
+          "reasons": {
+            "failsafe": 15,
+            "bbse-misspecified": 10
+          },
+          "modal_reason": "failsafe"
+        },
+        {
+          "replicate": 5,
+          "n_pools": 25,
+          "bbse_declined_share": 1.0,
+          "reasons": {
+            "bbse-misspecified": 13,
+            "failsafe": 12
+          },
+          "modal_reason": "bbse-misspecified"
+        },
+        {
+          "replicate": 6,
+          "n_pools": 25,
+          "bbse_declined_share": 1.0,
+          "reasons": {
+            "failsafe": 12,
+            "bbse-misspecified": 13
+          },
+          "modal_reason": "bbse-misspecified"
+        },
+        {
+          "replicate": 7,
+          "n_pools": 25,
+          "bbse_declined_share": 1.0,
+          "reasons": {
+            "bbse-misspecified": 12,
+            "failsafe": 13
+          },
+          "modal_reason": "failsafe"
+        },
+        {
+          "replicate": 8,
+          "n_pools": 25,
+          "bbse_declined_share": 1.0,
+          "reasons": {
+            "bbse-misspecified": 11,
+            "failsafe": 14
+          },
+          "modal_reason": "failsafe"
+        },
+        {
+          "replicate": 9,
+          "n_pools": 25,
+          "bbse_declined_share": 1.0,
+          "reasons": {
+            "failsafe": 13,
+            "bbse-misspecified": 12
+          },
+          "modal_reason": "failsafe"
+        },
+        {
+          "replicate": 10,
+          "n_pools": 25,
+          "bbse_declined_share": 1.0,
+          "reasons": {
+            "bbse-misspecified": 11,
+            "failsafe": 13
+          },
+          "modal_reason": "failsafe"
+        },
+        {
+          "replicate": 11,
+          "n_pools": 25,
+          "bbse_declined_share": 1.0,
+          "reasons": {
+            "bbse-misspecified": 10,
+            "failsafe": 15
+          },
+          "modal_reason": "failsafe"
+        },
+        {
+          "replicate": 12,
+          "n_pools": 25,
+          "bbse_declined_share": 1.0,
+          "reasons": {
+            "bbse-misspecified": 13,
+            "failsafe": 12
+          },
+          "modal_reason": "bbse-misspecified"
+        },
+        {
+          "replicate": 13,
+          "n_pools": 25,
+          "bbse_declined_share": 1.0,
+          "reasons": {
+            "bbse-misspecified": 6,
+            "failsafe": 18
+          },
+          "modal_reason": "failsafe"
+        },
+        {
+          "replicate": 14,
+          "n_pools": 25,
+          "bbse_declined_share": 1.0,
+          "reasons": {
+            "bbse-misspecified": 13,
+            "failsafe": 12
+          },
+          "modal_reason": "bbse-misspecified"
+        },
+        {
+          "replicate": 15,
+          "n_pools": 25,
+          "bbse_declined_share": 1.0,
+          "reasons": {
+            "bbse-misspecified": 11,
+            "failsafe": 14
+          },
+          "modal_reason": "failsafe"
+        },
+        {
+          "replicate": 16,
+          "n_pools": 25,
+          "bbse_declined_share": 1.0,
+          "reasons": {
+            "bbse-misspecified": 13,
+            "failsafe": 12
+          },
+          "modal_reason": "bbse-misspecified"
+        },
+        {
+          "replicate": 17,
+          "n_pools": 25,
+          "bbse_declined_share": 1.0,
+          "reasons": {
+            "failsafe": 15,
+            "bbse-misspecified": 10
+          },
+          "modal_reason": "failsafe"
+        },
+        {
+          "replicate": 18,
+          "n_pools": 25,
+          "bbse_declined_share": 1.0,
+          "reasons": {
+            "bbse-misspecified": 12,
+            "failsafe": 13
+          },
+          "modal_reason": "failsafe"
+        },
+        {
+          "replicate": 19,
+          "n_pools": 25,
+          "bbse_declined_share": 1.0,
+          "reasons": {
+            "bbse-misspecified": 11,
+            "failsafe": 13
+          },
+          "modal_reason": "failsafe"
+        }
+      ],
+      "note": "P3 carries its own falsification rule in the protocol, which did not fire; the modal-reason phrase is a characterisation of the mechanism and is reported as it came out (bbse-misspecified modal in 7 of 20 re-splits; failsafe, meaning the mode fit but certified no threshold at both endpoints, modal in 13). Under a stricter every-clause reading this would be 'partly'."
+    },
+    {
+      "id": "P4",
+      "registered": "APACHE-absence features (aps_present, apv_present, or an aps_*__missing / apv_*__missing sibling) appear in the top 3 of the abstention gap_ranking on the pooled arm. Basis: absence is site-correlated by the dataset authors' own account.",
+      "settled_by": "EICU_diagnostics.json `abstention_gap_ranking`",
+      "verdict": "falsified",
+      "clauses": [
+        {
+          "clause": "an APACHE-absence feature (aps_present, apv_present or a *__missing sibling) sits in the top 3 of the abstention gap ranking, pooled arm (registered unsigned rule)",
+          "registered": "top 3 (every re-split)",
+          "observed": "2 of 20 re-splits",
+          "met": false
+        },
+        {
+          "clause": "... with the registered leak sign (more attribution on declined stays, gap < 0) -- the signed reading",
+          "registered": "gap < 0",
+          "observed": "0 of 20 re-splits; the 2 unsigned hits all carry positive gaps",
+          "met": false
+        },
+        {
+          "clause": "amendment A1 precondition: every F-D leg clear and the prevalence-ratio gate silent, so a hit would read as confirmation and not as the leak signature",
+          "registered": "0 alarms, gate not fired",
+          "observed": "0 leak alarms, 0 flagged screens, gate fired=False",
+          "met": true
+        }
+      ],
+      "per_replicate": [
+        {
+          "replicate": 0,
+          "top3": [
+            {
+              "feature": "aps_motor",
+              "gap": -0.245857
+            },
+            {
+              "feature": "aps_fio2",
+              "gap": -0.152379
+            },
+            {
+              "feature": "aps_ph",
+              "gap": -0.116441
+            }
+          ],
+          "unsigned_hit": false,
+          "signed_hit": false,
+          "hits": []
+        },
+        {
+          "replicate": 1,
+          "top3": [
+            {
+              "feature": "aps_motor",
+              "gap": -0.320438
+            },
+            {
+              "feature": "aps_eyes",
+              "gap": -0.119606
+            },
+            {
+              "feature": "aps_fio2",
+              "gap": -0.118918
+            }
+          ],
+          "unsigned_hit": false,
+          "signed_hit": false,
+          "hits": []
+        },
+        {
+          "replicate": 2,
+          "top3": [
+            {
+              "feature": "aps_motor",
+              "gap": -0.248001
+            },
+            {
+              "feature": "apv_oobintubday1",
+              "gap": -0.134883
+            },
+            {
+              "feature": "aps_heartrate__missing",
+              "gap": 0.126034
+            }
+          ],
+          "unsigned_hit": true,
+          "signed_hit": false,
+          "hits": [
+            {
+              "feature": "aps_heartrate__missing",
+              "gap": 0.126034
+            }
+          ]
+        },
+        {
+          "replicate": 3,
+          "top3": [
+            {
+              "feature": "aps_motor",
+              "gap": -0.286648
+            },
+            {
+              "feature": "aps_fio2",
+              "gap": -0.160488
+            },
+            {
+              "feature": "apv_oobintubday1",
+              "gap": -0.140371
+            }
+          ],
+          "unsigned_hit": false,
+          "signed_hit": false,
+          "hits": []
+        },
+        {
+          "replicate": 4,
+          "top3": [
+            {
+              "feature": "aps_motor",
+              "gap": -0.349021
+            },
+            {
+              "feature": "aps_fio2",
+              "gap": -0.116612
+            },
+            {
+              "feature": "aps_intubated",
+              "gap": -0.114962
+            }
+          ],
+          "unsigned_hit": false,
+          "signed_hit": false,
+          "hits": []
+        },
+        {
+          "replicate": 5,
+          "top3": [
+            {
+              "feature": "aps_motor",
+              "gap": -0.243697
+            },
+            {
+              "feature": "unitstaytype=stepdown/other",
+              "gap": 0.148442
+            },
+            {
+              "feature": "aps_heartrate__missing",
+              "gap": 0.105179
+            }
+          ],
+          "unsigned_hit": true,
+          "signed_hit": false,
+          "hits": [
+            {
+              "feature": "aps_heartrate__missing",
+              "gap": 0.105179
+            }
+          ]
+        },
+        {
+          "replicate": 6,
+          "top3": [
+            {
+              "feature": "aps_motor",
+              "gap": -0.368454
+            },
+            {
+              "feature": "aps_fio2",
+              "gap": -0.179985
+            },
+            {
+              "feature": "apv_oobintubday1",
+              "gap": -0.141599
+            }
+          ],
+          "unsigned_hit": false,
+          "signed_hit": false,
+          "hits": []
+        },
+        {
+          "replicate": 7,
+          "top3": [
+            {
+              "feature": "aps_motor",
+              "gap": -0.213896
+            },
+            {
+              "feature": "apv_oobintubday1",
+              "gap": -0.121848
+            },
+            {
+              "feature": "aps_fio2",
+              "gap": -0.119816
+            }
+          ],
+          "unsigned_hit": false,
+          "signed_hit": false,
+          "hits": []
+        },
+        {
+          "replicate": 8,
+          "top3": [
+            {
+              "feature": "aps_motor",
+              "gap": -0.283355
+            },
+            {
+              "feature": "aps_intubated",
+              "gap": -0.142727
+            },
+            {
+              "feature": "aps_fio2",
+              "gap": -0.119367
+            }
+          ],
+          "unsigned_hit": false,
+          "signed_hit": false,
+          "hits": []
+        },
+        {
+          "replicate": 9,
+          "top3": [
+            {
+              "feature": "aps_motor",
+              "gap": -0.314523
+            },
+            {
+              "feature": "aps_temperature",
+              "gap": -0.141091
+            },
+            {
+              "feature": "apv_oobintubday1",
+              "gap": -0.139761
+            }
+          ],
+          "unsigned_hit": false,
+          "signed_hit": false,
+          "hits": []
+        },
+        {
+          "replicate": 10,
+          "top3": [
+            {
+              "feature": "aps_motor",
+              "gap": -0.278841
+            },
+            {
+              "feature": "aps_fio2",
+              "gap": -0.148275
+            },
+            {
+              "feature": "aps_ph",
+              "gap": -0.145214
+            }
+          ],
+          "unsigned_hit": false,
+          "signed_hit": false,
+          "hits": []
+        },
+        {
+          "replicate": 11,
+          "top3": [
+            {
+              "feature": "aps_motor",
+              "gap": -0.280573
+            },
+            {
+              "feature": "aps_fio2",
+              "gap": -0.216028
+            },
+            {
+              "feature": "aps_intubated",
+              "gap": -0.154665
+            }
+          ],
+          "unsigned_hit": false,
+          "signed_hit": false,
+          "hits": []
+        },
+        {
+          "replicate": 12,
+          "top3": [
+            {
+              "feature": "aps_motor",
+              "gap": -0.235332
+            },
+            {
+              "feature": "aps_fio2",
+              "gap": -0.160431
+            },
+            {
+              "feature": "aps_intubated",
+              "gap": -0.136036
+            }
+          ],
+          "unsigned_hit": false,
+          "signed_hit": false,
+          "hits": []
+        },
+        {
+          "replicate": 13,
+          "top3": [
+            {
+              "feature": "aps_motor",
+              "gap": -0.400028
+            },
+            {
+              "feature": "apv_oobintubday1",
+              "gap": -0.167403
+            },
+            {
+              "feature": "aps_eyes",
+              "gap": -0.161427
+            }
+          ],
+          "unsigned_hit": false,
+          "signed_hit": false,
+          "hits": []
+        },
+        {
+          "replicate": 14,
+          "top3": [
+            {
+              "feature": "aps_motor",
+              "gap": -0.343484
+            },
+            {
+              "feature": "aps_fio2",
+              "gap": -0.10544
+            },
+            {
+              "feature": "apv_oobintubday1",
+              "gap": -0.101029
+            }
+          ],
+          "unsigned_hit": false,
+          "signed_hit": false,
+          "hits": []
+        },
+        {
+          "replicate": 15,
+          "top3": [
+            {
+              "feature": "aps_motor",
+              "gap": -0.276438
+            },
+            {
+              "feature": "aps_fio2",
+              "gap": -0.155205
+            },
+            {
+              "feature": "aps_intubated",
+              "gap": -0.114559
+            }
+          ],
+          "unsigned_hit": false,
+          "signed_hit": false,
+          "hits": []
+        },
+        {
+          "replicate": 16,
+          "top3": [
+            {
+              "feature": "aps_motor",
+              "gap": -0.377738
+            },
+            {
+              "feature": "apv_oobintubday1",
+              "gap": -0.163825
+            },
+            {
+              "feature": "aps_eyes",
+              "gap": -0.128701
+            }
+          ],
+          "unsigned_hit": false,
+          "signed_hit": false,
+          "hits": []
+        },
+        {
+          "replicate": 17,
+          "top3": [
+            {
+              "feature": "aps_motor",
+              "gap": -0.45449
+            },
+            {
+              "feature": "apv_oobintubday1",
+              "gap": -0.13299
+            },
+            {
+              "feature": "aps_temperature",
+              "gap": -0.124053
+            }
+          ],
+          "unsigned_hit": false,
+          "signed_hit": false,
+          "hits": []
+        },
+        {
+          "replicate": 18,
+          "top3": [
+            {
+              "feature": "aps_motor",
+              "gap": -0.312948
+            },
+            {
+              "feature": "aps_fio2",
+              "gap": -0.168945
+            },
+            {
+              "feature": "apv_oobintubday1",
+              "gap": -0.115252
+            }
+          ],
+          "unsigned_hit": false,
+          "signed_hit": false,
+          "hits": []
+        },
+        {
+          "replicate": 19,
+          "top3": [
+            {
+              "feature": "aps_motor",
+              "gap": -0.42934
+            },
+            {
+              "feature": "aps_temperature",
+              "gap": -0.139912
+            },
+            {
+              "feature": "aps_eyes",
+              "gap": -0.114653
+            }
+          ],
+          "unsigned_hit": false,
+          "signed_hit": false,
+          "hits": []
+        }
+      ],
+      "note": "the unsigned rule holds on 2 of 20 re-splits (re-split 2: aps_heartrate__missing +0.126; re-split 5: aps_heartrate__missing +0.105); both hits pull harder on ANSWERED stays, the opposite direction from the registered leak signature, so under a signed reading P4 holds on 0 of 20"
+    },
+    {
+      "id": "P5",
+      "registered": "The per-hospital arm returns pool-too-small for >= 1 and <= 6 of the 24 target hospitals (heavy-tailed hospital sizes; ~78% of hospitals have < 500 stays).",
+      "settled_by": "EICU_per_site.csv `reason`",
+      "verdict": "falsified",
+      "clauses": [
+        {
+          "clause": "the per-hospital arm returns pool-too-small for some of the 24 target hospitals",
+          "registered": ">= 1 and <= 6 of 24, per re-split",
+          "observed": "in range on 3 of 20 re-splits; counts [(0, 17), (1, 3)] (published split 0; total 3 of 480)",
+          "met": false
+        }
+      ],
+      "per_replicate": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "note": "the floor bit on fewer hospitals than registered: 3 pools of 480 over the 20 re-splits, never more than one per re-split"
+    },
+    {
+      "id": "P6",
+      "registered": "Mean coverage at the operative rung on the pooled arm is in [0.60, 0.95].",
+      "settled_by": "EICU_pooled.csv `coverage`",
+      "verdict": "confirmed",
+      "clauses": [
+        {
+          "clause": "mean coverage at the operative rung, pooled arm",
+          "registered": "[0.60, 0.95]",
+          "observed": "20 of 20 re-splits inside; mean 0.8904, range [0.8080, 0.9257]",
+          "met": true
+        }
+      ],
+      "per_replicate": [
+        0.8546,
+        0.8892,
+        0.808,
+        0.8884,
+        0.9107,
+        0.8559,
+        0.9114,
+        0.8596,
+        0.905,
+        0.9002,
+        0.8947,
+        0.9199,
+        0.858,
+        0.9182,
+        0.9198,
+        0.8586,
+        0.9029,
+        0.9215,
+        0.9055,
+        0.9257
+      ]
+    },
+    {
+      "id": "P7",
+      "registered": "Primary-cohort size lands in [130 000, 175 000] stays across 208 sites, and apache-result-linked retains <= 195 sites -- i.e. the APACHE-result restriction visibly deletes >= 13 hospitals.",
+      "settled_by": "EICU_attrition.csv",
+      "verdict": "partly",
+      "clauses": [
+        {
+          "clause": "primary-cohort size (settling quantity)",
+          "registered": "[130 000, 175 000] stays",
+          "observed": "164,322",
+          "met": true
+        },
+        {
+          "clause": "primary-cohort hospital count",
+          "registered": "208 sites",
+          "observed": "207 (208 in the raw unit-stay table; one hospital carries no stay with a known outcome)",
+          "met": false
+        },
+        {
+          "clause": "apache-result-linked hospital count",
+          "registered": "<= 195 sites (>= 13 hospitals deleted)",
+          "observed": "190 (17 deleted from the primary cohort)",
+          "met": true
+        }
+      ]
+    }
+  ]
+}

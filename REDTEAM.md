@@ -34,7 +34,7 @@ nothing actionable.
 - **R4 — salvaged.** The PI_CLIP comment (shift.py) and SPEC.md parenthetical now say the range gate
   guards only the widest corner and any inner-corner clip only *widens* [ρ_lo, ρ_hi] (conservative),
   replacing the false "containment only" claim. *(2026-08-25 pointer: certgate/shift.py:167-184 and
-  SPEC.md:267-275. Both were later reworded to REVIEW-FABLE B-3's corner-coverage phrasing, so
+  SPEC.md:267-275. Both were later reworded to REVIEW-FABLE B-3's (in git history) corner-coverage phrasing, so
   neither still contains "widens" or "containment only".)*
 - **R5 — salvaged.** Every conditional rate in the E1–E3 summaries now carries `n_certified`, and a
   zero-certificate rung reports `null` (not 0.0) with a "no certificates" figure annotation.
@@ -126,7 +126,7 @@ false test-citation parenthetical. Either way the action items are identical to 
   widens the ρ interval (conservative). *Salvage:* one-line rewording of the comment + SPEC
   parenthetical ("clip only widens the corner interval; range gate protects the widest corner").
   *(2026-08-25 pointer: the comment is now the `rho_box_interval` docstring, certgate/shift.py:167-184,
-  clip paragraph :178-181, with SPEC.md:267-275. Both were later reworded to REVIEW-FABLE B-3's
+  clip paragraph :178-181, with SPEC.md:267-275. Both were later reworded to REVIEW-FABLE B-3's (in git history)
   corner-coverage phrasing, so neither still contains "widens" or "containment only".)*
 - **R5 — E2 BBSE "0.0 violations" rests on 9 certified draws** (harness lens, filed minor,
   refuted). Wrong quantity: the guarantee bounds the *joint* event P(certify AND violate); over all

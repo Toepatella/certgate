@@ -18,11 +18,13 @@ the output directory.
 
 CLI:
 
-    python -m experiments.run_eicu --data DIR [--preflight] [--out experiments/out]
+    python -m experiments.run_eicu --data DIR --out DIR [--preflight]
             [--arm primary|apache-complete] [--replicates N] [--quick]
             [--no-reference-check]
 
---data is required in both modes. --preflight short-circuits after the profile.
+--data and --out are both required in both modes; --out has no default
+because the summary and provenance are written even when a run aborts, and
+the frozen release directory experiments/out/ must never be the accident. --preflight short-circuits after the profile.
 --replicates defaults to 1; the validity-replication arm is --replicates 20
 (= eicu_etl.EICU_SPLIT_REPLICATES). --quick caps replicates at 2 and skips
 figures.
@@ -108,10 +110,29 @@ EICU_SUMMARY_SECTIONS = ("EICU-PREFLIGHT", "EICU-PREDICTIONS",
 # adding no new threshold constant.
 # One marginal dimension at a time, never crossed, never per-hospital x
 # subgroup.
+# "aps_present" was APPENDED LAST on 2026-09-04 (SPEC pin amendment, fix
+# pass): it stratifies by whether a day-1 apacheApsVar row exists, from the
+# cohort's own presence column, so the five dimensions before it keep their
+# rows and their order in every EICU_subgroups.csv already on disk.
 # Ref: SPEC pin amendment, revision-2 item 3b; panel item S2-36; A5/A6
 # discipline.
 EICU_SUBGROUP_DIMS = ("age_band", "gender", "ethnicity",
-                      "hospitaladmitsource", "unittype")
+                      "hospitaladmitsource", "unittype", "aps_present")
+# The gloss the aps_present levels carry in the EICU-SUBGROUPS block. A row
+# can be absent for three reasons, and "early discharge" names only one.
+EICU_SUBGROUP_DIM_NOTES = {
+    "aps_present": (
+        "present = a day-1 apacheApsVar row exists for the stay; absent = no "
+        "day-1 APACHE row: APACHE-ineligible admission types, stays that "
+        "ended before the day-1 window closed, and hospitals that filed no "
+        "APACHE rows. Absence is outcome-informative (audit E-9), which is "
+        "why it is reported as a subgroup rather than imputed away.")}
+# ICU length of stay is a DENYLISTED feature (unitdischargeoffset). The
+# runner reads it as a diagnostic only, to count the stays and deaths that
+# ended inside the first 24 h: the prediction is made at ICU hour 24, so
+# those stays are ones the head would not have been asked about in
+# deployment. Aggregate counts only; the per-stay array never leaves memory.
+EICU_LOS_WINDOW_HOURS = etl.EICU_LOS_WINDOW_HOURS
 EICU_SUBGROUP_AGE_BANDS = ((18, 45), (45, 65), (65, 75), (75, 200))
 EICU_SUBGROUP_LABEL = ("[MEASURE] POST-HOC SUBGROUP DESCRIPTIVES (2026-08-20): "
                        "computed after the extract was read; certifies "
@@ -825,6 +846,87 @@ def _abstention_ranking(head, target_x, tau, feature_names,
                 n_declined=int(prof["n_declined"]), ranking=out)
 
 
+def _top_driver_coef_rank(head, feature_names, ranking):
+    """Where the top abstention driver sits in the head's |coefficient| order.
+
+    Rank 1 is the largest |coef| among all EICU_N_FEATURES standardized-space
+    coefficients. The reading the paper makes -- the top driver of abstention
+    is not simply the head's biggest weight -- is a claim about this number,
+    so it is emitted rather than left to a reader with the certificate."""
+    if not ranking:
+        return dict(feature=None, coef=None, abs_coef_rank=None,
+                    n_features=len(feature_names))
+    coef = np.asarray(head.coef, dtype=np.float64)
+    j = list(feature_names).index(ranking[0]["feature"])
+    order = np.argsort(-np.abs(coef), kind="mergesort")
+    rank = int(np.flatnonzero(order == j)[0]) + 1
+    return dict(feature=feature_names[j], coef=round(float(coef[j]), 6),
+                abs_coef_rank=rank, n_features=int(coef.size))
+
+
+def _coef_rank_block(entries):
+    """The per-rung entries plus their mode, min and max (scalars only)."""
+    ranks = [e["abs_coef_rank"] for e in entries.values()
+             if e.get("abs_coef_rank") is not None]
+    mode = None
+    if ranks:
+        counts = {}
+        for r in ranks:
+            counts[r] = counts.get(r, 0) + 1
+        mode = min(r for r, c in counts.items() if c == max(counts.values()))
+    return dict(
+        what=("rank of the top abstention driver (abstention_gap_ranking[0]) "
+              "in the head's |coefficient| ordering over all features; 1 = "
+              "the largest |coef|. One entry per certified (replicate, rung), "
+              "the same keys as abstention_gap_ranking."),
+        by_rung=entries,
+        summary=dict(n=len(ranks), mode=mode,
+                     min=(min(ranks) if ranks else None),
+                     max=(max(ranks) if ranks else None)))
+
+
+def _los_under_24h_row(los_hours, y, answered, replicate, operative_alpha,
+                       threshold=EICU_LOS_WINDOW_HOURS):
+    """Aggregate sub-threshold LOS counts for one replicate's target pool.
+
+    los_hours is the diagnostic-only per-stay array (NaN where the extract
+    carried no offset), y the pool's bool labels, answered the deployed mask or
+    None when no rung certified. Every value returned is a count."""
+    los = np.asarray(los_hours, dtype=np.float64)
+    y = np.asarray(y, dtype=bool)
+    fin = np.isfinite(los)
+    lt = fin & (los < float(threshold))
+    row = dict(replicate=replicate, operative_alpha=operative_alpha,
+               n_pool=int(y.size), n_deaths_pool=int(y.sum()),
+               n_los_unavailable_pool=int((~fin).sum()),
+               n_lt_24h_pool=int(lt.sum()),
+               n_deaths_lt_24h_pool=int((lt & y).sum()),
+               n_answered=None, n_declined=None,
+               n_lt_24h_answered=None, n_lt_24h_declined=None,
+               n_deaths_lt_24h_declined=None)
+    if answered is not None:
+        ans = np.asarray(answered, dtype=bool)
+        row.update(n_answered=int(ans.sum()), n_declined=int((~ans).sum()),
+                   n_lt_24h_answered=int((lt & ans).sum()),
+                   n_lt_24h_declined=int((lt & ~ans).sum()),
+                   n_deaths_lt_24h_declined=int((lt & y & ~ans).sum()))
+    return row
+
+
+def _share_75plus(x, feature_names):
+    """Share of rows aged 75+ among rows whose age was recorded, or None.
+
+    Same rule as _subgroup_masks: an imputed age carries the S_train mean and
+    is excluded through its age__missing sibling."""
+    idx = {n: i for i, n in enumerate(feature_names)}
+    age = np.asarray(x[:, idx["age"]], dtype=np.float64)
+    known = (x[:, idx["age__missing"]] == 0.0 if "age__missing" in idx
+             else np.ones(len(age), dtype=bool))
+    if not known.any():
+        return None
+    return round(float((age[known] >= 75.0).mean()), 4)
+
+
 def _bbse_block(report):
     """The BBSE outcome for one report, including why it declined.
 
@@ -905,6 +1007,20 @@ def _build_cohorts(x, y_raw, site_raw, idx, arm, replicate):
     return cohorts
 
 
+def _auc_brier(p, y):
+    """(AUC, Brier) of probabilities p against bool labels y, 6 dp.
+
+    AUC is None on a one-class subset (the ETL's tie-averaged rank AUC says
+    so itself); Brier is always defined on a non-empty subset."""
+    y = np.asarray(y, dtype=bool)
+    p = np.asarray(p, dtype=np.float64)
+    if p.size == 0:
+        return None, None
+    auc = _auc(p, y)
+    brier = round(float(np.mean((p - y.astype(np.float64)) ** 2)), 6)
+    return (None if auc is None else round(float(auc), 6)), brier
+
+
 def _comparator_row(head, report, alpha, target, comparator_p, replicate):
     """APACHE-IVa comparator on the answered set (aggregate rates only).
 
@@ -916,7 +1032,25 @@ def _comparator_row(head, report, alpha, target, comparator_p, replicate):
     across different denominators."""
     row = dict(replicate=replicate, alpha=alpha, n_answered=0,
                certgate_answered_err=None, apache_iva_brier_answered=None,
-               apache_iva_auc_answered=None, n_apache_available=0)
+               apache_iva_auc_answered=None, n_apache_available=0,
+               # Appended 2026-09-04: the head and the comparator on the WHOLE
+               # pool (every held-out stay, certified rung or not) and the
+               # head on the answered set, so the row no longer reports
+               # APACHE-IVa on the answered subset alone.
+               head_auc_pool=None, head_brier_pool=None,
+               head_auc_answered=None, head_brier_answered=None,
+               apache_iva_auc_pool=None, apache_iva_brier_pool=None,
+               n_apache_available_pool=0)
+    y_pool = np.asarray(target.y, dtype=bool)
+    p_head = np.asarray(head.predict_proba(target.x), dtype=np.float64)
+    row["head_auc_pool"], row["head_brier_pool"] = _auc_brier(p_head, y_pool)
+    p = np.asarray(comparator_p, dtype=np.float64)
+    avail_pool = np.isfinite(p)
+    row["n_apache_available_pool"] = int(avail_pool.sum())
+    if avail_pool.any():
+        row["apache_iva_auc_pool"], row["apache_iva_brier_pool"] = \
+            _auc_brier(p[avail_pool], y_pool[avail_pool])
+    row["_n_pool"] = int(y_pool.size)
     cert = _row_for(report, alpha)
     if cert is None or cert["status"] != "certified":
         return row, None
@@ -926,7 +1060,9 @@ def _comparator_row(head, report, alpha, target, comparator_p, replicate):
     n_ans = int(ans.sum())
     row["n_answered"] = n_ans
     row["certgate_answered_err"] = _rate(int(err[ans].sum()), n_ans)
-    p = np.asarray(comparator_p, dtype=np.float64)
+    if n_ans:
+        row["head_auc_answered"], row["head_brier_answered"] = \
+            _auc_brier(p_head[ans], y_pool[ans])
     avail = ans & np.isfinite(p)
     n_avail = int(avail.sum())
     row["n_apache_available"] = n_avail
@@ -1267,9 +1403,50 @@ def _figures(out, pooled_rows, per_site_rows, panel_payloads, verbose):
     _reliability_figure(out, panel_payloads, verbose)
 
 
+def _los_under_24h_summary(los_rows):
+    """Replicate means of the sub-24 h counts (scalars only, aggregate gate)."""
+    def _mean_frac(num, den):
+        vals = [r[num] / r[den] for r in los_rows
+                if r.get(num) is not None and r.get(den)]
+        return round(float(np.mean(vals)), 4) if vals else None
+    return dict(
+        unit="hours", threshold=EICU_LOS_WINDOW_HOURS,
+        what=("ICU stays (unitdischargeoffset, a DENYLISTED feature read as a "
+              "diagnostic only) that ended inside the first 24 h, counted on "
+              "the held-out target pool of each replicate and on its "
+              "declined / answered halves at the deployed operative tau. "
+              "The prediction is made at ICU hour 24, so a stay that ended "
+              "before then is one the head would not have been asked about "
+              "in deployment; the cohort keeps them and this block says how "
+              "many there are. Means over replicates; no per-stay value is "
+              "written."),
+        n_replicates=len(los_rows),
+        mean_n_pool=_mean_of("n_pool", los_rows, 2),
+        mean_n_lt_24h_pool=_mean_of("n_lt_24h_pool", los_rows, 2),
+        mean_frac_lt_24h_pool=_mean_frac("n_lt_24h_pool", "n_pool"),
+        mean_frac_lt_24h_of_declined=_mean_frac("n_lt_24h_declined",
+                                                "n_declined"),
+        mean_frac_lt_24h_of_answered=_mean_frac("n_lt_24h_answered",
+                                                "n_answered"),
+        mean_frac_declined_among_lt_24h=_mean_frac("n_lt_24h_declined",
+                                                   "n_lt_24h_pool"),
+        mean_n_deaths_pool=_mean_of("n_deaths_pool", los_rows, 2),
+        mean_n_deaths_lt_24h_pool=_mean_of("n_deaths_lt_24h_pool", los_rows,
+                                           2),
+        mean_frac_deaths_lt_24h_of_deaths=_mean_frac("n_deaths_lt_24h_pool",
+                                                     "n_deaths_pool"),
+        mean_frac_deaths_lt_24h_of_pool=_mean_frac("n_deaths_lt_24h_pool",
+                                                   "n_pool"),
+        mean_n_los_unavailable_pool=_mean_of("n_los_unavailable_pool",
+                                             los_rows, 2))
+
+
 def _pooled_summary(pooled_rows, *, arm, replicates, n_records, n_sites,
-                    site_counts, warnings):
-    """The EICU-POOLED payload: per-rung rollup plus the pre-declared verdicts."""
+                    site_counts, warnings, los_rows=None):
+    """The EICU-POOLED payload: per-rung rollup plus the pre-declared verdicts.
+
+    los_rows (appended 2026-09-04) adds the sub-24 h block after the frozen
+    keys; None keeps the payload exactly as it was."""
     out = {"arm": arm, "replicates": replicates, "n_records": n_records,
            "n_sites": n_sites,
            "estimand": (
@@ -1324,6 +1501,8 @@ def _pooled_summary(pooled_rows, *, arm, replicates, n_records, n_sites,
                  "never applies it: restricting the cohort would move the site "
                  "population the estimand refers to.")}
     out["warnings"] = warnings
+    if los_rows is not None:
+        out["los_under_24h"] = _los_under_24h_summary(los_rows)
     return out
 
 
@@ -1353,6 +1532,14 @@ def _per_site_summary(per_site_rows, *, arm):
         errs = [x["answered_err_rate"] for x in certs
                 if x["answered_err_rate"] is not None]
         cov = [x["coverage"] for x in certs if x["coverage"] is not None]
+        # Appended 2026-09-04: does the per-hospital answered error track the
+        # hospital's share of patients aged 75+? Rank correlation over every
+        # certified pool (replicate x hospital) carrying both numbers.
+        pairs = [(x["share_75plus"], x["answered_err_rate"]) for x in certs
+                 if x.get("share_75plus") is not None
+                 and x["answered_err_rate"] is not None]
+        rho = (_spearman([a for a, _ in pairs], [b for _, b in pairs])
+               if len(pairs) >= 3 else None)
         out["rungs"][_alpha_key(alpha)] = dict(
             n_pools=len(rows), n_certified=len(certs),
             certify_rate=_rate(len(certs), len(rows)),
@@ -1362,7 +1549,16 @@ def _per_site_summary(per_site_rows, *, arm):
                                            len(certs)),
             note=("per-hospital hard-violation is a DISPERSION diagnostic with "
                   "NO delta target: the certificate bounds the site-population "
-                  "average, not individual hospitals (audit V1)."))
+                  "average, not individual hospitals (audit V1)."),
+            share_75plus_vs_answered_err_spearman=rho,
+            n_pools_in_spearman=len(pairs),
+            share_75plus_note=(
+                "share_75plus is the share of a hospital's held-out stays "
+                "aged 75 or over among stays with a recorded age; the "
+                "Spearman correlation is against that hospital's answered "
+                "error rate over every certified pool at this rung, so pools "
+                "of the same hospital in different re-splits are not "
+                "independent observations."))
     return out
 
 
@@ -1382,6 +1578,29 @@ def _comparator_summary(comparator_rows, *, arm):
                if x["_certgate_err_on_apache_subset"] is not None]
         avail = [x["n_apache_available"] for x in rows]
         ans = [x["n_answered"] for x in rows]
+        # Appended 2026-09-04: whole-pool scores are defined on every row of
+        # the rung, certified or not, so they are averaged over all rows.
+        all_rows = [x for x in comparator_rows if x["alpha"] == alpha]
+        appended = dict(
+            mean_head_auc_pool=_mean_of("head_auc_pool", all_rows),
+            mean_head_brier_pool=_mean_of("head_brier_pool", all_rows),
+            mean_head_auc_answered=_mean_of("head_auc_answered", rows),
+            mean_head_brier_answered=_mean_of("head_brier_answered", rows),
+            mean_apache_iva_auc_pool=_mean_of("apache_iva_auc_pool",
+                                              all_rows),
+            mean_apache_iva_brier_pool=_mean_of("apache_iva_brier_pool",
+                                                all_rows),
+            apache_available_share_pool=_rate(
+                int(np.sum([x["n_apache_available_pool"] for x in all_rows])),
+                int(np.sum([x.get("_n_pool") or 0 for x in all_rows])))
+            if any(x.get("_n_pool") for x in all_rows) else None,
+            n_rows_pool=len(all_rows),
+            pool_note=("*_pool fields score EVERY held-out stay of the "
+                       "replicate's target pool, certified rung or not: the "
+                       "head's on the full pool, APACHE-IVa's on the pool "
+                       "records that carry a comparator value. *_answered "
+                       "fields are on the answered set of a certified rung "
+                       "only."))
         out["rungs"][_alpha_key(alpha)] = dict(
             n_certified_replicates=len(rows),
             mean_certgate_answered_err=round(float(np.mean(cg)), 4)
@@ -1397,8 +1616,15 @@ def _comparator_summary(comparator_rows, *, arm):
                   "that CARRY a comparator value; that coverage is "
                   "site-correlated, so the subset-matched CertGate error is "
                   "reported beside them rather than compared across different "
-                  "denominators."))
+                  "denominators."),
+            **appended)
     return out
+
+
+def _mean_of(key, rows, ndigits=4):
+    """Mean of a possibly-None field over rows, or None when nothing is set."""
+    vals = [x.get(key) for x in rows if x.get(key) is not None]
+    return round(float(np.mean(vals)), ndigits) if vals else None
 
 
 def _panel_ci_statuses(node, sink):
@@ -1568,7 +1794,14 @@ def _subgroup_masks(x, feature_names):
         label = f"{lo}-{hi - 1}" if hi < 200 else f"{lo}+"
         bands[label] = (~miss) & (age >= lo) & (age < hi)
     masks["age_band"] = bands
+    # The presence flag is a single 0/1 column, not a one-hot family, so its
+    # two levels are named here rather than parsed from a "dim=" prefix.
+    if "aps_present" in EICU_SUBGROUP_DIMS and "aps_present" in idx:
+        flag = x[:, idx["aps_present"]]
+        masks["aps_present"] = {"present": flag == 1.0, "absent": flag == 0.0}
     for dim in EICU_SUBGROUP_DIMS[1:]:
+        if dim in masks:
+            continue
         prefix = dim + "="
         levels = {}
         for name, col in idx.items():
@@ -1653,6 +1886,7 @@ def _subgroup_summary(rows, *, arm):
                     1 for r in sub if r["status"] == "ok"
                     and r["answered_err_rate"] is None))
         out["dims"][dim] = levels
+    out["dim_notes"] = dict(EICU_SUBGROUP_DIM_NOTES)
     return out
 
 
@@ -1879,7 +2113,8 @@ def _write_artifacts(out, *, data_dir, arm, replicates, quick, verbose,
                      per_site_rows, comparator_rows, composition_rows,
                      bbse_rows, abstention, leak_rows, panel_payloads,
                      panel_curve_rows, subgroup_rows, faith_rows,
-                     faith_scalars, certificate, warnings):
+                     faith_scalars, certificate, warnings, los_rows=None,
+                     coef_ranks=None):
     """Tables, diagnostics, certificate, panel artifacts, figures, summary.
 
     The write half of run_certification, split out at the author's own comment
@@ -1903,13 +2138,20 @@ def _write_artifacts(out, *, data_dir, arm, replicates, quick, verbose,
                  ["replicate", "arm", "site", "alpha", "n_target", "reason",
                   "certified", "tau", "coverage", "n_answered",
                   "answered_err_rate", "hard", "numbedscategory",
-                  "teachingstatus", "region", "aps_coverage", "apv_coverage"],
+                  "teachingstatus", "region", "aps_coverage", "apv_coverage",
+                  # appended 2026-09-04; the columns before it are frozen
+                  "share_75plus"],
                  "EICU_per_site.csv")
     _write_table(os.path.join(out, f"{EICU_OUT_PREFIX}_comparator.csv"),
                  comparator_rows,
                  ["replicate", "alpha", "n_answered", "certgate_answered_err",
                   "apache_iva_brier_answered", "apache_iva_auc_answered",
-                  "n_apache_available"], "EICU_comparator.csv")
+                  "n_apache_available",
+                  # appended 2026-09-04; the columns before it are frozen
+                  "head_auc_pool", "head_brier_pool", "head_auc_answered",
+                  "head_brier_answered", "apache_iva_auc_pool",
+                  "apache_iva_brier_pool", "n_apache_available_pool"],
+                 "EICU_comparator.csv")
 
     # ---- diagnostics + certificate ---------------------------------------
     diagnostics = {
@@ -1957,6 +2199,10 @@ def _write_artifacts(out, *, data_dir, arm, replicates, quick, verbose,
         "n_target_sites_without_hospital_strata": len(sites_without_strata),
         "n_hospital_strata_rows": len(hospital_strata),
         "warnings": warnings,
+        # Appended 2026-09-04; every key above is frozen (gate 2 projects
+        # onto them). Per-replicate COUNTS and one small dict per rung.
+        "los_under_24h": list(los_rows or []),
+        "top_driver_coef_rank": _coef_rank_block(dict(coef_ranks or {})),
     }
     _write_json(os.path.join(out, f"{EICU_OUT_PREFIX}_diagnostics.json"),
                 diagnostics, "EICU_diagnostics.json")
@@ -2023,7 +2269,8 @@ def _write_artifacts(out, *, data_dir, arm, replicates, quick, verbose,
         "pooled": _pooled_summary(pooled_rows, arm=arm, replicates=replicates,
                                   n_records=n_records,
                                   n_sites=len(coverage_by_site),
-                                  site_counts=site_counts, warnings=warnings),
+                                  site_counts=site_counts, warnings=warnings,
+                                  los_rows=los_rows),
         "per_site": _per_site_summary(per_site_rows, arm=arm),
         "comparator": _comparator_summary(comparator_rows, arm=arm),
         "reliability": _reliability_summary(panel_payloads, arm=arm,
@@ -2116,6 +2363,14 @@ def run_certification(data_dir, out, *, arm="primary", replicates=1,
     panel_payloads, panel_curve_rows = [], []
     subgroup_rows = []
     faith_rows, faith_scalars = [], []
+    # Appended 2026-09-04 (fix pass): three diagnostics that read nothing new
+    # from the extract and consume no _rng draw -- the sub-24 h LOS counts,
+    # the coefficient rank of the top abstention driver, and (per site) the
+    # 75+ age share. Each is aggregate by construction and gated on write.
+    los_rows, coef_ranks = [], {}
+    los_hours = np.asarray(meta.get("los_hours",
+                                    np.full(n_records, np.nan)),
+                           dtype=np.float64)
     warnings.append(rp.POST_HOC_LABEL)
     certificate = None
     impute_fill = {}
@@ -2199,9 +2454,11 @@ def run_certification(data_dir, out, *, arm="primary", replicates=1,
                 leak_alarm=bool(leak["auc_alarm"] or leak["ablation_alarm"]),
                 decline_reason=ev["decline_reason"]))
             if ev["certified"]:
-                abstention[f"replicate{r}_alpha{_alpha_key(alpha)}"] = \
-                    _abstention_ranking(head, target.x, ev["tau"],
-                                        feature_names)
+                key = f"replicate{r}_alpha{_alpha_key(alpha)}"
+                abstention[key] = _abstention_ranking(head, target.x,
+                                                      ev["tau"], feature_names)
+                coef_ranks[key] = _top_driver_coef_rank(
+                    head, feature_names, abstention[key]["ranking"])
             crow, subset_err = _comparator_row(head, rep_pooled, alpha, target,
                                                comparator[t_idx], r)
             crow["_certgate_err_on_apache_subset"] = subset_err
@@ -2275,6 +2532,13 @@ def run_certification(data_dir, out, *, arm="primary", replicates=1,
                 panel_curve_rows.append({"replicate": r, "arm": arm,
                                          "post_hoc": rp.POST_HOC_LABEL, **row})
 
+        # ---- sub-24 h stays and deaths in this replicate's pool -----------
+        # The deployed mask is the report's own, never a rounded tau.
+        los_rows.append(_los_under_24h_row(
+            los_hours[t_idx], target.y,
+            (rep_pooled["answered_mask"] if op_pooled else None), r,
+            (float(op_pooled["alpha"]) if op_pooled else None)))
+
         # ---- post-hoc subgroup descriptives (revision-2 item 3b) ----------
         # Pooled arm only, at the deployed operative tau, marginal dimensions
         # only. Descends entirely from data seen after the freeze: labeled,
@@ -2329,6 +2593,7 @@ def run_certification(data_dir, out, *, arm="primary", replicates=1,
             if not strat["found"]:
                 sites_without_strata.add(site)
             cov = coverage_by_site.get(site, {})
+            share_75 = _share_75plus(x_h, feature_names)
             for alpha in ALPHA_LADDER:
                 ev = _eval_rung(head, rep_h, alpha, x_h, y_h)
                 per_site_rows.append(dict(
@@ -2344,7 +2609,8 @@ def run_certification(data_dir, out, *, arm="primary", replicates=1,
                     teachingstatus=strat["teachingstatus"],
                     region=strat["region"],
                     aps_coverage=cov.get("aps_coverage"),
-                    apv_coverage=cov.get("apv_coverage")))
+                    apv_coverage=cov.get("apv_coverage"),
+                    share_75plus=share_75))
 
     # ---- artifacts + summary payload, through the gated writers -----------
     return _write_artifacts(
@@ -2360,7 +2626,7 @@ def run_certification(data_dir, out, *, arm="primary", replicates=1,
         panel_payloads=panel_payloads, panel_curve_rows=panel_curve_rows,
         subgroup_rows=subgroup_rows, faith_rows=faith_rows,
         faith_scalars=faith_scalars, certificate=certificate,
-        warnings=warnings)
+        warnings=warnings, los_rows=los_rows, coef_ranks=coef_ranks)
 
 
 # ------------------------------------------------------- summary + driver ---
@@ -2461,8 +2727,14 @@ def main(argv=None) -> dict:
     ap.add_argument("--preflight", action="store_true",
                     help="profile the extract and write the a-priori "
                          "predictions; build no features and certify nothing")
-    ap.add_argument("--out", default=os.path.join("experiments", "out"),
-                    help="output directory (aggregate artifacts only)")
+    # REQUIRED since 2026-09-04: the old default was experiments/out/, the
+    # frozen release directory, and the summary + provenance are written in
+    # a finally: block even on --preflight. A forgotten flag must not be able
+    # to touch a byte-identical-by-gate artifact.
+    ap.add_argument("--out", required=True,
+                    help="output directory (aggregate artifacts only); "
+                         "REQUIRED -- use a fresh directory, never "
+                         "experiments/out/")
     ap.add_argument("--arm", default=etl.EICU_ARMS[0],
                     choices=list(etl.EICU_ARMS),
                     help="cohort arm; apache-linked (day-1 window complete, "

@@ -1,0 +1,2439 @@
+{
+  "_run": {
+    "utc": "2026-09-07T01:29:07+00:00",
+    "git_sha": "f48d3b4ec5b7f7d92021e4ec75f8127bf83de34d",
+    "inputs": {
+      "experiments/out/EICU_reliability_panel.json": "7c39f89f9dbd8630b5adc412950c1be98852d45b3373004871e81b8c8a3f6647",
+      "experiments/out/EICU_pooled.csv": "3036ae120d70a8bf1d048f998ab710d36b6bdd0f3148893d109185778ff58f18",
+      "experiments/out/EICU_certificate.json": "7e63e5e02df4749415c54883016fed4bf798a168eb666e71f697f5f0c06056a9",
+      "experiments/out/EICU_per_site.csv": "c85ea2c17fb878a14dd02837cfd8c22b42dc7d6862c03e82d1a9fca4ebadb00a",
+      "experiments/out/EICU_diagnostics.json": "c357e8a7e873f7b1d974df055790f07aad062894d3ac11d8c57559e0dd12f04d",
+      "experiments/out/EICU_preflight.json": "5b36918850ff4545580f56110ac425fd5b729670ae7756c953164a30cfab4c1a",
+      "experiments/out/EICU_attrition.csv": "51784a55d02d5d03580f4e50b270ecc156c760307a8f6c9e6619b191c34a2ea9",
+      "experiments/out-subgroups/EICU_subgroups.csv": "3f3552efb865ea19e72b734a48cedea4369f5c8ef32d1f9a2292565dba254c43",
+      "experiments/out-faithfulness/EICU_faithfulness.csv": "7dd41bf5d34bc3054a3fd48990eb7d63e46487889566ffff4296dac15d017a9b",
+      "experiments/out-sens/EICU_pooled.csv": "cc3f9559bafea50a8ebb829ac8590ea91aca1f08a59f77df7160c4cd8e7b0e64",
+      "experiments/out-sens/EICU_attrition.csv": "eb60cf1dc603412b2d6a8ae8088dfe868720bf205f9e7eb72cc06c1505c982db",
+      "experiments/out/E1_validity.csv": "ca59f0b893286f251d9d1657f61abd945a81e45ab362fbcb151867417e683c8a",
+      "experiments/out/E9_bbse_frontier.csv": "40d481d9753d8eedb09f8eb3a4a19b638c81e751ba87ea40aab64a6a80ba4d5a",
+      "experiments/out/E9_fnr.csv": "205dcae9eacb2a028d01fb402fcb5297d8b358b2d63a473ce6372c6f9ed24754",
+      "experiments/out/summary.md": "98b146bb141d3590184c439fb9a03bdfa78e48e065eff7db5b6a1a931abb3c82",
+      "experiments/out-e9a-rescore/E9a_rescore.json": "bd33cafe2ecc4245b935e5e51c6730375026f1476a1a75b93eb2f9bfa2eebde0",
+      "experiments/out-e9b-positives/E9b_fnr_positives.json": "561c62d4f86a839c7453486f776a701cd3b9c718d0fda65b1c8d86d26afb81ba",
+      "experiments/out-bbse-probe/BBSE_probe.json": "ffebfc416cfdd1089c5bba62c65df68c719735f28300caa1d25cdba5d083375a",
+      "experiments/out-settled/EICU-PREDICTIONS-SETTLED.json": "059e8e4a67725453914a2868c2ab4e6066314097ba107db0d191675a7558fbb0",
+      "experiments/out-rev2/EICU_pooled.csv": "3036ae120d70a8bf1d048f998ab710d36b6bdd0f3148893d109185778ff58f18",
+      "experiments/out-rev2/EICU_faithfulness.csv": "05d1155b627b9a58da0e5b309df57a070ae03599f1b52182355962f20820053c",
+      "experiments/out-rev2/EICU_diagnostics.json": "088d47f6a198f6aef40e70f9e7ebb2f090a3e8e66043d98cefe228cc05cfd057"
+    }
+  },
+  "post_hoc": "[MEASURE] POST-HOC (2026-09-04): read-only derivation from released artifacts for the fix pass; certifies nothing, settles no registered prediction, and no certified quantity descends from it.",
+  "composition_20_resplits": {
+    "answered": {
+      "observed_positive_fraction": {
+        "n": 20,
+        "mean": 0.0524,
+        "sd": 0.0076,
+        "min": 0.0388,
+        "max": 0.0643
+      },
+      "predicted_positive_fraction": {
+        "n": 20,
+        "mean": 0.0087,
+        "sd": 0.0029,
+        "min": 0.0049,
+        "max": 0.0167
+      }
+    },
+    "declined": {
+      "observed_positive_fraction": {
+        "n": 20,
+        "mean": 0.3803,
+        "sd": 0.0464,
+        "min": 0.2677,
+        "max": 0.4392
+      },
+      "predicted_positive_fraction": {
+        "n": 20,
+        "mean": 0.2424,
+        "sd": 0.0437,
+        "min": 0.1611,
+        "max": 0.3239
+      }
+    },
+    "all": {
+      "observed_positive_fraction": {
+        "n": 20,
+        "mean": 0.0874,
+        "sd": 0.0071,
+        "min": 0.0788,
+        "max": 0.1038
+      },
+      "predicted_positive_fraction": {
+        "n": 20,
+        "mean": 0.0333,
+        "sd": 0.0042,
+        "min": 0.0248,
+        "max": 0.0413
+      }
+    },
+    "note": "means over the 20 re-splits of the panel's composition block; the published split (replicate 0) is one of them"
+  },
+  "head_auc_s_cal": {
+    "set": "S_cal (the 74 calibration hospitals; run_eicu leak probe, head_auc_oos)",
+    "n": 20,
+    "mean": 0.8618,
+    "sd": 0.0037,
+    "min": 0.8544,
+    "max": 0.8672,
+    "argmax_replicate": 4,
+    "max_value": 0.867222,
+    "ablation_drop": {
+      "n": 20,
+      "mean": 0.0043,
+      "sd": 0.0012,
+      "min": 0.0009,
+      "max": 0.0063
+    },
+    "note": "the manuscript's 'peaks at 0.867' is this maximum, replicate 4, on S_cal; pool and answered-set AUC come from the out-rev2 re-emission when present"
+  },
+  "calibration_20_resplits": {
+    "answered": {
+      "slope": {
+        "n": 20,
+        "mean": 0.9795,
+        "sd": 0.0644,
+        "min": 0.8664,
+        "max": 1.0978
+      },
+      "intercept": {
+        "n": 20,
+        "mean": -0.0607,
+        "sd": 0.2156,
+        "min": -0.4759,
+        "max": 0.3057
+      },
+      "ece": {
+        "n": 20,
+        "mean": 0.0065,
+        "sd": 0.0022,
+        "min": 0.0032,
+        "max": 0.011
+      }
+    },
+    "declined": {
+      "slope": {
+        "n": 20,
+        "mean": 0.8619,
+        "sd": 0.079,
+        "min": 0.7151,
+        "max": 1.0028
+      },
+      "intercept": {
+        "n": 20,
+        "mean": -0.1097,
+        "sd": 0.1439,
+        "min": -0.3748,
+        "max": 0.1294
+      },
+      "ece": {
+        "n": 20,
+        "mean": 0.0305,
+        "sd": 0.0126,
+        "min": 0.0102,
+        "max": 0.0525
+      }
+    },
+    "skill_margin_answered": {
+      "n": 20,
+      "mean": 0.0046,
+      "sd": 0.0014,
+      "min": 0.0026,
+      "max": 0.0084
+    },
+    "note": "post-hoc panel, descriptive; skill_margin_answered is constant-rule error minus head error on the answered set, i.e. the head's margin over the constant rule"
+  },
+  "three_way_composition": {
+    "published_split": {
+      "predicted_class": 0.0049,
+      "bbse_implied": 0.0307,
+      "oracle": 0.0458,
+      "rho_point": 0.6684,
+      "rho_box": [
+        0.0684,
+        1.9857
+      ],
+      "n_predicted_positive": 63,
+      "expected_n_positive_bbse": 397.8,
+      "n_positive_oracle": 594
+    },
+    "bbse_transfer": {
+      "q_observed": 0.0299,
+      "c0": 0.0144,
+      "c1": 0.2605,
+      "pi_s": 0.0912,
+      "implied_target_prevalence": 0.0628,
+      "understatement_of_answered_positive_load": 0.33,
+      "note": "expected_q_at_observed_prevalence uses the pool's oracle prevalence from the 20-re-split block; a q below it means the auxiliary-split confusion rates do not transfer to the held-out hospitals",
+      "pool_prevalence_observed": 0.0898,
+      "expected_q_at_observed_prevalence": 0.0365,
+      "true_odds_ratio_vs_pi_s": 0.983
+    },
+    "per_replicate": {
+      "n": 20,
+      "mean": 0.0534,
+      "sd": 0.016,
+      "min": 0.0307,
+      "max": 0.1002
+    },
+    "per_replicate_oracle": {
+      "n": 20,
+      "mean": 0.0524,
+      "sd": 0.0076,
+      "min": 0.0388,
+      "max": 0.0643
+    }
+  },
+  "primary_pooled": {
+    "certified_alpha0_10": {
+      "k": 20,
+      "n": 20,
+      "rate": 1.0,
+      "ci95": [
+        0.8316,
+        1.0
+      ]
+    },
+    "certified_alpha0_05": {
+      "k": 0,
+      "n": 20,
+      "rate": 0.0,
+      "ci95": [
+        0.0,
+        0.1684
+      ]
+    },
+    "rm_exceed": {
+      "k": 0,
+      "n": 20,
+      "rate": 0.0,
+      "ci95": [
+        0.0,
+        0.1684
+      ]
+    },
+    "mean_coverage": 0.8904,
+    "mean_tau": 0.793,
+    "rm_fresh": {
+      "n": 20,
+      "mean": 0.0478,
+      "sd": 0.0072,
+      "min": 0.0348,
+      "max": 0.0593
+    },
+    "answered_err": {
+      "n": 20,
+      "mean": 0.0478,
+      "sd": 0.0067,
+      "min": 0.0352,
+      "max": 0.0568
+    },
+    "per_site_exceed_frac_mean": 0.0271,
+    "n_target": {
+      "n": 20,
+      "mean": 19267.0,
+      "sd": 3303.0,
+      "min": 13667.0,
+      "max": 27021.0
+    },
+    "n_cal_carrying": 74,
+    "cohort": {
+      "n_stays": 164322,
+      "n_sites": 207,
+      "prevalence": 0.088868,
+      "n_sites_apache_result_linked": 190
+    }
+  },
+  "per_hospital_dispersion": {
+    "pools": 480,
+    "certified": 477,
+    "refused": {
+      "pool-too-small": 3
+    },
+    "hard": {
+      "k": 7,
+      "n": 477,
+      "rate": 0.0147,
+      "ci95": [
+        0.0059,
+        0.03
+      ]
+    },
+    "hospitals_with_hard_violations": {
+      "hosp-131": {
+        "appearances": 4,
+        "n_hard": 4,
+        "n_target": 112,
+        "beds": "<100",
+        "teaching": "f",
+        "region": "South",
+        "coverage_range": [
+          0.8125,
+          0.9018
+        ],
+        "answered_err_range": [
+          0.1771,
+          0.2079
+        ]
+      },
+      "hosp-273": {
+        "appearances": 4,
+        "n_hard": 3,
+        "n_target": 132,
+        "beds": "100 - 249",
+        "teaching": "f",
+        "region": "Midwest",
+        "coverage_range": [
+          0.3561,
+          0.5833
+        ],
+        "answered_err_range": [
+          0.1277,
+          0.2857
+        ]
+      }
+    },
+    "answered_err": {
+      "median": 0.0448,
+      "p10": 0.0188,
+      "p90": 0.0776,
+      "max": 0.2857
+    }
+  },
+  "published_split": {
+    "n_target": 15169,
+    "n_answered": 12964,
+    "n_declined": 2205,
+    "n_predicted_positive_answered": 63,
+    "positive_call_rate_answered": 0.0049,
+    "deaths_total": 1362,
+    "deaths_declined": 768,
+    "deaths_answered": 594,
+    "deaths_answered_caught_tp": 57,
+    "deaths_answered_missed_fn": 537,
+    "death_shares": {
+      "deferred": 0.564,
+      "answered_missed": 0.394,
+      "answered_caught": 0.042
+    },
+    "answered_error": 0.0419,
+    "answered_mortality": 0.0458,
+    "answered_error_over_mortality": 0.914,
+    "fn_share_of_answered_deaths": 0.904,
+    "constant_rule_margin_rep0": 0.0039,
+    "note": "published split = replicate 0; the constant survive-everyone rule errs at the answered mortality, so the head's margin over it is answered_mortality - answered_error"
+  },
+  "over_cap_indicators": {
+    "cap": 2.0,
+    "n_over_cap": 2,
+    "indicators": {
+      "apv_ejectfx__missing": {
+        "prevalence_ratio": 4.333,
+        "n_missing": 161531,
+        "n_present": 2791,
+        "prevalence_missing": 0.090045,
+        "prevalence_present": 0.020781,
+        "in_figure3_top_ten": false
+      },
+      "apv_electivesurgery__missing": {
+        "prevalence_ratio": 2.6552,
+        "n_missing": 133738,
+        "n_present": 30584,
+        "prevalence_missing": 0.100532,
+        "prevalence_present": 0.037863,
+        "in_figure3_top_ten": false
+      }
+    },
+    "whole_row_flags": {
+      "aps_present": 0.5064,
+      "apv_present": 0.5064
+    }
+  },
+  "p4_signed": {
+    "rule": "an APACHE-absence feature (aps_present, apv_present or an *__missing sibling) in the top 3 of the |gap| ranking",
+    "unsigned_satisfied": 2,
+    "signed_satisfied": 0,
+    "n_replicates": 20,
+    "exceptions": [
+      {
+        "replicate": 2,
+        "hits": [
+          {
+            "feature": "aps_heartrate__missing",
+            "rank": 3,
+            "gap": 0.126034
+          }
+        ]
+      },
+      {
+        "replicate": 5,
+        "hits": [
+          {
+            "feature": "aps_heartrate__missing",
+            "rank": 3,
+            "gap": 0.105179
+          }
+        ]
+      }
+    ],
+    "note": "a negative gap means the feature carries more attribution on declined stays (the registered leak direction); every exception's gap is positive, so under a signed reading P4 is satisfied on none",
+    "top_driver_all_replicates": [
+      "aps_motor"
+    ]
+  },
+  "fairness": {
+    "n_cells": 900,
+    "cells_status_ok": 570,
+    "cells_suppressed": 330,
+    "cells_resolvable_answered_err": 563,
+    "cells_over_alpha": {
+      "n": 8,
+      "by_level": {
+        "hospitaladmitsource=Acute Care/Floor": 1,
+        "hospitaladmitsource=Other Hospital": 1,
+        "hospitaladmitsource=Step-Down Unit (SDU)": 6
+      },
+      "max": 0.1203,
+      "rows": [
+        {
+          "replicate": 10,
+          "dim": "hospitaladmitsource",
+          "level": "Acute Care/Floor",
+          "answered_err_rate": 0.1085,
+          "n_answered": 387
+        },
+        {
+          "replicate": 19,
+          "dim": "hospitaladmitsource",
+          "level": "Other Hospital",
+          "answered_err_rate": 0.1056,
+          "n_answered": 161
+        },
+        {
+          "replicate": 1,
+          "dim": "hospitaladmitsource",
+          "level": "Step-Down Unit (SDU)",
+          "answered_err_rate": 0.1169,
+          "n_answered": 402
+        },
+        {
+          "replicate": 2,
+          "dim": "hospitaladmitsource",
+          "level": "Step-Down Unit (SDU)",
+          "answered_err_rate": 0.1119,
+          "n_answered": 143
+        },
+        {
+          "replicate": 11,
+          "dim": "hospitaladmitsource",
+          "level": "Step-Down Unit (SDU)",
+          "answered_err_rate": 0.1203,
+          "n_answered": 266
+        },
+        {
+          "replicate": 14,
+          "dim": "hospitaladmitsource",
+          "level": "Step-Down Unit (SDU)",
+          "answered_err_rate": 0.1186,
+          "n_answered": 177
+        },
+        {
+          "replicate": 15,
+          "dim": "hospitaladmitsource",
+          "level": "Step-Down Unit (SDU)",
+          "answered_err_rate": 0.1003,
+          "n_answered": 289
+        },
+        {
+          "replicate": 18,
+          "dim": "hospitaladmitsource",
+          "level": "Step-Down Unit (SDU)",
+          "answered_err_rate": 0.1135,
+          "n_answered": 185
+        }
+      ]
+    },
+    "row_means_all_below_alpha": true,
+    "row_mean_max": 0.084,
+    "table_s8_rows": [
+      {
+        "dim": "age_band",
+        "level": "18-44",
+        "n_cells": 20,
+        "mean_n": 2839.8,
+        "coverage_mean": 0.9631,
+        "coverage_min": 0.9203,
+        "answered_err_mean": 0.0193,
+        "answered_err_max": 0.0281,
+        "cells_over_alpha": 0,
+        "cells_resolvable": 20,
+        "answered_err_suppressed": 0,
+        "declined_err_suppressed": 11
+      },
+      {
+        "dim": "age_band",
+        "level": "45-64",
+        "n_cells": 20,
+        "mean_n": 6554.5,
+        "coverage_mean": 0.9192,
+        "coverage_min": 0.8608,
+        "answered_err_mean": 0.0391,
+        "answered_err_max": 0.0491,
+        "cells_over_alpha": 0,
+        "cells_resolvable": 20,
+        "answered_err_suppressed": 0,
+        "declined_err_suppressed": 0
+      },
+      {
+        "dim": "age_band",
+        "level": "65-74",
+        "n_cells": 20,
+        "mean_n": 4374.6,
+        "coverage_mean": 0.8875,
+        "coverage_min": 0.8063,
+        "answered_err_mean": 0.0497,
+        "answered_err_max": 0.0637,
+        "cells_over_alpha": 0,
+        "cells_resolvable": 20,
+        "answered_err_suppressed": 0,
+        "declined_err_suppressed": 0
+      },
+      {
+        "dim": "age_band",
+        "level": "75+",
+        "n_cells": 20,
+        "mean_n": 5498.0,
+        "coverage_mean": 0.8208,
+        "coverage_min": 0.6885,
+        "answered_err_mean": 0.075,
+        "answered_err_max": 0.0897,
+        "cells_over_alpha": 0,
+        "cells_resolvable": 20,
+        "answered_err_suppressed": 0,
+        "declined_err_suppressed": 0
+      },
+      {
+        "dim": "gender",
+        "level": "EMPTY",
+        "n_cells": 20,
+        "mean_n": 2.5,
+        "coverage_mean": null,
+        "coverage_min": null,
+        "answered_err_mean": null,
+        "answered_err_max": null,
+        "cells_over_alpha": 0,
+        "cells_resolvable": 0,
+        "answered_err_suppressed": 20,
+        "declined_err_suppressed": 20
+      },
+      {
+        "dim": "gender",
+        "level": "Female",
+        "n_cells": 20,
+        "mean_n": 8916.3,
+        "coverage_mean": 0.89,
+        "coverage_min": 0.8034,
+        "answered_err_mean": 0.0489,
+        "answered_err_max": 0.0597,
+        "cells_over_alpha": 0,
+        "cells_resolvable": 20,
+        "answered_err_suppressed": 0,
+        "declined_err_suppressed": 0
+      },
+      {
+        "dim": "gender",
+        "level": "Male",
+        "n_cells": 20,
+        "mean_n": 10344.8,
+        "coverage_mean": 0.8908,
+        "coverage_min": 0.8121,
+        "answered_err_mean": 0.0468,
+        "answered_err_max": 0.0552,
+        "cells_over_alpha": 0,
+        "cells_resolvable": 20,
+        "answered_err_suppressed": 0,
+        "declined_err_suppressed": 0
+      },
+      {
+        "dim": "gender",
+        "level": "OTHER",
+        "n_cells": 20,
+        "mean_n": 0.0,
+        "coverage_mean": null,
+        "coverage_min": null,
+        "answered_err_mean": null,
+        "answered_err_max": null,
+        "cells_over_alpha": 0,
+        "cells_resolvable": 0,
+        "answered_err_suppressed": 20,
+        "declined_err_suppressed": 20
+      },
+      {
+        "dim": "gender",
+        "level": "Other",
+        "n_cells": 20,
+        "mean_n": 0.1,
+        "coverage_mean": null,
+        "coverage_min": null,
+        "answered_err_mean": null,
+        "answered_err_max": null,
+        "cells_over_alpha": 0,
+        "cells_resolvable": 0,
+        "answered_err_suppressed": 20,
+        "declined_err_suppressed": 20
+      },
+      {
+        "dim": "gender",
+        "level": "Unknown",
+        "n_cells": 20,
+        "mean_n": 3.2,
+        "coverage_mean": null,
+        "coverage_min": null,
+        "answered_err_mean": null,
+        "answered_err_max": null,
+        "cells_over_alpha": 0,
+        "cells_resolvable": 0,
+        "answered_err_suppressed": 20,
+        "declined_err_suppressed": 20
+      },
+      {
+        "dim": "ethnicity",
+        "level": "African American",
+        "n_cells": 20,
+        "mean_n": 1940.7,
+        "coverage_mean": 0.8982,
+        "coverage_min": 0.8036,
+        "answered_err_mean": 0.0422,
+        "answered_err_max": 0.0598,
+        "cells_over_alpha": 0,
+        "cells_resolvable": 20,
+        "answered_err_suppressed": 0,
+        "declined_err_suppressed": 0
+      },
+      {
+        "dim": "ethnicity",
+        "level": "Asian",
+        "n_cells": 20,
+        "mean_n": 311.4,
+        "coverage_mean": 0.8748,
+        "coverage_min": 0.7968,
+        "answered_err_mean": 0.0466,
+        "answered_err_max": 0.0727,
+        "cells_over_alpha": 0,
+        "cells_resolvable": 20,
+        "answered_err_suppressed": 0,
+        "declined_err_suppressed": 19
+      },
+      {
+        "dim": "ethnicity",
+        "level": "Caucasian",
+        "n_cells": 20,
+        "mean_n": 15081.0,
+        "coverage_mean": 0.8895,
+        "coverage_min": 0.8062,
+        "answered_err_mean": 0.0488,
+        "answered_err_max": 0.0568,
+        "cells_over_alpha": 0,
+        "cells_resolvable": 20,
+        "answered_err_suppressed": 0,
+        "declined_err_suppressed": 0
+      },
+      {
+        "dim": "ethnicity",
+        "level": "EMPTY",
+        "n_cells": 20,
+        "mean_n": 243.7,
+        "coverage_mean": 0.8895,
+        "coverage_min": 0.7736,
+        "answered_err_mean": 0.0481,
+        "answered_err_max": 0.0592,
+        "cells_over_alpha": 0,
+        "cells_resolvable": 6,
+        "answered_err_suppressed": 14,
+        "declined_err_suppressed": 20
+      },
+      {
+        "dim": "ethnicity",
+        "level": "Hispanic",
+        "n_cells": 20,
+        "mean_n": 660.5,
+        "coverage_mean": 0.8947,
+        "coverage_min": 0.8123,
+        "answered_err_mean": 0.0462,
+        "answered_err_max": 0.069,
+        "cells_over_alpha": 0,
+        "cells_resolvable": 20,
+        "answered_err_suppressed": 0,
+        "declined_err_suppressed": 15
+      },
+      {
+        "dim": "ethnicity",
+        "level": "Native American",
+        "n_cells": 20,
+        "mean_n": 130.2,
+        "coverage_mean": 0.8887,
+        "coverage_min": 0.8489,
+        "answered_err_mean": 0.0408,
+        "answered_err_max": 0.0765,
+        "cells_over_alpha": 0,
+        "cells_resolvable": 12,
+        "answered_err_suppressed": 8,
+        "declined_err_suppressed": 20
+      },
+      {
+        "dim": "ethnicity",
+        "level": "OTHER",
+        "n_cells": 20,
+        "mean_n": 0.0,
+        "coverage_mean": null,
+        "coverage_min": null,
+        "answered_err_mean": null,
+        "answered_err_max": null,
+        "cells_over_alpha": 0,
+        "cells_resolvable": 0,
+        "answered_err_suppressed": 20,
+        "declined_err_suppressed": 20
+      },
+      {
+        "dim": "ethnicity",
+        "level": "Other/Unknown",
+        "n_cells": 20,
+        "mean_n": 899.5,
+        "coverage_mean": 0.8902,
+        "coverage_min": 0.818,
+        "answered_err_mean": 0.0458,
+        "answered_err_max": 0.0707,
+        "cells_over_alpha": 0,
+        "cells_resolvable": 20,
+        "answered_err_suppressed": 0,
+        "declined_err_suppressed": 14
+      },
+      {
+        "dim": "hospitaladmitsource",
+        "level": "Acute Care/Floor",
+        "n_cells": 20,
+        "mean_n": 416.1,
+        "coverage_mean": 0.8581,
+        "coverage_min": 0.688,
+        "answered_err_mean": 0.0599,
+        "answered_err_max": 0.1085,
+        "cells_over_alpha": 1,
+        "cells_resolvable": 20,
+        "answered_err_suppressed": 0,
+        "declined_err_suppressed": 18
+      },
+      {
+        "dim": "hospitaladmitsource",
+        "level": "Chest Pain Center",
+        "n_cells": 20,
+        "mean_n": 30.6,
+        "coverage_mean": 0.9914,
+        "coverage_min": 0.9741,
+        "answered_err_mean": 0.0323,
+        "answered_err_max": 0.0522,
+        "cells_over_alpha": 0,
+        "cells_resolvable": 3,
+        "answered_err_suppressed": 17,
+        "declined_err_suppressed": 20
+      },
+      {
+        "dim": "hospitaladmitsource",
+        "level": "Direct Admit",
+        "n_cells": 20,
+        "mean_n": 1285.0,
+        "coverage_mean": 0.8806,
+        "coverage_min": 0.792,
+        "answered_err_mean": 0.0563,
+        "answered_err_max": 0.079,
+        "cells_over_alpha": 0,
+        "cells_resolvable": 20,
+        "answered_err_suppressed": 0,
+        "declined_err_suppressed": 5
+      },
+      {
+        "dim": "hospitaladmitsource",
+        "level": "EMPTY",
+        "n_cells": 20,
+        "mean_n": 4797.2,
+        "coverage_mean": 0.891,
+        "coverage_min": 0.7769,
+        "answered_err_mean": 0.0498,
+        "answered_err_max": 0.0706,
+        "cells_over_alpha": 0,
+        "cells_resolvable": 20,
+        "answered_err_suppressed": 0,
+        "declined_err_suppressed": 0
+      },
+      {
+        "dim": "hospitaladmitsource",
+        "level": "Emergency Department",
+        "n_cells": 20,
+        "mean_n": 7992.1,
+        "coverage_mean": 0.8972,
+        "coverage_min": 0.8187,
+        "answered_err_mean": 0.0463,
+        "answered_err_max": 0.061,
+        "cells_over_alpha": 0,
+        "cells_resolvable": 20,
+        "answered_err_suppressed": 0,
+        "declined_err_suppressed": 0
+      },
+      {
+        "dim": "hospitaladmitsource",
+        "level": "Floor",
+        "n_cells": 20,
+        "mean_n": 1624.2,
+        "coverage_mean": 0.7962,
+        "coverage_min": 0.6826,
+        "answered_err_mean": 0.0747,
+        "answered_err_max": 0.0994,
+        "cells_over_alpha": 0,
+        "cells_resolvable": 20,
+        "answered_err_suppressed": 0,
+        "declined_err_suppressed": 0
+      },
+      {
+        "dim": "hospitaladmitsource",
+        "level": "ICU",
+        "n_cells": 20,
+        "mean_n": 6.1,
+        "coverage_mean": null,
+        "coverage_min": null,
+        "answered_err_mean": null,
+        "answered_err_max": null,
+        "cells_over_alpha": 0,
+        "cells_resolvable": 0,
+        "answered_err_suppressed": 20,
+        "declined_err_suppressed": 20
+      },
+      {
+        "dim": "hospitaladmitsource",
+        "level": "ICU to SDU",
+        "n_cells": 20,
+        "mean_n": 7.8,
+        "coverage_mean": null,
+        "coverage_min": null,
+        "answered_err_mean": null,
+        "answered_err_max": null,
+        "cells_over_alpha": 0,
+        "cells_resolvable": 0,
+        "answered_err_suppressed": 20,
+        "declined_err_suppressed": 20
+      },
+      {
+        "dim": "hospitaladmitsource",
+        "level": "OTHER",
+        "n_cells": 20,
+        "mean_n": 0.0,
+        "coverage_mean": null,
+        "coverage_min": null,
+        "answered_err_mean": null,
+        "answered_err_max": null,
+        "cells_over_alpha": 0,
+        "cells_resolvable": 0,
+        "answered_err_suppressed": 20,
+        "declined_err_suppressed": 20
+      },
+      {
+        "dim": "hospitaladmitsource",
+        "level": "Observation",
+        "n_cells": 20,
+        "mean_n": 2.2,
+        "coverage_mean": null,
+        "coverage_min": null,
+        "answered_err_mean": null,
+        "answered_err_max": null,
+        "cells_over_alpha": 0,
+        "cells_resolvable": 0,
+        "answered_err_suppressed": 20,
+        "declined_err_suppressed": 20
+      },
+      {
+        "dim": "hospitaladmitsource",
+        "level": "Operating Room",
+        "n_cells": 20,
+        "mean_n": 1691.4,
+        "coverage_mean": 0.9642,
+        "coverage_min": 0.895,
+        "answered_err_mean": 0.0261,
+        "answered_err_max": 0.0354,
+        "cells_over_alpha": 0,
+        "cells_resolvable": 20,
+        "answered_err_suppressed": 0,
+        "declined_err_suppressed": 19
+      },
+      {
+        "dim": "hospitaladmitsource",
+        "level": "Other",
+        "n_cells": 20,
+        "mean_n": 0.9,
+        "coverage_mean": null,
+        "coverage_min": null,
+        "answered_err_mean": null,
+        "answered_err_max": null,
+        "cells_over_alpha": 0,
+        "cells_resolvable": 0,
+        "answered_err_suppressed": 20,
+        "declined_err_suppressed": 20
+      },
+      {
+        "dim": "hospitaladmitsource",
+        "level": "Other Hospital",
+        "n_cells": 20,
+        "mean_n": 291.9,
+        "coverage_mean": 0.8053,
+        "coverage_min": 0.7017,
+        "answered_err_mean": 0.066,
+        "answered_err_max": 0.1056,
+        "cells_over_alpha": 1,
+        "cells_resolvable": 17,
+        "answered_err_suppressed": 3,
+        "declined_err_suppressed": 16
+      },
+      {
+        "dim": "hospitaladmitsource",
+        "level": "Other ICU",
+        "n_cells": 20,
+        "mean_n": 38.0,
+        "coverage_mean": null,
+        "coverage_min": null,
+        "answered_err_mean": null,
+        "answered_err_max": null,
+        "cells_over_alpha": 0,
+        "cells_resolvable": 0,
+        "answered_err_suppressed": 20,
+        "declined_err_suppressed": 20
+      },
+      {
+        "dim": "hospitaladmitsource",
+        "level": "PACU",
+        "n_cells": 20,
+        "mean_n": 181.8,
+        "coverage_mean": 0.9727,
+        "coverage_min": 0.9122,
+        "answered_err_mean": 0.0162,
+        "answered_err_max": 0.0263,
+        "cells_over_alpha": 0,
+        "cells_resolvable": 13,
+        "answered_err_suppressed": 7,
+        "declined_err_suppressed": 20
+      },
+      {
+        "dim": "hospitaladmitsource",
+        "level": "Recovery Room",
+        "n_cells": 20,
+        "mean_n": 655.8,
+        "coverage_mean": 0.9733,
+        "coverage_min": 0.9435,
+        "answered_err_mean": 0.02,
+        "answered_err_max": 0.0361,
+        "cells_over_alpha": 0,
+        "cells_resolvable": 20,
+        "answered_err_suppressed": 0,
+        "declined_err_suppressed": 20
+      },
+      {
+        "dim": "hospitaladmitsource",
+        "level": "Step-Down Unit (SDU)",
+        "n_cells": 20,
+        "mean_n": 245.7,
+        "coverage_mean": 0.7396,
+        "coverage_min": 0.6135,
+        "answered_err_mean": 0.084,
+        "answered_err_max": 0.1203,
+        "cells_over_alpha": 6,
+        "cells_resolvable": 17,
+        "answered_err_suppressed": 3,
+        "declined_err_suppressed": 17
+      },
+      {
+        "dim": "unittype",
+        "level": "CCU-CTICU",
+        "n_cells": 20,
+        "mean_n": 1708.7,
+        "coverage_mean": 0.8998,
+        "coverage_min": 0.766,
+        "answered_err_mean": 0.0428,
+        "answered_err_max": 0.058,
+        "cells_over_alpha": 0,
+        "cells_resolvable": 17,
+        "answered_err_suppressed": 3,
+        "declined_err_suppressed": 7
+      },
+      {
+        "dim": "unittype",
+        "level": "CSICU",
+        "n_cells": 20,
+        "mean_n": 756.0,
+        "coverage_mean": 0.94,
+        "coverage_min": 0.8657,
+        "answered_err_mean": 0.0297,
+        "answered_err_max": 0.0458,
+        "cells_over_alpha": 0,
+        "cells_resolvable": 15,
+        "answered_err_suppressed": 5,
+        "declined_err_suppressed": 16
+      },
+      {
+        "dim": "unittype",
+        "level": "CTICU",
+        "n_cells": 20,
+        "mean_n": 585.2,
+        "coverage_mean": 0.9275,
+        "coverage_min": 0.7746,
+        "answered_err_mean": 0.0396,
+        "answered_err_max": 0.0652,
+        "cells_over_alpha": 0,
+        "cells_resolvable": 12,
+        "answered_err_suppressed": 8,
+        "declined_err_suppressed": 17
+      },
+      {
+        "dim": "unittype",
+        "level": "Cardiac ICU",
+        "n_cells": 20,
+        "mean_n": 1391.8,
+        "coverage_mean": 0.8698,
+        "coverage_min": 0.7692,
+        "answered_err_mean": 0.0482,
+        "answered_err_max": 0.0844,
+        "cells_over_alpha": 0,
+        "cells_resolvable": 20,
+        "answered_err_suppressed": 0,
+        "declined_err_suppressed": 5
+      },
+      {
+        "dim": "unittype",
+        "level": "EMPTY",
+        "n_cells": 20,
+        "mean_n": 0.0,
+        "coverage_mean": null,
+        "coverage_min": null,
+        "answered_err_mean": null,
+        "answered_err_max": null,
+        "cells_over_alpha": 0,
+        "cells_resolvable": 0,
+        "answered_err_suppressed": 20,
+        "declined_err_suppressed": 20
+      },
+      {
+        "dim": "unittype",
+        "level": "MICU",
+        "n_cells": 20,
+        "mean_n": 1763.2,
+        "coverage_mean": 0.8497,
+        "coverage_min": 0.7186,
+        "answered_err_mean": 0.0603,
+        "answered_err_max": 0.0932,
+        "cells_over_alpha": 0,
+        "cells_resolvable": 16,
+        "answered_err_suppressed": 4,
+        "declined_err_suppressed": 6
+      },
+      {
+        "dim": "unittype",
+        "level": "Med-Surg ICU",
+        "n_cells": 20,
+        "mean_n": 10499.9,
+        "coverage_mean": 0.8936,
+        "coverage_min": 0.8281,
+        "answered_err_mean": 0.0496,
+        "answered_err_max": 0.0631,
+        "cells_over_alpha": 0,
+        "cells_resolvable": 20,
+        "answered_err_suppressed": 0,
+        "declined_err_suppressed": 0
+      },
+      {
+        "dim": "unittype",
+        "level": "Neuro ICU",
+        "n_cells": 20,
+        "mean_n": 1315.8,
+        "coverage_mean": 0.8888,
+        "coverage_min": 0.8335,
+        "answered_err_mean": 0.0443,
+        "answered_err_max": 0.061,
+        "cells_over_alpha": 0,
+        "cells_resolvable": 19,
+        "answered_err_suppressed": 1,
+        "declined_err_suppressed": 5
+      },
+      {
+        "dim": "unittype",
+        "level": "OTHER",
+        "n_cells": 20,
+        "mean_n": 0.0,
+        "coverage_mean": null,
+        "coverage_min": null,
+        "answered_err_mean": null,
+        "answered_err_max": null,
+        "cells_over_alpha": 0,
+        "cells_resolvable": 0,
+        "answered_err_suppressed": 20,
+        "declined_err_suppressed": 20
+      },
+      {
+        "dim": "unittype",
+        "level": "SICU",
+        "n_cells": 20,
+        "mean_n": 1246.2,
+        "coverage_mean": 0.8954,
+        "coverage_min": 0.7841,
+        "answered_err_mean": 0.0481,
+        "answered_err_max": 0.0684,
+        "cells_over_alpha": 0,
+        "cells_resolvable": 16,
+        "answered_err_suppressed": 4,
+        "declined_err_suppressed": 12
+      }
+    ],
+    "age": {
+      "18-44": {
+        "coverage_mean": 0.9631,
+        "deferral_mean": 0.0369,
+        "answered_err_mean": 0.0193,
+        "deferred_death_share": 0.481,
+        "deferred_death_share_cells": 9,
+        "declined_mortality": 0.393
+      },
+      "45-64": {
+        "coverage_mean": 0.9192,
+        "deferral_mean": 0.0808,
+        "answered_err_mean": 0.0391,
+        "deferred_death_share": 0.435,
+        "deferred_death_share_cells": 20,
+        "declined_mortality": 0.376
+      },
+      "65-74": {
+        "coverage_mean": 0.8875,
+        "deferral_mean": 0.1125,
+        "answered_err_mean": 0.0497,
+        "deferred_death_share": 0.456,
+        "deferred_death_share_cells": 20,
+        "declined_mortality": 0.378
+      },
+      "75+": {
+        "coverage_mean": 0.8208,
+        "deferral_mean": 0.1792,
+        "answered_err_mean": 0.075,
+        "deferred_death_share": 0.492,
+        "deferred_death_share_cells": 20,
+        "declined_mortality": 0.381
+      }
+    },
+    "age_gradients": {
+      "bands": [
+        "18-44",
+        "75+"
+      ],
+      "answered_err_ratio": 3.89,
+      "deferral_ratio": 4.86
+    },
+    "dims": [
+      "age_band",
+      "ethnicity",
+      "gender",
+      "hospitaladmitsource",
+      "unittype"
+    ]
+  },
+  "faithfulness_rep0": {
+    "replicate": 0,
+    "n_features": 10,
+    "factorisation": "gap_j = |w_j| * (mean|z_j| answered - mean|z_j| declined)",
+    "spearman_abs_coef_vs_abs_gap": 0.6364,
+    "features": [
+      {
+        "feature": "aps_motor",
+        "coef": -0.320479,
+        "gap_int": -0.245857,
+        "rank_int": 1,
+        "delta_mean_abs_z": -0.7672
+      },
+      {
+        "feature": "aps_fio2",
+        "coef": 0.195262,
+        "gap_int": -0.152379,
+        "rank_int": 2,
+        "delta_mean_abs_z": -0.7804
+      },
+      {
+        "feature": "aps_ph",
+        "coef": -0.14355,
+        "gap_int": -0.116441,
+        "rank_int": 3,
+        "delta_mean_abs_z": -0.8112
+      },
+      {
+        "feature": "aps_intubated",
+        "coef": -0.195205,
+        "gap_int": -0.109131,
+        "rank_int": 4,
+        "delta_mean_abs_z": -0.5591
+      },
+      {
+        "feature": "aps_pco2",
+        "coef": -0.126074,
+        "gap_int": -0.077861,
+        "rank_int": 5,
+        "delta_mean_abs_z": -0.6176
+      },
+      {
+        "feature": "aps_eyes",
+        "coef": -0.115928,
+        "gap_int": -0.07382,
+        "rank_int": 6,
+        "delta_mean_abs_z": -0.6368
+      },
+      {
+        "feature": "apv_oobintubday1",
+        "coef": 0.141012,
+        "gap_int": -0.070734,
+        "rank_int": 7,
+        "delta_mean_abs_z": -0.5016
+      },
+      {
+        "feature": "aps_temperature",
+        "coef": -0.177154,
+        "gap_int": -0.063872,
+        "rank_int": 8,
+        "delta_mean_abs_z": -0.3605
+      },
+      {
+        "feature": "apv_oobventday1",
+        "coef": 0.14746,
+        "gap_int": -0.060021,
+        "rank_int": 9,
+        "delta_mean_abs_z": -0.407
+      },
+      {
+        "feature": "aps_pao2",
+        "coef": -0.081368,
+        "gap_int": -0.058155,
+        "rank_int": 10,
+        "delta_mean_abs_z": -0.7147
+      }
+    ],
+    "delta_mean_abs_z_ranking": [
+      [
+        "aps_ph",
+        -0.8112
+      ],
+      [
+        "aps_fio2",
+        -0.7804
+      ],
+      [
+        "aps_motor",
+        -0.7672
+      ],
+      [
+        "aps_pao2",
+        -0.7147
+      ],
+      [
+        "aps_eyes",
+        -0.6368
+      ],
+      [
+        "aps_pco2",
+        -0.6176
+      ],
+      [
+        "aps_intubated",
+        -0.5591
+      ],
+      [
+        "apv_oobintubday1",
+        -0.5016
+      ],
+      [
+        "apv_oobventday1",
+        -0.407
+      ],
+      [
+        "aps_temperature",
+        -0.3605
+      ]
+    ],
+    "abs_coef_ranking_within_ten": [
+      [
+        "aps_motor",
+        0.3205
+      ],
+      [
+        "aps_fio2",
+        0.1953
+      ],
+      [
+        "aps_intubated",
+        0.1952
+      ],
+      [
+        "aps_temperature",
+        0.1772
+      ],
+      [
+        "apv_oobventday1",
+        0.1475
+      ],
+      [
+        "aps_ph",
+        0.1436
+      ],
+      [
+        "apv_oobintubday1",
+        0.141
+      ],
+      [
+        "aps_pco2",
+        0.1261
+      ],
+      [
+        "aps_eyes",
+        0.1159
+      ],
+      [
+        "aps_pao2",
+        0.0814
+      ]
+    ],
+    "top_driver_rank_by_abs_coef_within_ten": 1,
+    "next_largest_abs_coef_ratio": 1.64
+  },
+  "sensitivity_arm": {
+    "arm": "apache-complete",
+    "n_replicates": 20,
+    "n_sites": 190,
+    "n_stays": 135127,
+    "prevalence": 0.088502,
+    "certified": {
+      "k": 19,
+      "n": 20,
+      "rate": 0.95,
+      "ci95": [
+        0.7513,
+        0.9987
+      ]
+    },
+    "certified_alpha0_05": {
+      "k": 0,
+      "n": 20,
+      "rate": 0.0,
+      "ci95": [
+        0.0,
+        0.1684
+      ]
+    },
+    "mean_coverage": 0.8376,
+    "mean_tau": 0.8542,
+    "rm_fresh": {
+      "n": 19,
+      "mean": 0.0374,
+      "sd": 0.007,
+      "min": 0.0268,
+      "max": 0.0519
+    },
+    "rm_exceed": 0,
+    "n_cal_carrying": 67,
+    "head_auc_s_cal": {
+      "n": 20,
+      "mean": 0.8631,
+      "sd": 0.004,
+      "min": 0.8576,
+      "max": 0.87
+    },
+    "decline_reasons": {
+      "baseline:failsafe|bbse:failsafe": 1
+    }
+  },
+  "information_floor": {
+    "n_cal_carrying": 74,
+    "floor": {
+      "0.05": 0.0385,
+      "0.1": 0.0364
+    },
+    "margin_on_s_aux": {
+      "0.05": 0.0166,
+      "0.1": 0.0462
+    },
+    "ratio": {
+      "0.05": 0.431,
+      "0.1": 1.267
+    },
+    "estimated_answered_risk_s_cal": 0.0387,
+    "note": "ln(1/delta)(1-alpha)/n at the record-carrying calibration count; a margin in atom units, a feasibility diagnostic, never a gate"
+  },
+  "e1": {
+    "baseline_deploying_draws_alpha0.10": 194,
+    "draws": 200,
+    "note": "the influence-cap sweep replays these draws; six validity-grid draws deployed a BBSE threshold and are excluded from Table S4"
+  },
+  "e9a_frozen": {
+    "population_odds_ratio": 2.687,
+    "cells": {
+      "208|k40-boot|0.05": {
+        "R": 50,
+        "certified": {
+          "k": 0,
+          "n": 50,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.0711
+          ]
+        },
+        "rm_exceed": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "ci95": null
+        },
+        "box_centre_certified": null,
+        "box_centre_all_fitted": {
+          "n": 50,
+          "mean": 3.1806,
+          "sd": 0.6108,
+          "min": 2.2768,
+          "max": 5.2605
+        },
+        "mean_tau": null
+      },
+      "208|k40-boot|0.1": {
+        "R": 50,
+        "certified": {
+          "k": 0,
+          "n": 50,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.0711
+          ]
+        },
+        "rm_exceed": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "ci95": null
+        },
+        "box_centre_certified": null,
+        "box_centre_all_fitted": {
+          "n": 50,
+          "mean": 3.1806,
+          "sd": 0.6108,
+          "min": 2.2768,
+          "max": 5.2605
+        },
+        "mean_tau": null
+      },
+      "208|single-site-cp|0.05": {
+        "R": 50,
+        "certified": {
+          "k": 0,
+          "n": 50,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.0711
+          ]
+        },
+        "rm_exceed": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "ci95": null
+        },
+        "box_centre_certified": null,
+        "box_centre_all_fitted": {
+          "n": 50,
+          "mean": 3.9996,
+          "sd": 2.1409,
+          "min": 1.3592,
+          "max": 10.4326
+        },
+        "mean_tau": null
+      },
+      "208|single-site-cp|0.1": {
+        "R": 50,
+        "certified": {
+          "k": 0,
+          "n": 50,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.0711
+          ]
+        },
+        "rm_exceed": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "ci95": null
+        },
+        "box_centre_certified": null,
+        "box_centre_all_fitted": {
+          "n": 50,
+          "mean": 3.9996,
+          "sd": 2.1409,
+          "min": 1.3592,
+          "max": 10.4326
+        },
+        "mean_tau": null
+      },
+      "600|k40-boot|0.05": {
+        "R": 50,
+        "certified": {
+          "k": 0,
+          "n": 50,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.0711
+          ]
+        },
+        "rm_exceed": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "ci95": null
+        },
+        "box_centre_certified": null,
+        "box_centre_all_fitted": {
+          "n": 50,
+          "mean": 3.0065,
+          "sd": 0.3931,
+          "min": 2.3899,
+          "max": 4.384
+        },
+        "mean_tau": null
+      },
+      "600|k40-boot|0.1": {
+        "R": 50,
+        "certified": {
+          "k": 0,
+          "n": 50,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.0711
+          ]
+        },
+        "rm_exceed": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "ci95": null
+        },
+        "box_centre_certified": null,
+        "box_centre_all_fitted": {
+          "n": 50,
+          "mean": 3.0065,
+          "sd": 0.3931,
+          "min": 2.3899,
+          "max": 4.384
+        },
+        "mean_tau": null
+      },
+      "600|single-site-cp|0.05": {
+        "R": 50,
+        "certified": {
+          "k": 0,
+          "n": 50,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.0711
+          ]
+        },
+        "rm_exceed": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "ci95": null
+        },
+        "box_centre_certified": null,
+        "box_centre_all_fitted": {
+          "n": 46,
+          "mean": 4.2668,
+          "sd": 2.7272,
+          "min": 1.2004,
+          "max": 12.0409
+        },
+        "mean_tau": null
+      },
+      "600|single-site-cp|0.1": {
+        "R": 50,
+        "certified": {
+          "k": 7,
+          "n": 50,
+          "rate": 0.14,
+          "ci95": [
+            0.0582,
+            0.2674
+          ]
+        },
+        "rm_exceed": {
+          "k": 0,
+          "n": 7,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.4096
+          ]
+        },
+        "box_centre_certified": {
+          "n": 7,
+          "mean": 1.6156,
+          "sd": 0.2839,
+          "min": 1.2004,
+          "max": 2.0073
+        },
+        "box_centre_all_fitted": {
+          "n": 46,
+          "mean": 4.2668,
+          "sd": 2.7272,
+          "min": 1.2004,
+          "max": 12.0409
+        },
+        "mean_tau": 0.8586
+      },
+      "900|k40-boot|0.05": {
+        "R": 50,
+        "certified": {
+          "k": 0,
+          "n": 50,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.0711
+          ]
+        },
+        "rm_exceed": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "ci95": null
+        },
+        "box_centre_certified": null,
+        "box_centre_all_fitted": {
+          "n": 50,
+          "mean": 2.9858,
+          "sd": 0.4118,
+          "min": 2.1416,
+          "max": 3.7874
+        },
+        "mean_tau": null
+      },
+      "900|k40-boot|0.1": {
+        "R": 50,
+        "certified": {
+          "k": 19,
+          "n": 50,
+          "rate": 0.38,
+          "ci95": [
+            0.2465,
+            0.5283
+          ]
+        },
+        "rm_exceed": {
+          "k": 0,
+          "n": 19,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.1765
+          ]
+        },
+        "box_centre_certified": {
+          "n": 19,
+          "mean": 2.585,
+          "sd": 0.2567,
+          "min": 2.1416,
+          "max": 3.0641
+        },
+        "box_centre_all_fitted": {
+          "n": 50,
+          "mean": 2.9858,
+          "sd": 0.4118,
+          "min": 2.1416,
+          "max": 3.7874
+        },
+        "mean_tau": 0.9068
+      },
+      "900|single-site-cp|0.05": {
+        "R": 50,
+        "certified": {
+          "k": 1,
+          "n": 50,
+          "rate": 0.02,
+          "ci95": [
+            0.0005,
+            0.1065
+          ]
+        },
+        "rm_exceed": {
+          "k": 0,
+          "n": 1,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.975
+          ]
+        },
+        "box_centre_certified": {
+          "n": 1,
+          "mean": 1.3219,
+          "sd": null,
+          "min": 1.3219,
+          "max": 1.3219
+        },
+        "box_centre_all_fitted": {
+          "n": 48,
+          "mean": 3.7933,
+          "sd": 2.3602,
+          "min": 1.0291,
+          "max": 14.4318
+        },
+        "mean_tau": 0.95
+      },
+      "900|single-site-cp|0.1": {
+        "R": 50,
+        "certified": {
+          "k": 13,
+          "n": 50,
+          "rate": 0.26,
+          "ci95": [
+            0.1463,
+            0.4034
+          ]
+        },
+        "rm_exceed": {
+          "k": 0,
+          "n": 13,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.2471
+          ]
+        },
+        "box_centre_certified": {
+          "n": 13,
+          "mean": 1.899,
+          "sd": 0.5944,
+          "min": 1.0291,
+          "max": 2.877
+        },
+        "box_centre_all_fitted": {
+          "n": 48,
+          "mean": 3.7933,
+          "sd": 2.3602,
+          "min": 1.0291,
+          "max": 14.4318
+        },
+        "mean_tau": 0.8038
+      },
+      "1200|k40-boot|0.05": {
+        "R": 50,
+        "certified": {
+          "k": 0,
+          "n": 50,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.0711
+          ]
+        },
+        "rm_exceed": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "ci95": null
+        },
+        "box_centre_certified": null,
+        "box_centre_all_fitted": {
+          "n": 50,
+          "mean": 2.7757,
+          "sd": 0.3755,
+          "min": 2.1967,
+          "max": 3.9208
+        },
+        "mean_tau": null
+      },
+      "1200|k40-boot|0.1": {
+        "R": 50,
+        "certified": {
+          "k": 47,
+          "n": 50,
+          "rate": 0.94,
+          "ci95": [
+            0.8345,
+            0.9875
+          ]
+        },
+        "rm_exceed": {
+          "k": 0,
+          "n": 47,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.0755
+          ]
+        },
+        "box_centre_certified": {
+          "n": 47,
+          "mean": 2.7076,
+          "sd": 0.2657,
+          "min": 2.1967,
+          "max": 3.3705
+        },
+        "box_centre_all_fitted": {
+          "n": 50,
+          "mean": 2.7757,
+          "sd": 0.3755,
+          "min": 2.1967,
+          "max": 3.9208
+        },
+        "mean_tau": 0.884
+      },
+      "1200|single-site-cp|0.05": {
+        "R": 50,
+        "certified": {
+          "k": 3,
+          "n": 50,
+          "rate": 0.06,
+          "ci95": [
+            0.0125,
+            0.1655
+          ]
+        },
+        "rm_exceed": {
+          "k": 1,
+          "n": 3,
+          "rate": 0.3333,
+          "ci95": [
+            0.0084,
+            0.9057
+          ]
+        },
+        "box_centre_certified": {
+          "n": 3,
+          "mean": 1.0837,
+          "sd": 0.374,
+          "min": 0.7777,
+          "max": 1.5006
+        },
+        "box_centre_all_fitted": {
+          "n": 47,
+          "mean": 4.4008,
+          "sd": 4.8635,
+          "min": 0.7777,
+          "max": 34.6777
+        },
+        "mean_tau": 0.89
+      },
+      "1200|single-site-cp|0.1": {
+        "R": 50,
+        "certified": {
+          "k": 20,
+          "n": 50,
+          "rate": 0.4,
+          "ci95": [
+            0.2641,
+            0.5482
+          ]
+        },
+        "rm_exceed": {
+          "k": 2,
+          "n": 20,
+          "rate": 0.1,
+          "ci95": [
+            0.0123,
+            0.317
+          ]
+        },
+        "box_centre_certified": {
+          "n": 20,
+          "mean": 2.2497,
+          "sd": 0.7485,
+          "min": 0.7777,
+          "max": 3.5229
+        },
+        "box_centre_all_fitted": {
+          "n": 47,
+          "mean": 4.4008,
+          "sd": 4.8635,
+          "min": 0.7777,
+          "max": 34.6777
+        },
+        "mean_tau": 0.831
+      }
+    },
+    "exceeding_rows": [
+      {
+        "n_source_sites": 1200,
+        "target_mode": "single-site-cp",
+        "draw": 29,
+        "alpha": 0.05,
+        "tau": 0.83,
+        "rm_fresh": 0.058005,
+        "rho_lo": 0.2167,
+        "rho_hi": 1.3388
+      },
+      {
+        "n_source_sites": 1200,
+        "target_mode": "single-site-cp",
+        "draw": 29,
+        "alpha": 0.1,
+        "tau": 0.55,
+        "rm_fresh": 0.106762,
+        "rho_lo": 0.2167,
+        "rho_hi": 1.3388
+      },
+      {
+        "n_source_sites": 1200,
+        "target_mode": "single-site-cp",
+        "draw": 48,
+        "alpha": 0.1,
+        "tau": 0.55,
+        "rm_fresh": 0.108856,
+        "rho_lo": 0.2916,
+        "rho_hi": 1.654
+      }
+    ]
+  },
+  "e9b_frozen": {
+    "cells": {
+      "208|0.4": {
+        "R": 200,
+        "certified": {
+          "k": 0,
+          "n": 200,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.0183
+          ]
+        },
+        "fnr_exceed": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "ci95": null
+        },
+        "mean_fnr_fresh": null
+      },
+      "208|0.5": {
+        "R": 200,
+        "certified": {
+          "k": 0,
+          "n": 200,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.0183
+          ]
+        },
+        "fnr_exceed": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "ci95": null
+        },
+        "mean_fnr_fresh": null
+      },
+      "208|0.55": {
+        "R": 200,
+        "certified": {
+          "k": 0,
+          "n": 200,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.0183
+          ]
+        },
+        "fnr_exceed": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "ci95": null
+        },
+        "mean_fnr_fresh": null
+      },
+      "208|0.6": {
+        "R": 200,
+        "certified": {
+          "k": 8,
+          "n": 200,
+          "rate": 0.04,
+          "ci95": [
+            0.0174,
+            0.0773
+          ]
+        },
+        "fnr_exceed": {
+          "k": 0,
+          "n": 8,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.3694
+          ]
+        },
+        "mean_fnr_fresh": 0.4164
+      },
+      "400|0.4": {
+        "R": 200,
+        "certified": {
+          "k": 0,
+          "n": 200,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.0183
+          ]
+        },
+        "fnr_exceed": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "ci95": null
+        },
+        "mean_fnr_fresh": null
+      },
+      "400|0.5": {
+        "R": 200,
+        "certified": {
+          "k": 0,
+          "n": 200,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.0183
+          ]
+        },
+        "fnr_exceed": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "ci95": null
+        },
+        "mean_fnr_fresh": null
+      },
+      "400|0.55": {
+        "R": 200,
+        "certified": {
+          "k": 57,
+          "n": 200,
+          "rate": 0.285,
+          "ci95": [
+            0.2236,
+            0.3529
+          ]
+        },
+        "fnr_exceed": {
+          "k": 0,
+          "n": 57,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.0627
+          ]
+        },
+        "mean_fnr_fresh": 0.4382
+      },
+      "400|0.6": {
+        "R": 200,
+        "certified": {
+          "k": 200,
+          "n": 200,
+          "rate": 1.0,
+          "ci95": [
+            0.9817,
+            1.0
+          ]
+        },
+        "fnr_exceed": {
+          "k": 0,
+          "n": 200,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.0183
+          ]
+        },
+        "mean_fnr_fresh": 0.4484
+      },
+      "600|0.4": {
+        "R": 200,
+        "certified": {
+          "k": 0,
+          "n": 200,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.0183
+          ]
+        },
+        "fnr_exceed": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "ci95": null
+        },
+        "mean_fnr_fresh": null
+      },
+      "600|0.5": {
+        "R": 200,
+        "certified": {
+          "k": 1,
+          "n": 200,
+          "rate": 0.005,
+          "ci95": [
+            0.0001,
+            0.0275
+          ]
+        },
+        "fnr_exceed": {
+          "k": 0,
+          "n": 1,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.975
+          ]
+        },
+        "mean_fnr_fresh": 0.4194
+      },
+      "600|0.55": {
+        "R": 200,
+        "certified": {
+          "k": 199,
+          "n": 200,
+          "rate": 0.995,
+          "ci95": [
+            0.9725,
+            0.9999
+          ]
+        },
+        "fnr_exceed": {
+          "k": 0,
+          "n": 199,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.0184
+          ]
+        },
+        "mean_fnr_fresh": 0.45
+      },
+      "600|0.6": {
+        "R": 200,
+        "certified": {
+          "k": 200,
+          "n": 200,
+          "rate": 1.0,
+          "ci95": [
+            0.9817,
+            1.0
+          ]
+        },
+        "fnr_exceed": {
+          "k": 0,
+          "n": 200,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.0183
+          ]
+        },
+        "mean_fnr_fresh": 0.45
+      }
+    },
+    "truth_by_sites": {
+      "208": {
+        "n": 200,
+        "mean": 0.4514,
+        "sd": 0.0177,
+        "min": 0.4028,
+        "max": 0.503
+      },
+      "400": {
+        "n": 200,
+        "mean": 0.4484,
+        "sd": 0.0137,
+        "min": 0.4147,
+        "max": 0.4814
+      },
+      "600": {
+        "n": 200,
+        "mean": 0.45,
+        "sd": 0.0117,
+        "min": 0.4194,
+        "max": 0.4807
+      }
+    }
+  },
+  "r_counts": {
+    "E1": {
+      "R": 200,
+      "eval_sites": 200
+    },
+    "E2": {
+      "R_anchor": 200,
+      "R_sweep": 100
+    },
+    "E3": {
+      "R": 200
+    },
+    "E4": {
+      "R": 200
+    },
+    "E5": {
+      "case_study_draws": 1,
+      "R_replication": 200
+    },
+    "E6": {
+      "draws": 1
+    },
+    "E7": {
+      "R": 200
+    },
+    "E8": {
+      "R": 200,
+      "noise_R": 300,
+      "n_boot": 1000
+    },
+    "E9": {
+      "R_bbse_frontier": 50,
+      "fnr_R": 200
+    },
+    "sentence": "R = 200 calibration draws unless stated: the label-shift power frontier uses 50 per point, the label-shift magnitude sweep 100, the aleatoric frontier 300; the explanation case study and the coverage-and-composition arm are single draws"
+  },
+  "exact_cis": {
+    "eicu_rm_exceed_0_of_20": [
+      0.0,
+      0.1684
+    ],
+    "eicu_alpha0_10_certified_20_of_20": [
+      0.8316,
+      1.0
+    ],
+    "eicu_hard_7_of_477": [
+      0.0059,
+      0.03
+    ],
+    "eicu_pool_too_small_3_of_480": [
+      0.0013,
+      0.0182
+    ],
+    "fairness_cells_8_of_570": [
+      0.0061,
+      0.0275
+    ],
+    "e9a_single_site_1200_exceed_alpha0_10": {
+      "k": 2,
+      "n": 20,
+      "rate": 0.1,
+      "ci95": [
+        0.0123,
+        0.317
+      ]
+    },
+    "e9a_single_site_1200_exceed_alpha0_05": {
+      "k": 1,
+      "n": 3,
+      "rate": 0.3333,
+      "ci95": [
+        0.0084,
+        0.9057
+      ]
+    },
+    "note": "exact Clopper-Pearson 95% intervals, run_synthetic._rate_ci95"
+  },
+  "sidecars": {
+    "e9a_rescore": {
+      "status": "present",
+      "path": "experiments/out-e9a-rescore/E9a_rescore.json",
+      "headline": "single-site 1200 a=0.10: frozen rm_exceed 2 of 20 (CI [0.0123, 0.317]); rescored to the declared site's prevalence 0 of 20; all 110 certified rows replayed to 4 dp",
+      "run": "2026-09-05T16:26:27+00:00"
+    },
+    "e9b_positives": {
+      "status": "present",
+      "path": "experiments/out-e9b-positives/E9b_fnr_positives.json",
+      "headline": "certify rate at b=0.5 by sites [208, 400, 600]: shipped [0.0, 0.0, 0.005] vs positives [0.79, 0.995, 1.0]; b=0.55: shipped [0.0, 0.285, 0.995] vs positives [1.0, 1.0, 1.0]; fresh-pool exceedances under own estimand {'shipped': 0, 'positives': 1}, under the other {'shipped': 0, 'positives': 1}; truth shipped 0.4499 positives 0.4496",
+      "run": "2026-09-05T16:32:51+00:00"
+    },
+    "bbse_probe": {
+      "status": "present",
+      "path": "experiments/out-bbse-probe/BBSE_probe.json",
+      "headline": "n_aux=36: decline 0.04, box4 miss 0.0417 (box3 0.0417), rho covers site 1.0 / pop 0.901, implied level 0.9333; n_aux=42: decline 0.0225, box4 miss 0.0563 (box3 0.0537), rho covers site 1.0 / pop 0.8977, implied level 0.9187; n_aux=74: decline 0.03, box4 miss 0.0438 (box3 0.0361), rho covers site 1.0 / pop 0.8454, implied level 0.9312",
+      "run": "2026-09-05T16:28:53+00:00"
+    },
+    "settled": {
+      "status": "present",
+      "path": "experiments/out-settled/EICU-PREDICTIONS-SETTLED.json",
+      "headline": "3 confirmed / 1 partly / 3 falsified; partly = P7; falsified = P2, P4, P5",
+      "run": "2026-09-05T16:33:18+00:00"
+    }
+  },
+  "rev2": {
+    "pooled_new_columns": "no new columns found",
+    "faithfulness_by_replicate": {
+      "0": {
+        "spearman": 0.6364,
+        "top_driver": "aps_motor",
+        "top_driver_delta_mean_abs_z": -0.7672
+      },
+      "1": {
+        "spearman": 0.2242,
+        "top_driver": "aps_motor",
+        "top_driver_delta_mean_abs_z": -0.9971
+      },
+      "2": {
+        "spearman": 0.8667,
+        "top_driver": "aps_motor",
+        "top_driver_delta_mean_abs_z": -0.738
+      },
+      "3": {
+        "spearman": 0.7818,
+        "top_driver": "aps_motor",
+        "top_driver_delta_mean_abs_z": -1.0574
+      },
+      "4": {
+        "spearman": 0.4545,
+        "top_driver": "aps_motor",
+        "top_driver_delta_mean_abs_z": -1.039
+      },
+      "5": {
+        "spearman": 0.5879,
+        "top_driver": "aps_motor",
+        "top_driver_delta_mean_abs_z": -0.7865
+      },
+      "6": {
+        "spearman": 0.4061,
+        "top_driver": "aps_motor",
+        "top_driver_delta_mean_abs_z": -1.1015
+      },
+      "7": {
+        "spearman": 0.6,
+        "top_driver": "aps_motor",
+        "top_driver_delta_mean_abs_z": -0.7645
+      },
+      "8": {
+        "spearman": 0.1273,
+        "top_driver": "aps_motor",
+        "top_driver_delta_mean_abs_z": -0.9053
+      },
+      "9": {
+        "spearman": 0.297,
+        "top_driver": "aps_motor",
+        "top_driver_delta_mean_abs_z": -1.0946
+      },
+      "10": {
+        "spearman": 0.6364,
+        "top_driver": "aps_motor",
+        "top_driver_delta_mean_abs_z": -0.9487
+      },
+      "11": {
+        "spearman": 0.6364,
+        "top_driver": "aps_motor",
+        "top_driver_delta_mean_abs_z": -0.9718
+      },
+      "12": {
+        "spearman": 0.3939,
+        "top_driver": "aps_motor",
+        "top_driver_delta_mean_abs_z": -0.8292
+      },
+      "13": {
+        "spearman": 0.1515,
+        "top_driver": "aps_motor",
+        "top_driver_delta_mean_abs_z": -1.3896
+      },
+      "14": {
+        "spearman": 0.6,
+        "top_driver": "aps_motor",
+        "top_driver_delta_mean_abs_z": -0.9983
+      },
+      "15": {
+        "spearman": 0.6848,
+        "top_driver": "aps_motor",
+        "top_driver_delta_mean_abs_z": -0.8735
+      },
+      "16": {
+        "spearman": 0.3818,
+        "top_driver": "aps_motor",
+        "top_driver_delta_mean_abs_z": -1.2022
+      },
+      "17": {
+        "spearman": 0.4061,
+        "top_driver": "aps_motor",
+        "top_driver_delta_mean_abs_z": -1.3786
+      },
+      "18": {
+        "spearman": 0.5273,
+        "top_driver": "aps_motor",
+        "top_driver_delta_mean_abs_z": -1.0362
+      },
+      "19": {
+        "spearman": 0.297,
+        "top_driver": "aps_motor",
+        "top_driver_delta_mean_abs_z": -1.3006
+      }
+    },
+    "faithfulness_spearman": {
+      "n": 20,
+      "mean": 0.4849,
+      "sd": 0.2041,
+      "min": 0.1273,
+      "max": 0.8667
+    }
+  },
+  "pins": {
+    "composition_20_resplits/answered/observed_positive_fraction/mean": {
+      "expected": 0.0524,
+      "derived": 0.0524,
+      "status": true
+    },
+    "head_auc_s_cal/mean": {
+      "expected": 0.8618,
+      "derived": 0.8618,
+      "status": true
+    },
+    "published_split/n_predicted_positive_answered": {
+      "expected": 63,
+      "derived": 63,
+      "status": true
+    },
+    "fairness/cells_over_alpha/n": {
+      "expected": 8,
+      "derived": 8,
+      "status": true
+    },
+    "fairness/cells_status_ok": {
+      "expected": 570,
+      "derived": 570,
+      "status": true
+    },
+    "faithfulness_rep0/spearman_abs_coef_vs_abs_gap": {
+      "expected": 0.636,
+      "derived": 0.6364,
+      "status": true
+    },
+    "e1/baseline_deploying_draws_alpha0.10": {
+      "expected": 194,
+      "derived": 194,
+      "status": true
+    }
+  }
+}

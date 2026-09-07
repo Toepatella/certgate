@@ -2,7 +2,7 @@
 
 Companion to `SPEC.md` § *Real-data protocol (eICU-CRD v2.0)*, which is the binding engineering
 contract for `experiments/eicu_mock.py`, `experiments/eicu_etl.py`, `experiments/run_eicu.py` and
-`tests/test_eicu_path.py`. This document is the scientific half: the cohort, the label, the feature
+`tests/test_eicu_mock.py`. This document is the scientific half: the cohort, the label, the feature
 allowlist, the split, the predictions, and the ways the result is allowed to come out negative.
 
 ---
@@ -61,7 +61,7 @@ correction into a visible SPEC + constants diff rather than absorb it.
 | A3 | 2026-07-31 | §5.4a (new) | The nine `apachePredVar` treatment/intervention flags whose measurement timing cannot be cited are NAMED, and `outcome_screen` settles them from data before any certificate. | The denylist applied a "timing unverified" standard to two `apachePatientResult` columns and none at all to `activetx` and eight siblings. | **NO** |
 | A4 | 2026-07-31 | §14.1 | Reference-identity counts taken at S0; typed read-boundary errors; `unrecognised-null-token`; `duplicate-stay-id`; preflight no longer raises on an unknown outcome level; decidable `header_case_as_read`; operator checklist corrected (git precondition, no absolute test count, decline expectation scoped to the frozen corpus sizes). | Ingest-boundary defects, each demonstrated. The reference-count one would have aborted the mandatory first command on the CORRECT extract. | **NO** |
 | A5 | 2026-07-31 | §12.5 (T-26, T-27) | An absent or UNLINKED APACHE block now aborts: `unparseable-join-key` when a child table's `patientunitstayid` tokens fail integer parse past `EICU_MAX_UNPARSEABLE_SHARE`, and `apache-coverage-collapse` when a cohort of ≥ `EICU_MIN_OUTCOME_STRATUM` stays has a presence stratum below that floor. The `unrecognised-null-token` gate widened to the three `patient` numerics. No new constant; both legs reuse frozen thresholds. | Arrival-day audit (2026-07-31, three verifiers): a float-formatted join key (`141258.0`), a header-only child table, and a row-count-preserving key shift each CERTIFIED with 89/161 constant columns, zero warnings, and E-9's `gate_applies=false` — total absence bypassed the leak gate partial absence trips. Separately, Postgres `\N` in `patient.admissionweight` zeroed the column silently, and in `hospitaladmitoffset` silently changed first-stay selection with no ledger trace. | **NO** — demonstrated on mock corpora; no eICU byte read |
-| A6 | 2026-07-31 | §5.3, §12.5 (T-2) | `unexpected-negative-sentinel` now aborts only when a column's negative-not-`-1` mass exceeds the already-frozen `EICU_MAX_UNPARSEABLE_SHARE = 0.01`; below it the cells become missing (which `_parse_apache_cell` already did) and a `[MEASURE]` warning names column, count and share. No new constant. | The released extract carries **exactly one** such cell in 4.1M: `apacheApsVar.urine = -11245.5648` at `patientunitstayid = 1805017` (in cohort), against a support that is otherwise contiguous and non-negative (min 0, median 1447.6, max 269323.7, 1824 zeros, n = 84,062 observed). §5.3 pre-specified that the "value < 0 ⇒ missing" rule is adopted **only after the histogram proves the support is contiguous and non-negative**; that histogram was run and it does. The abort was a look-at-this gate, not a correctness gate: the value maps to NaN either way, so no study number changes. | **YES** — first post-hoc amendment; the extract had been read. Every number affected by it must carry the post-hoc label. |
+| A6 | 2026-07-31 | §5.3, §12.5 (T-2) | `unexpected-negative-sentinel` now aborts only when a column's negative-not-`-1` mass exceeds the already-frozen `EICU_MAX_UNPARSEABLE_SHARE = 0.01`; below it the cells become missing (which `_parse_apache_cell` already did) and a `[MEASURE]` warning names column, count and share. No new constant. | The released extract carries **exactly one** such cell in 4.1M: one cohort stay carried a large negative urine value in `apacheApsVar.urine`, against a support that is otherwise contiguous and non-negative (min 0, median 1447.6, max 269323.7, 1824 zeros, n = 84,062 observed). §5.3 pre-specified that the "value < 0 ⇒ missing" rule is adopted **only after the histogram proves the support is contiguous and non-negative**; that histogram was run and it does. The abort was a look-at-this gate, not a correctness gate: the value maps to NaN either way, so no study number changes. | **YES** — first post-hoc amendment; the extract had been read. Every number affected by it must carry the post-hoc label. |
 
 A6 is the **only** post-hoc amendment and the only one that RELAXES a refusal; it is bounded by a
 pre-existing frozen constant, changes no computed value, and its triggering evidence (the urine
@@ -776,7 +776,7 @@ bound it.
 The two legs have different sensitivities *and* cover different halves of the channel, which is why
 both are kept: whole-row absence is caught earliest by §5.5's prevalence-ratio abort, while
 **cell-level** outcome-correlated missingness leaves the presence flags untouched and is caught only
-by leg 2. `tests/test_eicu_path.py` plants both and asserts the corresponding gate fires.
+by leg 2. `tests/test_eicu_mock.py` plants both and asserts the corresponding gate fires.
 
 **F-E — estimand-population failure.** If the primary arm's `n_sites` at `primary-cohort` is
 materially below 208 (say `< 200`), the certificate's site-population average no longer refers to the
@@ -931,8 +931,9 @@ carries the claim.
 
 The eICU run holds outcome labels for the target hospitals, so it can *measure* the failure through
 the oracle scoring path — but that measurement is available only because the study is retrospective.
-A deployment has no such instrument, which is the reason the tag must be reported with the number
-rather than assumed away. T-19 is added by this document — the interface contract's frozen register
+A deployment has no such instrument at prediction time; once discharge labels accrue the same check can be
+run retrospectively (Section 5 of the manuscript), which is the reason the tag must be reported with the
+number rather than assumed away. T-19 is added by this document — the interface contract's frozen register
 runs T-1 to T-18, all of which are implementation risks with a diagnostic attached. This one has no
 diagnostic, because none exists; it is carried in §12.5 so the numbering is contiguous, with its
 response column saying so.
@@ -942,7 +943,7 @@ response column saying so.
 | id | risk | preflight field / gate | response |
 |---|---|---|---|
 | T-1 | Outcome leakage from an allowlisted column | not a preflight check — `assert_no_leak_columns` in CI, plus F-D | abort; re-audit denylist and dedup before reporting anything |
-| T-2 | `-1` flows through as a finite value | `sentinels[t][col]`: `n_minus_one`, `n_other_negative`, `min_positive`, `p01` | negative mass not exactly at `-1.0` raises `unexpected-negative-sentinel` **above `EICU_MAX_UNPARSEABLE_SHARE = 0.01` of rows**; below it the cells become missing and a `[MEASURE]` warning names column, count and share (amendment **A6**, post-hoc — the released extract carries exactly one such cell, `urine = -11245.5648`, against an otherwise contiguous non-negative support) |
+| T-2 | `-1` flows through as a finite value | `sentinels[t][col]`: `n_minus_one`, `n_other_negative`, `min_positive`, `p01` | negative mass not exactly at `-1.0` raises `unexpected-negative-sentinel` **above `EICU_MAX_UNPARSEABLE_SHARE = 0.01` of rows**; below it the cells become missing and a `[MEASURE]` warning names column, count and share (amendment **A6**, post-hoc — the released extract carries exactly one such cell — one cohort stay carried a large negative urine value — against an otherwise contiguous non-negative support) |
 | T-3 | Site-correlated APACHE missingness acts as a site proxy | `apache_coverage_by_site[t]`, `sentinel_site_dispersion` | named as `aps_present` / `apv_present`; §12.2; never filtered |
 | T-4 | APACHE restriction changes the estimand's population | `attrition`: `n_sites` at `apache-result-linked` vs `primary-cohort` | primary arm never restricts; §12.1; F-E |
 | T-5 | Records not independent within patient; cross-hospital `uniquepid` | `cross_site_patients`, `n_healthsystemstays`, `unitvisitnumber_hist` | §12.3 — S4 plus disclosure |
@@ -994,7 +995,10 @@ on something correlated with the site, and the site is the unit the guarantee is
 
 ## 14. Reproduction
 
-### 14.1 Operator checklist — in order, when the zip lands
+### 14.1 Reproduction checklist — in order, when the zip lands
+
+The seven predictions registered in §9 are settled clause by clause, read-only from the released
+files, in `experiments/out-settled/EICU-PREDICTIONS-SETTLED.md` (post-hoc, 2026-09-04).
 
 The order is part of the protocol: step 5 must pass before step 6 is run, and step 9 must happen
 before anything is written up.
@@ -1033,8 +1037,8 @@ before anything is written up.
     A mismatch stops here.
 
 4.  Exercise the full-scale mock first, so a failure is attributable to the code and not the data:
-      $env:CERTGATE_EICU = "1"; python -m pytest tests/test_eicu_path.py -q     # PowerShell
-      CERTGATE_EICU=1 python -m pytest tests/test_eicu_path.py -q               # Git Bash
+      $env:CERTGATE_EICU = "1"; python -m pytest tests/test_eicu_mock.py -q     # PowerShell
+      CERTGATE_EICU=1 python -m pytest tests/test_eicu_mock.py -q               # Git Bash
     EXPECT A DECLINE AT THE TWO FROZEN CORPUS SIZES (180 and 208 hospitals) -- and ONLY
     there. At the frozen EICU_MOCK_SIGNAL_B = 0.85 the mock's outcome has a Bayes-optimal
     AUC of 0.726, the fitted head reaches 0.60 out of sample, and an ORACLE ranking's best
@@ -1044,7 +1048,7 @@ before anything is written up.
     first drops BELOW 0.0354 at n_carrying = 77 (~217 hospitals): a mock generated at 900
     or 1500 hospitals CERTIFIES alpha = 0.10 with the pre-registered constant untouched.
     That is correct behaviour, not a broken pipeline. The certified branch is exercised by
-      $env:CERTGATE_EICU_LARGE = "1"; python -m pytest tests/test_eicu_path.py -q -k large
+      $env:CERTGATE_EICU_LARGE = "1"; python -m pytest tests/test_eicu_mock.py -q -k large
     which builds a 900-hospital mock and asserts the same HONESTY contract.
     This step proves the pipeline RUNS end to end at the real scale.
 

@@ -13,6 +13,9 @@ against the artifact and not against a prose copy:
   - GCS motor is the top driver on 20/20 re-splits
   - FiO2 is in the top three on 13
   - the day-1 intubation flag is in the top three on 10
+  - positive_gap_cells: how many top-three cells have a POSITIVE gap (the
+    feature pulls harder on answered cases); those cells are outlined and
+    carry a "+" in the right panel, since the ranking is by |gap|
 
 Aggregate-only by construction: ten features x twenty replicates of a cohort
 mean, no record ever present. The feature glossary maps allowlisted eICU
@@ -122,11 +125,17 @@ def render(rankings, topk, gaps, png):
     # enters the top three. A presence grid, so the 20/20 reads off directly.
     members = sorted(topk, key=lambda f: (-topk[f], np.mean(gaps[f])))
     grid = np.zeros((len(members), n_rep))
+    # The ranking is by |gap|, so a top-three cell can carry either sign. The
+    # draft reads the panel as "pulls harder on declined cases" (negative
+    # gap); a positive-gap cell is the exception and is marked as one, with a
+    # "+" glyph and an outline, so the sign is never read off the shade.
+    positive = np.zeros_like(grid, dtype=bool)
     for j, (_, ranking) in enumerate(rankings):
         names = [r["feature"] for r in ranking[:TOP_K_MEMBERSHIP]]
         for i, f in enumerate(members):
             if f in names:
                 grid[i, j] = TOP_K_MEMBERSHIP - names.index(f)   # 3 = rank 1
+                positive[i, j] = ranking[names.index(f)]["gap"] > 0
     ax[1].imshow(grid, aspect="auto", cmap="Blues", vmin=0,
                  vmax=TOP_K_MEMBERSHIP)
     ax[1].set_yticks(range(len(members)))
@@ -135,18 +144,30 @@ def render(rankings, topk, gaps, png):
     ax[1].set_xticks(range(0, n_rep, 5))
     ax[1].set_xticklabels([str(i) for i in range(0, n_rep, 5)], fontsize=8)
     ax[1].set_xlabel("by-site re-split")
-    ax[1].set_title("Top-three abstention driver per re-split\n"
-                    "(darkest = rank 1)", fontsize=10)
+    n_positive = int(positive.sum())
+    ax[1].set_title("Top-three abstention driver per re-split "
+                    "(darkest = rank 1)\n"
+                    "outlined \"+\" = positive gap (harder on answered "
+                    "cases)\n"
+                    f"({n_positive} such cell{'' if n_positive == 1 else 's'} "
+                    f"of {int((grid > 0).sum())}; all others negative)",
+                    fontsize=9)
     for i in range(len(members)):
         for j in range(n_rep):
             if grid[i, j] > 0:
-                ax[1].text(j, i, str(int(TOP_K_MEMBERSHIP - grid[i, j] + 1)),
-                           ha="center", va="center", fontsize=6.5,
+                rank = int(TOP_K_MEMBERSHIP - grid[i, j] + 1)
+                glyph = f"{rank}+" if positive[i, j] else str(rank)
+                ax[1].text(j, i, glyph, ha="center", va="center",
+                           fontsize=6.5,
                            color="white" if grid[i, j] >= 2 else "black")
+                if positive[i, j]:
+                    ax[1].add_patch(plt.Rectangle(
+                        (j - 0.5, i - 0.5), 1.0, 1.0, fill=False,
+                        edgecolor="tab:red", lw=1.4, zorder=4))
     fig.tight_layout()
     fig.savefig(png, dpi=110)
     plt.close(fig)
-    return order, members
+    return order, members, n_positive
 
 
 def main(argv=None):
@@ -155,9 +176,10 @@ def main(argv=None):
     png = argv[1] if len(argv) > 1 else PNG_DEFAULT
     rankings = load_rankings(diag)
     top1, topk, gaps = counts(rankings)
-    order, members = render(rankings, topk, gaps, png)
+    order, members, n_positive = render(rankings, topk, gaps, png)
     out = {
         "source": diag, "png": png, "n_replicates": len(rankings),
+        "positive_gap_cells": n_positive,
         "top1_counts": dict(sorted(top1.items(), key=lambda kv: -kv[1])),
         "top3_counts": dict(sorted(topk.items(), key=lambda kv: -kv[1])),
         "mean_gap_by_feature": {f: round(float(np.mean(gaps[f])), 6)

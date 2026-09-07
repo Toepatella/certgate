@@ -717,12 +717,17 @@ def test_eicu_subgroup_posthoc_constants_pinned():
     They carry no pre-registration claim: chosen after the extract was read,
     to keep the descriptive layer stable, on the reliability-panel precedent.
     The cell floor reuses eicu_etl.EICU_MIN_OUTCOME_STRATUM, adding no new
-    threshold constant (SPEC PIN AMENDMENT 2026-08-20).
+    threshold constant (SPEC PIN AMENDMENT 2026-08-20). "aps_present" was
+    APPENDED LAST on 2026-09-04 (SPEC PIN AMENDMENT, fix pass): the five
+    dimensions before it keep their positions, so every EICU_subgroups.csv
+    written under the 5-tuple still parses and projects byte-identically.
     """
     from experiments import run_eicu
     from experiments import eicu_etl as etl
     assert run_eicu.EICU_SUBGROUP_DIMS == (
-        "age_band", "gender", "ethnicity", "hospitaladmitsource", "unittype")
+        "age_band", "gender", "ethnicity", "hospitaladmitsource", "unittype",
+        "aps_present")
+    assert run_eicu.EICU_SUBGROUP_DIMS[-1] == "aps_present"
     assert run_eicu.EICU_SUBGROUP_AGE_BANDS == (
         (18, 45), (45, 65), (65, 75), (75, 200))
     assert "POST-HOC" in run_eicu.EICU_SUBGROUP_LABEL

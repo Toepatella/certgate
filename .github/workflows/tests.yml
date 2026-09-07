@@ -15,3 +15,14 @@ jobs:
           python-version: "3.13"
       - run: pip install -r requirements.txt
       - run: python -m pytest tests -q
+  eicu-mock:
+    # the credential-free exerciser of the extract-to-certificate pipeline on the
+    # schema-faithful mock corpus (declines by design at the frozen 180/208-hospital sizes)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install -r requirements.txt
+      - run: CERTGATE_EICU=1 python -m pytest tests/test_eicu_mock.py -q

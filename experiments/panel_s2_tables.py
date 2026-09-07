@@ -1,17 +1,17 @@
-"""Read-only analysis behind draft.md Tables 6 and 7.
+"""Read-only analysis behind the paper's Supplementary Tables S4 and S5.
 
 Two things the main grid does not emit.
 
-Table 6, influence-cap sensitivity. Replays E1's s_u=0.5 arm in baseline mode
+Table S4, influence-cap sensitivity. Replays E1's s_u=0.5 arm in baseline mode
 at each candidate M, re-deriving both the S_aux walk order and the calibration
 walk. Each certificate is then rescored against R_M at that same M, on one
 fresh 200-site evaluation pool. Every M certifies its own estimand, so the
 table compares procedures, not one quantity.
 
-The Table 6 self-check: at M=100 the replay must reproduce every
+The Table S4 self-check: at M=100 the replay must reproduce every
 baseline-deploying draw's tau in the recorded E1_validity.csv exactly.
 
-Table 7, answered/declined operating characteristics. Confusion counts,
+Table S5, answered/declined operating characteristics. Confusion counts,
 sensitivity, specificity, PPV and NPV for the answered and declined sets of E1
 (pooled over its 200 fresh evaluation pools) and E6 (its single 40-site
 deployment). Plus the always-negative comparator error rate that Sections 3.1
@@ -30,12 +30,9 @@ results go to stdout as JSON.
 
 Run: python -m experiments.panel_s2_tables [R]   (default R = 200)
 
-Open item: these numbers are not yet folded into run_synthetic.py's CSV and
-summary writers, so python -m experiments.run_synthetic alone does not
-regenerate Tables 6 and 7. Appendix A.3's one-command claim covers Tables 1-4
-and Figures 1-7 only until that wiring lands.
-
-Refs: panel items S2-13, S2-28.
+These numbers are not folded into run_synthetic.py's writers: python -m
+experiments.run_synthetic alone does not regenerate Tables S4 and S5, and
+Appendix A.3 names this command as the second, read-only step that does.
 """
 
 import csv
@@ -74,7 +71,7 @@ def _confusion(y, yhat):
 
 
 def _op_chars(c, fnr=False):
-    """Operating characteristics from confusion counts (Table 7 row).
+    """Operating characteristics from confusion counts (Table S5 row).
 
     panel_confusion_tables reuses this row for its eICU tables; fnr=True
     inserts the FNR column those tables carry.
@@ -113,7 +110,7 @@ def _recorded_e1():
 
 
 def e1_arm(R):
-    """Table 6 + E1's half of Table 7, from one replay of the s_u=0.5 arm."""
+    """Table S4 + E1's half of Table S5, from one replay of the s_u=0.5 arm."""
     recorded = _recorded_e1()
     cfg = SimConfig(s_u=0.5)
     acc = {(M, a): dict(n=0, tau=[], cov=[], rm=[], exceed=0)
@@ -167,7 +164,7 @@ def e1_arm(R):
                         check["tau_mismatches"] += int(
                             abs(tau - float(recorded[r]["tau"])) > 1e-9)
 
-        # Table 7 + Section 3.3/4.2 diagnostics at the deployed (recorded) tau
+        # Table S5 + Section 3.3/4.2 diagnostics at the deployed (recorded) tau
         if r in recorded:
             tau = float(recorded[r]["tau"])
             s_ev, yh = head.score(ev.x), head.predict(ev.x)
@@ -233,7 +230,7 @@ def e1_arm(R):
 
 
 def e6_arm():
-    """E6's half of Table 7, plus its R_M-vs-record gap (Section 4.7)."""
+    """E6's half of Table S5, plus its R_M-vs-record gap (Section 4.7)."""
     cfg = SimConfig()
     rng = _rng(6)
     coh = draw_cohort(cfg, ANCHOR_SITES, rng)

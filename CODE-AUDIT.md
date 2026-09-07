@@ -6,7 +6,8 @@ Scope: `certgate/` (package), `tests/`, `experiments/`, `SPEC.md`, `METHODS.md`,
 > Citations re-verified against the working tree 2026-08-25. Line numbers and quoted comment
 > text were re-pointed after the 2026-08-24 comment humanization and the 2026-08-25 paper
 > de-labelling; findings, verdicts and numbers are the originals and are unchanged. Note that
-> most fixes this audit prescribes have since landed, so a re-pointed citation usually names the
+> all fixes this audit prescribes except recommendation 17 have since landed (see RESOLUTION below),
+> so a re-pointed citation usually names the
 > *corrected* code rather than the defect the row describes — several quoted strings were deleted
 > by the very fix their row prescribes and are annotated as having no current match.
 > A later 2026-08-25 simplification pass restructured certgate/pipeline.py, certgate/shift.py, experiments/run_synthetic.py and experiments/run_eicu.py (behavior proven byte-identical) and split tests/test_eicu_path.py into test_eicu_mock.py / test_eicu_etl.py / test_eicu_run.py, so line citations into those files are as of the re-verification date, before the moves.
@@ -74,6 +75,92 @@ the 1-delta event."* Both clauses are false — the first because the estimand i
 the second because the permutation is seeded from the target label. The code faithfully implements a
 specification that misstates the mathematics. Fixing the code alone would not fix this; `SPEC.md` must
 change first, as its own protocol requires.
+
+## RESOLUTION (applied through 2026-09-04)
+
+Every item below landed before the repository's first commit, the pre-extract freeze `9f25b49`
+(2026-07-30), so no later commit can be cited for it; the corrected code is what that commit carries,
+and the durable pointer is the regression test named on each line (`tests/<file>::<test>`).
+
+- **Critical 1 (V1) — FIXED.** SPEC.md's mandated guarantee text was changed first (rec. 1), then
+  `certgate/report.py` states the estimand the test certifies: the influence-weighted answered-set
+  risk "averaged over the population of sites from which the calibration sites were drawn … NOT any
+  individual site's answered error rate". Pinned by: `test_report.py::test_guarantee_statement_frozen_baseline`,
+  `::test_guarantee_statement_frozen_both_modes`, `::test_guarantee_statement_frozen_bbse_only`
+  (exact-string equality against three frozen variants; changing the text is a SPEC change).
+  E1 reports aggregate conformance as the metric and the per-site rate as a diagnostic across an
+  `s_u` sweep (rec. 3); pinned by `test_experiments.py::test_rm_on_pool_matches_closed_form_and_is_not_the_record_mean`,
+  `::test_per_site_exceed_frac_closed_form`.
+- **Critical 2 (V2) — FIXED.** `q_t` receives its own confidence share: `BBSE_BONFERRONI = 4`, an
+  exact Clopper–Pearson interval for a single-site pool, a cluster bootstrap for pools of at least
+  `BBSE_MIN_TARGET_SITES = 10` declared sites, and a `bbse-target-clustering` decline for 2–9; the
+  box propagates over 16 corners. Pinned by: `test_shift.py::test_fit_records_q_interval`,
+  `::test_q_ci_is_clopper_pearson_at_the_bonferroni_level`, `::test_q_interval_matches_the_scipy_reference_implementation`,
+  `::test_multi_site_q_interval_path`, `::test_few_target_sites_decline_bbse_target_clustering`,
+  `::test_q_interval_propagation_regression`; constants by `test_constants.py::test_bbse_bonferroni`,
+  `::test_bbse_min_target_sites`. The box's realized coverage is measured post-hoc in
+  `experiments/out-bbse-probe/` (implied certificate level about 0.93 in the probe's regime) and
+  disclosed in METHODS §5 and in every BBSE guarantee string — the residue is recommendation 17.
+- **V6 #1 (M-cap deleted) — pinned by** `test_certify.py::test_mcap_supplies_ville_boundedness`.
+- **V6 #2 (baseline walk spends δ = 0.5) — pinned by** `test_pipeline.py::test_delta_accounting_spy`.
+- **V6 #3 (BBSE bet spends the full δ) — pinned by** `test_pipeline.py::test_delta_accounting_spy`.
+- **V6 #4 (box drops the Bonferroni split) — pinned by** `test_constants.py::test_bbse_bonferroni`
+  (the constant) and `test_shift.py::test_q_ci_is_clopper_pearson_at_the_bonferroni_level`,
+  `::test_q_interval_propagation_regression` (the level actually spent on the q interval); the three
+  bootstrap percentiles' level is pinned only through the constant.
+- **V6 #5 (walk order derived from S_cal) — pinned by** `test_pipeline.py::test_walk_order_is_aux_derived`.
+- **V6 #6 (`wilson_lcb` returns the upper bound) — pinned by** `test_harness.py::test_wilson_lcb_is_a_LOWER_bound_and_monotone`,
+  `::test_wilson_lcb_matches_closed_form`, `::test_wilson_lcb_matches_the_scipy_reference_implementation`.
+- **V6 #7 (`hard_violation` uses the raw rate) — pinned by** `test_harness.py::test_hard_violation_criterion`.
+- **V6 #8 (BBSE walk `break` → `continue`) — pinned by** `test_shift.py::test_bbse_walk_break_not_continue`.
+- **V6 #9 (provenance hashes → a literal) — pinned by** `test_pipeline.py::test_provenance_binds_label_content_and_shape`,
+  `::test_provenance_binds_run_configuration`.
+- **V6 #10 (bootstrap quantiles a reduced count) — pinned by** `test_shift.py::test_bootstrap_shortfall_declines_not_reduced_quantile`.
+- **V6 #11 (atoms use `>` while deploy uses `>=`) — pinned by** `test_certify.py::test_threshold_tie_is_answered_in_atoms`.
+- **V6 #12 (`certification_rng` ignores `alpha`) — pinned by** `test_certify.py::test_certification_rng_streams`.
+- **V6 #13 (out-of-scope clause inverted) — pinned by** the three `test_report.py::test_guarantee_statement_frozen_*`
+  exact-string tests.
+- **V6 #14 (BBSE asymptotic clause deleted) — pinned by** `test_report.py::test_guarantee_statement_frozen_both_modes`,
+  `::test_guarantee_statement_frozen_bbse_only`.
+- **Rec. 1 — CLOSED.** SPEC.md guarantee text rewritten first; enforced through the `test_report.py`
+  frozen strings above.
+- **Rec. 2 — CLOSED.** `report.py` estimand wording; `test_report.py::test_guarantee_statement_frozen_*`.
+- **Rec. 3 — CLOSED.** E1 scored on aggregate conformance with the `s_u` sweep reported as a
+  dispersion diagnostic; `test_experiments.py::test_per_site_exceed_frac_closed_form`,
+  `test_constants.py::test_simconfig_generator_defaults_pinned`.
+- **Rec. 4 — CLOSED.** As Critical 2.
+- **Rec. 5 — CLOSED.** `target_label` out of the permutation seed; the shared-event clause struck
+  for BBSE. `test_certify.py::test_certification_rng_streams`, `test_pipeline.py::test_baseline_reports_are_target_label_invariant`,
+  `::test_bbse_fit_is_target_label_free_and_data_seeded`, `test_report.py::test_bbse_rows_never_claim_a_shared_event`.
+- **Rec. 6 — CLOSED.** E2/E3 run at the documented separation (`SimConfig()` defaults; the local
+  constant is gone). `test_constants.py::test_no_experiment_local_separation_override`,
+  `::test_simconfig_generator_defaults_pinned`.
+- **Rec. 7 — CLOSED.** The BBSE guarantee string carries the asymptotic clause (frozen by
+  `test_report.py`), METHODS §5 reports the measured shortfall, and `experiments/out-bbse-probe/`
+  records the box's realized coverage at auxiliary-site counts bracketing the design's (36, 42 and 74).
+- **Rec. 8 — CLOSED.** `tests/test_harness.py` exists; the δ-accounting spy is
+  `test_pipeline.py::test_delta_accounting_spy`; the exact-string guarantee assertion is the
+  `test_report.py` trio.
+- **Rec. 9 — CLOSED.** Site identity canonicalized, missing site ids rejected.
+  `test_validate.py::test_dirty_site_ids_whitespace_merges_to_one_site`, `::test_dirty_site_ids_case_collision_raises`,
+  `::test_dirty_site_ids_string_numeric_spelling_raises`, `::test_numeric_int_float_ids_merge_to_one_site`,
+  `::test_invisible_and_nfd_spellings_merge_to_one_site`, `::test_missing_site_ids_rejected`,
+  `test_pipeline.py::test_target_gates_use_canonical_normal_form`.
+- **Rec. 10 — CLOSED.** `test_validate.py::test_duplicate_site_labels_rejected_by_make_cohort`.
+- **Rec. 11 — CLOSED.** Target pool asserted site-disjoint; `target_site_id` added and used by
+  `examples/real_data_example.py`. `test_pipeline.py::test_target_overlapping_calibration_raises`,
+  `::test_misaligned_target_site_id_raises_on_every_path`.
+- **Rec. 12 — CLOSED.** `test_validate.py::test_cohort_post_init_enforces_contract`.
+- **Rec. 13 — CLOSED.** `test_validate.py::test_column_shaped_arrays_rejected`.
+- **Rec. 14 — CLOSED.** `test_pipeline.py::test_unknown_or_empty_modes_raise`,
+  `::test_single_class_fitting_cohort_raises`, `::test_malformed_oracle_labels_raise`.
+- **Rec. 15 — CLOSED.** The V6 table above: every one of the fourteen mutations now has a named test.
+- **Rec. 16 — CLOSED.** `test_report_estimated.py::test_feasibility_reports_none_not_inf_when_no_coverage`
+  (V16), `test_explain.py::test_empty_population_gap_ranking_is_empty` (V22),
+  `test_pipeline.py::test_gated_report_has_stable_diagnostic_keys` (V25).
+- **Rec. 17 — OPEN.** Replacing the percentile box with a finite-sample cluster bound is deferred
+  post-submission; the manuscript names it as future work (§6.1), and the shortfall it would retire
+  is measured (`experiments/out-bbse-probe/`) and disclosed wherever the BBSE guarantee is stated.
 
 ---
 
@@ -168,7 +255,7 @@ to discount dispersion, and it still fires — these are parameter-level exceeda
 only that mode and does not cover this one.
 
 The "design-conditional estimand" defence (`METHODS.md:25`, the Scope paragraph; the phrase itself no
-longer appears in `METHODS.md` and survives only in `paper/review/`) does not rescue it: conditioning on
+longer appears in `METHODS.md` and survives only in `paper/review/`, in git history) does not rescue it: conditioning on
 the target's features makes them observed, but does not convert a population-average bound into a per-site
 bound. Note also that in baseline mode the target's data never enters the test at all —
 `pipeline.py:71-89` builds atoms from `cal` only, at `:79-82` — so a genuinely site-specific claim is

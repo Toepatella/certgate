@@ -1185,7 +1185,7 @@ the deliverable is certify rate + R_M-exceed rate per unit x rung x s_u arm.
 · E8 certificate stress & comparator suite (revision-2; every stream begins `_rng(8, arm, ...)`
 and every walk permutation uses a NEW `certification_rng` stream string, so no E1–E7 draw or
 permutation is consumed and every published number stays byte-identical; design probes recorded
-in `PHASE0-PROBES.md`, kept in git history; removed from HEAD at submission). ARM A comparator bounds (review weakness 1):
+in `paper/review/revision2/PHASE0-PROBES.md`, kept in git history and readable with `git show 9419e10^:paper/review/revision2/PHASE0-PROBES.md`; removed from HEAD at submission). ARM A comparator bounds (review weakness 1):
 draws `_rng(8, 0, n_idx, r)` over the E4 sweep at R=200; per rung, compute the IDENTICAL
 cal/aux atoms once and walk them five ways — WSR (stream "e8-comp") and the four
 `experiments/comparators.py` bounds — under the same `walk_order` and the same
@@ -1202,7 +1202,7 @@ prevent. Validity gate: every finite-sample bound's rm_exceed rate must sit at o
 within its exact binomial interval.
 ARM B label-noise stress frontier (review weakness 4; the originally planned near-alpha window
 is INFEASIBLE — the walk adapts by deploying higher tau, and the information floor forbids
-certification within ~floor of alpha at this scale; PHASE0-PROBES.md records the probe): flip
+certification within ~floor of alpha at this scale; PHASE0-PROBES.md (in git history) records the probe): flip
 every cohort's labels (train/aux/cal/eval identically) at rate eta over
 `E8_NOISE_SWEEP = (0.01, 0.02, 0.03, 0.035, 0.04)`, streams `_rng(8, 1, eta_idx, r)` with
 flips on `_rng(8, 1, eta_idx, r, 1)` and walk stream "e8-noise", at `E8_NOISE_R = 300`.
@@ -1225,7 +1225,7 @@ any monotone recalibration a relabeling of the same answered sets (the walk cert
 different tau index for identical sets), so the gate is insensitive to monotone
 miscalibration BY CONSTRUCTION — the paper states this analytically instead of simulating it.
 · E9 power frontiers (revision-2; streams `_rng(9, arm, ...)`). ARM A BBSE label-shift power
-frontier (review weakness 3; P0.2 pilot in PHASE0-PROBES.md): at the anchor shift
+frontier (review weakness 3; P0.2 pilot in PHASE0-PROBES.md, in git history): at the anchor shift
 `SHIFT_BASE`, sweep the SOURCE-site count `E9_SOURCE_SWEEP = (208, 600, 900, 1200)` x
 declared-target modes `E9_TARGET_MODES = ("single-site-cp", "k40-boot")`
 (`E9_TARGET_K = 40`) at `E9_R = 50`, draws `_rng(9, 0, n_idx, mode_idx, r)`; the standard
@@ -1287,7 +1287,7 @@ atoms `Z_c = b`, exactly as record-less sites do for `R_M`.
 
 **Budgets and randomness.** Budgets live on their own ladder `E9_FNR_LADDER = (0.4, 0.5,
 0.55, 0.6)` — chosen to bracket the design-time truth (~0.45 on the synthetic grid;
-PHASE0-PROBES.md) so 0.4 is a built-in always-refuses negative control. `ALPHA_LADDER` and
+PHASE0-PROBES.md, in git history) so 0.4 is a built-in always-refuses negative control for the shipped normalisation. `ALPHA_LADDER` and
 `certify.certification_rng` are UNTOUCHED: walk permutations come from an experiment-local
 `_e9_fnr_rng(budget, stream)` in `run_synthetic.py` that mirrors `certification_rng`'s
 sha256 construction but indexes `E9_FNR_LADDER`. Each budget is tested by its own walk at the
@@ -1451,7 +1451,7 @@ and must abort, not flow. Below the threshold the cells still become missing (th
 did) and `preflight`/`build_raw` emit a `[MEASURE]` warning naming column, count and
 share. **This threshold is protocol amendment A6 (2026-07-31), the one POST-HOC amendment
 and the only one that relaxes a refusal** — the released extract carries exactly one such
-cell in ~4.1M (`apacheApsVar.urine = -11245.5648`, stay 1805017, in cohort) against a
+cell in ~4.1M (one cohort stay carried a large negative urine value; the identifier and the raw value are withheld from the released text) against a
 support otherwise contiguous and non-negative (min 0, median 1447.6, max 269323.7). §5.3
 of `EICU-PROTOCOL.md` pre-specified that the "value < 0 ⇒ missing" rule is adopted *only
 after the histogram proves the support is contiguous and non-negative*; that histogram was
@@ -1715,6 +1715,30 @@ block is labeled by `EICU_FAITHFULNESS_LABEL`, carried in TWO enumerated places 
 consumes no `_rng` draw — every certified quantity is byte-identical with and without it. `k`
 and the label are pinned by an APPENDED post-hoc constants test that carries no
 pre-registration claim (the subgroups precedent).
+
+**PIN AMENDMENT (2026-09-04, fix pass), same house rule.** `EICU_SUBGROUP_DIMS` gains a sixth
+entry, `"aps_present"`, APPENDED LAST — `("age_band", "gender", "ethnicity",
+"hospitaladmitsource", "unittype", "aps_present")` — so the post-hoc subgroup descriptives
+above also stratify the pooled target arm by whether a day-1 apacheApsVar row exists (levels
+`present` / `absent`); ordering again SPEC (this paragraph) → `experiments/run_eicu.py` →
+`tests/test_constants.py`. The mask is the target cohort's own allowlisted `aps_present`
+presence column (0/1, finite by construction), so NO ETL or allowlist change exists, the
+frozen floor and the null-not-zero suppression rule apply unchanged, and the dimension is
+marginal like the other five (never crossed, never per-hospital x subgroup). The `absent`
+level is glossed in the block as APACHE-ineligible admission types together with stays that
+ended before the day-1 window closed and hospitals that did not file APACHE rows — the three
+reasons a row can be missing — not as "early discharge". Every artifact written under the
+5-tuple still parses: the new rows are APPENDED after the `unittype` rows of each replicate,
+so a projection of `EICU_subgroups.csv` onto the five old dimensions is byte-identical to the
+frozen `experiments/out-subgroups/` file (gate 2 of the fix pass, `experiments/gate2_diff.py`).
+The same pass adds only APPENDED columns and keys elsewhere on the eICU path — `EICU_comparator.csv`
+(head and APACHE-IVa AUC/Brier on the whole pool and the answered set), `EICU_per_site.csv`
+(`share_75plus`), `EICU_diagnostics.json` (`los_under_24h`, `top_driver_coef_rank`), the
+EICU-POOLED / EICU-PERSITE / EICU-COMPARATOR blocks, and the preflight `apache_absent_los`
+block (`n_lt_24h` / `frac_lt_24h` and a nested `los_window` sub-block for the whole cohort and
+its deaths) — none of which consumes an `_rng` draw or enters any certified quantity; the
+projected diff onto the frozen columns and keys is the proof. `--out` became REQUIRED on the
+`run_eicu` CLI in the same pass, so no invocation can land in `experiments/out/` by default.
 
 **PIN AMENDMENT (2026-08-01), recorded because the house rule forbids silent edits to a pinned
 literal.** `EICU_SUMMARY_SECTIONS` was a 5-tuple until this date; the reliability-panel work

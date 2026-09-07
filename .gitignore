@@ -13,8 +13,13 @@ __pycache__/
 # The EICU_* artifacts that land there are aggregate-only BY CONSTRUCTION
 # (run_eicu.assert_aggregate_only gates every write), so they stay tracked too.
 # The same reasoning covers the real-extract sidecar output dirs
-# (experiments/out-sens/, experiments/out-panel/): every write passes the same
-# gate, and an audit of out-panel/ (2026-08-09) found no array longer than 10.
+# (experiments/out-sens/, experiments/out-panel/, out-subgroups/, out-faithfulness/,
+# and the 2026-09 POST-HOC fix-pass runs out-timing/ and out-rev2/): every write
+# passes the same gate, and an audit of out-panel/ (2026-08-09) found no array
+# longer than 10. The remaining POST-HOC sidecars are tracked for the same reason
+# with less to gate: out-e9a-rescore/, out-e9b-positives/ and out-bbse-probe/ are
+# synthetic-only; out-settled/ and out-derived/ are read-only derivations from the
+# released aggregates.
 
 # ---------------------------------------------------------------------------
 # eICU-CRD v2.0 — the extract is NOT redistributable and MUST NOT be committed
@@ -73,3 +78,9 @@ explain_dashboard_eicu*.html
 # ---------------------------------------------------------------------------
 paper/build/out/
 paper/figures/
+
+# Submission correspondence stays on disk but untracked: the cover letter carries
+# a confidential referee suggestion and the response notes are pre-drafted replies
+# (2026-09-04; the cover letter is removed from the index with git rm --cached)
+paper/cover-letter.md
+paper/response-notes.md

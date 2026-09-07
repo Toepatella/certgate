@@ -760,3 +760,241 @@ def test_dashboard_out_guard_refuses_the_sidecar_output_dirs(tmp_path):
     ok = os.path.join(str(tmp_path), "pages",
                       "explain_dashboard_eicu_v2.html")
     assert dash_eicu._check_out_path(ok) == os.path.abspath(ok)
+
+
+# ================================= 2026-09-04 fix pass: appended diagnostics ===
+# Everything below was added after the extract was read, on the subgroups
+# precedent: new keys and columns are APPENDED, the certified path computes
+# what it computed before, and experiments/gate2_diff.py proves it on the
+# frozen artifacts. These tests pin the shape -- every new value a scalar or
+# None, through the aggregate gate -- not any number.
+
+def _is_scalar_or_none(v):
+    return v is None or isinstance(v, (bool, int, float, str))
+
+
+def test_mock_run_appends_the_sub_24h_and_coef_rank_diagnostics(
+        mock_certified_run):
+    """EICU_diagnostics.json and the EICU-POOLED block carry the new blocks.
+
+    The always-on mock declines every rung, so the answered / declined halves
+    are None and the coefficient-rank block is empty; both are legal shapes
+    and both must still be scalar-only and strict JSON."""
+    out = mock_certified_run["out"]
+    diag = json.load(open(os.path.join(out, "EICU_diagnostics.json"),
+                          encoding="utf-8"))
+    # the frozen keys are all still there, in front of the appended ones
+    frozen = ["arm", "replicates", "n_records", "n_sites", "reference_check",
+              "abstention_gap_ranking", "composition_three_way", "bbse",
+              "n_target_sites_without_hospital_strata",
+              "n_hospital_strata_rows", "warnings"]
+    keys = list(diag)
+    assert all(k in keys for k in frozen)
+    assert keys.index("los_under_24h") > keys.index("warnings")
+    assert keys.index("top_driver_coef_rank") > keys.index("los_under_24h")
+
+    los = diag["los_under_24h"]
+    assert isinstance(los, list) and len(los) == 1
+    row = los[0]
+    for k in ("replicate", "operative_alpha", "n_pool", "n_deaths_pool",
+              "n_los_unavailable_pool", "n_lt_24h_pool",
+              "n_deaths_lt_24h_pool", "n_answered", "n_declined",
+              "n_lt_24h_answered", "n_lt_24h_declined",
+              "n_deaths_lt_24h_declined"):
+        assert k in row and _is_scalar_or_none(row[k]), k
+    assert 0 <= row["n_lt_24h_pool"] <= row["n_pool"]
+    assert 0 <= row["n_deaths_lt_24h_pool"] <= min(row["n_lt_24h_pool"],
+                                                    row["n_deaths_pool"])
+    assert row["operative_alpha"] is None          # the mock certifies nothing
+    assert row["n_answered"] is None and row["n_lt_24h_declined"] is None
+
+    rank = diag["top_driver_coef_rank"]
+    assert rank["by_rung"] == {}                   # no certified rung, no rank
+    assert rank["summary"] == dict(n=0, mode=None, min=None, max=None)
+    assert "abstention_gap_ranking[0]" in rank["what"]
+
+    pooled = mock_certified_run["payload"]["pooled"]
+    block = pooled["los_under_24h"]
+    assert block["threshold"] == run_eicu.EICU_LOS_WINDOW_HOURS == 24.0
+    assert block["n_replicates"] == 1
+    for k, v in block.items():
+        assert _is_scalar_or_none(v), k
+    assert block["mean_frac_lt_24h_pool"] is not None
+    assert block["mean_frac_lt_24h_of_answered"] is None
+    # the appended block sits after the frozen keys of the POOLED payload
+    assert list(pooled).index("los_under_24h") > list(pooled).index("warnings")
+    text = open(os.path.join(out, "EICU-SUMMARY.md"), encoding="utf-8").read()
+    assert "los_under_24h" in text
+    run_eicu.assert_aggregate_only(run_eicu._json_ready(diag),
+                                   "EICU_diagnostics.json")
+    _assert_no_forbidden_key(diag)
+
+
+def test_mock_run_appends_the_comparator_and_per_site_columns(
+        mock_certified_run):
+    """The two CSVs gain APPENDED columns; the frozen columns lead unchanged."""
+    out = mock_certified_run["out"]
+    with open(os.path.join(out, "EICU_comparator.csv"), encoding="ascii") as fh:
+        rows = list(csv.DictReader(fh))
+        header = list(rows[0]) if rows else None
+    frozen = ["replicate", "alpha", "n_answered", "certgate_answered_err",
+              "apache_iva_brier_answered", "apache_iva_auc_answered",
+              "n_apache_available"]
+    appended = ["head_auc_pool", "head_brier_pool", "head_auc_answered",
+                "head_brier_answered", "apache_iva_auc_pool",
+                "apache_iva_brier_pool", "n_apache_available_pool"]
+    assert header == frozen + appended
+    assert len(rows) == len(ALPHA_LADDER)
+    for r in rows:
+        # whole-pool scores exist whether or not the rung certified
+        assert 0.0 <= float(r["head_auc_pool"]) <= 1.0
+        assert 0.0 <= float(r["head_brier_pool"]) <= 1.0
+        assert int(r["n_apache_available_pool"]) >= int(r["n_apache_available"])
+        # answered-set scores are empty on a declined rung, never 0.0
+        assert r["head_auc_answered"] == "" and r["head_brier_answered"] == ""
+        if int(r["n_apache_available_pool"]):
+            assert 0.0 <= float(r["apache_iva_brier_pool"]) <= 1.0
+    comp = mock_certified_run["payload"]["comparator"]
+    for rung in comp["rungs"].values():
+        for k in ("mean_head_auc_pool", "mean_head_brier_pool",
+                  "mean_head_auc_answered", "mean_head_brier_answered",
+                  "mean_apache_iva_auc_pool", "mean_apache_iva_brier_pool",
+                  "apache_available_share_pool", "n_rows_pool"):
+            assert k in rung and _is_scalar_or_none(rung[k]), k
+        assert rung["mean_head_auc_pool"] is not None
+        assert rung["mean_head_auc_answered"] is None
+        assert "EVERY held-out stay" in rung["pool_note"]
+
+    with open(os.path.join(out, "EICU_per_site.csv"), encoding="ascii") as fh:
+        rows = list(csv.DictReader(fh))
+    assert list(rows[0])[-1] == "share_75plus"
+    assert list(rows[0])[:17] == [
+        "replicate", "arm", "site", "alpha", "n_target", "reason",
+        "certified", "tau", "coverage", "n_answered", "answered_err_rate",
+        "hard", "numbedscategory", "teachingstatus", "region", "aps_coverage",
+        "apv_coverage"]
+    shares = [float(r["share_75plus"]) for r in rows if r["share_75plus"]]
+    assert shares and all(0.0 <= s <= 1.0 for s in shares)
+    per_site = mock_certified_run["payload"]["per_site"]
+    for rung in per_site["rungs"].values():
+        assert "share_75plus_vs_answered_err_spearman" in rung
+        assert _is_scalar_or_none(rung["share_75plus_vs_answered_err_spearman"])
+        assert isinstance(rung["n_pools_in_spearman"], int)
+        assert "not" in rung["share_75plus_note"]      # non-independence stated
+
+
+def test_mock_run_appends_the_aps_present_subgroup_dimension(
+        mock_certified_run):
+    """aps_present is the sixth, LAST dimension: its rows follow the unittype
+    rows in every replicate, so a projection onto the five old dims is the
+    old file."""
+    out = mock_certified_run["out"]
+    with open(os.path.join(out, "EICU_subgroups.csv"), encoding="ascii") as fh:
+        rows = list(csv.DictReader(fh))
+    dims_in_order = []
+    for r in rows:
+        if not dims_in_order or dims_in_order[-1] != r["dim"]:
+            dims_in_order.append(r["dim"])
+    assert dims_in_order == list(run_eicu.EICU_SUBGROUP_DIMS)
+    assert run_eicu.EICU_SUBGROUP_DIMS[-1] == "aps_present"
+    aps = [r for r in rows if r["dim"] == "aps_present"]
+    assert sorted(r["level"] for r in aps) == ["absent", "present"]
+    assert sum(int(r["n"]) for r in aps) == sum(
+        int(r["n"]) for r in rows if r["dim"] == "gender")   # one partition each
+    block = mock_certified_run["payload"]["subgroups"]
+    assert set(block["dims"]["aps_present"]) == {"absent", "present"}
+    note = block["dim_notes"]["aps_present"]
+    assert "APACHE-ineligible admission types" in note
+    assert "early discharge" not in note
+    assert note == run_eicu.EICU_SUBGROUP_DIM_NOTES["aps_present"]
+
+
+def test_subgroup_masks_read_the_presence_column_not_a_one_hot_prefix():
+    names = ["age", "age__missing", "aps_present", "gender=Female",
+             "gender=Male"]
+    x = np.array([[70.0, 0, 1.0, 1, 0],
+                  [80.0, 0, 0.0, 0, 1],
+                  [40.0, 1, 1.0, 1, 0]])
+    masks = run_eicu._subgroup_masks(x, names)
+    assert masks["aps_present"]["present"].tolist() == [True, False, True]
+    assert masks["aps_present"]["absent"].tolist() == [False, True, False]
+    # every level of the new dim is a partition of the rows
+    assert (masks["aps_present"]["present"]
+            | masks["aps_present"]["absent"]).all()
+
+
+def test_los_under_24h_row_counts_add_up():
+    los = np.array([3.0, 30.0, np.nan, 12.0, 48.0, -2.0])
+    y = np.array([True, False, True, True, False, False])
+    ans = np.array([True, True, False, False, True, True])
+    row = run_eicu._los_under_24h_row(los, y, ans, 3, 0.10)
+    assert row == dict(replicate=3, operative_alpha=0.10, n_pool=6,
+                       n_deaths_pool=3, n_los_unavailable_pool=1,
+                       n_lt_24h_pool=3, n_deaths_lt_24h_pool=2,
+                       n_answered=4, n_declined=2, n_lt_24h_answered=2,
+                       n_lt_24h_declined=1, n_deaths_lt_24h_declined=1)
+    # no certified rung: the pool counts stand, the halves are None
+    row = run_eicu._los_under_24h_row(los, y, None, 0, None)
+    assert row["n_lt_24h_pool"] == 3 and row["n_answered"] is None
+    for v in row.values():
+        assert _is_scalar_or_none(v)
+    run_eicu.assert_aggregate_only(row, "los-row")
+
+
+def test_share_75plus_excludes_imputed_ages():
+    names = ["age", "age__missing", "aps_present"]
+    x = np.array([[80.0, 0, 1], [60.0, 0, 1], [75.0, 0, 0], [63.2, 1, 0]])
+    assert run_eicu._share_75plus(x, names) == round(2 / 3, 4)
+    x_all_missing = np.array([[63.2, 1, 0], [63.2, 1, 1]])
+    assert run_eicu._share_75plus(x_all_missing, names) is None
+
+
+def test_top_driver_coef_rank_is_the_position_in_the_abs_coef_order():
+    """On a head that certifies (the synthetic fixture) the rank is 1-based,
+    consistent with argsort on |coef|, and the block's mode is well defined."""
+    from certgate.data import SimConfig, draw_cohort, split_sites
+    rng = np.random.default_rng(11)
+    coh = draw_cohort(SimConfig(), 40, rng)
+    train, _, _ = split_sites(coh, rng)
+    head = fit_head(train)
+    target = draw_cohort(SimConfig(), 6, rng, site_label_prefix="t")
+    names = [f"f{j}" for j in range(head.coef.shape[0])]
+    ranking = run_eicu._abstention_ranking(head, target.x, 0.75, names)
+    entry = run_eicu._top_driver_coef_rank(head, names, ranking["ranking"])
+    j = names.index(ranking["ranking"][0]["feature"])
+    order = np.argsort(-np.abs(np.asarray(head.coef)), kind="mergesort")
+    assert entry["abs_coef_rank"] == int(np.flatnonzero(order == j)[0]) + 1
+    assert 1 <= entry["abs_coef_rank"] <= entry["n_features"] == len(names)
+    assert entry["feature"] == names[j]
+    assert entry["coef"] == round(float(head.coef[j]), 6)
+    block = run_eicu._coef_rank_block({"r0_a0.1": entry,
+                                       "r1_a0.1": dict(entry, abs_coef_rank=2),
+                                       "r2_a0.1": dict(entry, abs_coef_rank=2)})
+    assert block["summary"] == dict(n=3, mode=2,
+                                    min=min(entry["abs_coef_rank"], 2),
+                                    max=max(entry["abs_coef_rank"], 2))
+    empty = run_eicu._top_driver_coef_rank(head, names, [])
+    assert empty["abs_coef_rank"] is None and empty["n_features"] == len(names)
+
+
+def test_run_eicu_cli_requires_out(tmp_path):
+    """--out has no default any more: the old default was experiments/out/,
+    the frozen release directory, and the summary + provenance are written in
+    a finally: block even on --preflight. A forgotten flag must fail loudly
+    before anything is opened."""
+    with pytest.raises(SystemExit) as info:
+        run_eicu.main(["--data", str(tmp_path), "--preflight"])
+    assert info.value.code == 2                      # argparse usage error
+    assert not any(p.name.startswith("EICU") for p in tmp_path.iterdir())
+
+
+def test_dashboard_out_guard_refuses_any_out_prefixed_directory(tmp_path):
+    """The guard is a prefix rule since 2026-09-04: a fixed list went stale
+    (out-subgroups/, out-faithfulness/, out-rev2/, out-timing/)."""
+    for d in ("out-subgroups", "out-faithfulness", "out-rev2", "out-timing",
+              os.path.join("out-rev2", "nested")):
+        bad = os.path.join(str(tmp_path), d, "explain_dashboard_eicu.html")
+        with pytest.raises(SystemExit, match="record-level-output"):
+            dash_eicu._check_out_path(bad)
+    ok = os.path.join(str(tmp_path), "pages", "explain_dashboard_eicu.html")
+    assert dash_eicu._check_out_path(ok) == os.path.abspath(ok)

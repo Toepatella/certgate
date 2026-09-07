@@ -1,0 +1,974 @@
+{
+  "_run": {
+    "utc": "2026-09-05T16:28:53+00:00",
+    "git_sha": "f48d3b4ec5b7f7d92021e4ec75f8127bf83de34d",
+    "inputs": {}
+  },
+  "post_hoc": "[MEASURE] POST-HOC (2026-09-04): coverage probe of the BBSE uncertainty box with the head held fixed; a diagnostic of the asymptotic bootstrap intervals at the design's own site counts. No certified quantity descends from it and BBSE_BOOT is read, never changed.",
+  "headline": "n_aux=36: decline 0.04, box4 miss 0.0417 (box3 0.0417), rho covers site 1.0 / pop 0.901, implied level 0.9333; n_aux=42: decline 0.0225, box4 miss 0.0563 (box3 0.0537), rho covers site 1.0 / pop 0.8977, implied level 0.9187; n_aux=74: decline 0.03, box4 miss 0.0438 (box3 0.0361), rho covers site 1.0 / pop 0.8454, implied level 0.9312",
+  "config": {
+    "n_aux_sweep": [
+      36,
+      42,
+      74
+    ],
+    "fits_per_n_aux": 400,
+    "target": "one declared site at the registered shift (base rate 0.22), its random effect drawn in the open",
+    "head_stream": [
+      9,
+      2
+    ],
+    "fit_stream_prefix": [
+      9,
+      2,
+      1
+    ],
+    "bbse_boot": 2000,
+    "bonferroni": 4,
+    "per_parameter_level": 0.00625,
+    "delta_conf": 0.025,
+    "delta_bet": 0.025
+  },
+  "truth": {
+    "c0": 0.016979,
+    "c1": 0.531539,
+    "c0_mc": 0.016795,
+    "c1_mc": 0.530955,
+    "pi_s": 0.103657,
+    "pi_pop_target": 0.23126,
+    "head_train_sites": 83,
+    "head_train_records": 59318,
+    "rho_pop": 2.601345
+  },
+  "nominal": {
+    "per_parameter": 0.99375,
+    "joint_three_bootstrap": 0.98125,
+    "joint_four": 0.975,
+    "certificate": 0.95
+  },
+  "cells": {
+    "36": {
+      "n_fits": 400,
+      "n_fitted": 384,
+      "n_with_box": 400,
+      "decline": {
+        "k": 16,
+        "n": 400,
+        "rate": 0.04,
+        "reasons": {
+          "bbse-misspecified": 16
+        }
+      },
+      "coverage_among_fits_with_a_box": {
+        "c0": {
+          "k": 394,
+          "n": 400,
+          "rate": 0.985,
+          "ci95": [
+            0.9676,
+            0.9945
+          ],
+          "miss": 0.015,
+          "miss_ci95": [
+            0.0055,
+            0.0324
+          ]
+        },
+        "c1": {
+          "k": 394,
+          "n": 400,
+          "rate": 0.985,
+          "ci95": [
+            0.9676,
+            0.9945
+          ],
+          "miss": 0.015,
+          "miss_ci95": [
+            0.0055,
+            0.0324
+          ]
+        },
+        "pi_s": {
+          "k": 392,
+          "n": 400,
+          "rate": 0.98,
+          "ci95": [
+            0.961,
+            0.9913
+          ],
+          "miss": 0.02,
+          "miss_ci95": [
+            0.0087,
+            0.039
+          ]
+        },
+        "q": {
+          "k": 399,
+          "n": 400,
+          "rate": 0.9975,
+          "ci95": [
+            0.9862,
+            0.9999
+          ],
+          "miss": 0.0025,
+          "miss_ci95": [
+            0.0001,
+            0.0138
+          ]
+        },
+        "joint_three_bootstrap": {
+          "k": 381,
+          "n": 400,
+          "rate": 0.9525,
+          "ci95": [
+            0.9268,
+            0.9712
+          ],
+          "miss": 0.0475,
+          "miss_ci95": [
+            0.0288,
+            0.0732
+          ]
+        },
+        "joint_four": {
+          "k": 381,
+          "n": 400,
+          "rate": 0.9525,
+          "ci95": [
+            0.9268,
+            0.9712
+          ],
+          "miss": 0.0475,
+          "miss_ci95": [
+            0.0288,
+            0.0732
+          ]
+        }
+      },
+      "coverage_among_certifiable_fits": {
+        "c0": {
+          "k": 379,
+          "n": 384,
+          "rate": 0.987,
+          "ci95": [
+            0.9699,
+            0.9958
+          ],
+          "miss": 0.013,
+          "miss_ci95": [
+            0.0042,
+            0.0301
+          ]
+        },
+        "c1": {
+          "k": 379,
+          "n": 384,
+          "rate": 0.987,
+          "ci95": [
+            0.9699,
+            0.9958
+          ],
+          "miss": 0.013,
+          "miss_ci95": [
+            0.0042,
+            0.0301
+          ]
+        },
+        "pi_s": {
+          "k": 378,
+          "n": 384,
+          "rate": 0.9844,
+          "ci95": [
+            0.9663,
+            0.9942
+          ],
+          "miss": 0.0156,
+          "miss_ci95": [
+            0.0058,
+            0.0337
+          ]
+        },
+        "q": {
+          "k": 384,
+          "n": 384,
+          "rate": 1.0,
+          "ci95": [
+            0.9904,
+            1.0
+          ],
+          "miss": 0.0,
+          "miss_ci95": [
+            0.0,
+            0.0096
+          ]
+        },
+        "joint_three_bootstrap": {
+          "k": 368,
+          "n": 384,
+          "rate": 0.9583,
+          "ci95": [
+            0.9332,
+            0.976
+          ],
+          "miss": 0.0417,
+          "miss_ci95": [
+            0.024,
+            0.0668
+          ]
+        },
+        "joint_four": {
+          "k": 368,
+          "n": 384,
+          "rate": 0.9583,
+          "ci95": [
+            0.9332,
+            0.976
+          ],
+          "miss": 0.0417,
+          "miss_ci95": [
+            0.024,
+            0.0668
+          ]
+        },
+        "rho_declared_site": {
+          "k": 384,
+          "n": 384,
+          "rate": 1.0,
+          "ci95": [
+            0.9904,
+            1.0
+          ],
+          "miss": 0.0,
+          "miss_ci95": [
+            0.0,
+            0.0096
+          ]
+        },
+        "rho_population": {
+          "k": 346,
+          "n": 384,
+          "rate": 0.901,
+          "ci95": [
+            0.8667,
+            0.929
+          ],
+          "miss": 0.099,
+          "miss_ci95": [
+            0.071,
+            0.1333
+          ]
+        }
+      },
+      "box_width_rho": {
+        "mean": 663.5855,
+        "median": 5.9552,
+        "min": 1.361,
+        "max": 128868.837,
+        "n_clip_bound": 4,
+        "mean_excluding_clip_bound": 7.5922
+      },
+      "mean_rho_point": 3.037,
+      "mean_pi_t_site": 0.2357,
+      "implied_certificate_level": {
+        "measured_four_parameter": 0.9333,
+        "panel_decomposition_three_plus_q_share": 0.9271,
+        "conservative_ci_upper": 0.9082,
+        "formula": "1 - (box miss + delta_bet); the panel's version replaces the four-parameter miss by the three-bootstrap miss plus the q share delta_conf/4"
+      }
+    },
+    "42": {
+      "n_fits": 400,
+      "n_fitted": 391,
+      "n_with_box": 400,
+      "decline": {
+        "k": 9,
+        "n": 400,
+        "rate": 0.0225,
+        "reasons": {
+          "bbse-misspecified": 9
+        }
+      },
+      "coverage_among_fits_with_a_box": {
+        "c0": {
+          "k": 395,
+          "n": 400,
+          "rate": 0.9875,
+          "ci95": [
+            0.9711,
+            0.9959
+          ],
+          "miss": 0.0125,
+          "miss_ci95": [
+            0.0041,
+            0.0289
+          ]
+        },
+        "c1": {
+          "k": 392,
+          "n": 400,
+          "rate": 0.98,
+          "ci95": [
+            0.961,
+            0.9913
+          ],
+          "miss": 0.02,
+          "miss_ci95": [
+            0.0087,
+            0.039
+          ]
+        },
+        "pi_s": {
+          "k": 390,
+          "n": 400,
+          "rate": 0.975,
+          "ci95": [
+            0.9545,
+            0.9879
+          ],
+          "miss": 0.025,
+          "miss_ci95": [
+            0.0121,
+            0.0455
+          ]
+        },
+        "q": {
+          "k": 399,
+          "n": 400,
+          "rate": 0.9975,
+          "ci95": [
+            0.9862,
+            0.9999
+          ],
+          "miss": 0.0025,
+          "miss_ci95": [
+            0.0001,
+            0.0138
+          ]
+        },
+        "joint_three_bootstrap": {
+          "k": 377,
+          "n": 400,
+          "rate": 0.9425,
+          "ci95": [
+            0.915,
+            0.9632
+          ],
+          "miss": 0.0575,
+          "miss_ci95": [
+            0.0368,
+            0.085
+          ]
+        },
+        "joint_four": {
+          "k": 376,
+          "n": 400,
+          "rate": 0.94,
+          "ci95": [
+            0.912,
+            0.9612
+          ],
+          "miss": 0.06,
+          "miss_ci95": [
+            0.0388,
+            0.088
+          ]
+        }
+      },
+      "coverage_among_certifiable_fits": {
+        "c0": {
+          "k": 387,
+          "n": 391,
+          "rate": 0.9898,
+          "ci95": [
+            0.974,
+            0.9972
+          ],
+          "miss": 0.0102,
+          "miss_ci95": [
+            0.0028,
+            0.026
+          ]
+        },
+        "c1": {
+          "k": 383,
+          "n": 391,
+          "rate": 0.9795,
+          "ci95": [
+            0.9601,
+            0.9911
+          ],
+          "miss": 0.0205,
+          "miss_ci95": [
+            0.0089,
+            0.0399
+          ]
+        },
+        "pi_s": {
+          "k": 382,
+          "n": 391,
+          "rate": 0.977,
+          "ci95": [
+            0.9568,
+            0.9894
+          ],
+          "miss": 0.023,
+          "miss_ci95": [
+            0.0106,
+            0.0432
+          ]
+        },
+        "q": {
+          "k": 390,
+          "n": 391,
+          "rate": 0.9974,
+          "ci95": [
+            0.9858,
+            0.9999
+          ],
+          "miss": 0.0026,
+          "miss_ci95": [
+            0.0001,
+            0.0142
+          ]
+        },
+        "joint_three_bootstrap": {
+          "k": 370,
+          "n": 391,
+          "rate": 0.9463,
+          "ci95": [
+            0.9191,
+            0.9664
+          ],
+          "miss": 0.0537,
+          "miss_ci95": [
+            0.0336,
+            0.0809
+          ]
+        },
+        "joint_four": {
+          "k": 369,
+          "n": 391,
+          "rate": 0.9437,
+          "ci95": [
+            0.916,
+            0.9644
+          ],
+          "miss": 0.0563,
+          "miss_ci95": [
+            0.0356,
+            0.084
+          ]
+        },
+        "rho_declared_site": {
+          "k": 391,
+          "n": 391,
+          "rate": 1.0,
+          "ci95": [
+            0.9906,
+            1.0
+          ],
+          "miss": 0.0,
+          "miss_ci95": [
+            0.0,
+            0.0094
+          ]
+        },
+        "rho_population": {
+          "k": 351,
+          "n": 391,
+          "rate": 0.8977,
+          "ci95": [
+            0.8633,
+            0.9259
+          ],
+          "miss": 0.1023,
+          "miss_ci95": [
+            0.0741,
+            0.1367
+          ]
+        }
+      },
+      "box_width_rho": {
+        "mean": 526.707,
+        "median": 5.1623,
+        "min": 1.0112,
+        "max": 113748.1787,
+        "n_clip_bound": 3,
+        "mean_excluding_clip_bound": 7.2638
+      },
+      "mean_rho_point": 2.8612,
+      "mean_pi_t_site": 0.2315,
+      "implied_certificate_level": {
+        "measured_four_parameter": 0.9187,
+        "panel_decomposition_three_plus_q_share": 0.9151,
+        "conservative_ci_upper": 0.891,
+        "formula": "1 - (box miss + delta_bet); the panel's version replaces the four-parameter miss by the three-bootstrap miss plus the q share delta_conf/4"
+      }
+    },
+    "74": {
+      "n_fits": 400,
+      "n_fitted": 388,
+      "n_with_box": 400,
+      "decline": {
+        "k": 12,
+        "n": 400,
+        "rate": 0.03,
+        "reasons": {
+          "bbse-misspecified": 12
+        }
+      },
+      "coverage_among_fits_with_a_box": {
+        "c0": {
+          "k": 396,
+          "n": 400,
+          "rate": 0.99,
+          "ci95": [
+            0.9746,
+            0.9973
+          ],
+          "miss": 0.01,
+          "miss_ci95": [
+            0.0027,
+            0.0254
+          ]
+        },
+        "c1": {
+          "k": 393,
+          "n": 400,
+          "rate": 0.9825,
+          "ci95": [
+            0.9643,
+            0.9929
+          ],
+          "miss": 0.0175,
+          "miss_ci95": [
+            0.0071,
+            0.0357
+          ]
+        },
+        "pi_s": {
+          "k": 397,
+          "n": 400,
+          "rate": 0.9925,
+          "ci95": [
+            0.9782,
+            0.9985
+          ],
+          "miss": 0.0075,
+          "miss_ci95": [
+            0.0015,
+            0.0218
+          ]
+        },
+        "q": {
+          "k": 397,
+          "n": 400,
+          "rate": 0.9925,
+          "ci95": [
+            0.9782,
+            0.9985
+          ],
+          "miss": 0.0075,
+          "miss_ci95": [
+            0.0015,
+            0.0218
+          ]
+        },
+        "joint_three_bootstrap": {
+          "k": 386,
+          "n": 400,
+          "rate": 0.965,
+          "ci95": [
+            0.942,
+            0.9807
+          ],
+          "miss": 0.035,
+          "miss_ci95": [
+            0.0193,
+            0.058
+          ]
+        },
+        "joint_four": {
+          "k": 383,
+          "n": 400,
+          "rate": 0.9575,
+          "ci95": [
+            0.9328,
+            0.9751
+          ],
+          "miss": 0.0425,
+          "miss_ci95": [
+            0.0249,
+            0.0672
+          ]
+        }
+      },
+      "coverage_among_certifiable_fits": {
+        "c0": {
+          "k": 384,
+          "n": 388,
+          "rate": 0.9897,
+          "ci95": [
+            0.9738,
+            0.9972
+          ],
+          "miss": 0.0103,
+          "miss_ci95": [
+            0.0028,
+            0.0262
+          ]
+        },
+        "c1": {
+          "k": 381,
+          "n": 388,
+          "rate": 0.982,
+          "ci95": [
+            0.9632,
+            0.9927
+          ],
+          "miss": 0.018,
+          "miss_ci95": [
+            0.0073,
+            0.0368
+          ]
+        },
+        "pi_s": {
+          "k": 385,
+          "n": 388,
+          "rate": 0.9923,
+          "ci95": [
+            0.9776,
+            0.9984
+          ],
+          "miss": 0.0077,
+          "miss_ci95": [
+            0.0016,
+            0.0224
+          ]
+        },
+        "q": {
+          "k": 385,
+          "n": 388,
+          "rate": 0.9923,
+          "ci95": [
+            0.9776,
+            0.9984
+          ],
+          "miss": 0.0077,
+          "miss_ci95": [
+            0.0016,
+            0.0224
+          ]
+        },
+        "joint_three_bootstrap": {
+          "k": 374,
+          "n": 388,
+          "rate": 0.9639,
+          "ci95": [
+            0.9402,
+            0.9801
+          ],
+          "miss": 0.0361,
+          "miss_ci95": [
+            0.0199,
+            0.0598
+          ]
+        },
+        "joint_four": {
+          "k": 371,
+          "n": 388,
+          "rate": 0.9562,
+          "ci95": [
+            0.9308,
+            0.9743
+          ],
+          "miss": 0.0438,
+          "miss_ci95": [
+            0.0257,
+            0.0692
+          ]
+        },
+        "rho_declared_site": {
+          "k": 388,
+          "n": 388,
+          "rate": 1.0,
+          "ci95": [
+            0.9905,
+            1.0
+          ],
+          "miss": 0.0,
+          "miss_ci95": [
+            0.0,
+            0.0095
+          ]
+        },
+        "rho_population": {
+          "k": 328,
+          "n": 388,
+          "rate": 0.8454,
+          "ci95": [
+            0.8055,
+            0.8799
+          ],
+          "miss": 0.1546,
+          "miss_ci95": [
+            0.1201,
+            0.1945
+          ]
+        }
+      },
+      "box_width_rho": {
+        "mean": 540.7498,
+        "median": 4.544,
+        "min": 1.0409,
+        "max": 113160.705,
+        "n_clip_bound": 4,
+        "mean_excluding_clip_bound": 6.4655
+      },
+      "mean_rho_point": 2.9854,
+      "mean_pi_t_site": 0.2363,
+      "implied_certificate_level": {
+        "measured_four_parameter": 0.9312,
+        "panel_decomposition_three_plus_q_share": 0.9326,
+        "conservative_ci_upper": 0.9058,
+        "formula": "1 - (box miss + delta_bet); the panel's version replaces the four-parameter miss by the three-bootstrap miss plus the q share delta_conf/4"
+      }
+    }
+  },
+  "pooled_over_n_aux": {
+    "n_fits": 1200,
+    "n_fitted": 1163,
+    "n_with_box": 1200,
+    "decline": {
+      "k": 37,
+      "n": 1200,
+      "rate": 0.0308,
+      "reasons": {
+        "bbse-misspecified": 37
+      }
+    },
+    "coverage_among_fits_with_a_box": {
+      "c0": {
+        "k": 1185,
+        "n": 1200,
+        "rate": 0.9875,
+        "ci95": [
+          0.9795,
+          0.993
+        ],
+        "miss": 0.0125,
+        "miss_ci95": [
+          0.007,
+          0.0205
+        ]
+      },
+      "c1": {
+        "k": 1179,
+        "n": 1200,
+        "rate": 0.9825,
+        "ci95": [
+          0.9734,
+          0.9891
+        ],
+        "miss": 0.0175,
+        "miss_ci95": [
+          0.0109,
+          0.0266
+        ]
+      },
+      "pi_s": {
+        "k": 1179,
+        "n": 1200,
+        "rate": 0.9825,
+        "ci95": [
+          0.9734,
+          0.9891
+        ],
+        "miss": 0.0175,
+        "miss_ci95": [
+          0.0109,
+          0.0266
+        ]
+      },
+      "q": {
+        "k": 1195,
+        "n": 1200,
+        "rate": 0.9958,
+        "ci95": [
+          0.9903,
+          0.9986
+        ],
+        "miss": 0.0042,
+        "miss_ci95": [
+          0.0014,
+          0.0097
+        ]
+      },
+      "joint_three_bootstrap": {
+        "k": 1144,
+        "n": 1200,
+        "rate": 0.9533,
+        "ci95": [
+          0.9398,
+          0.9646
+        ],
+        "miss": 0.0467,
+        "miss_ci95": [
+          0.0354,
+          0.0602
+        ]
+      },
+      "joint_four": {
+        "k": 1140,
+        "n": 1200,
+        "rate": 0.95,
+        "ci95": [
+          0.9361,
+          0.9616
+        ],
+        "miss": 0.05,
+        "miss_ci95": [
+          0.0384,
+          0.0639
+        ]
+      }
+    },
+    "coverage_among_certifiable_fits": {
+      "c0": {
+        "k": 1150,
+        "n": 1163,
+        "rate": 0.9888,
+        "ci95": [
+          0.981,
+          0.994
+        ],
+        "miss": 0.0112,
+        "miss_ci95": [
+          0.006,
+          0.019
+        ]
+      },
+      "c1": {
+        "k": 1143,
+        "n": 1163,
+        "rate": 0.9828,
+        "ci95": [
+          0.9736,
+          0.9895
+        ],
+        "miss": 0.0172,
+        "miss_ci95": [
+          0.0105,
+          0.0264
+        ]
+      },
+      "pi_s": {
+        "k": 1145,
+        "n": 1163,
+        "rate": 0.9845,
+        "ci95": [
+          0.9756,
+          0.9908
+        ],
+        "miss": 0.0155,
+        "miss_ci95": [
+          0.0092,
+          0.0244
+        ]
+      },
+      "q": {
+        "k": 1159,
+        "n": 1163,
+        "rate": 0.9966,
+        "ci95": [
+          0.9912,
+          0.9991
+        ],
+        "miss": 0.0034,
+        "miss_ci95": [
+          0.0009,
+          0.0088
+        ]
+      },
+      "joint_three_bootstrap": {
+        "k": 1112,
+        "n": 1163,
+        "rate": 0.9561,
+        "ci95": [
+          0.9427,
+          0.9672
+        ],
+        "miss": 0.0439,
+        "miss_ci95": [
+          0.0328,
+          0.0573
+        ]
+      },
+      "joint_four": {
+        "k": 1108,
+        "n": 1163,
+        "rate": 0.9527,
+        "ci95": [
+          0.9389,
+          0.9642
+        ],
+        "miss": 0.0473,
+        "miss_ci95": [
+          0.0358,
+          0.0611
+        ]
+      },
+      "rho_declared_site": {
+        "k": 1163,
+        "n": 1163,
+        "rate": 1.0,
+        "ci95": [
+          0.9968,
+          1.0
+        ],
+        "miss": 0.0,
+        "miss_ci95": [
+          0.0,
+          0.0032
+        ]
+      },
+      "rho_population": {
+        "k": 1025,
+        "n": 1163,
+        "rate": 0.8813,
+        "ci95": [
+          0.8614,
+          0.8994
+        ],
+        "miss": 0.1187,
+        "miss_ci95": [
+          0.1006,
+          0.1386
+        ]
+      }
+    },
+    "box_width_rho": {
+      "mean": 576.5866,
+      "median": 5.2038,
+      "min": 1.0112,
+      "max": 128868.837,
+      "n_clip_bound": 11,
+      "mean_excluding_clip_bound": 7.106
+    },
+    "mean_rho_point": 2.9607,
+    "mean_pi_t_site": 0.2345,
+    "implied_certificate_level": {
+      "measured_four_parameter": 0.9277,
+      "panel_decomposition_three_plus_q_share": 0.9248,
+      "conservative_ci_upper": 0.9139,
+      "formula": "1 - (box miss + delta_bet); the panel's version replaces the four-parameter miss by the three-bootstrap miss plus the q share delta_conf/4"
+    }
+  },
+  "clip": {
+    "pi_clip": 0.0001,
+    "rho_hi_clip_bound_above": 100.0,
+    "note": "the pi_t clip costs width, not coverage: the unclipped odds ratio stays covered whenever the true pi_t lies inside [PI_CLIP, 1 - PI_CLIP]"
+  },
+  "monte_carlo_resolution": "each percentile endpoint sits at the 0.00313 tail of BBSE_BOOT = 2000 resamples, i.e. about 6.25 tail draws; part of any shortfall below the nominal 0.99375 per parameter is Monte-Carlo resolution of that quantile, and a larger BBSE_BOOT is a frozen-constant change deferred to after submission",
+  "wall_clock_s": 109.4
+}

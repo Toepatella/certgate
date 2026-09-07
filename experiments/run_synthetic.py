@@ -1,7 +1,8 @@
 """The synthetic validation harness.
 
-Runs E1-E6 deterministically, all seeded from constants.SEED. Writes one CSV
-per experiment, PNG figures, and a summary.md into the output directory.
+Runs the nine experiments E1-E9 deterministically, all seeded from
+constants.SEED. Writes one CSV per experiment, PNG figures, and a summary.md
+into the output directory.
 Figures use the matplotlib Agg backend -- no seaborn, no interactive display.
 
 CLI:
@@ -10,7 +11,8 @@ CLI:
 
 --quick is R=10 draws over the cluster sweep {60, 208, 400} -- a fast smoke of
 every experiment, and E1-quick must show zero hard violations. The full grid is
-R=200 over {60, 100, 150, 208, 300, 400} and targets under ~30 minutes.
+R=200 over {60, 100, 150, 208, 300, 400} and takes about 42 minutes on
+the baseline machine (a 14-core laptop CPU, no GPU; measured 2026-09-06).
 
 Refs: METHODS 8; SPEC section "Experiments".
 """
@@ -945,7 +947,7 @@ def run_E5(out, quick):
                   yerr=[0.0 if v is None else v
                         for v in replication["gap_ci95"]], capsize=3)
         ax[1].set_title(
-            f"E5 answered-vs-declined |phi| gap "
+            "Answered-vs-declined mean |attribution| gap\n"
             f"(mean +/- 95% CI over {len(gaps)} draws)")
     else:
         ax[1].bar(feat, profile["gap"], color="#aa3377")

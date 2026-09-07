@@ -1,14 +1,16 @@
 """The eICU mock-corpus generator, on its own terms.
 
 Byte-determinism and the --tables projection, the frozen manifest key set,
-generator honesty against the ETL's level tuples, and the CERTGATE_EICU /
-CERTGATE_EICU_LARGE gated arms at the generator's frozen sizes.
+generator honesty against the ETL's level tuples, the CERTGATE_EICU /
+CERTGATE_EICU_LARGE gated arms at the generator's frozen sizes, and the
+mock-corpus explanation page (examples/explain_dashboard_mock.py).
 Split from test_eicu_path.py on 2026-08-25; the tests are relocated verbatim.
 """
 from __future__ import annotations
 
 import json
 import os
+import pathlib
 
 import pytest
 
@@ -152,3 +154,63 @@ def test_large_mock_reaches_the_certified_branch():
         assert outcome in ("certified", "declined")
         assert rep["diagnostic"]["n_cal_carrying"] > 77, (
             "this arm is pointless unless it clears the crossing point")
+
+
+# ============================================= mock-corpus explanation page ==
+
+def test_mock_dashboard_page_names_features_and_declares_itself(mock_small,
+                                                                tmp_path):
+    """The committed mock page: eICU column names, a banner, a parseable payload.
+
+    The small corpus declines every rung by design, so the page is built with
+    allow_declined=True and shows the uncertified banner; the full-size
+    committed page (900 hospitals) is built by the module's CLI. What is
+    pinned here is the contract the page makes regardless of outcome: the
+    payload names the real eICU features (not "feature 0"), the MOCK CORPUS
+    banner is on the page, the cohort label repeats it, and the `const DATA =`
+    line parses as JSON the way tests/test_reliability_panel.py reads it.
+    """
+    from examples import explain_dashboard_mock as page
+
+    out = tmp_path / "explain_dashboard_mock.html"
+    path = page.build(str(out), corpus_dir=mock_small["dir"],
+                      allow_declined=True, verbose=False)
+    html = pathlib.Path(path).read_text(encoding="utf-8")
+    assert page.MOCK_BANNER in html
+    assert html.count('id="mockbanner"') == 1
+    assert "no eICU record" in html
+
+    prefix = "const DATA = "
+    line = next(l for l in html.splitlines() if l.startswith(prefix))
+    payload = json.loads(line[len(prefix):].rstrip(";"))
+    names = payload["raw_names"]
+    assert "aps_motor" in names and "age" in names
+    assert any(n.startswith("unitstaytype=") for n in names)
+    assert not any(n.startswith("feature ") for n in names)
+    assert payload["cohort_label"].startswith(page.MOCK_BANNER)
+    assert payload["provenance"]["pool"].endswith("held-out mock hospitals")
+
+    # the basename guard: a mock page must never be filed as a record-level
+    # eICU page, whose pattern .gitignore denies
+    with pytest.raises(SystemExit, match="basename-collision"):
+        page.build(str(tmp_path / "explain_dashboard_eicu_mock.html"),
+                   corpus_dir=mock_small["dir"], allow_declined=True,
+                   verbose=False)
+
+
+def test_committed_mock_dashboard_page_ships():
+    """The page the manuscript cites is in the tree and declares itself.
+
+    Section 4.11 and the Code availability statement point the reader at
+    examples/explain_dashboard_mock.html; this pins that the file ships,
+    carries the MOCK CORPUS banner once, and says it holds no eICU record.
+    """
+    from examples import explain_dashboard_mock as page
+
+    root = pathlib.Path(__file__).resolve().parents[1]
+    html_path = root / "examples" / "explain_dashboard_mock.html"
+    assert html_path.exists(), "examples/explain_dashboard_mock.html is cited"
+    html = html_path.read_text(encoding="utf-8")
+    assert page.MOCK_BANNER in html
+    assert html.count('id="mockbanner"') == 1
+    assert "no eICU record" in html

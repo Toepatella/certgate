@@ -689,7 +689,7 @@ def test_sub_threshold_negative_sentinel_flows_as_missing(tmp_path):
 
     Negative-not-(-1) mass below EICU_MAX_UNPARSEABLE_SHARE maps to missing and
     warns. The released extract carries exactly one such cell in ~4.1M:
-    apacheApsVar.urine = -11245.5648, stay 1805017.
+    one cohort stay carried a large negative urine value (identifier and raw value withheld).
 
     Those cells always became NaN and the raise was only a look-at-this gate,
     so no computed number changes. Above the threshold the abort must still
@@ -704,7 +704,7 @@ def test_sub_threshold_negative_sentinel_flows_as_missing(tmp_path):
     for i in range(1, n + 1):
         rows["patient"].append(_patient(
             i, hospitaldischargestatus="Expired" if i % 7 == 0 else "Alive"))
-        over = {"urine": "-11245.5648"} if i == 3 else {}
+        over = {"urine": "-4321.5"} if i == 3 else {}
         rows["apacheApsVar"].append(_aps(i, i, **over))
         rows["apachePredVar"].append(_apv(i, i))
     dst = _write_corpus(str(tmp_path / "subthreshold"), rows)
@@ -1498,3 +1498,83 @@ def test_room_air_fio2_is_an_observation_not_a_missing_value(tmp_path):
     assert conv.get("aps_fio2:room-air-fraction") == 1
     assert conv.get("aps_fio2:room-air-percent") == 1
     assert not any(k.endswith(":at-window-floor") for k in conv)
+
+
+# ================================= 2026-09-04 fix pass: the LOS diagnostic ===
+# unitdischargeoffset stays on the denylist. It is read twice as a diagnostic
+# -- into preflight counts and into a row-aligned side array on the cohort
+# object -- and never becomes a column, an artifact, or a stay-keyed record.
+
+def test_preflight_los_window_counts_stays_and_deaths_before_hour_24(
+        mock_small):
+    pf = etl.preflight(mock_small["dir"], verbose=False)
+    assert set(pf) == PREFLIGHT_KEYS                 # no new top-level key
+    los = pf["apache_absent_los"]
+    # the old strata keep their frozen keys and gain the two appended counts
+    for tag in ("aps_absent", "aps_present", "aps_absent_positive"):
+        block = los[tag]
+        assert list(block)[:7] == ["n", "min", "q1", "median", "q3", "max",
+                                   "mean"]
+        assert list(block)[7:] == ["n_lt_24h", "frac_lt_24h"]
+        assert 0 <= block["n_lt_24h"] <= block["n"]
+        if block["n"]:
+            assert abs(block["frac_lt_24h"] - block["n_lt_24h"] / block["n"]) < 1e-6
+        else:
+            assert block["frac_lt_24h"] is None
+    win = los["los_window"]
+    assert win["threshold_hours"] == etl.EICU_LOS_WINDOW_HOURS == 24.0
+    assert set(win) == {"threshold_hours", "what", "cohort", "deaths",
+                        "n_negative_offset_cohort"}
+    cohort, deaths = win["cohort"], win["deaths"]
+    # the whole cohort is the union of the two APACHE strata
+    assert cohort["n"] == los["aps_absent"]["n"] + los["aps_present"]["n"]
+    assert cohort["n"] + los["n_los_unavailable"] == \
+        _attrition(pf)["primary-cohort"]
+    assert deaths["n"] <= cohort["n"]
+    assert deaths["n_lt_24h"] <= cohort["n_lt_24h"]
+    assert los["aps_absent_positive"]["n"] <= deaths["n"]
+    assert isinstance(win["n_negative_offset_cohort"], int)
+    # every value is a scalar: the block is aggregate by shape
+    for block in (cohort, deaths):
+        assert all(v is None or isinstance(v, (int, float)) for v in block.values())
+    run_eicu.assert_aggregate_only(run_eicu._json_ready(los), "apache_absent_los")
+
+
+def test_build_raw_carries_a_diagnostic_los_side_array_never_a_column(
+        pipeline_small):
+    meta, names, x_raw = (pipeline_small["meta"], pipeline_small["names"],
+                          pipeline_small["x_raw"])
+    los = meta["los_hours"]
+    assert isinstance(los, np.ndarray) and los.dtype == np.float64
+    assert los.shape == (meta["n"],) == (x_raw.shape[0],)
+    assert "los_hours" not in names and "unitdischargeoffset" not in names
+    assert names == list(etl.FEATURE_NAMES)          # the feature contract holds
+    assert len(names) == etl.EICU_N_FEATURES
+    finite = np.isfinite(los)
+    assert finite.any()
+    # the mock's stays end: some inside the first day, some after
+    assert (los[finite] < etl.EICU_LOS_WINDOW_HOURS).any()
+    assert (los[finite] >= etl.EICU_LOS_WINDOW_HOURS).any()
+    # the array is row-aligned with y: the deaths' LOS is a subset by mask
+    y = pipeline_small["y_bool"]
+    assert y.shape == los.shape
+    # and the aggregate gate refuses it whole, before the DUA has to
+    if los.size > run_eicu.EICU_MAX_OUTPUT_LEN:
+        with pytest.raises(etl.EicuError, match="record-level-output"):
+            run_eicu.assert_aggregate_only({"los_hours": los}, "leak-probe")
+
+
+def test_build_raw_subsets_the_los_side_array_with_the_arm(mock_small):
+    """The apache-linked arm keeps fewer stays; the side array follows."""
+    x_p, _n, meta_p = etl.build_raw(mock_small["dir"], verbose=False)
+    x_l, _n, meta_l = etl.build_raw(mock_small["dir"], arm="apache-linked",
+                                    verbose=False)
+    assert meta_p["los_hours"].shape == (x_p.shape[0],)
+    assert meta_l["los_hours"].shape == (x_l.shape[0],)
+    assert x_l.shape[0] < x_p.shape[0]
+    # the linked arm keeps the stays with BOTH day-1 rows; the side array is
+    # exactly those stays' values, in order
+    keep = (np.asarray(meta_p["aps_present"], dtype=bool)
+            & np.asarray(meta_p["apv_present"], dtype=bool))
+    np.testing.assert_array_equal(meta_l["los_hours"],
+                                  meta_p["los_hours"][keep])

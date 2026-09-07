@@ -154,6 +154,15 @@ EICU_FEATURE_AUC_REVIEW = 0.75            # outcome_screen: a univariate AUC pas
 EICU_MAX_UNPARSEABLE_SHARE = 0.01
 _NULL_TOKEN_CARDINALITY_CAP = 8           # bounded retention of offending tokens
 
+# The head is asked at the close of ICU hour 24 (APACHE day-1 worst values).
+# A stay that ended before then -- discharge or death -- is one no real-time
+# answer could exist for; it is kept in the cohort and COUNTED, never dropped,
+# so the estimand the certificate names is not moved. unitdischargeoffset is a
+# DENYLISTED feature: build_raw reads it into a diagnostic-only side array,
+# preflight into per-stratum counts, and neither ever becomes a column,
+# reaches an artifact, or is keyed by stay id. Added 2026-09-04 (fix pass).
+EICU_LOS_WINDOW_HOURS = 24.0
+
 EICU_ATTRITION_STEPS = ("raw-unit-stays", "site-parseable", "outcome-known",
                         "adult", "first-stay", "primary-cohort",
                         "apache-aps-linked", "apache-result-linked",
@@ -1336,6 +1345,11 @@ def build_raw(data_dir, *, arm="primary", strict_levels=True, verbose=True):
     stay_arr = np.zeros(n, dtype=np.int64)
     adm_arr = np.zeros(n, dtype=np.int64)
     row_of = {}
+    # Diagnostic-only ICU length of stay in hours, NaN where the extract
+    # carried no offset. Row-aligned with x and never a column of it (the
+    # feature is denylisted); the runner reduces it to counts and the array
+    # is discarded with meta. See EICU_LOS_WINDOW_HOURS.
+    los_hours = np.full(n, np.nan, dtype=np.float64)
 
     # ---- pass 1 (scan B): the patient feature block -------------------------
     i = 0
@@ -1357,6 +1371,9 @@ def build_raw(data_dir, *, arm="primary", strict_levels=True, verbose=True):
         site_raw.append(site)
         y_raw.append(status)
         patient_id.append((row["uniquepid"] or "").strip())
+        los = _maybe_float(row.get("unitdischargeoffset", ""))
+        if los is not None:
+            los_hours[i] = los / 60.0
 
         token = (row["age"] or "").strip()
         age = parse_age(token)             # S3 guarantees this parses and is >= 18
@@ -1487,7 +1504,8 @@ def build_raw(data_dir, *, arm="primary", strict_levels=True, verbose=True):
     # cells is material, at EICU_MAX_UNPARSEABLE_SHARE.
     #
     # Sub-threshold mass is reported, not aborted. The released extract carries
-    # one such cell in ~4.1M (apacheApsVar.urine = -11245.5648) against an
+    # one such cell in ~4.1M (a large negative apacheApsVar.urine value;
+    # identifier and raw value withheld) against an
     # otherwise contiguous non-negative support, and refusing the study over it
     # would be theatre.
     #
@@ -1776,6 +1794,7 @@ def build_raw(data_dir, *, arm="primary", strict_levels=True, verbose=True):
         adm_arr = adm_arr[keep]
         aps_present = aps_present[keep]
         apv_present = apv_present[keep]
+        los_hours = los_hours[keep]
         comp_version = [comp_version[int(r)] for r in keep]
         comp_pred = comp_pred[keep]
         n = int(keep.size)
@@ -1815,6 +1834,10 @@ def build_raw(data_dir, *, arm="primary", strict_levels=True, verbose=True):
         "site_raw": site_raw, "y_raw": y_raw,
         "stay_id": stay_arr, "admission_id": adm_arr, "patient_id": patient_id,
         "aps_present": aps_present, "apv_present": apv_present,
+        # diagnostic only (2026-09-04): per-stay, row-aligned, never written.
+        # Any writer that took it whole would trip assert_aggregate_only on
+        # length before the DUA had to.
+        "los_hours": los_hours,
         "comparator_apache_version": comp_version,
         "comparator_predicted_mortality": comp_pred,
         "comparator_out_of_range": n_comp_oor,      # RP-8, counted not silent
@@ -2680,9 +2703,16 @@ def preflight(data_dir, *, expect_reference=False, verbose=True) -> dict:
     def _los_summary(stays):
         vals = [los_by_stay[s] for s in stays if s in los_by_stay]
         d = _dist_summary(vals) if vals else _dist_summary([])
+        # n_lt_24h / frac_lt_24h appended 2026-09-04: the stays whose ICU
+        # stay ended before the hour-24 prediction time (negative and zero
+        # offsets included -- they ended too). The keys before them are
+        # frozen.
+        n_lt = int(sum(1 for v in vals if v < EICU_LOS_WINDOW_HOURS))
         return {"n": len(vals), "min": d["min"], "q1": d["q1"],
                 "median": d["median"], "q3": d["q3"], "max": d["max"],
-                "mean": d["mean"]}
+                "mean": d["mean"],
+                "n_lt_24h": n_lt,
+                "frac_lt_24h": (round(n_lt / len(vals), 6) if vals else None)}
 
     absent_aps = [s for s in selected if s not in aps["linked_stays"]]
     apache_absent_los = {
@@ -2695,7 +2725,22 @@ def preflight(data_dir, *, expect_reference=False, verbose=True) -> dict:
         "aps_present": _los_summary(aps["linked_stays"]),
         "aps_absent_positive": _los_summary(
             [s for s in absent_aps if stay_positive.get(s)]),
-        "n_los_unavailable": int(len(selected) - len(los_by_stay))}
+        "n_los_unavailable": int(len(selected) - len(los_by_stay)),
+        # Appended 2026-09-04 (fix pass): the same summary over the WHOLE
+        # selected cohort and over its deaths, so the share of stays and of
+        # deaths that ended before the hour-24 prediction time is on the
+        # record beside the APACHE-absence strata above.
+        "los_window": {
+            "threshold_hours": EICU_LOS_WINDOW_HOURS,
+            "what": ("stays whose unitdischargeoffset falls below the "
+                     "hour-24 prediction time; the head is a retrospective "
+                     "day-1 instrument for them (no real-time answer could "
+                     "exist), and the cohort keeps them"),
+            "cohort": _los_summary(list(selected)),
+            "deaths": _los_summary(
+                [s for s in selected if stay_positive.get(s)]),
+            "n_negative_offset_cohort": int(sum(
+                1 for v in los_by_stay.values() if v < 0.0))}}
 
     worst = sorted((e for e in outcome_missingness.values()
                     if e["gate_applies"] and e["prevalence_ratio"] is not None),

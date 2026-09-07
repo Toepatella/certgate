@@ -1,0 +1,182 @@
+{
+  "_run": {
+    "utc": "2026-09-06T05:55:28+00:00",
+    "git_sha": "f48d3b4ec5b7f7d92021e4ec75f8127bf83de34d",
+    "inputs": {
+      "experiments/out/EICU_pooled.csv": "3036ae120d70a8bf1d048f998ab710d36b6bdd0f3148893d109185778ff58f18",
+      "experiments/out-rev2/EICU_pooled.csv": "3036ae120d70a8bf1d048f998ab710d36b6bdd0f3148893d109185778ff58f18",
+      "experiments/out-subgroups/EICU_pooled.csv": "3036ae120d70a8bf1d048f998ab710d36b6bdd0f3148893d109185778ff58f18",
+      "experiments/out-faithfulness/EICU_pooled.csv": "e3f08e39f8962a16e5278b49b02222ce43862bd0db5490c8c93b0d80a8d22a6f",
+      "experiments/out/EICU_attrition.csv": "51784a55d02d5d03580f4e50b270ecc156c760307a8f6c9e6619b191c34a2ea9",
+      "experiments/out-rev2/EICU_attrition.csv": "51784a55d02d5d03580f4e50b270ecc156c760307a8f6c9e6619b191c34a2ea9",
+      "experiments/out-subgroups/EICU_attrition.csv": "51784a55d02d5d03580f4e50b270ecc156c760307a8f6c9e6619b191c34a2ea9",
+      "experiments/out-faithfulness/EICU_attrition.csv": "51784a55d02d5d03580f4e50b270ecc156c760307a8f6c9e6619b191c34a2ea9",
+      "experiments/out/EICU_reliability.csv": "7c56b876dc6a11a22f1dca3afd20e9ce7f44694b531c403bb10344cb94b3d6a9",
+      "experiments/out-rev2/EICU_reliability.csv": "7c56b876dc6a11a22f1dca3afd20e9ce7f44694b531c403bb10344cb94b3d6a9",
+      "experiments/out-subgroups/EICU_reliability.csv": "7c56b876dc6a11a22f1dca3afd20e9ce7f44694b531c403bb10344cb94b3d6a9",
+      "experiments/out-faithfulness/EICU_reliability.csv": "b199cc2bca064747716dcfbc9fb1a78654e5d89a079bca88a47a9864759a4552",
+      "experiments/out/EICU_comparator.csv": "52b76b0236b87b5f6fc79462e26d3ca8c12650ca559d57ae3b47b2a03cae493f",
+      "experiments/out-rev2/EICU_comparator.csv": "35034dd4ade05580f4fdf61bab3e3864150455016c4bdaa26b30b7862a6dc965",
+      "experiments/out-subgroups/EICU_comparator.csv": "52b76b0236b87b5f6fc79462e26d3ca8c12650ca559d57ae3b47b2a03cae493f",
+      "experiments/out-faithfulness/EICU_comparator.csv": "58af1dbb96636cdcc83de907a013623f777a1180e73e4022ab886f524b3e6e7d",
+      "experiments/out/EICU_per_site.csv": "c85ea2c17fb878a14dd02837cfd8c22b42dc7d6862c03e82d1a9fca4ebadb00a",
+      "experiments/out-rev2/EICU_per_site.csv": "2b35b4793f14e6f461d228d1a296de055beb86a1b235ec53517f3bab9f33a8d5",
+      "experiments/out-subgroups/EICU_per_site.csv": "c85ea2c17fb878a14dd02837cfd8c22b42dc7d6862c03e82d1a9fca4ebadb00a",
+      "experiments/out-faithfulness/EICU_per_site.csv": "a9b3e2cbb7fe72911b57246657bcf258f53a034543f52cf68ebcb08c8f939f99",
+      "experiments/out/EICU_certificate.json": "7e63e5e02df4749415c54883016fed4bf798a168eb666e71f697f5f0c06056a9",
+      "experiments/out-rev2/EICU_certificate.json": "d94c68a84f23f02212962745c3297be842421a23063e25c8aa1274411493c865",
+      "experiments/out-subgroups/EICU_certificate.json": "51bc9a5e6ff25af8f536a8686127b8f55d27a73dd953d57eefcfff97eb4f7df8",
+      "experiments/out-faithfulness/EICU_certificate.json": "a0f8ed17f94a72326ee396b8d17206681a4d411ebeb221be34a7b2b847d76794",
+      "experiments/out/EICU_reliability_panel.json": "7c39f89f9dbd8630b5adc412950c1be98852d45b3373004871e81b8c8a3f6647",
+      "experiments/out-rev2/EICU_reliability_panel.json": "7c39f89f9dbd8630b5adc412950c1be98852d45b3373004871e81b8c8a3f6647",
+      "experiments/out-subgroups/EICU_reliability_panel.json": "7c39f89f9dbd8630b5adc412950c1be98852d45b3373004871e81b8c8a3f6647",
+      "experiments/out-faithfulness/EICU_reliability_panel.json": "014166eb1f095441563bf4fc00d0e8f4fbc83b8b7359dbdb94f552a46e47770e",
+      "experiments/out/EICU_diagnostics.json": "c357e8a7e873f7b1d974df055790f07aad062894d3ac11d8c57559e0dd12f04d",
+      "experiments/out-rev2/EICU_diagnostics.json": "088d47f6a198f6aef40e70f9e7ebb2f090a3e8e66043d98cefe228cc05cfd057",
+      "experiments/out-subgroups/EICU_diagnostics.json": "c357e8a7e873f7b1d974df055790f07aad062894d3ac11d8c57559e0dd12f04d",
+      "experiments/out-faithfulness/EICU_diagnostics.json": "2cbb08898073fa51da365077b3f267e943b0e4c829561d87058ee43885bd2621",
+      "experiments/out/EICU_preflight.json": "5b36918850ff4545580f56110ac425fd5b729670ae7756c953164a30cfab4c1a",
+      "experiments/out-timing/EICU_preflight.json": "eb0c3794246ea04bac5eebb295475e93e12b8b40f52ff273de28ac6ae0b3e2c9",
+      "experiments/out-rev2/EICU_subgroups.csv": "2eeb02386eeb94f43d408f3d78423a85c2e819b4ffa4ab4adec92ec35e8d3451",
+      "experiments/out-subgroups/EICU_subgroups.csv": "3f3552efb865ea19e72b734a48cedea4369f5c8ef32d1f9a2292565dba254c43",
+      "experiments/out-faithfulness/EICU_subgroups.csv": "00ea41d9e00c95e5f0cb0b1236d3300f86fc620750bb91eb2a2ca96bb9b4498d",
+      "experiments/out-rev2/EICU_faithfulness.csv": "05d1155b627b9a58da0e5b309df57a070ae03599f1b52182355962f20820053c",
+      "experiments/out-faithfulness/EICU_faithfulness.csv": "7dd41bf5d34bc3054a3fd48990eb7d63e46487889566ffff4296dac15d017a9b"
+    }
+  },
+  "gate": "fix-pass gate 2 (2026-09-04)",
+  "passed": true,
+  "new": "experiments/out-rev2",
+  "new_preflight": "experiments/out-timing",
+  "old": "experiments/out",
+  "old_subgroups": "experiments/out-subgroups",
+  "old_faithfulness": "experiments/out-faithfulness",
+  "results": [
+    {
+      "artifact": "EICU_pooled.csv",
+      "kind": "byte-identical",
+      "status": "ok",
+      "n_bytes": 5474
+    },
+    {
+      "artifact": "EICU_attrition.csv",
+      "kind": "byte-identical",
+      "status": "ok",
+      "n_bytes": 498
+    },
+    {
+      "artifact": "EICU_reliability.csv",
+      "kind": "byte-identical",
+      "status": "ok",
+      "n_bytes": 185883
+    },
+    {
+      "artifact": "EICU_comparator.csv",
+      "kind": "projected-columns",
+      "n_rows_old": 40,
+      "n_rows_new": 40,
+      "appended_columns": [
+        "head_auc_pool",
+        "head_brier_pool",
+        "head_auc_answered",
+        "head_brier_answered",
+        "apache_iva_auc_pool",
+        "apache_iva_brier_pool",
+        "n_apache_available_pool"
+      ],
+      "n_rows_compared": 40,
+      "n_rows_appended": 0,
+      "status": "ok"
+    },
+    {
+      "artifact": "EICU_per_site.csv",
+      "kind": "projected-columns",
+      "n_rows_old": 960,
+      "n_rows_new": 960,
+      "appended_columns": [
+        "share_75plus"
+      ],
+      "n_rows_compared": 960,
+      "n_rows_appended": 0,
+      "status": "ok"
+    },
+    {
+      "artifact": "EICU_certificate.json",
+      "kind": "full-document",
+      "invocation_keys_not_compared": {
+        "provenance.timestamp_utc": {
+          "old": "2026-08-10T14:46:06.171279+00:00",
+          "new": "2026-09-05T16:14:59.137634+00:00"
+        }
+      },
+      "status": "ok"
+    },
+    {
+      "artifact": "EICU_reliability_panel.json",
+      "kind": "full-document",
+      "status": "ok"
+    },
+    {
+      "artifact": "EICU_diagnostics.json",
+      "kind": "projected-keys",
+      "appended_keys": [
+        "los_under_24h",
+        "top_driver_coef_rank"
+      ],
+      "status": "ok"
+    },
+    {
+      "artifact": "EICU_preflight.json",
+      "kind": "projected-keys",
+      "invocation_keys_not_compared": {
+        "data_dir": {
+          "old": "./eicu-extract",
+          "new": "eicu-extract"
+        }
+      },
+      "appended_keys": [
+        "apache_absent_los.aps_absent.n_lt_24h",
+        "apache_absent_los.aps_absent.frac_lt_24h",
+        "apache_absent_los.aps_present.n_lt_24h",
+        "apache_absent_los.aps_present.frac_lt_24h",
+        "apache_absent_los.aps_absent_positive.n_lt_24h",
+        "apache_absent_los.aps_absent_positive.frac_lt_24h",
+        "apache_absent_los.los_window"
+      ],
+      "status": "ok"
+    },
+    {
+      "artifact": "EICU_subgroups.csv",
+      "kind": "projected-rows (old dims)",
+      "n_rows_old": 900,
+      "n_rows_new": 940,
+      "appended_columns": [],
+      "n_rows_compared": 900,
+      "n_rows_appended": 40,
+      "status": "ok",
+      "old_dims": [
+        "age_band",
+        "ethnicity",
+        "gender",
+        "hospitaladmitsource",
+        "unittype"
+      ],
+      "appended_dims": [
+        "aps_present"
+      ]
+    },
+    {
+      "artifact": "EICU_faithfulness.csv",
+      "kind": "projected-rows (old replicates)",
+      "n_rows_old": 10,
+      "n_rows_new": 200,
+      "appended_columns": [],
+      "n_rows_compared": 10,
+      "n_rows_appended": 190,
+      "status": "ok",
+      "old_replicates": [
+        "0"
+      ]
+    }
+  ]
+}

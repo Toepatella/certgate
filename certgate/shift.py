@@ -184,7 +184,8 @@ def rho_box_interval(q_lo, q_hi, q_point, lo, hi, point):
     The clip costs precision, not coverage: the unclipped odds ratio stays
     covered whenever the true pi_t lies in [PI_CLIP, 1-PI_CLIP]. Outside that
     range the exposure is bounded at the PI_CLIP odds scale, about 1e-4 in an
-    affine-in-rho statistic. Misspecification declines before it gets there.
+    affine-in-rho statistic. Out-of-range corners are clipped, not declined;
+    the clipped endpoint then fails to certify (failsafe).
 
     Refs: SPEC "shift.py"; audits V2, F41/B-9; verification F2-bbse.
     """

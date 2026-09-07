@@ -1,0 +1,466 @@
+{
+  "_run": {
+    "utc": "2026-09-05T16:32:51+00:00",
+    "git_sha": "f48d3b4ec5b7f7d92021e4ec75f8127bf83de34d",
+    "inputs": {
+      "experiments/out/E9_fnr.csv": "205dcae9eacb2a028d01fb402fcb5297d8b358b2d63a473ce6372c6f9ed24754"
+    }
+  },
+  "post_hoc": "[MEASURE] POST-HOC (2026-09-04): a second, positives-normalised estimand run beside the released false-negative frontier on the same draws; the frozen CSV is unchanged and reproduced row for row before this arm is written. An experimental secondary certificate, never the deployed report.",
+  "estimand": "shipped: influence_atoms with weights = y and g_c = min(n_c, 100) on the full site size, the atom the paper ships (SPEC 'Outcome-weighted atoms'). positives: the same influence_atoms on each site's positive records with g_c^+ = min(n_c^+, 10) on the positive count. The two certify different estimands, FNR_M (sites weighted by records, cap 100) and FNR_M^+ (sites weighted by positives, cap 10); each certificate is scored on the fresh pool under both. n_c^+ is a function of the site's labels alone: tau-independent, error-independent, fixed before any threshold is chosen, so the estimand is one named functional of the site distribution and the atoms stay i.i.d. and in [0, 1] under Assumption 1.",
+  "headline": "certify rate at b=0.5 by sites [208, 400, 600]: shipped [0.0, 0.0, 0.005] vs positives [0.79, 0.995, 1.0]; b=0.55: shipped [0.0, 0.285, 0.995] vs positives [1.0, 1.0, 1.0]; fresh-pool exceedances under own estimand {'shipped': 0, 'positives': 1}, under the other {'shipped': 0, 'positives': 1}; truth shipped 0.4499 positives 0.4496",
+  "shipped_row_check": {
+    "shipped_rows_compared": 2400,
+    "mismatches": 0,
+    "frozen_rows": 2400,
+    "fnr_R": 200,
+    "quick": false,
+    "wall_clock_s": 681.5
+  },
+  "M_positives": 10,
+  "M_shipped": 100,
+  "fnr_R": 200,
+  "ladder": [
+    0.4,
+    0.5,
+    0.55,
+    0.6
+  ],
+  "sweep": [
+    208,
+    400,
+    600
+  ],
+  "fnr_frontier": {
+    "shipped": {
+      "0.4": {
+        "208": {
+          "certify_rate": 0.0,
+          "mean_tau": null,
+          "mean_fnr_fresh": null,
+          "fnr_exceed_rate": null,
+          "n_certified": 0,
+          "certify_rate_ci95": [
+            0.0,
+            0.0183
+          ],
+          "fnr_exceed_rate_ci95": null,
+          "fnr_exceed_rate_other_estimand": null,
+          "mean_fnr_fresh_other_estimand": null
+        },
+        "400": {
+          "certify_rate": 0.0,
+          "mean_tau": null,
+          "mean_fnr_fresh": null,
+          "fnr_exceed_rate": null,
+          "n_certified": 0,
+          "certify_rate_ci95": [
+            0.0,
+            0.0183
+          ],
+          "fnr_exceed_rate_ci95": null,
+          "fnr_exceed_rate_other_estimand": null,
+          "mean_fnr_fresh_other_estimand": null
+        },
+        "600": {
+          "certify_rate": 0.0,
+          "mean_tau": null,
+          "mean_fnr_fresh": null,
+          "fnr_exceed_rate": null,
+          "n_certified": 0,
+          "certify_rate_ci95": [
+            0.0,
+            0.0183
+          ],
+          "fnr_exceed_rate_ci95": null,
+          "fnr_exceed_rate_other_estimand": null,
+          "mean_fnr_fresh_other_estimand": null
+        }
+      },
+      "0.5": {
+        "208": {
+          "certify_rate": 0.0,
+          "mean_tau": null,
+          "mean_fnr_fresh": null,
+          "fnr_exceed_rate": null,
+          "n_certified": 0,
+          "certify_rate_ci95": [
+            0.0,
+            0.0183
+          ],
+          "fnr_exceed_rate_ci95": null,
+          "fnr_exceed_rate_other_estimand": null,
+          "mean_fnr_fresh_other_estimand": null
+        },
+        "400": {
+          "certify_rate": 0.0,
+          "mean_tau": null,
+          "mean_fnr_fresh": null,
+          "fnr_exceed_rate": null,
+          "n_certified": 0,
+          "certify_rate_ci95": [
+            0.0,
+            0.0183
+          ],
+          "fnr_exceed_rate_ci95": null,
+          "fnr_exceed_rate_other_estimand": null,
+          "mean_fnr_fresh_other_estimand": null
+        },
+        "600": {
+          "certify_rate": 0.005,
+          "mean_tau": 0.55,
+          "mean_fnr_fresh": 0.4194,
+          "fnr_exceed_rate": 0.0,
+          "n_certified": 1,
+          "certify_rate_ci95": [
+            0.0001,
+            0.0275
+          ],
+          "fnr_exceed_rate_ci95": [
+            0.0,
+            0.975
+          ],
+          "fnr_exceed_rate_other_estimand": 0.0,
+          "mean_fnr_fresh_other_estimand": 0.4174
+        }
+      },
+      "0.55": {
+        "208": {
+          "certify_rate": 0.0,
+          "mean_tau": null,
+          "mean_fnr_fresh": null,
+          "fnr_exceed_rate": null,
+          "n_certified": 0,
+          "certify_rate_ci95": [
+            0.0,
+            0.0183
+          ],
+          "fnr_exceed_rate_ci95": null,
+          "fnr_exceed_rate_other_estimand": null,
+          "mean_fnr_fresh_other_estimand": null
+        },
+        "400": {
+          "certify_rate": 0.285,
+          "mean_tau": 0.5504,
+          "mean_fnr_fresh": 0.4382,
+          "fnr_exceed_rate": 0.0,
+          "n_certified": 57,
+          "certify_rate_ci95": [
+            0.2236,
+            0.3529
+          ],
+          "fnr_exceed_rate_ci95": [
+            0.0,
+            0.0627
+          ],
+          "fnr_exceed_rate_other_estimand": 0.0,
+          "mean_fnr_fresh_other_estimand": 0.4379
+        },
+        "600": {
+          "certify_rate": 0.995,
+          "mean_tau": 0.55,
+          "mean_fnr_fresh": 0.45,
+          "fnr_exceed_rate": 0.0,
+          "n_certified": 199,
+          "certify_rate_ci95": [
+            0.9725,
+            0.9999
+          ],
+          "fnr_exceed_rate_ci95": [
+            0.0,
+            0.0184
+          ],
+          "fnr_exceed_rate_other_estimand": 0.0,
+          "mean_fnr_fresh_other_estimand": 0.4499
+        }
+      },
+      "0.6": {
+        "208": {
+          "certify_rate": 0.04,
+          "mean_tau": 0.55,
+          "mean_fnr_fresh": 0.4164,
+          "fnr_exceed_rate": 0.0,
+          "n_certified": 8,
+          "certify_rate_ci95": [
+            0.0174,
+            0.0773
+          ],
+          "fnr_exceed_rate_ci95": [
+            0.0,
+            0.3694
+          ],
+          "fnr_exceed_rate_other_estimand": 0.0,
+          "mean_fnr_fresh_other_estimand": 0.4127
+        },
+        "400": {
+          "certify_rate": 1.0,
+          "mean_tau": 0.55,
+          "mean_fnr_fresh": 0.4484,
+          "fnr_exceed_rate": 0.0,
+          "n_certified": 200,
+          "certify_rate_ci95": [
+            0.9817,
+            1.0
+          ],
+          "fnr_exceed_rate_ci95": [
+            0.0,
+            0.0183
+          ],
+          "fnr_exceed_rate_other_estimand": 0.0,
+          "mean_fnr_fresh_other_estimand": 0.448
+        },
+        "600": {
+          "certify_rate": 1.0,
+          "mean_tau": 0.55,
+          "mean_fnr_fresh": 0.45,
+          "fnr_exceed_rate": 0.0,
+          "n_certified": 200,
+          "certify_rate_ci95": [
+            0.9817,
+            1.0
+          ],
+          "fnr_exceed_rate_ci95": [
+            0.0,
+            0.0183
+          ],
+          "fnr_exceed_rate_other_estimand": 0.0,
+          "mean_fnr_fresh_other_estimand": 0.4499
+        }
+      }
+    },
+    "positives": {
+      "0.4": {
+        "208": {
+          "certify_rate": 0.0,
+          "mean_tau": null,
+          "mean_fnr_fresh": null,
+          "fnr_exceed_rate": null,
+          "n_certified": 0,
+          "certify_rate_ci95": [
+            0.0,
+            0.0183
+          ],
+          "fnr_exceed_rate_ci95": null,
+          "fnr_exceed_rate_other_estimand": null,
+          "mean_fnr_fresh_other_estimand": null
+        },
+        "400": {
+          "certify_rate": 0.01,
+          "mean_tau": 0.86,
+          "mean_fnr_fresh": 0.3807,
+          "fnr_exceed_rate": 0.0,
+          "n_certified": 2,
+          "certify_rate_ci95": [
+            0.0012,
+            0.0357
+          ],
+          "fnr_exceed_rate_ci95": [
+            0.0,
+            0.8419
+          ],
+          "fnr_exceed_rate_other_estimand": 0.0,
+          "mean_fnr_fresh_other_estimand": 0.3771
+        },
+        "600": {
+          "certify_rate": 0.02,
+          "mean_tau": 0.905,
+          "mean_fnr_fresh": 0.3826,
+          "fnr_exceed_rate": 0.25,
+          "n_certified": 4,
+          "certify_rate_ci95": [
+            0.0055,
+            0.0504
+          ],
+          "fnr_exceed_rate_ci95": [
+            0.0063,
+            0.8059
+          ],
+          "fnr_exceed_rate_other_estimand": 0.25,
+          "mean_fnr_fresh_other_estimand": 0.3844
+        }
+      },
+      "0.5": {
+        "208": {
+          "certify_rate": 0.79,
+          "mean_tau": 0.5549,
+          "mean_fnr_fresh": 0.4455,
+          "fnr_exceed_rate": 0.0,
+          "n_certified": 158,
+          "certify_rate_ci95": [
+            0.7269,
+            0.8443
+          ],
+          "fnr_exceed_rate_ci95": [
+            0.0,
+            0.0231
+          ],
+          "fnr_exceed_rate_other_estimand": 0.0,
+          "mean_fnr_fresh_other_estimand": 0.4461
+        },
+        "400": {
+          "certify_rate": 0.995,
+          "mean_tau": 0.5507,
+          "mean_fnr_fresh": 0.4478,
+          "fnr_exceed_rate": 0.0,
+          "n_certified": 199,
+          "certify_rate_ci95": [
+            0.9725,
+            0.9999
+          ],
+          "fnr_exceed_rate_ci95": [
+            0.0,
+            0.0184
+          ],
+          "fnr_exceed_rate_other_estimand": 0.0,
+          "mean_fnr_fresh_other_estimand": 0.4482
+        },
+        "600": {
+          "certify_rate": 1.0,
+          "mean_tau": 0.55,
+          "mean_fnr_fresh": 0.4499,
+          "fnr_exceed_rate": 0.0,
+          "n_certified": 200,
+          "certify_rate_ci95": [
+            0.9817,
+            1.0
+          ],
+          "fnr_exceed_rate_ci95": [
+            0.0,
+            0.0183
+          ],
+          "fnr_exceed_rate_other_estimand": 0.0,
+          "mean_fnr_fresh_other_estimand": 0.45
+        }
+      },
+      "0.55": {
+        "208": {
+          "certify_rate": 1.0,
+          "mean_tau": 0.5501,
+          "mean_fnr_fresh": 0.4508,
+          "fnr_exceed_rate": 0.0,
+          "n_certified": 200,
+          "certify_rate_ci95": [
+            0.9817,
+            1.0
+          ],
+          "fnr_exceed_rate_ci95": [
+            0.0,
+            0.0183
+          ],
+          "fnr_exceed_rate_other_estimand": 0.0,
+          "mean_fnr_fresh_other_estimand": 0.4514
+        },
+        "400": {
+          "certify_rate": 1.0,
+          "mean_tau": 0.55,
+          "mean_fnr_fresh": 0.448,
+          "fnr_exceed_rate": 0.0,
+          "n_certified": 200,
+          "certify_rate_ci95": [
+            0.9817,
+            1.0
+          ],
+          "fnr_exceed_rate_ci95": [
+            0.0,
+            0.0183
+          ],
+          "fnr_exceed_rate_other_estimand": 0.0,
+          "mean_fnr_fresh_other_estimand": 0.4484
+        },
+        "600": {
+          "certify_rate": 1.0,
+          "mean_tau": 0.55,
+          "mean_fnr_fresh": 0.4499,
+          "fnr_exceed_rate": 0.0,
+          "n_certified": 200,
+          "certify_rate_ci95": [
+            0.9817,
+            1.0
+          ],
+          "fnr_exceed_rate_ci95": [
+            0.0,
+            0.0183
+          ],
+          "fnr_exceed_rate_other_estimand": 0.0,
+          "mean_fnr_fresh_other_estimand": 0.45
+        }
+      },
+      "0.6": {
+        "208": {
+          "certify_rate": 1.0,
+          "mean_tau": 0.55,
+          "mean_fnr_fresh": 0.4508,
+          "fnr_exceed_rate": 0.0,
+          "n_certified": 200,
+          "certify_rate_ci95": [
+            0.9817,
+            1.0
+          ],
+          "fnr_exceed_rate_ci95": [
+            0.0,
+            0.0183
+          ],
+          "fnr_exceed_rate_other_estimand": 0.0,
+          "mean_fnr_fresh_other_estimand": 0.4514
+        },
+        "400": {
+          "certify_rate": 1.0,
+          "mean_tau": 0.55,
+          "mean_fnr_fresh": 0.448,
+          "fnr_exceed_rate": 0.0,
+          "n_certified": 200,
+          "certify_rate_ci95": [
+            0.9817,
+            1.0
+          ],
+          "fnr_exceed_rate_ci95": [
+            0.0,
+            0.0183
+          ],
+          "fnr_exceed_rate_other_estimand": 0.0,
+          "mean_fnr_fresh_other_estimand": 0.4484
+        },
+        "600": {
+          "certify_rate": 1.0,
+          "mean_tau": 0.55,
+          "mean_fnr_fresh": 0.4499,
+          "fnr_exceed_rate": 0.0,
+          "n_certified": 200,
+          "certify_rate_ci95": [
+            0.9817,
+            1.0
+          ],
+          "fnr_exceed_rate_ci95": [
+            0.0,
+            0.0183
+          ],
+          "fnr_exceed_rate_other_estimand": 0.0,
+          "mean_fnr_fresh_other_estimand": 0.45
+        }
+      }
+    }
+  },
+  "true_fnr_at_lowest_tau_mean": {
+    "shipped": {
+      "208": 0.4514,
+      "400": 0.4484,
+      "600": 0.45,
+      "all": 0.4499
+    },
+    "positives": {
+      "208": 0.4508,
+      "400": 0.448,
+      "600": 0.4499,
+      "all": 0.4496
+    }
+  },
+  "total_fresh_exceedances_own_estimand": {
+    "shipped": 0,
+    "positives": 1
+  },
+  "total_fresh_exceedances_other_estimand": {
+    "shipped": 0,
+    "positives": 1
+  },
+  "wall_clock_s": 682.1
+}

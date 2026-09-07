@@ -24,7 +24,13 @@ The frozen-constants register lives in the Supplementary Information as
 Table S1.
 
 Requires pandoc and a MiKTeX/TeX Live pdflatex + bibtex on PATH.
-Usage: python paper/make_submission.py [--no-compile]
+Usage: python paper/make_submission.py [--no-compile] [--strict]
+                                       [--max-overfull-main N]
+                                       [--max-overfull-si N]
+
+--strict is the release gate: an author blank ([[TBC:...]]), a missing
+declaration section, a missing figure source or an Overfull count over the
+given budget each become a hard failure instead of a printed warning.
 """
 
 import argparse
@@ -40,7 +46,8 @@ ROOT = PAPER.parent
 SN = PAPER / "build" / "sn"
 OUT = PAPER / "build" / "out"
 BUILD = OUT / "sn"
-FIGSRC = ROOT / "experiments" / "out"
+EXPERIMENTS = ROOT / "experiments"
+FIGSRC = EXPERIMENTS / "out"
 PDF_NAME = "CertGate_DiscoverComputing.pdf"
 
 # The canonical figure -> artifact map (also documented in README.md).
@@ -48,6 +55,12 @@ PDF_NAME = "CertGate_DiscoverComputing.pdf"
 # Figures 2-5 are experiment artifacts; 3 is derived read-only from the
 # released eICU diagnostics. E6_reliability.png stays supplementary-only with
 # no number, and the two eICU orphans are the SI figures S1/S2.
+#
+# A bare filename lives in experiments/out/. A value with a directory part is
+# a path relative to experiments/, which is how the post-hoc sidecar
+# directories (out-e9b-positives/ and friends) contribute a figure without
+# anything being copied into the frozen out/ tree. Files are copied into the
+# build and named in the Snapp zip by basename either way.
 FIGURE_MAP = {
     1: "pipeline.pdf",
     2: "EICU_pooled.png",
@@ -68,10 +81,20 @@ SI_FIGURE_MAP = {
     "S7": "E4_site_sweep.png",
     "S8": "E6_fairness.png",
     "S9": "E2_label_shift.png",
+    "S10": "out-e9b-positives/E9b_fnr_positives.png",   # experiments/run_e9b_positives.py
 }
 
+
+def figure_source(name: str) -> Path:
+    """Where a FIGURE_MAP / SI_FIGURE_MAP value lives on disk."""
+    return (EXPERIMENTS / name) if "/" in name else (FIGSRC / name)
+
+
 # Back-matter sections in the order the journal's end-matter renders them.
-# Acknowledgements stays outside the Declarations block.
+# Acknowledgements stays outside the Declarations block. Every '# ' heading
+# after the Supplementary Information that is not one of BACK_MATTER_OTHER
+# must appear here -- main() refuses to build otherwise, because a heading
+# missing from this list used to vanish from the PDF without a word.
 DECLARATIONS = [
     "Data availability",
     "Code availability",
@@ -79,8 +102,20 @@ DECLARATIONS = [
     "Author contributions",
     "Ethics approval and consent to participate",
     "Consent for publication",
+    "Clinical trial number",
+    "Use of AI tools",
     "Competing interests",
 ]
+BACK_MATTER_OTHER = {"Acknowledgements", "Figures", "Tables", "References"}
+
+# An SI table with more than this many pipes on its header row (i.e. more
+# than six columns) is set \footnotesize; the rest keep the body size.
+SI_WIDE_TABLE_PIPES = 7
+# SI tables that do not fit the 372pt sn-jnl text width even at
+# \footnotesize are set landscape (rotating's sidewaystable, 553pt of line).
+# Table S5 has nine columns holding four confusion counts apiece. The float
+# carries its own caption so the two never separate across a page turn.
+SI_SIDEWAYS_TABLES = {"S5"}
 
 # Above this many data rows a table will not float on one page, so it is
 # emitted as a page-breaking longtable instead. Table 5 is the case in point.
@@ -270,7 +305,45 @@ def figure_float(number: int, block_md: str) -> str:
             "\\includegraphics[width=%.2f\\textwidth]{figs/%s}\n"
             "\\caption{%s}\\label{fig:%d}\n"
             "\\end{figure}" % (number - 1, FIG_WIDTHS[number],
-                               FIGURE_MAP[number], caption, number))
+                               Path(FIGURE_MAP[number]).name, caption,
+                               number))
+
+
+SI_TABLE_CAPTION = re.compile(r"^\*\*Table (S\d{1,2})\.\s*(.*?)\*\*\s*(.*)$",
+                              re.S)
+
+
+def si_table_latex(table_md: str, tag, caption_md) -> str:
+    """One SI pipe-table paragraph -> a sized, unwrapped table.
+
+    pandoc wraps each longtable in {\\def\\LTcaptype{none} ...}, which trips
+    sn-jnl with "No counter 'none' defined". The SI tables carry no \\caption,
+    so that guard protects nothing here and extract_longtable drops it. Wide
+    tables are set \\footnotesize inside a group; a bare '{' would be escaped
+    by the later pandoc pass, hence \\begingroup.
+
+    A table in SI_SIDEWAYS_TABLES becomes a landscape float instead, with its
+    caption paragraph (hand-set label, never \\caption) placed above the
+    tabular inside the float.
+    """
+    pipes = table_md.strip().splitlines()[0].count("|")
+    size = "\\footnotesize" if pipes > SI_WIDE_TABLE_PIPES else ""
+    if tag in SI_SIDEWAYS_TABLES:
+        m = SI_TABLE_CAPTION.match((caption_md or "").strip())
+        if not m or m.group(1) != tag:
+            raise ValueError(f"Table {tag} is set sideways but its caption "
+                             "paragraph does not directly precede it")
+        cap = pandoc(f"**{m.group(2).strip()}** {m.group(3).strip()}")
+        return ("\\begin{sidewaystable}[!htbp]\n"
+                "{\\small \\textbf{Table %s.} %s}\n"
+                "\\par\\vspace{6pt}\n"
+                "\\centering %s\n%s\n"
+                "\\end{sidewaystable}"
+                % (tag, cap, size, longtable_to_tabular(pandoc(table_md))))
+    lines = extract_longtable(pandoc(table_md))
+    if size:
+        return "\\begingroup%s\n%s\n\\endgroup" % (size, "\n".join(lines))
+    return "\n".join(lines)
 
 
 def anchor_paragraph(paras, kind: str, number: int, start: int) -> int:
@@ -320,6 +393,7 @@ COMPACT_TEMPLATE = r"""%% Generated by paper/make_submission.py -- DO NOT EDIT B
 \usepackage{array}
 \usepackage{calc}
 \usepackage{textcomp}
+\usepackage{rotating}
 \usepackage[numbers,sort&compress]{natbib}
 \usepackage[hidelinks]{hyperref}
 \providecommand{\tightlist}{\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
@@ -389,7 +463,7 @@ MAIN_TEMPLATE = r"""%% Generated by paper/make_submission.py -- DO NOT EDIT BY H
 
 \bmhead{Supplementary information}
 
-The online version contains supplementary material: Supplementary Information A (deferred proofs; software and reproducibility details with the frozen-constants register, Table S1; the post-hoc reliability panel on eICU-CRD, Figures S1--S2; and extended results, Figures S3--S9 and Tables S2--S10).
+The online version contains supplementary material: Supplementary Information A (deferred proofs; software and reproducibility details with the frozen-constants register, Table S1; the post-hoc reliability panel on eICU-CRD, Figures S1--S2; and extended results, Figures S3--S10 and Tables S2--S11).
 
 <<ACKNOWLEDGEMENTS>>
 
@@ -413,6 +487,7 @@ SI_TEMPLATE = r"""%% Generated by paper/make_submission.py -- DO NOT EDIT BY HAN
 \usepackage{array}
 \usepackage{calc}
 \usepackage{textcomp}
+\usepackage{rotating}
 
 \providecommand{\tightlist}{\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
 
@@ -427,7 +502,7 @@ SI_TEMPLATE = r"""%% Generated by paper/make_submission.py -- DO NOT EDIT BY HAN
 \author*[1]{<<AUTHOR>>}\email{<<EMAIL>>}
 \affil*[1]{<<AFFIL>>}
 
-\abstract{Supplementary Information A for the main article: deferred proofs (A.1, A.2), software and reproducibility details (A.3) with the frozen-constants register (Table S1), the post-hoc selective reliability panel on eICU-CRD v2.0 (A.4, Figures S1--S2), and extended results (A.5, Figures S3--S9 and Tables S2--S10). References of the form ``Section 3.x'' point into the main article.}
+\abstract{Supplementary Information A for the main article: deferred proofs (A.1, A.2), software and reproducibility details (A.3) with the frozen-constants register (Table S1), the post-hoc selective reliability panel on eICU-CRD v2.0 (A.4, Figures S1--S2), and extended results (A.5, Figures S3--S10 and Tables S2--S11). References of the form ``Section 3.x'' point into the main article.}
 
 \keywords{}
 
@@ -445,7 +520,25 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--no-compile", action="store_true",
                     help="emit the LaTeX project without running pdflatex")
+    ap.add_argument("--strict", action="store_true",
+                    help="release gate: author blanks, missing declarations, "
+                         "missing figure sources and Overfull budgets fail "
+                         "the build instead of warning")
+    ap.add_argument("--max-overfull-main", type=int, default=None,
+                    help="fail when main.log has more Overfull boxes than this")
+    ap.add_argument("--max-overfull-si", type=int, default=None,
+                    help="fail when si.log has more Overfull boxes than this")
     args = ap.parse_args()
+
+    def lapse(msg: str):
+        """A defect the draft can still carry while it is being revised.
+
+        Printed loudly and tolerated by default, so the build keeps working
+        between editing sessions; a hard failure under --strict.
+        """
+        if args.strict:
+            raise SystemExit(f"[make_submission] --strict: {msg}")
+        print(f"[make_submission] WARNING: {msg}")
 
     draft = (PAPER / "draft.md").read_text(encoding="utf-8")
 
@@ -457,6 +550,9 @@ def main():
         for t in tbc:
             print(f"  {t}")
         print("=" * 72)
+        if args.strict:
+            raise SystemExit("[make_submission] --strict: "
+                             f"{len(tbc)} [[TBC:...]] blank(s) remain")
 
     # ---- front matter (anchor on the title heading, never on offsets) ------
     lines = draft.splitlines()
@@ -487,6 +583,17 @@ def main():
     si_name = next(n for n in order
                    if n.startswith("Supplementary Information A"))
 
+    # Every heading after the SI is back matter, and back matter is emitted
+    # only through DECLARATIONS or the fixed set of other blocks. A heading in
+    # neither would silently fall out of the PDF -- '# References' does that
+    # by design; a new declaration must not.
+    stray = [n for n in order[order.index(si_name) + 1:]
+             if n not in DECLARATIONS and n not in BACK_MATTER_OTHER]
+    if stray:
+        raise SystemExit(
+            "[make_submission] back-matter heading(s) not in DECLARATIONS "
+            f"(add them there or they will not be emitted): {stray}")
+
     body_md = "\n\n".join(f"# {n}\n\n{sections[n]}" for n in body_names)
     fig_blocks = parse_float_blocks(sections["Figures"], "Figure")
     tab_blocks = parse_float_blocks(sections["Tables"], "Table")
@@ -502,29 +609,55 @@ def main():
     # Information A.1(iii)"). Figure S-blocks become embedded floats with
     # hand-set labels, never \caption -- that would number them "Fig. 1".
     si_title = si_name.split(":", 1)[1].strip()
-    si_paras = []
+    si_paras, si_tables, si_fig_tags = [], [], []
     for para in sections[si_name].split("\n\n"):
-        m = re.match(r"\*\*Figure (S\d)\.\s*(.*?)\*\*\s*(.*)$",
+        m = re.match(r"^\*\*Figure (S\d{1,2})\.\s*(.*?)\*\*\s*(.*)$",
                      para.strip(), re.S)
         if m:
             tag, cap_title, cap_rest = m.groups()
+            if tag not in SI_FIGURE_MAP:
+                raise SystemExit(f"[make_submission] Figure {tag} has a "
+                                 "caption in the draft but no SI_FIGURE_MAP "
+                                 "entry")
+            si_fig_tags.append(tag)
             cap = pandoc(f"**{cap_title.strip()}** {cap_rest.strip()}")
             si_paras.append(
                 "\\begin{figure}[!htbp]\n\\centering\n"
                 "\\includegraphics[width=\\textwidth]{figs/%s}\n"
                 "\\par\\vspace{4pt}\n"
                 "{\\small \\textbf{Figure %s.} %s}\n"
-                "\\end{figure}" % (SI_FIGURE_MAP[tag], tag, cap))
+                "\\end{figure}" % (Path(SI_FIGURE_MAP[tag]).name, tag, cap))
+        elif para.lstrip().startswith("|"):
+            # Tables are rendered one at a time so each can be sized on its
+            # own. A plain alphanumeric token stands in for the table through
+            # the prose pass and is swapped for the LaTeX afterwards. The
+            # caption paragraph precedes its table in the draft; a sideways
+            # table absorbs it into the float.
+            prev = si_paras[-1] if si_paras else ""
+            cm = SI_TABLE_CAPTION.match(prev.strip())
+            tag = cm.group(1) if cm else None
+            if tag in SI_SIDEWAYS_TABLES:
+                si_paras.pop()
+            si_tables.append(si_table_latex(para, tag, prev))
+            si_paras.append(f"SITABLEPLACEHOLDER{len(si_tables) - 1}END")
         else:
             si_paras.append(para)
     si_body_latex = pandoc(f"# {si_title}\n\n" + "\n\n".join(si_paras))
-    # pandoc wraps longtables in {\def\LTcaptype{none} ...}, which trips
-    # sn-jnl with "No counter 'none' defined". The SI tables carry no
-    # \caption, so that guard protects nothing here -- unwrap it.
-    si_body_latex = re.sub(r"\{\\def\\LTcaptype\{none\}[^\n]*\n", "",
-                           si_body_latex)
-    si_body_latex = si_body_latex.replace("\\end{longtable}\n}",
-                                          "\\end{longtable}")
+    for i, tex in enumerate(si_tables):
+        token = f"SITABLEPLACEHOLDER{i}END"
+        if si_body_latex.count(token) != 1:
+            raise SystemExit(f"[make_submission] SI table {i} placeholder "
+                             "did not survive pandoc intact")
+        si_body_latex = si_body_latex.replace(token, tex)
+    if "LTcaptype" in si_body_latex:
+        raise SystemExit("[make_submission] an SI longtable kept its "
+                         "\\LTcaptype wrapper")
+    missing_si = [t for t in SI_FIGURE_MAP if t not in si_fig_tags]
+    if missing_si:
+        lapse(f"SI figure(s) mapped but not captioned in the draft: "
+              f"{missing_si}")
+    print(f"[make_submission] SI: {len(si_fig_tags)} figures "
+          f"({', '.join(si_fig_tags)}), {len(si_tables)} tables")
 
     ack_md = sections.get("Acknowledgements", "").strip()
     ack_latex = ""
@@ -534,7 +667,9 @@ def main():
     decl_parts = []
     for name in DECLARATIONS:
         if name not in sections:
-            raise SystemExit(f"missing back-matter section: {name}")
+            lapse(f"missing back-matter section: '{name}' (the PDF will "
+                  "omit it)")
+            continue
         decl_parts.append(f"\\bmhead{{{name}}}\n\n{pandoc(sections[name])}")
     decl_latex = "\n\n".join(decl_parts)
 
@@ -582,11 +717,24 @@ def main():
     shutil.copy(PAPER / "references.bib", BUILD / "references.bib")
     shutil.copy(SN / "sn-jnl.cls", BUILD / "sn-jnl.cls")
     shutil.copy(SN / "sn-vancouver-num.bst", BUILD / "sn-vancouver-num.bst")
-    for f in FIGURE_MAP.values():
-        if f.endswith(".png"):
-            shutil.copy(FIGSRC / f, BUILD / "figs" / f)
-    for f in SI_FIGURE_MAP.values():
-        shutil.copy(FIGSRC / f, BUILD / "figs" / f)
+    # A mapped figure whose source is not on disk yet (a sidecar still being
+    # produced) is skipped with a warning; it is a failure under --strict, and
+    # a failure regardless once the draft captions it (pdflatex cannot
+    # include a file that is not there).
+    absent = set()
+    for f in list(FIGURE_MAP.values()) + list(SI_FIGURE_MAP.values()):
+        if f == "pipeline.pdf":
+            continue
+        src = figure_source(f)
+        if not src.exists():
+            absent.add(f)
+            lapse(f"figure source missing: {src.relative_to(ROOT)}")
+            continue
+        shutil.copy(src, BUILD / "figs" / Path(f).name)
+    captioned_absent = [t for t in si_fig_tags if SI_FIGURE_MAP[t] in absent]
+    if captioned_absent:
+        raise SystemExit("[make_submission] the draft captions "
+                         f"{captioned_absent} but the source file is missing")
 
     # ---- Figure 1: compile the pipeline schematic --------------------------
     r = subprocess.run(
@@ -600,10 +748,16 @@ def main():
     # journal naming convention for the figures zip: Fig1.pdf, Fig2.png, ...
     with zipfile.ZipFile(OUT / "CertGate_figures.zip", "w") as z:
         for n, f in sorted(FIGURE_MAP.items()):
-            src = (BUILD / "figs" / f) if f == "pipeline.pdf" else FIGSRC / f
+            src = ((BUILD / "figs" / f) if f == "pipeline.pdf"
+                   else figure_source(f))
+            if f in absent:
+                continue
             z.write(src, f"Fig{n}{Path(f).suffix}")
-        for tag, f in sorted(SI_FIGURE_MAP.items()):
-            z.write(FIGSRC / f, f"Fig{tag}{Path(f).suffix}")
+        for tag, f in sorted(SI_FIGURE_MAP.items(),
+                             key=lambda kv: int(kv[0][1:])):
+            if f in absent:
+                continue
+            z.write(figure_source(f), f"Fig{tag}{Path(f).suffix}")
     print(f"[make_submission] wrote {BUILD / 'main.tex'}, "
           f"{BUILD / 'si.tex'} and {OUT / 'CertGate_figures.zip'}")
 
@@ -638,10 +792,20 @@ def main():
                   "references/citations:")
             for p in problems[:20]:
                 print("  " + p)
+            if args.strict:
+                raise SystemExit(f"[make_submission] --strict: {base} has "
+                                 f"{len(problems)} unresolved reference(s)")
+        overfull = sum(1 for l in log.splitlines() if l.startswith("Overfull"))
+        print(f"[make_submission] {base}.log: Overfull boxes = {overfull}")
+        return overfull
 
-    build_doc("main")
-    build_doc("si")
-    build_doc("compact")
+    budgets = {"main": args.max_overfull_main, "si": args.max_overfull_si}
+    for base in ("main", "si", "compact"):
+        n_over = build_doc(base)
+        cap = budgets.get(base)
+        if cap is not None and n_over > cap:
+            raise SystemExit(f"[make_submission] {base}.log has {n_over} "
+                             f"Overfull boxes, over the budget of {cap}")
     shutil.copy(BUILD / "main.pdf", OUT / PDF_NAME)
     shutil.copy(BUILD / "si.pdf", OUT / "CertGate_SI.pdf")
     shutil.copy(BUILD / "compact.pdf", OUT / "CertGate_compact.pdf")
