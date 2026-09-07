@@ -132,7 +132,7 @@ def _serialize_csv(header, rows):
 
 
 def _first_line_delta(a, b):
-    la, lb = a.split(b"\r\n"), b.split(b"\r\n")
+    la, lb = a.splitlines(), b.splitlines()
     for i, (x, y) in enumerate(zip(la, lb)):
         if x != y:
             return dict(line=i + 1, old=x.decode("ascii", "replace")[:200],
@@ -238,7 +238,10 @@ def _check_bytes(name, old_path, new_path):
 def _check_projected_csv(name, old_path, new_path, *, row_filter=None,
                          kind="projected-columns"):
     """Project the new table onto the old header (and optionally onto a row
-    subset), then require the re-serialized projection to equal the old bytes."""
+    subset), then require the projection to equal the old table when both are
+    re-serialized the same way -- so the line terminator on disk (CRLF on a
+    Windows checkout, LF on Linux) plays no part; values, header and row order
+    are what is compared."""
     if not os.path.exists(new_path):
         return dict(artifact=name, kind=kind, status="MISSING")
     old_header, old_rows = _read_csv(old_path)
@@ -257,7 +260,7 @@ def _check_projected_csv(name, old_path, new_path, *, row_filter=None,
     out["n_rows_compared"] = len(kept)
     out["n_rows_appended"] = len(new_rows) - len(kept)
     projected = _serialize_csv(old_header, [[r[i] for i in idx] for r in kept])
-    old_bytes = open(old_path, "rb").read()
+    old_bytes = _serialize_csv(old_header, old_rows)
     if projected == old_bytes:
         out["status"] = "ok"
     else:
