@@ -96,8 +96,9 @@ def test_full_scale_mock_reaches_an_honest_outcome(tmp_path):
     """The real eICU scale: 208 hospitals, 200,859 unit stays, ~35 MB of gzip.
 
     Holding out 24 hospitals leaves 73/36/75, so MIN_CAL_CLUSTERS = 50 has 50%
-    headroom. Certification is plausible here and, if issued, must survive the
-    oracle. A decline is equally acceptable.
+    headroom. At B = 0.85 this size declines every rung (measured); the
+    assertion is honesty only, so a certificate would also pass provided it
+    survives the oracle.
     """
     out = str(tmp_path / "eicu_full")
     manifest = mock.generate(mock.MockConfig(stays=mock.EICU_MOCK_FULL_STAYS,
@@ -129,9 +130,12 @@ def test_large_mock_reaches_the_certified_branch():
     """margin_floor scales as 1/n_carrying (E-20).
 
     So the mock's frozen-size decline does not generalise to any corpus size.
-    The oracle margin 0.0354 meets a floor that falls with the calibration
-    cluster count, crossing at n_carrying = 77, about 217 hospitals. At 900
-    hospitals the mock certifies alpha = 0.10, EICU_MOCK_SIGNAL_B untouched.
+    The floor is in atom units: it meets the oracle's record-unit margin 0.0354
+    times the calibration hospitals' mean min(n_c,100)/100. At this corpus's
+    size distribution (mean 0.568) that crossing is about 134 calibration
+    clusters; the 900-hospital, 90,000-stay mock yields 351 and certifies
+    alpha = 0.10 (measured), EICU_MOCK_SIGNAL_B untouched.
+    Ref: audit 2026-10 GAP-eicu-mock-math-1.
 
     This arm exercises the certified branch before the extract lands:
     _eval_rung's path, _abstention_ranking (which settles P4), _rm_on_pool and
@@ -142,9 +146,12 @@ def test_large_mock_reaches_the_certified_branch():
     from certgate.constants import DELTA
 
     # the arithmetic the claim rests on
-    assert margin_floor(63, DELTA, 0.10) > 0.0354     # small arm  -> declines
-    assert margin_floor(75, DELTA, 0.10) > 0.0354     # full arm   -> declines
-    assert margin_floor(77, DELTA, 0.10) < 0.0354     # crossing point
+    assert margin_floor(63, DELTA, 0.10) > 0.0354     # record-unit floor arithmetic only
+    assert margin_floor(75, DELTA, 0.10) > 0.0354     # record-unit floor arithmetic only
+    assert margin_floor(77, DELTA, 0.10) < 0.0354     # record-unit floor arithmetic only
+    # the atom-unit crossing: record-unit margin times the mean atom weight
+    assert min(n for n in range(50, 400)
+               if margin_floor(n, DELTA, 0.10) < 0.5679 * 0.035434) == 134
 
     with tempfile.TemporaryDirectory() as tmp:
         out = os.path.join(tmp, "eicu_large")
@@ -152,8 +159,9 @@ def test_large_mock_reaches_the_certified_branch():
         rep, ctx = _run_eicu(out)
         outcome = _assert_honest(rep, ctx)
         assert outcome in ("certified", "declined")
-        assert rep["diagnostic"]["n_cal_carrying"] > 77, (
-            "this arm is pointless unless it clears the crossing point")
+        assert rep["diagnostic"]["n_cal_carrying"] > 134, (
+            "this arm is pointless unless it clears the atom-unit crossing "
+            "(about 134 calibration clusters at this size)")
 
 
 # ============================================= mock-corpus explanation page ==
@@ -162,7 +170,7 @@ def test_mock_dashboard_page_names_features_and_declares_itself(mock_small,
                                                                 tmp_path):
     """The committed mock page: eICU column names, a banner, a parseable payload.
 
-    The small corpus declines every rung by design, so the page is built with
+    The small corpus declines every rung at the frozen seed, so the page is built with
     allow_declined=True and shows the uncertified banner; the full-size
     committed page (900 hospitals) is built by the module's CLI. What is
     pinned here is the contract the page makes regardless of outcome: the
@@ -214,3 +222,93 @@ def test_committed_mock_dashboard_page_ships():
     assert page.MOCK_BANNER in html
     assert html.count('id="mockbanner"') == 1
     assert "no eICU record" in html
+
+
+# ======================== audit 2026-10: the mock page's certificate block ===
+
+def _render_stub_certificate(monkeypatch, tmp_path):
+    """Render the mock page from a stub certified report; capture what
+    build_dashboard receives instead of drawing the page."""
+    from types import SimpleNamespace
+
+    import numpy as np
+
+    from certgate.constants import TAU_GRID
+    from certgate.model import Head
+    from examples import explain_dashboard_mock as page
+
+    captured = {}
+
+    def _fake_build_dashboard(head, x, *, tau_star, out_path, **kw):
+        captured.update(tau_star=tau_star, **kw)
+        with open(out_path, "w", encoding="utf-8") as fh:
+            fh.write("<html><body></body></html>")
+        return out_path
+
+    monkeypatch.setattr(page, "build_dashboard", _fake_build_dashboard)
+    head = Head(coef=np.array([1.0]), intercept=0.0, mu=np.array([0.0]),
+                sd=np.array([1.0]))
+    x = np.array([[1.585627263740381], [3.0], [0.1]])
+    cohort = SimpleNamespace(n_sites=3, n=3, x=x,
+                             y=np.array([True, True, False]))
+    res = dict(head=head,
+               report={"operative": dict(alpha=0.1, tau=float(TAU_GRID[14]),
+                                         tau_idx=14, deploy_mode="baseline",
+                                         modes=["baseline"])},
+               cohorts=dict(train=cohort, aux=cohort, cal=cohort,
+                            target=cohort),
+               feature_names=["f0"], t_sites=["h1", "h2", "h3"],
+               n_records=3, n_sites=12, replicate=0)
+    page.render(res, str(tmp_path / "explain_dashboard_mock.html"),
+                corpus_note="stub", provenance_comment="<!-- stub -->",
+                verbose=False)
+    return captured
+
+
+def test_mock_page_deploys_the_unrounded_certified_tau(monkeypatch, tmp_path):
+    """The page gates on the deployed double; only the banner copy is rounded.
+
+    Ref: audit 2026-10 GAP-example-builders-1, explain-13 (contract C4).
+    """
+    from certgate.constants import TAU_GRID
+
+    captured = _render_stub_certificate(monkeypatch, tmp_path)
+    assert captured["tau_star"] == float(TAU_GRID[14])     # 0.8300000000000001
+    cert = captured["certificate"]
+    assert cert["tau"] == 0.83 and cert["tau_idx"] == 14
+
+
+def test_mock_page_banner_carries_selected_claim_joint_level(monkeypatch,
+                                                             tmp_path):
+    """delta is per rung; the displayed rung was selected from the ladder, so
+    the page states the joint level 1 - len(ALPHA_LADDER)*delta and the tagged
+    assumption. Ref: audit 2026-10 GAP-example-builders-4,
+    GAP-estimand-wording-all-surfaces-6.
+    """
+    cert = _render_stub_certificate(monkeypatch, tmp_path)["certificate"]
+    assert cert["joint_confidence_over_ladder"] == 0.9
+    assert cert["delta"] == 0.05
+    assert cert["tagged_assumption"] == "exchangeability"
+    assert cert["deploy_mode"] == "baseline" and "mode" not in cert
+
+
+def _committed_mock_payload():
+    root = pathlib.Path(__file__).resolve().parents[1]
+    html = (root / "examples" / "explain_dashboard_mock.html").read_text(
+        encoding="utf-8")
+    prefix = "const DATA = "
+    line = next(l for l in html.splitlines() if l.startswith(prefix))
+    return html, json.loads(line[len(prefix):].rstrip(";"))
+
+
+def test_committed_mock_dashboard_certificate_states_joint_level():
+    """The committed page carries the joint level, the tagged assumption and
+    the influence-weighted estimand wording. Ref: audit 2026-10
+    GAP-estimand-wording-all-surfaces-3, -6."""
+    html, payload = _committed_mock_payload()
+    cert = payload["certificate"]
+    assert cert["joint_confidence_over_ladder"] == 0.9
+    assert cert["tagged_assumption"] == "exchangeability"
+    assert "mode" not in cert
+    assert "jointly" in html
+    assert "influence-weighted" in html

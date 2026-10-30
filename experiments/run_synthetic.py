@@ -1,8 +1,10 @@
 """The synthetic validation harness.
 
 Runs the nine experiments E1-E9 deterministically, all seeded from
-constants.SEED. Writes one CSV per experiment, PNG figures, and a summary.md
-into the output directory.
+constants.SEED except E6's post-hoc reliability panel, which self-seeds from
+reliability.PANEL_SEED and a sha256 of its own inputs (see run_E6; audit
+PAPER2-15). Writes one CSV per experiment, PNG figures, and a summary.md into
+the output directory.
 Figures use the matplotlib Agg backend -- no seaborn, no interactive display.
 
 CLI:
@@ -84,7 +86,11 @@ E9_SOURCE_SWEEP = (208, 600, 900, 1200)     # BBSE power frontier source-site co
 E9_TARGET_MODES = ("single-site-cp", "k40-boot")
 E9_TARGET_K = 40                            # declared target sites, bootstrap mode
 E9_R = 50                                   # draws per (source count, target mode)
-E9_FNR_LADDER = (0.4, 0.5, 0.55, 0.6)       # FNR budgets; 0.4 = negative control
+# FNR budgets. FNR_M falls below 0.4 only at high tau (the ~0.45 truth is the
+# rate at the lowest tau), so 0.4 is not a null-true negative control; the
+# shipped atom never certifies it for want of power (SPEC "Outcome-weighted
+# atoms", corrected 2026-10-29; audit FNR-1).
+E9_FNR_LADDER = (0.4, 0.5, 0.55, 0.6)
 E9_FNR_SWEEP = (208, 400, 600)              # site counts for the FNR frontier
 E9_FNR_R = 200
 EXPERIMENTS = ("E1", "E2", "E3", "E4", "E5", "E6", "E7", "E8", "E9")
@@ -176,14 +182,17 @@ def _draw_split(cfg, n_sites, rng):
 def _rm_on_pool(head, pool, tau, M=M_INFLUENCE):
     """Influence-weighted answered-set risk R_M on a fresh multi-site pool.
 
-    This is the quantity the certificate actually bounds:
+    This is a finite-pool estimate of the quantity the certificate bounds,
+    the site-population ratio E[g a e] / E[g a]. On the pool's sites:
 
         R_M = sum_c g_c a_c e_c / sum_c g_c a_c
             = sum_c (g_c/n_c) err_ans_c / sum_c (g_c/n_c) ans_c
 
-    with g_c = min(n_c, M). Returns NaN when nothing answers.
+    with g_c = min(n_c, M), so it carries the pool's sampling noise (sd about
+    0.002 on a 200-site pool at E1's operating point). Returns NaN when
+    nothing answers.
 
-    Refs: METHODS 3; audit V1.
+    Refs: METHODS 3, 7.1; audit V1; audit synthetic-2.
     """
     score = head.score(pool.x)
     err = head.predict(pool.x) != pool.y
@@ -321,10 +330,16 @@ def _rollup(certs, n_draws, fields, none_certify=False, risk_key="rm_fresh",
 def run_E1(out, quick):
     """E1 validity.
 
-    The conformance metric is the aggregate quantity the test actually
-    certifies. Per draw, the certified tau is applied to a fresh
-    E1_EVAL_SITES-site pool and R_M is computed there. Conformance is the
-    fraction of certified draws with R_M > alpha, and it targets <= DELTA.
+    The conformance metric scores the aggregate estimand the test certifies.
+    Per draw, the certified tau is applied to a fresh E1_EVAL_SITES-site pool
+    and R_M is computed there, a finite-pool estimate of the site-population
+    R_M. Conformance is the fraction of certified draws with pool R_M > alpha,
+    and it targets <= DELTA. That is a conditional rate: the betting test
+    bounds the joint probability of certifying while the population R_M is
+    at or above alpha. The conditional rate equals the joint one when every
+    draw certifies and is never below it otherwise (joint = conformance x
+    certify rate), so it is the stricter target (METHODS 7.1; audit
+    synthetic-2).
 
     The single-fresh-site hard-violation rate is kept, but only as a per-site
     dispersion diagnostic with no delta target. The certificate does not bound
@@ -481,8 +496,14 @@ def _e2_arm(cfg, base, R, seed_parts, prefix, label_suffix):
     """One magnitude arm of E2.
 
     seed_parts prefixes the per-draw stream. That keeps the 0.22 anchor on its
-    original _rng(2, r) stream, so its published numbers stay byte-exact while
-    sweep arms live on distinct streams.
+    original _rng(2, r) stream, so its published numbers stay byte-exact. The
+    sweep streams _rng(2, 100 + m, r) are distinct from each other and from
+    the anchor's except at r = 0: SeedSequence zero-pads entropy shorter than
+    four words, so _rng(2, 100 + m, 0) is the anchor's _rng(2, 100 + m). In a
+    full run, draw 0 of sweep arm m (m = 0..3) therefore reuses anchor draw
+    100 + m: same source cohort, split, head and baseline certificate, with
+    target and evaluation pools that differ only through the base rate
+    (audit GAP-seed-stream-aliasing-2).
     """
     rows = []
     for r in range(R):
@@ -535,7 +556,8 @@ def run_E2(out, quick):
     cfg = SimConfig()                       # documented generator (audit V7)
     # anchor magnitude, full R, original seed streams (numbers byte-exact)
     rows = _e2_arm(cfg, SHIFT_BASE, R, (2,), "e2t", "")
-    # magnitude sweep (panel S2-6/S2-7) at R//2 on distinct streams; the
+    # magnitude sweep (panel S2-6/S2-7) at R//2 on its own streams (draw 0 of
+    # each arm shares anchor draw 100 + m_idx's stream; see _e2_arm); the
     # 0.095 point is the null-shift arm (BBSE behaviour when nothing is wrong)
     R_sweep = max(2, R // 2)
     for m_idx, base in enumerate(E2_SHIFT_SWEEP):
@@ -828,9 +850,13 @@ def run_E5(out, quick):
     gimp = global_importance(head)
 
     # ---- Replication arm. The single-draw case study above has n_declined ~ 2,
-    # ---- which supports no cohort-level claim. So: R fresh draws on the
-    # ---- distinct stream _rng(5, r), each giving an abstention profile at its
-    # ---- own deployed tau; the case-study stream _rng(5) stays byte-exact.
+    # ---- which supports no cohort-level claim. So: R draws on the stream
+    # ---- _rng(5, r), each giving an abstention profile at its own deployed tau.
+    # ---- numpy's SeedSequence zero-pads entropy shorter than its four-word
+    # ---- pool, so _rng(5, 0) IS the case-study stream _rng(5): draw 0
+    # ---- reproduces the case-study draw and draws 1..R-1 are fresh. The
+    # ---- case-study stream _rng(5) stays byte-exact (audit
+    # ---- GAP-seed-stream-aliasing-1).
     # ---- A null result — no stable single driver — is expected here, because
     # ---- features 0-3 share one signal direction with equal loadings.
     # ---- Ref: panel S1-4.
@@ -1016,8 +1042,16 @@ def run_E6(out, quick):
 
     # The BBSE-implied view is an estimated quantity, present whenever the fit
     # held. It is never gated on which mode won deployment (verification N5).
-    rho = rep["diagnostic"]["bbse"].get("rho_point")
-    comp = composition(head, tgt.x, answered, rho_point=rho, oracle_y=tgt.y)
+    # rho_point divides out the S_aux prevalence (the fit's pi_s), while the
+    # head's odds carry the S_train prevalence, so both priors travel with it;
+    # composition clips pi_s exactly as rho_box_interval clipped it (audit
+    # BBSE-1). experiments/out/E6_composition.json predates this and keeps
+    # the rho-only multiplier.
+    bb = rep["diagnostic"]["bbse"]
+    rho = bb.get("rho_point")
+    comp = composition(head, tgt.x, answered, rho_point=rho, oracle_y=tgt.y,
+                       pi_source=bb.get("pi_s"),
+                       pi_train=float(np.mean(train.y)))
     comp_json = {k: {kk: (float(vv) if isinstance(vv, (int, float)) else vv)
                      for kk, vv in v.items()} for k, v in comp.items()}
 
@@ -1516,6 +1550,14 @@ def run_E8(out, quick):
         "heads": heads_summary,
         "explain_supported": {"linear": True, "gbm": False,
                               "degraded": False},
+        # Correction 2026-10-29 (audit synthetic-4): the arm-C clause below
+        # ("temperature miscalibration is analytically a no-op for the gate
+        # (monotone score transform)") is wrong on the fixed TAU_GRID.
+        # Temperature keeps y_hat and the score order but moves every grid cut
+        # to |logit p| >= T*logit(tau), so the certified answered set and
+        # coverage can change; only validity is calibration-free (SPEC "E8",
+        # ARM C). The string stays byte-identical: it is emitted into the
+        # frozen experiments/out/summary.md E8 block.
         "notes": ("arm A: identical atoms and walk order across all five "
                   "certifiers; two-sided reading pre-committed in SPEC. "
                   "arm B: flips applied to every cohort alike, so "
@@ -1778,6 +1820,12 @@ def run_E9(out, quick):
         "fnr_frontier": fnr,
         "true_fnr_at_lowest_tau_mean": round(float(np.mean(truth)), 4)
         if truth else None,
+        # The notes string below is reproduced verbatim in the frozen
+        # out/summary.md (E9 block) and is kept byte-identical. Its last
+        # clause is superseded: 0.4 is not a negative control. FNR_M(tau)
+        # falls below 0.4 at high tau in most draws, and the shipped atom's
+        # 0 of 600 there is a power limit, not a refusal the test guarantees
+        # (SPEC "Outcome-weighted atoms", corrected 2026-10-29; audit FNR-1).
         "notes": ("arm A: pipeline in bbse mode only; certificates rescored "
                   "on a fresh same-shift pool (E2's aggregate-estimand "
                   "precedent); the single-site-declaration exceedance rate "

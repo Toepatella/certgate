@@ -355,15 +355,28 @@ def test_no_leak_reaches_the_matrix_via_implausible_discrimination(
 def test_leak_auc_ceiling_sits_just_above_the_mocks_bayes_optimal_auc():
     """The ceiling must be derived from the mock's own outcome model.
 
-    Phi(B/sqrt(2)) is the AUC a score that recovers the latent severity
-    perfectly attains, the honest upper bound for anything the mock can
-    produce. A ceiling far above it makes the probe decorative; one below it
-    makes the suite flaky (audit E-10).
+    The exact Bayes-optimal AUC of the mock outcome, scoring a + B*z + u_site,
+    is 0.748 (0.715 for a score that recovers z alone); Phi(B/sqrt(2)) = 0.726
+    is the rare-event binormal approximation, pinned below as such. A ceiling
+    far above the exact value makes the probe decorative; one below it makes
+    the suite flaky (audit E-10; audit 2026-10 DOCS-7).
     """
     bayes = 0.5 * (1.0 + math.erf(mock.EICU_MOCK_SIGNAL_B / 2.0))
     assert bayes == pytest.approx(0.7264, abs=5e-4)
     assert bayes < LEAK_AUC_CEILING <= bayes + 0.08
     assert LEAK_AUC_CEILING == 0.80          # literal pin, per audit F13
+
+    # The exact population AUC by quadrature over the logit-normal severity:
+    # s^2 = B^2 + sigma_u^2, density weighted by P(y=1 | t) and P(y=0 | t).
+    s = math.hypot(mock.EICU_MOCK_SIGNAL_B, mock.EICU_MOCK_SITE_SIGMA_U)
+    t = np.linspace(-10.0 * s, 10.0 * s, 40001)
+    f = np.exp(-0.5 * (t / s) ** 2)
+    p = 1.0 / (1.0 + np.exp(-(mock.EICU_MOCK_SIGNAL_INTERCEPT + t)))
+    w1 = f * p / np.sum(f * p)
+    w0 = f * (1.0 - p) / np.sum(f * (1.0 - p))
+    exact = float(np.sum(w1 * (np.cumsum(w0) - 0.5 * w0)))
+    assert exact == pytest.approx(0.7476, abs=5e-4)
+    assert exact < LEAK_AUC_CEILING <= exact + 0.08
 
 
 def test_outcome_correlated_apache_absence_is_caught_before_any_certificate(
@@ -838,7 +851,8 @@ def test_apache_result_dedup_is_version_preferred_and_counted(planted_dedup):
 
     That is 297,064 rows over 171,177 stays, which is not 2x. And
     predictedhospitalmortality is a VARCHAR holding a probability, so compared
-    as a string '-1' > '0'. Call float() first, always.
+    as a string ('1e-05' > '0.5' lexically, though 1e-05 < 0.5) it orders
+    wrongly. Call float() first, always.
     """
     _, _, meta = etl.build_raw(planted_dedup, verbose=False)
     pred = np.asarray(meta["comparator_predicted_mortality"], dtype=np.float64)
@@ -912,8 +926,11 @@ def test_site_split_is_by_site_disjoint_and_deterministic(pipeline_small):
     assert other != sets                           # an independent re-split
 
 
-def test_site_split_refuses_a_population_it_cannot_calibrate():
-    few = [f"{etl.EICU_SITE_PREFIX}{i}" for i in range(etl.EICU_MIN_TOTAL_SITES - 1)]
+def test_site_split_refuses_below_the_sufficient_site_floor():
+    """148 sites would leave cal = 51; the refusal is the pre-registered
+    sufficient floor (149), not an impossibility. The tight breakpoint is 146.
+    Ref: audit 2026-10 GAP-unreviewed-tests-3."""
+    few =[f"{etl.EICU_SITE_PREFIX}{i}" for i in range(etl.EICU_MIN_TOTAL_SITES - 1)]
     with pytest.raises(etl.EicuError, match="too-few-sites"):
         etl.site_split(few, replicate=0)
     assert etl.EICU_MIN_TOTAL_SITES == 149
@@ -924,7 +941,8 @@ def test_split_leaves_at_least_min_cal_clusters(pipeline_small):
 
     180 mock hospitals minus 24 held out leaves 156, and 40/20/40 gives
     62/31/63. EICU_MOCK_MIN_STAYS_PER_SITE = 12 makes all 63 record-carrying,
-    so MIN_CAL_CLUSTERS = 50 is satisfied and certification is reachable.
+    so MIN_CAL_CLUSTERS = 50 is satisfied and the walk is reached rather than
+    gated.
     """
     sets, cal = pipeline_small["sets"], pipeline_small["cal"]
     uniq = len(set(pipeline_small["site_raw"]))
@@ -963,6 +981,28 @@ def test_impute_means_come_from_train_only(pipeline_small):
     assert not np.array_equal(x_c, pipeline_small["x"])
     with pytest.raises(etl.EicuError, match="impute-fit-empty"):
         etl.impute(x_raw, np.array([], dtype=int))
+
+
+def test_imputed_rows_standardize_to_zero(pipeline_small):
+    """An unrecorded value sits at z_j = 0 under the head's standardization.
+
+    impute fills with the S_train column mean and fit_head standardizes with
+    the S_train column mean of the imputed matrix, which mean imputation leaves
+    unchanged. So every originally-NaN cell, in any split, standardizes to 0.
+    That is the premise of the paper's identity mean|z_j| =
+    P(recorded) x mean(|z_j| | recorded) for a mean-imputed feature.
+    Ref: audit 2026-10 explain-3.
+    """
+    x_raw, x, idx = (pipeline_small["x_raw"], pipeline_small["x"],
+                     pipeline_small["idx"])
+    train = pipeline_small["train"]
+    assert np.array_equal(np.sort(train.x, axis=0),
+                          np.sort(x[idx["train"]], axis=0))
+    head = fit_head(train)
+    z = (x - head.mu) / head.sd
+    was_nan = np.isnan(x_raw)
+    assert was_nan.any()
+    assert np.allclose(z[was_nan], 0.0, atol=1e-9)
 
 
 def test_labels_flow_through_coerce_labels_not_a_bool_array(pipeline_small):
@@ -1410,8 +1450,10 @@ def test_reference_check_passes_when_the_constants_match_the_corpus(
 
     Counting n_uniquepid post-filter and comparing it against
     EICU_REFERENCE_PATIENTS = 139367, the pre-filter published total, lands
-    ~1.7% low: ~1751 stays carry a blank outcome, and at 1.44 stays per patient
-    most of those lose every stay. preflight(expect_reference=True) then aborts
+    low: the outcome-known step drops 1751 stays and the adult step 618 more,
+    and a patient whose every stay is dropped leaves the count (137773 remain
+    on the released extract, 1.14% low; at most (1751 + 618)/139367 = 1.70%).
+    preflight(expect_reference=True) then aborts
     and writes no artifact. Here the constants are re-pinned to the mock's own
     whole-table values, so only the estimator can disagree.
     """

@@ -4,12 +4,13 @@ The released frontier (experiments/out/E9_fnr.csv, arm B of the ninth
 experiment) certifies the influence-weighted false-negative rate among
 answered positives on the unmodified atom: influence_atoms with weights = y
 and the site weight g_c = min(n_c, 100) inherited from R_M. Against a measured
-truth near 0.45, no budget below 0.55 issues at realistic site counts. The
-panel asked whether that price belongs to the estimand or to its
-normalisation: a site's positives are a tenth of its records, so the
-inherited weight divides each site's false negatives by ten times more
-records than carry them, and the margin the walk must certify shrinks with
-it.
+truth near 0.45 at the lowest threshold, a budget below 0.55 almost never
+issues at realistic site counts (one certificate in 600 draws at b = 0.5;
+audits FNR-1, PAPER1-7). The panel asked whether that price belongs to the
+estimand or to its normalisation: a site's positives are a tenth of its
+records, so the inherited weight divides each site's false negatives by ten
+times more records than carry them, and the margin the walk must certify
+shrinks with it.
 
 This file runs the frozen arm again, row for row, and beside it a second arm
 on the same draws: the same influence_atoms, restricted to each site's
@@ -27,33 +28,45 @@ outcome-independence requirement on g_c". The atom here does not renormalise
 by answered positives. Its weight is a function of the site's positive COUNT
 n_c^+: fixed by the site's labels before any threshold is chosen, the same at
 every rung of the tau grid, and never a function of the head's errors or of
-which records answer. What the requirement protects is that the certified
-quantity be one fixed functional of the site distribution that the
-certificate can name; a threshold-dependent weight would make the estimand
-move with tau. n_c^+ is tau-independent, so the estimand is fixed:
+which records answer. Validity of the betting test needs only i.i.d. atoms
+in [0, 1] whose mean crosses b exactly when the named estimand does; what the
+requirement on the weight guards against is a site factor that depends on
+the site's own errors, which, like the truncation of the paper's
+Supplementary Information A.3, changes the quantity certified away from the
+rate the certificate names (audit FNR-4). n_c^+ depends on the labels but on
+neither the errors nor tau, so
 FNR_M^+ = E[g_c^+ fn_c / n_c^+] / E[g_c^+ ap_c / n_c^+], with fn_c the
-answered false negatives and ap_c the answered positives at site c, a
+answered false negatives and ap_c the answered positives at site c, is a
 ratio-of-expectations over the site draw exactly parallel to R_M. Under
-Assumption 1 the sites are exchangeable draws, so (n_c^+, the positives'
+Assumption 1 the sites are i.i.d. draws, so (n_c^+, the positives'
 scores and errors) are i.i.d. across sites and the per-site atoms
 Z_c = b + (g_c^+ / (M^+ n_c^+)) sum_{i in c, y_i = 1} ans_i (err_i - b) are
 i.i.d. and bounded: the inner sum lies in [-b n_c^+, (1 - b) n_c^+], the
 prefactor scales it into [-b, 1 - b], and the shift lands in [0, 1]. A site
 with no positives, or none answered, enters as the neutral atom Z_c = b, as
 record-less sites do for R_M. The sign identity E[Z] <= b iff FNR_M^+ <= b
-holds exactly as it does for the shipped atom. What changes is the estimand
+holds exactly as it does for the shipped atom, whenever some site answers a
+positive (audit CORE-16). What changes is the estimand
 -- sites now count by their positives, capped at ten, rather than by their
 records capped at a hundred -- and the manuscript reports both, because a
 certificate is a statement about one named estimand and the choice between
-them is a modelling decision, not a free lunch.
+them is, in general, a modelling decision, not a free lunch. On this
+generator the two take one value: P(x | y) is the same at every site, so
+FNR_M(tau) = FNR_M^+(tau) = P(err | ans, y = 1) at every tau, and the gap
+between the arms is power alone -- E[Z] - b = kappa * P(ans | y = 1) *
+(FNR - b), with kappa = E[min(n_c, 100) n_c^+ / n_c] / 100 (about 0.10) for
+the shipped atom and E[min(n_c^+, 10)] / 10 (about 0.94) for the positives
+atom. The estimands separate only where the answered false-negative rate
+varies by site (audit FNR-5).
 
 --quick runs 20 draws per site count. The full run is E9_FNR_R = 200 draws
 at 208, 400 and 600 sites, the frozen grid.
 
-Run: python -m experiments.run_e9b_positives [--quick] [--out DIR]
+Run: python -m experiments.run_e9b_positives [--quick] --out DIR
+     (the released out-e9b-positives/ is refused, so a bare run writes nothing)
 
-Writes E9b_fnr_positives.csv, .json and .png into
-experiments/out-e9b-positives/. The PNG is the certify-rate-versus-budget
+Writes E9b_fnr_positives.csv, .json and .png into DIR; the released copy is
+experiments/out-e9b-positives/, frozen as released. The PNG is the certify-rate-versus-budget
 frontier for both arms, drawn in the style of E9_frontiers.png. The JSON
 carries a _run block (UTC, git sha, sha256 of the frozen input).
 

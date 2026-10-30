@@ -46,11 +46,15 @@ Honesty constraints carried into the page itself:
     ("what would the gate need"), never causal or clinical advice;
   * the minimal flip clears the bar by the documented 1e-9 logit headroom, so
     it is the weakest answerable answer;
-  * the certificate is a site-population-average guarantee, so no single
-    record carries a certified property, and an uncertified build says so;
+  * the certificate is a bound on the influence-weighted, site-population
+    answered risk R_M, so no single record carries a certified property, and
+    an uncertified build says so;
   * the threshold explorer is fenced as intuition-only;
-  * the abstention panel states the replicated E5 null: abstention is
-    cancellation, with no stable single-feature driver;
+  * the abstention panel ranks features by |answered - declined| mean |phi|
+    (cohort_abstention_profile's gap_ranking, the rule of paper Figure 3) and
+    reads gaps descriptively: the synthetic E5 null (no stable single driver)
+    is stated as a synthetic result beside the eICU re-splits' stable driver,
+    never as a property of every cohort;
   * every display cap is disclosed on the page, never silently truncated.
 
 Refs: SPEC "explain.py".
@@ -340,6 +344,21 @@ def build_dashboard(head, x, tau_star, out_path, feature_names=None,
 
     scores = head.score(x)
     answered = scores >= tau_star
+    # The histogram and the threshold explorer draw counts computed here, by
+    # the deployed comparison on the same float64 scores as `answered`. The
+    # page never re-derives a verdict: 4-dp scores counted a case within 5e-5
+    # below a bar as answered, and a float64 bin edge one ulp above tau* drew
+    # a bin of declined cases in the answered colour. The histogram colours
+    # by `answered` itself, so it follows score >= tau* exactly. The explorer
+    # is an intuition aid at the 2-dp bars k/100: where the deployed tau* is
+    # the grid float one ulp above its 2-dp value (TAU_GRID[14] =
+    # 0.8300000000000001), its opening reading can differ from the answered
+    # count by the scores inside that ulp. Ref: audit 2026-10 explain-5,
+    # tests-6.
+    hist_bin = np.minimum(np.floor((scores - 0.5) * 100.0).astype(int), 49)
+    hist_answered = np.bincount(hist_bin[answered], minlength=50)
+    hist_declined = np.bincount(hist_bin[~answered], minlength=50)
+    explore_answered = [int((scores >= k / 100).sum()) for k in range(55, 100)]
     p1 = np.asarray(head.predict_proba(x), dtype=np.float64)
     oracle = None if oracle_y is None else np.asarray(oracle_y, dtype=bool)
     sites = None if site_ids is None else [str(s) for s in site_ids]
@@ -460,7 +479,9 @@ def build_dashboard(head, x, tau_star, out_path, feature_names=None,
                  "mu": [float(v) for v in head.mu],
                  "sd": [float(v) for v in head.sd],
                  "intercept": float(head.intercept)},
-        "all_scores": [round(float(s), 4) for s in scores],
+        "hist": {"answered": [int(v) for v in hist_answered],
+                 "declined": [int(v) for v in hist_declined]},
+        "explore_answered": explore_answered,
         "composition": composition,
         "per_site": per_site,
         "reliability": reliability,
@@ -474,6 +495,7 @@ def build_dashboard(head, x, tau_star, out_path, feature_names=None,
             "mean_abs_phi_declined": _clean(prof["mean_abs_phi_declined"]),
             "n_answered": int(prof["n_answered"]),
             "n_declined": int(prof["n_declined"]),
+            "gap_ranking": [int(j) for j in prof["gap_ranking"]],
         },
         "cases": cases,
     }
@@ -700,6 +722,8 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
   .hist .hb { flex:1; position:relative; background:var(--histbar);
               border-radius:1px 1px 0 0; min-height:1px; }
   .hist .hb.dec { background:var(--histdec); }
+  .hist .hb .hbdec { position:absolute; left:0; right:0; bottom:0;
+                     background:var(--histdec); }
   body.adv .hist .hb { cursor:pointer; }
   body.adv .hist .hb:hover { outline:1.5px solid var(--pos); }
   .hist .hb.hsel { outline:2px solid var(--pos); }
@@ -950,9 +974,11 @@ finish review, the verdict, and DESIGN.md.
       this case to clear the answering bar. Not causal claims, not treatment
       suggestions, not clinically achievable actions. The minimal flip clears
       the bar by the documented 1e-9 logit headroom &mdash; the <b>weakest
-      answerable</b> answer. The certificate is a
-      <b>site-population-average</b> guarantee over answered cases: no
-      individual record carries a certified property. Cohort:
+      answerable</b> answer. The certificate bounds the
+      <b>influence-weighted</b> answered error rate R_M across the hospital
+      population (each hospital counted as at most 100 patients), not each
+      hospital&rsquo;s own rate: no individual record carries a certified
+      property. Cohort:
       <span id="cohortlabel"></span>.
     </span>
   </div>
@@ -1075,6 +1101,7 @@ finish review, the verdict, and DESIGN.md.
 "use strict";
 const DATA = __PAYLOAD__;
 const H = DATA.head, TAU = DATA.tau_star, NAMES = DATA.feature_names;
+const TAU_TXT = String(+TAU.toFixed(6));     // display only; every comparison uses TAU
 const RAW = DATA.raw_names, D = NAMES.length;
 const L_STAR = Math.log(TAU/(1-TAU));
 const FLAG_OF = DATA.flag_of || {};          // parent -> flag
@@ -1214,20 +1241,25 @@ outcChip.onclick = () => {
   } else {
     const f = Object.keys(C).sort().map(k => k + " = " + C[k]);
     el.innerHTML = "<div class='certb cert'>" + seal + "<div><b>Certified deployment</b> — " +
-      "<span class='num'>" + f.join(" · ") + "</span><span class='cl2'>The certificate bounds a " +
-      "site-population-average error rate among answered cases; it is not a " +
-      "per-record or per-site property, and it certifies no single answer on " +
-      "this page.</span></div></div>";
+      "<span class='num'>" + f.join(" · ") + "</span><span class='cl2'>The certificate bounds R_M, " +
+      "the M=100 influence-weighted error rate among answered cases across the hospital " +
+      "population (each hospital counted as at most 100 patients; reweighted to the target " +
+      "prevalence when label shift is tagged), not the average of the hospitals' own answered " +
+      "error rates. Each rung is certified at confidence 1 − delta; the displayed rung was " +
+      "selected from the two-rung ladder, so its claim holds jointly at " +
+      "joint_confidence_over_ladder, under the tagged assumption shown, and is void under " +
+      "concept shift. It is not a per-record or per-site property, and it certifies no " +
+      "single answer on this page.</span></div></div>";
   }
 })();
 
 document.getElementById("subtitleAdv").textContent =
-  "τ* = " + TAU + " (L* = " + L_STAR.toFixed(6) + ") · " + DATA.cohort_label +
+  "τ* = " + TAU_TXT + " (L* = " + L_STAR.toFixed(6) + ") · " + DATA.cohort_label +
   " · " + D + " features (" + Object.keys(ONEHOT).length + " one-hot groups, " +
   Object.keys(PARENT_OF).length + " recording flags)";
 document.getElementById("cohortlabel").textContent = DATA.cohort_label;
 document.getElementById("cohortlabelS").textContent = DATA.cohort_label;
-document.getElementById("taulab").textContent = TAU;
+document.getElementById("taulab").textContent = TAU_TXT;
 document.getElementById("ntot").textContent = DATA.n_total.toLocaleString();
 const strip = document.getElementById("cohortstrip");
 const stat = (s,a,val,pct) => {
@@ -1273,16 +1305,23 @@ if (CP.oracle_positive_fraction_answered !== null) {
 })();
 
 // ---- histogram ----
-const NB = 50, bins = new Array(NB).fill(0);
-DATA.all_scores.forEach(s => bins[Math.min(NB-1, Math.floor((s-0.5)/0.5*NB))]++);
+// Counts arrive split by the deployed mask (build_dashboard), so a case's
+// colour is its verdict, never a float64 bin edge's side of TAU. A bin that
+// holds both verdicts (tau* off the 0.01 grid) is drawn two-tone.
+const HA = DATA.hist.answered, HD = DATA.hist.declined, NB = HA.length;
+const bins = HA.map((a,b) => a + HD[b]);
 let binSel = null;
 const hist = document.getElementById("hist"), bmax = Math.max(...bins);
 bins.forEach((n,b) => {
   const lo = 0.5+b*0.5/NB, hi = lo+0.5/NB;
   const el = document.createElement("div");
-  el.className = "hb" + (hi <= TAU ? " dec" : "");
+  el.className = "hb" + ((n ? HA[b] === 0 : lo+0.25/NB < TAU) ? " dec" : "");
+  if (HA[b] && HD[b]) { const seg = document.createElement("i");
+    seg.className = "hbdec"; seg.style.height = (HD[b]/n*100).toFixed(1)+"%";
+    el.appendChild(seg); }
   el.style.height = (n/bmax*100).toFixed(1)+"%";
-  el.title = n+" cases in ["+lo.toFixed(3)+", "+hi.toFixed(3)+")";
+  el.title = n+" cases in ["+lo.toFixed(3)+", "+hi.toFixed(3)+")"+
+    (HA[b] && HD[b] ? ", "+HD[b]+" declined" : "");
   el.onclick = () => {
     if (!document.body.classList.contains("adv")) return;
     const same = binSel && binSel[0] === lo;
@@ -1306,15 +1345,13 @@ document.getElementById("binclear").onclick = () => {
 // ---- abstention profile ----
 (function(){
   const P = DATA.abstention_profile;
-  if (!P || P.mean_abs_phi_declined.some(v => v === null)) return;
-  const idx = NAMES.map((_,j) => j)
-    .sort((a,b) => (P.mean_abs_phi_declined[b]-P.mean_abs_phi_answered[b])
-                 - (P.mean_abs_phi_declined[a]-P.mean_abs_phi_answered[a]))
-    .slice(0, 14);
+  if (!P || !P.gap_ranking || !P.gap_ranking.length) return;
+  // same rule as cohort_abstention_profile.gap_ranking and paper Figure 3: |answered - declined|
+  const idx = P.gap_ranking.slice(0, 14);
   const mx = Math.max(...P.mean_abs_phi_answered, ...P.mean_abs_phi_declined, 1e-9);
   let h = "<h2>Cohort abstention profile <span class='note'>mean |&#966;| per feature, " +
     "answered ("+P.n_answered.toLocaleString()+") vs declined ("+P.n_declined.toLocaleString()+
-    "), full cohort · top 14 by gap</span></h2>"+
+    "), full cohort · top 14 by |answered &#8722; declined| (the sign is read from the two bars)</span></h2>"+
     "<div class='legend'><span><i style='background:var(--ans)'></i>answered</span>"+
     "<span><i style='background:var(--dec)'></i>declined</span>"+
     "<span>each bar's value is printed beside it, so colour is never the only cue</span></div>";
@@ -1324,10 +1361,11 @@ document.getElementById("binclear").onclick = () => {
       "<div class='pbox'><div class='pa' style='width:"+(a/mx*50).toFixed(1)+"%'></div>"+
       "<div class='pd' style='width:"+(d/mx*50).toFixed(1)+"%'></div></div>"+
       "<div class='pval'>ans "+a.toFixed(3)+" · dec "+d.toFixed(3)+"</div></div>"; });
-  h += "<p class='note'>Interpretation caution (replicated E5 null, R=200): no single " +
-    "feature is a stable abstention driver — a decline is a CANCELLATION of signed " +
-    "contributions, a configuration property no per-feature magnitude can localize. " +
-    "Read gaps descriptively, never causally.</p>";
+  h += "<p class='note'>Interpretation caution: gaps are descriptive, never causal, and this page " +
+    "does not test whether any gap is stable across splits. On the symmetric synthetic generator no " +
+    "single feature is a stable abstention driver (replicated E5 null, R=200; declines there are " +
+    "cancellations of large signed contributions). On the eICU re-splits one is: the GCS motor score " +
+    "leads on 20 of 20 (paper Section 4.11).</p>";
   document.getElementById("profpanel").innerHTML = h;
 })();
 
@@ -1484,12 +1522,12 @@ function responseHTML(j) {
   for (let k = 0; k <= 160; k++) { const t = lo+(hi-lo)*k/160; xa[j] = t;
     path += (k?"L":"M")+X(t).toFixed(1)+" "+Y(scoreOf(xa)).toFixed(1); }
   let s = "<p class='note'>Exact score response to <b>"+NAMES[j]+"</b>; red dots are "+
-    "the bar crossings (the gate answers exactly there).</p>"+
+    "the bar crossings, where the verdict flips.</p>"+
     "<svg viewBox='0 0 "+W+" "+Hh+"' style='max-width:100%'>";
   s += "<line class='axis' x1='"+PX+"' y1='"+(Hh-24)+"' x2='"+(W-8)+"' y2='"+(Hh-24)+"'/>"+
     "<line class='axis' x1='"+PX+"' y1='"+PY+"' x2='"+PX+"' y2='"+(Hh-24)+"'/>"+
     "<line class='tauline' x1='"+PX+"' y1='"+Y(TAU)+"' x2='"+(W-8)+"' y2='"+Y(TAU)+
-    "'/><text x='"+(PX+2)+"' y='"+(Y(TAU)-3)+"'>bar τ* = "+TAU+"</text>";
+    "'/><text x='"+(PX+2)+"' y='"+(Y(TAU)-3)+"'>bar τ* = "+TAU_TXT+"</text>";
   ["0.5","0.75","1.0"].forEach(v => { s += "<text x='"+(PX-6)+"' y='"+(Y(+v)+4)+
     "' text-anchor='end'>"+v+"</text>"; });
   s += "<path class='curve' d='"+path+"'/>";
@@ -1583,7 +1621,7 @@ function redrawAdvanced() {
       "</b></span><span>margin <b>"+sigfmt(L_STAR-Math.abs(lg),6)+
       "</b></span><span>&#916;z from recorded <b>"+sigfmt(Math.sqrt(dz),5)+
       "</b></span><span>deployed rule <b>score "+scoreOf(xCur).toFixed(6)+
-      (scoreOf(xCur) >= TAU ? " ≥ " : " < ")+TAU+"</b></span>"+
+      (scoreOf(xCur) >= TAU ? " ≥ " : " < ")+TAU_TXT+"</b></span>"+
       (c.site ? "<span>hospital <b>"+c.site+"</b></span>" : ""); } }
 
 function wireCopy() {
@@ -1907,8 +1945,8 @@ tX.value = TAU;
 const tXm = document.getElementById("tauXmark");
 if (tXm) tXm.style.left = ((TAU-0.55)/(0.99-0.55)*100).toFixed(2)+"%";
 function exploreUpdate() {
-  const t = +tX.value, n = DATA.all_scores.length;
-  const ans = DATA.all_scores.filter(s => s >= t).length;
+  const t = +tX.value, n = DATA.n_total;
+  const ans = DATA.explore_answered[Math.round(t*100) - 55];
   tXv.innerHTML = dual("bar "+t.toFixed(2)+" → answers "+(ans/n*100).toFixed(1)+
       "% ("+(n-ans).toLocaleString()+" handed over)",
     "bar "+t.toFixed(2)+" → coverage "+(ans/n*100).toFixed(1)+"% ("+

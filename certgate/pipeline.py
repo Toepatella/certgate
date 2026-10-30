@@ -36,8 +36,13 @@ from certgate.report import build_report, provenance
 def _feasibility(head, aux, alpha, n_carrying) -> dict:
     """Feasibility diagnostic for one alpha. Never a gate.
 
-      - margin: the best record-weighted certification margin achievable on
-        S_aux, cov*(alpha-risk)*E[g/M]
+      - margin: max over tau of cov*(alpha-risk)*E[g/M], with cov and risk
+        pooled over S_aux records and E[g/M] the S_aux site mean of
+        min(n_c, M)/M -- a record-pooled proxy for the best atom-unit margin
+        max_tau(alpha - mean_c Z_c). The two agree only when the
+        record-weighted and g-weighted site averages of
+        cov_c*(alpha - risk_c) coincide; walk_order ranks by the atom form
+        (audit 2026-10 CORE-3)
       - floor: the information floor at the true record-carrying calibration
         count
       - ratio: their quotient
@@ -74,7 +79,8 @@ def _baseline_walk(cal, order, alpha, score, err) -> dict:
     score and err are the frozen head's outputs on cal, computed once in
     run_certgate. The permutation stream is target-label-free (audit V3).
     Baseline atoms are target-independent, so one calibration draw yields one
-    certificate shared by every target pool it is applied to. That is what
+    set of certified thresholds shared by every target pool it is applied to
+    (audit 2026-10 GAP-estimand-wording-all-surfaces-8). That is what
     makes the shared-1-delta-event clause in the guarantee text true.
     """
     atoms = influence_atoms(score, err, cal.site_id, cal.n_sites, TAU_GRID,
@@ -365,9 +371,12 @@ def run_certgate(train, aux, cal, target_x, *, target_label="target",
         mode_results[alpha] = per
 
     # 7. tiered report (operative rung + partition + explain artifacts inside).
+    #    pi_train is the prior the head's odds carry; only the BBSE-implied
+    #    composition reads it (audit 2026-10 BBSE-1).
     return build_report(target_label=target_label, head=head, cal=cal,
                         target_x=target_x, mode_results=mode_results,
                         feasibility=feasibility, bbse_fit=bbse_fit,
                         provenance_block=prov, oracle_y=oracle_target_y,
                         gate_reason=None,
-                        target_site_id_supplied=dense_target_sites is not None)
+                        target_site_id_supplied=dense_target_sites is not None,
+                        pi_train=float(np.mean(train.y)))

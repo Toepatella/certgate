@@ -1,12 +1,18 @@
 """The instruments that produce the paper's numbers.
 
-Three things get pinned here:
-  - _rm_on_pool, E1's conformance instrument after the audit-V1 rescoring
-  - _rate's None-vs-0.0 distinction, which keeps zero-certificate cells honest
+What gets pinned here:
+  - _rm_on_pool, E1's conformance instrument after the audit-V1 rescoring,
+    and on this generator its M-invariance in population
+  - _rate's None-vs-0.0 distinction, which keeps zero-certificate cells honest,
+    and the conditional (per-certified-draw) reading of rm_exceed_rate
   - the summary writer's preserved blocks, which must survive partial reruns
+  - the documented seed-stream aliasing of E2's sweep and E5's replication
+  - the panel readings the paper's tables rest on
 
-Refs: verification N2.
+Refs: verification N2; audit 2026-10 (ids at each test).
 """
+import os
+
 import numpy as np
 
 from certgate.validate import Cohort
@@ -69,6 +75,16 @@ def test_per_site_exceed_frac_closed_form():
     pool = _two_site_pool()
     assert _per_site_exceed_frac(head, pool, 0.55, 0.10) == 0.5
     assert np.isnan(_per_site_exceed_frac(head, pool, 1.01, 0.10))
+    # 10/50 == alpha is not an exceedance (audit GAP-unreviewed-tests-2)
+    assert _per_site_exceed_frac(head, pool, 0.55, 0.20) == 0.0
+    # a third, fully declined site (x = 0 -> score 0.5 < 0.55) leaves the
+    # denominator at the answering sites
+    xs = np.vstack([pool.x, np.zeros((50, 1))])
+    p3 = Cohort(x=xs, y=np.concatenate([pool.y, np.zeros(50, bool)]),
+                site_id=np.concatenate([pool.site_id,
+                                        np.full(50, 2, np.int64)]),
+                site_labels=("A", "B", "C"))
+    assert _per_site_exceed_frac(head, p3, 0.55, 0.10) == 0.5
 
 
 def test_rate_none_vs_zero():
@@ -128,6 +144,16 @@ def test_e8_bound_walk_mirrors_fixed_sequence_semantics():
     certified, dep = _bound_walk(atoms, np.array([2, 0, 1]),
                                  0.05, 0.05, tau_grid, ucb)
     assert certified == [] and dep is None
+    # min tau among the certified, not the last certified
+    # (audit GAP-unreviewed-tests-2)
+    certified, dep = _bound_walk(atoms, np.array([1, 0, 2]),
+                                 0.05, 0.05, tau_grid, ucb)
+    assert list(certified) == [1, 0] and dep == 1
+    a2 = atoms.copy()
+    a2[3] = [0.05]
+    certified, dep = _bound_walk(a2, np.array([3, 2]), 0.05, 0.05,
+                                 tau_grid, ucb)
+    assert list(certified) == [3] and dep == 3      # ucb == alpha certifies
 
 
 def test_e8_flip_labels_rate_and_determinism():
@@ -189,6 +215,16 @@ def test_fnr_on_pool_closed_form():
     # site 1: fn=0, ap=1 -> g/n = 1
     # FNR_M = (1*1 + 1*0) / (1*2 + 1*1) = 1/3
     assert np.isclose(got, 1.0 / 3.0)
+    # a second pool where site 1 sits above the cap (audit
+    # GAP-unreviewed-tests-2): site 1 has 200 records, two answered
+    # positives, both false negatives, g/n = 100/200
+    x1 = np.vstack([x[:3], np.tile([0.9, 0.0], (200, 1))])
+    y1 = np.array([True, True, True] + [True] * 2 + [False] * 198)
+    pool1 = SimpleNamespace(x=x1, y=y1,
+                            site_id=np.array([0] * 3 + [1] * 200),
+                            n_sites=2, site_sizes=np.array([3, 200]))
+    # FNR_M = (1 + 0.5*2) / (2 + 0.5*2) = 2/3; record-pooled would be 3/4
+    assert np.isclose(_fnr_on_pool(_H(), pool1, 0.5), 2.0 / 3.0)
 
 
 def test_eicu_subgroup_rows_masks_floor_and_no_certificate():
@@ -246,3 +282,107 @@ def test_eicu_subgroup_rows_masks_floor_and_no_certificate():
     rows_nc = _subgroup_rows(_H(), pool, feature_names, None, 0, "primary")
     assert all(r["status"] == "no-certificate" and r["coverage"] is None
                for r in rows_nc)
+
+
+def test_rm_exceed_rate_is_conditional_on_certified_draws():
+    """rm_exceed_rate is k over the certified draws, not over all draws.
+
+    The betting test bounds the joint certify-and-exceed probability, which
+    is rm_exceed_rate x certify_rate; the conditional rate is never below it.
+
+    Refs: audit synthetic-2.
+    """
+    from experiments.run_synthetic import _rollup
+    out = _rollup([{"rm_exceed": True}, {"rm_exceed": False}], 50,
+                  ("certify_rate", "rm_exceed_rate"))
+    assert out == {"certify_rate": 0.04, "rm_exceed_rate": 0.5}
+    assert out["rm_exceed_rate"] * out["certify_rate"] == 1 / 50
+
+
+def test_rm_population_value_is_m_invariant_on_generator():
+    """The generator draws site size independently of the site random effect,
+    so R_M takes one population value at every M: on a large pool the seven
+    Table S4 weightings agree up to sampling noise. A negative control that
+    couples size and prevalence moves R_M with M.
+
+    Refs: audit synthetic-6.
+    """
+    from certgate.constants import SEED
+    from certgate.data import SimConfig, draw_cohort, subset_sites
+    from experiments.panel_s2_tables import M_SWEEP
+    from experiments.run_synthetic import _draw_split, _rng
+    cfg = SimConfig()
+    _, _, _, head = _draw_split(cfg, 208, _rng(9, 1, 0, 0))
+    pool = draw_cohort(cfg, 1500, np.random.default_rng([SEED, 3]),
+                       site_label_prefix="inv")
+    for tau in (0.55, 0.75):
+        base = _rm_on_pool(head, pool, tau, 100)
+        for M in M_SWEEP:
+            assert abs(_rm_on_pool(head, pool, tau, M) - base) < 0.003
+    sizes = pool.site_sizes
+    prev = (np.bincount(pool.site_id, weights=pool.y.astype(float))
+            / sizes)
+    keep = np.where((sizes > np.median(sizes))
+                    == (prev > np.median(prev)))[0]
+    coupled = subset_sites(pool, keep)
+    for tau in (0.55, 0.75):
+        assert abs(_rm_on_pool(head, coupled, tau, 25)
+                   - _rm_on_pool(head, coupled, tau, 5000)) > 0.006
+
+
+def test_cap_share_closed_form():
+    """89.6% of sites exceed M = 100 under the generator's size law:
+    n_c = floor(clip(exp(N(6, 1.1^2)), 20, 5000)) > 100 iff the normal draw
+    is at least log(101). cap_facts emits the closed form beside its
+    simulated share.
+
+    Refs: audit synthetic-10.
+    """
+    from scipy.stats import norm
+    from certgate.constants import M_INFLUENCE
+    from certgate.data import SimConfig
+    from experiments.panel_s2_tables import cap_facts
+    cfg = SimConfig()
+    exact = float(norm.sf((np.log(M_INFLUENCE + 1) - cfg.size_mu)
+                          / cfg.size_sigma))
+    assert round(exact, 3) == 0.896
+    facts = cap_facts(n_reps=10)
+    assert facts["share_sites_above_M_exact"] == round(exact, 4)
+    se = np.sqrt(exact * (1.0 - exact) / facts["sites"])
+    assert abs(facts["share_sites_above_M"] - exact) < 4 * se
+
+
+def test_table_s4_rows_count_bbse_deploying_draws(monkeypatch):
+    """Table S4 replays every validity-grid draw; deploy_mode gates only the
+    tau self-check (paper Table S4 caption, SI A.3).
+
+    Refs: audits synthetic-5, PAPER1-4, PAPER2-1.
+    """
+    from experiments import panel_s2_tables as P
+    rec = {r: dict(v) for r, v in P._recorded_e1().items() if r < 2}
+    rec[1]["deploy_mode"] = "bbse"      # as if draw 1 had deployed a BBSE tau
+    monkeypatch.setattr(P, "_recorded_e1", lambda: rec)
+    out = P.e1_arm(2)
+    assert out["self_check"] == dict(compared=1, tau_mismatches=0)
+    assert out["table6"]["M=100"]["alpha=0.1"]["n_certified"] == 2
+
+
+def test_seed_streams_alias_at_trailing_zero():
+    """numpy's SeedSequence zero-pads entropy shorter than four words, so a
+    trailing zero index aliases the shorter stream: E5's replication draw 0
+    is the case-study stream _rng(5), and draw 0 of each E2 sweep arm m is
+    the anchor's _rng(2, 100 + m). The comments in run_synthetic document
+    this; the released numbers are unchanged by it.
+
+    Refs: audits GAP-seed-stream-aliasing-1, GAP-seed-stream-aliasing-2.
+    """
+    from certgate.constants import SEED
+
+    def pool(*parts):
+        return np.random.SeedSequence([SEED, *parts]).pool
+
+    assert np.array_equal(pool(5, 0), pool(5))
+    assert not np.array_equal(pool(5, 1), pool(5))
+    for m in range(4):
+        assert np.array_equal(pool(2, 100 + m, 0), pool(2, 100 + m))
+        assert not np.array_equal(pool(2, 100 + m, 1), pool(2, 100 + m))

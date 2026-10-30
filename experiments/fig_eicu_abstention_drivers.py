@@ -2,8 +2,9 @@
 
 Everything here is derived from the released 20-replicate diagnostics artifact
 experiments/out/EICU_diagnostics.json. The key is abstention_gap_ranking: the
-per-replicate top-10 answered-vs-declined attribution gap run_eicu already
-emits at the operative rung. The restricted extract is never touched and no
+per-replicate top-10 answered-vs-declined attribution gap. run_eicu emits one
+per certified (replicate, rung); the figure reads the operative rung's, one per
+re-split. The restricted extract is never touched and no
 pipeline is re-run, exactly like panel_confusion_tables.py.
 
 The one write is the PNG the draft calls out. The counts the draft quotes are
@@ -78,8 +79,16 @@ def _label(name):
 def load_rankings(path):
     doc = json.load(open(path, encoding="utf-8"))
     block = doc["abstention_gap_ranking"]
-    keys = sorted(block, key=lambda k: int(k.split("replicate")[1].split("_")[0]))
-    return [(k, block[k]["ranking"]) for k in keys]
+    # one ranking per replicate: run_eicu writes one per certified rung,
+    # and the strictest alpha present is the operative rung
+    # (audit 2026-10 EICU-12)
+    ops = {}
+    for k in block:
+        rep_s, alpha_s = k.split("_alpha")
+        rep, a = int(rep_s[len("replicate"):]), float(alpha_s)
+        if rep not in ops or a < ops[rep][0]:
+            ops[rep] = (a, k)
+    return [(k, block[k]["ranking"]) for _, (_, k) in sorted(ops.items())]
 
 
 def counts(rankings):

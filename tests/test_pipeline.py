@@ -18,7 +18,7 @@ from certgate.data import SimConfig, draw_cohort, split_sites
 from certgate.validate import Cohort, CohortError
 from certgate.pipeline import run_certgate
 from certgate.constants import (ALPHA_LADDER, DELTA, BBSE_DELTA_BET,
-                                M_INFLUENCE, TAU_GRID)
+                                M_INFLUENCE, PI_CLIP, TAU_GRID)
 
 
 @pytest.fixture(scope="module")
@@ -387,6 +387,19 @@ def test_composition_three_way_whenever_bbse_fit_holds(in_dist):
     # fit reaches the rho stage (fixture audit 2026-07-25)
     if bbse_diag.get("rho_point") is not None:     # fit reached the rho stage
         assert "bbse_true_class" in comp
+        # the view shifts the head's S_train prior to the BBSE target
+        # prevalence: rho_point * odds(clip(pi_s)) / odds(pi_train)
+        # (audit 2026-10 BBSE-1)
+        bt = comp["bbse_true_class"]
+        odds = lambda p: p / (1.0 - p)
+        ps = float(np.clip(bbse_diag["pi_s"], PI_CLIP, 1.0 - PI_CLIP))
+        pi_train = float(tr.y.mean())
+        want = bbse_diag["rho_point"] * odds(ps) / odds(pi_train)
+        assert abs(bt["odds_multiplier"] - want) < 1e-12
+        assert bt["pi_train"] == pi_train
+        assert bt["pi_source"] == ps
+        assert bt["rho"] == bbse_diag["rho_point"]
+        assert abs(bt["odds_multiplier"] - bt["rho"]) > 1e-3   # non-vacuous
     assert rep["diagnostic"]["target_site_id_supplied"] is False
 
 
@@ -438,3 +451,43 @@ def test_bbse_diagnostics_stable_keys_across_mode_sets(in_dist):
     assert set(rep_base["diagnostic"]["bbse"]) == keys
     # not-run placeholder: every value is None
     assert all(v is None for v in rep_base["diagnostic"]["bbse"].values())
+
+
+def test_one_site_aux_declines_bbse_not_the_run(in_dist):
+    """A one-site S_aux declines the label-shift fit, not the run: S_aux only
+    orders the baseline walk, so baseline stays live (audit 2026-10,
+    NUM-1)."""
+    from certgate.data import subset_sites
+    tr, ax, ca, tg = (in_dist[k] for k in ("train", "aux", "cal", "tgt"))
+    one = subset_sites(ax, [int(np.argmax(ax.site_sizes))])
+    rep = run_certgate(tr, one, ca, tg.x, target_label="one-site-aux")
+    assert rep["reason"] is None
+    for row in rep["certified"]:
+        per_mode = row.get("reasons") or row["mode_outcomes"]
+        assert per_mode["bbse"] == "bbse-aux-clustering"
+    assert rep["operative"] is not None
+    assert rep["operative"]["deploy_mode"] == "baseline"
+
+
+def test_feasibility_margin_is_the_record_pooled_proxy(in_dist):
+    """The feasibility margin is the record-pooled S_aux proxy, by definition.
+
+    max_tau cov(tau) * (alpha - err(tau)) * mean_c(g_c / M), with coverage and
+    answered error pooled over S_aux records -- not the mean-atom margin that
+    orders the walk. A never-gate diagnostic; pinned so the docs cannot drift.
+
+    Ref: audit 2026-10 CORE-3, NUM-6.
+    """
+    from certgate.model import fit_head
+    from certgate.pipeline import _feasibility
+    tr, ax, ca = in_dist["train"], in_dist["aux"], in_dist["cal"]
+    head = fit_head(tr)
+    score, err = head.score(ax.x), head.predict(ax.x) != ax.y
+    eg = float(np.mean(np.minimum(ax.site_sizes, M_INFLUENCE) / M_INFLUENCE))
+    n_carry = int((ca.site_sizes > 0).sum())
+    for a in ALPHA_LADDER:
+        want = max(float((score >= t).mean())
+                   * (a - float(err[score >= t].mean())) * eg
+                   for t in TAU_GRID if (score >= t).any())
+        assert _feasibility(head, ax, a, n_carry)["margin"] == \
+            pytest.approx(want, rel=1e-12)

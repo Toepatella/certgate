@@ -88,7 +88,7 @@ from experiments.run_synthetic import (_rm_on_pool, _per_site_exceed_frac,
 # the same lookup the synthetic tables use; that identity is pinned too.
 
 EICU_OUT_PREFIX = "EICU"
-EICU_MAX_OUTPUT_LEN = 512        # > 208 sites, < any record-level array
+EICU_MAX_OUTPUT_LEN = 512        # > 208 sites; per-hospital pools can be shorter (3 records), so the cap does not catch their record-level arrays -- only EICU_FORBIDDEN_OUT_KEYS does, under a listed key
 EICU_FORBIDDEN_OUT_KEYS = ("stay_id", "patient_id", "admission_id", "site_raw",
                            "y_raw", "answered_mask", "x", "site_id",
                            "comparator_predicted_mortality", "split_idx")
@@ -203,6 +203,12 @@ _RELIABILITY_NOTES = {
 # nothing, consumes no _rng draw.
 # Ref: SPEC pin amendment, 2026-08-21 venue-fit pass; decision-letter item 9 /
 # S1-12; audit V20.
+# Clarification (2026-10-29, audit 2026-10 explain-2): the Gaussian conditional
+# value function is exact only if the k drivers are jointly Gaussian. On eICU
+# no driver is: binary and ordinal values, plus mean-imputed point masses at
+# z = 0. The APPROXIMATION the label names therefore covers the whole
+# sub-game, not only the binary and __missing indicators. The label string is
+# written into released CSVs and stays unchanged.
 EICU_FAITHFULNESS_TOP_K = 10     # 2^10 coalitions, enumerated exactly
 EICU_FAITHFULNESS_LABEL = (
     "[MEASURE] POST-HOC ATTRIBUTION VALUE-FUNCTION CONTRAST (2026-08-21): "
@@ -475,10 +481,16 @@ def _eval_rung(head, report, alpha, pool_x, pool_y):
     tables carry: tau_idx, deploy_mode, modes, and the non-contributing-mode
     text. Structural gates are read from report["reason"] and rung outcomes
     from row["status"] -- a tier == "certified" row can still be
-    status == "declined"."""
-    out = dict(certified=False, tau=None, tau_idx=None, deploy_mode=None,
-               modes=None, coverage=None, n_answered=0, answered_err_rate=None,
-               hard=False, decline_reason=report.get("reason"))
+    status == "declined".
+
+    tau is rounded to 6 dp for the tables only; tau_raw is the deployed float64
+    threshold, and every re-scoring of the pool uses it -- round(TAU_GRID[14], 6)
+    == 0.83 is one ulp below the deployed 0.8300000000000001 (SPEC RP-7).
+    Ref: audit 2026-10 explain-13 / EICU-11."""
+    out = dict(certified=False, tau=None, tau_raw=None, tau_idx=None,
+               deploy_mode=None, modes=None, coverage=None, n_answered=0,
+               answered_err_rate=None, hard=False,
+               decline_reason=report.get("reason"))
     row = _row_for(report, alpha)
     if row is None:                      # gated exit: reason already carried
         return out
@@ -491,7 +503,8 @@ def _eval_rung(head, report, alpha, pool_x, pool_y):
     ans = head.score(pool_x) >= tau
     err = head.predict(pool_x) != pool_y
     n_ans = int(ans.sum())
-    out.update(certified=True, tau=round(tau, 6), tau_idx=int(row["tau_idx"]),
+    out.update(certified=True, tau=round(tau, 6), tau_raw=tau,
+               tau_idx=int(row["tau_idx"]),
                deploy_mode=row["deploy_mode"], modes="|".join(row["modes"]),
                coverage=_rate(n_ans, n_pool), n_answered=n_ans,
                answered_err_rate=_rate(int(err[ans].sum()), n_ans),
@@ -1137,7 +1150,14 @@ def _failure_criteria(pooled_rows, site_counts, n_replicates):
     rather than argued after the fact. F-A is deliberately written as a
     bound-shaped observation: 20 replicates cannot resolve a delta = 0.05 rate,
     and they share one hospital population, so they are not independent draws of
-    the calibration site population."""
+    the calibration site population.
+
+    Every threshold comparison reads exact quantities: the exceed count over
+    the certified count, n_answered / n_target, and the alarm booleans the
+    pooled rows carry from the unrounded values (rm_fd_alarm,
+    leak_auc_alarm, leak_ablation_alarm). The rounded rm_exceed_rate and
+    mean_operative_coverage are display only, so a value that rounds onto a
+    threshold cannot flip a criterion (audit 2026-10 GAP-unreviewed-tests-5)."""
     ops = {}
     for row in pooled_rows:
         if not row["certified"]:
@@ -1147,26 +1167,25 @@ def _failure_criteria(pooled_rows, site_counts, n_replicates):
             ops[r] = row
     n_cert = len(ops)
     n_exceed = sum(1 for row in ops.values() if row.get("rm_exceed"))
-    exceed_rate = _rate(n_exceed, n_cert)
-    covs = [row["coverage"] for row in ops.values()
-            if row["coverage"] is not None]
-    mean_cov = round(float(np.mean(covs)), 4) if covs else None
+    exceed_rate = _rate(n_exceed, n_cert)                      # display only
+    covs_exact = [row["n_answered"] / row["n_target"] for row in ops.values()
+                  if row["n_target"]]
+    mean_cov = (round(float(np.mean(covs_exact)), 4) if covs_exact
+                else None)                                     # display only
 
     strict = ALPHA_LADDER[0]
     fd_hits = [row for row in pooled_rows
                if row["certified"] and row["alpha"] == strict
-               and (row["coverage"] or 0.0) > EICU_FD_COVERAGE_ALARM
-               and row.get("rm_fresh") is not None
-               and row["rm_fresh"] < EICU_FD_RM_ALARM]
+               and row["n_target"]
+               and row["n_answered"] / row["n_target"] > EICU_FD_COVERAGE_ALARM
+               and row.get("rm_fd_alarm") is True]
     # E-10: the two legs that depend on neither alpha nor coverage. One row per
     # (replicate, alpha) carries the same replicate-level probe, so dedupe.
     by_rep = {row["replicate"]: row for row in pooled_rows}
     auc_hits = [r for r, row in sorted(by_rep.items())
-                if row.get("head_auc_oos") is not None
-                and row["head_auc_oos"] > EICU_LEAK_AUC_CEILING]
+                if row.get("leak_auc_alarm") is True]
     abl_hits = [r for r, row in sorted(by_rep.items())
-                if row.get("ablation_drop") is not None
-                and row["ablation_drop"] > EICU_LEAK_ABLATION_MAX_DROP]
+                if row.get("leak_ablation_alarm") is True]
     aucs = [row["head_auc_oos"] for row in by_rep.values()
             if row.get("head_auc_oos") is not None]
     drops = [row["ablation_drop"] for row in by_rep.values()
@@ -1175,7 +1194,7 @@ def _failure_criteria(pooled_rows, site_counts, n_replicates):
 
     return {
         "F-A": dict(
-            fired=bool(exceed_rate is not None and exceed_rate > DELTA),
+            fired=bool(n_cert > 0 and n_exceed / n_cert > DELTA),
             n_replicates=n_replicates, n_certified_replicates=n_cert,
             n_rm_exceed=n_exceed, rm_exceed_rate=exceed_rate, target=DELTA,
             note=("BOUND-SHAPED OBSERVATION, never 'validity confirmed': "
@@ -1184,8 +1203,9 @@ def _failure_criteria(pooled_rows, site_counts, n_replicates):
                   "they are not independent draws of the calibration site "
                   "population.")),
         "F-B": dict(
-            fired=bool(n_cert == 0 or (mean_cov is not None
-                                       and mean_cov < EICU_FB_MIN_COVERAGE)),
+            fired=bool(n_cert == 0 or (
+                bool(covs_exact)
+                and float(np.mean(covs_exact)) < EICU_FB_MIN_COVERAGE)),
             n_certified_replicates=n_cert, mean_operative_coverage=mean_cov,
             min_coverage=EICU_FB_MIN_COVERAGE,
             note=_FAILURE_NOTES["F-B"]),
@@ -2075,8 +2095,11 @@ def _build_and_gate(data_dir, arm, replicates, warnings, verbose):
     # apachePredVar treatment flags -- activetx above all -- had no timing
     # verification at all.
     # The DDL cannot settle that on a dataset whose sentinel convention the DDL
-    # already gets wrong, so it is settled from the data. Run on the raw matrix,
-    # the only place missingness is still visible.
+    # already gets wrong, so the screen decides it from the data under the
+    # registered 0.75 review band. It bounds each flag's univariate AUC but
+    # cannot establish measurement timing, so a weaker leak is not excluded
+    # (audit 2026-10 EICU-8). Run on the raw matrix, the only place
+    # missingness is still visible.
     screen = etl.outcome_screen(x_raw, meta, names=feature_names)
     screen_block = {"base_prevalence": screen["base_prevalence"],
                     "review_auc": screen["review_auc"],
@@ -2431,8 +2454,8 @@ def run_certification(data_dir, out, *, arm="primary", replicates=1,
             ev = _eval_rung(head, rep_pooled, alpha, target.x, target.y)
             rm = disp = None
             if ev["certified"]:
-                rm = _rm_on_pool(head, target, ev["tau"])
-                disp = _per_site_exceed_frac(head, target, ev["tau"], alpha)
+                rm = _rm_on_pool(head, target, ev["tau_raw"])
+                disp = _per_site_exceed_frac(head, target, ev["tau_raw"], alpha)
             pooled_rows.append(dict(
                 replicate=r, arm=arm, alpha=alpha,
                 certified=ev["certified"], tau=ev["tau"],
@@ -2444,6 +2467,12 @@ def run_certification(data_dir, out, *, arm="primary", replicates=1,
                           else round(float(rm), 6)),
                 rm_exceed=(None if rm is None or not np.isfinite(rm)
                            else bool(rm > alpha)),
+                # Exact-value alarms for _failure_criteria; not CSV columns
+                # (audit 2026-10 GAP-unreviewed-tests-5).
+                rm_fd_alarm=(None if rm is None or not np.isfinite(rm)
+                             else bool(rm < EICU_FD_RM_ALARM)),
+                leak_auc_alarm=leak["auc_alarm"],
+                leak_ablation_alarm=leak["ablation_alarm"],
                 per_site_exceed_frac=(None if disp is None
                                       or not np.isfinite(disp)
                                       else round(float(disp), 4)),
@@ -2456,7 +2485,8 @@ def run_certification(data_dir, out, *, arm="primary", replicates=1,
             if ev["certified"]:
                 key = f"replicate{r}_alpha{_alpha_key(alpha)}"
                 abstention[key] = _abstention_ranking(head, target.x,
-                                                      ev["tau"], feature_names)
+                                                      ev["tau_raw"],
+                                                      feature_names)
                 coef_ranks[key] = _top_driver_coef_rank(
                     head, feature_names, abstention[key]["ranking"])
             crow, subset_err = _comparator_row(head, rep_pooled, alpha, target,

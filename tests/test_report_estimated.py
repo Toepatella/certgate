@@ -12,10 +12,12 @@ import json
 
 import numpy as np
 
+from certgate.constants import M_INFLUENCE
 from certgate.data import SimConfig, draw_cohort, split_sites
 from certgate.model import fit_head, Head
-from certgate.report import _bootstrap_estimate, render_text
+from certgate.report import _bootstrap_estimate, _rm_vs_unweighted, render_text
 from certgate.pipeline import _feasibility, run_certgate
+from certgate.validate import Cohort
 
 
 def _head_cal():
@@ -98,9 +100,74 @@ def test_render_text_surfaces_n_boot_and_handles_gated_reports():
     rep = run_certgate(train, aux, cal, tgt.x, target_label="render")
     text = render_text(rep)
     assert "n_boot=" in text
+    # the estimated tier names its estimand (audit 2026-10 CORE-5)
+    assert "[estimated] record-pooled answered-set risk on S_cal" in text
     # the partition line includes the answered count, so its label must not
     # read as a decline count (fixture audit 2026-07-25)
     assert "[partition]" in text
     assert "[declines]" not in text
     gated = run_certgate(train, aux, cal, tgt.x[:5], target_label="gated")
     assert "[gate]" in render_text(gated)          # no KeyError on gated path
+
+
+def test_estimated_point_is_record_pooled_not_rm():
+    """The estimated tier is the record-pooled answered risk, not R_M.
+
+    Every answered S_cal record counts once, with no influence cap. R_M,
+    whose S_cal plug-in is rm_vs_unweighted's r_m, caps each site at M and
+    differs whenever some calibration site exceeds M.
+
+    Ref: audit 2026-10 CORE-5.
+    """
+    head, cal = _head_cal()
+    tau = 0.55
+    score = head.score(cal.x)
+    ans = score >= tau
+    err = head.predict(cal.x) != cal.y
+    assert (cal.site_sizes > M_INFLUENCE).any()
+    est = _bootstrap_estimate(head, cal, tau)
+    rm = _rm_vs_unweighted(head, cal, tau)
+    assert est["point"] == float(err[ans].sum() / ans.sum())
+    assert est["point"] == rm["unweighted_risk"]
+    sizes = cal.site_sizes.astype(np.float64)
+    g = np.minimum(sizes, M_INFLUENCE)
+    a_c = np.bincount(cal.site_id, weights=ans, minlength=cal.n_sites)
+    e_c = np.bincount(cal.site_id, weights=ans & err, minlength=cal.n_sites)
+    keep = sizes > 0
+    want = float((g[keep] * e_c[keep] / sizes[keep]).sum()
+                 / (g[keep] * a_c[keep] / sizes[keep]).sum())
+    assert abs(rm["r_m"] - want) < 1e-12
+    assert rm["r_m"] != est["point"]
+
+
+def test_rm_gap_isolates_the_influence_cap_under_bbse_weights():
+    """Both sides of the R_M gap carry the deploy-mode class weights.
+
+    With every site at or below M the influence weights are all 1, so the gap
+    must be exactly 0 under any class weights. The old plain record mean
+    folded the BBSE class reweighting into the gap (about +0.054 here).
+    Baseline values stay bitwise those of the plain record mean.
+
+    Ref: audit 2026-10 CORE-9.
+    """
+    rng = np.random.default_rng(5)
+    n_sites, per_site = 40, 60
+    assert per_site <= M_INFLUENCE
+    site_id = np.repeat(np.arange(n_sites, dtype=np.int64), per_site)
+    x = rng.normal(size=(site_id.size, 3))
+    y = (1.5 * x[:, 0] - x[:, 1] + rng.normal(size=site_id.size)) > 1.0
+    cal = Cohort(x=x, y=y, site_id=site_id,
+                 site_labels=tuple(f"s{i}" for i in range(n_sites)))
+    head = Head(coef=np.array([1.2, -0.8, 0.3]), intercept=-1.0,
+                mu=np.zeros(3), sd=np.ones(3))
+    tau = 0.6
+    w = np.where(cal.y, 2.5, 1.0)
+    rm_w = _rm_vs_unweighted(head, cal, tau, weights=w)
+    assert rm_w["gap"] == 0.0
+    # same ratio, summed in a different order (bincount per site first)
+    assert abs(rm_w["unweighted_risk"] - _bootstrap_estimate(
+        head, cal, tau, weights=w)["point"]) < 1e-15
+    ans = head.score(cal.x) >= tau
+    err = head.predict(cal.x) != cal.y
+    assert _rm_vs_unweighted(head, cal, tau)["unweighted_risk"] == \
+        float(err[ans].mean())

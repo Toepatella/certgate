@@ -69,6 +69,41 @@ histogram) is recorded above. Every A1–A5 change is a **tightening**: each add
 a threshold, widens a vocabulary, or admits a column. All were made before the extract was
 downloaded, and all are pinned by `tests/test_constants.py`.
 
+> **Errata, 2026-10-29 (post-hoc).** These are errata, not amendments: none changes a registered
+> rule, constant, prediction, failure criterion, settled verdict or computed value, the registered
+> text stays as frozen, and A6 remains the only post-hoc amendment. They are listed here because
+> this section requires every later change to §§2–13 to be recorded in it. Each is a dated note
+> beneath the passage it corrects:
+>
+> - §5.4a and A3, "settled from the data": the note at the end of §5.4a.
+> - §5.5, the p = 0.15 arm's coverage: the note after the dose-response paragraph.
+> - §7, `fixture_etl.site_split`'s asserts: the note after the split paragraph.
+> - §9 P2 and §12.1, P2's comparison values: the erratum to P2 after the ordering caveat.
+> - §12.2, "importance weighting provably cannot certify below roughly 400 clusters": the note
+>   beneath §12.2.
+> - §12.4, when a `P(y|x)` difference makes both tags false: the note after its first paragraph.
+> - §12.5 T-9 and §5.7, the string-comparison example: the note after the §12.5 register.
+>
+> Outside §§2–13, §14.1 (the P2 pointer and step 4), §14.3 and §15 carry notes of the same kind.
+> Two corrections span sections and are stated here.
+>
+> *The information floor (§12.2; §14.1 step 4).* Registered passages read
+> `certify.margin_floor` = ln(1/δ)(1−α)/n as an impossibility bound. It is a first-order lower
+> bound. At atom-unit margin m, any valid level-δ test of a [0,1]-bounded mean over n i.i.d.
+> clusters certifies with probability at most δ(1+m/(1−α))^n ≤ δ·exp(nm/(1−α)); the right-hand
+> bound is below one exactly when m is below the floor, and certifying with certainty needs
+> m ≥ (1−α)(δ^(−1/n) − 1), of which the floor is the first-order term. Below the floor a valid test
+> may still certify on a favourable draw, but never with certainty.
+>
+> *F-A (§10).* F-A scores the share of *certified* replicates whose `R_M` on a held-out 24-hospital
+> pool exceeds α. The betting test bounds a different quantity: the joint probability that a
+> replicate certifies while the population `R_M` is at or above α. The share equals the joint
+> share only when every replicate certifies, and the pool `R_M` is a finite-pool estimate with
+> sampling noise of its own, so F-A firing would not by itself have shown the method wrong. On the
+> released run all 20 replicates certified at α = 0.10 and none exceeded
+> (`experiments/out/EICU-SUMMARY.md`, `failure_criteria` → `F-A`), so the settlement stands as
+> written.
+
 **Order of operations (binding).** `SPEC.md` § *Real-data protocol* lands first →
 `certgate/constants.py` stays untouched (no eICU constant enters the core package; the eICU path is
 an experiment and follows the `run_synthetic.py` precedent) → `tests/test_constants.py` gains the
@@ -449,6 +484,14 @@ for measurement timing before any number is reported; if the timing cannot be es
 to the denylist under the same reason already used for the two `apachePatientResult` columns, as an
 amendment under §0. On the clean mock every one of the nine measures between 0.45 and 0.57.
 
+> **Erratum (2026-10-29, post-hoc; the paragraph above and amendment A3 are unchanged).** "Settled
+> from the **data**" here, and "settles them from data" in A3, mean decided under the registered
+> review rule. A univariate AUC within [0.25, 0.75] — the screen flags |AUC − 0.5| >
+> `EICU_FEATURE_AUC_REVIEW` − 0.5 = 0.25 — bounds a column's marginal discrimination; it cannot
+> establish the column's measurement timing, so the screen does not exclude a weaker leak through
+> one of the nine. On the released extract the nine measured
+> univariate AUC 0.41–0.69 and none was flagged.
+
 ### 5.5 The two APACHE presence flags — jointly site- AND outcome-informative
 
 `aps_present`, `apv_present` — `1.0` iff the stay carried a row in that table.
@@ -498,6 +541,9 @@ The p = 0.15 arm's coverage (0.850) is indistinguishable from the released extra
 171 177 / 200 859 = 0.852. **Coverage cannot be the screen.** End to end at 208 hospitals the clean
 corpus declines every rung at coverage 0.00 and the p = 0.75 corpus certifies `α = 0.10` at
 τ = 0.790, coverage 0.857 — and the old F-D reported `fired: false, n_hits: 0`.
+
+> **Erratum (2026-10-29).** The p = 0.15 arm's coverage is 0.849 (0.848769), not 0.850; the
+> conclusion is unchanged.
 
 **What replaces it — three gates at three sensitivities, all pre-registered.**
 
@@ -653,6 +699,10 @@ arm a real cluster count for the `q_t` bootstrap, (ii) 24 single-hospital pools 
 **pairwise** disjointness — a deliberate strengthening over `fixture_etl.site_split`, whose
 `assert not (a & b & c)` tests a triple intersection and passes on a two-way overlap.
 
+> **Erratum (2026-10-29).** Since commit `ea08c9f` (2026-08-20) `fixture_etl.site_split` asserts the
+> three train/aux/cal pairs; the triple-intersection assert described above no longer exists.
+> `eicu_etl.site_split` still differs in also asserting disjointness from the target set.
+
 **Records never cross a boundary.** Splitting is on the site label and every record inherits its
 hospital's assignment. `assert_site_disjoint(train=, aux=, cal=)` runs before every `run_certgate`
 (audit F03), and target disjointness is checked at the record level as well when `target_site_id` is
@@ -719,6 +769,25 @@ computes, and the preflight is also what writes this table into the run artifact
 value therefore rests on this document's commit predating the download, not on the summary-writing
 step. P1–P4 and P6 require a certificate and are settled strictly after. No prediction may be
 revised once the preflight has run; a revision is an amendment under §0 and is labelled post-hoc.
+
+> **Erratum to P2 (2026-10-29, post-hoc; the registered row above is unchanged and is the one
+> scored).** P2's comparison values come from a different statistic than the field that settles it.
+> The 0.02 quoted for the synthetic generator at `s_u = 0.5`, and the 0.10 for its `s_u = 2.0` arm,
+> are E1's single-fresh-site hard-violation rates (`hard_violation_rate_diag`: 0.02, 0.10 and 0.095
+> at `s_u` = 0.5, 1.0 and 2.0; 0.095 rounds to 0.10), which E1's summary labels a "per-site
+> dispersion diagnostic". On `per_site_exceed_frac`, the settling field, E1 gave 0.055, 0.1285 and
+> 0.1634 for the same arms (`mean_per_site_exceed_frac`, E1 `su_sensitivity` in
+> `experiments/out/summary.md`, values already there at the freeze commit). The direction clause
+> (> 0.02) therefore compares across statistics, and [0.05, 0.30] already contains the `s_u = 0.5`
+> value of the settling field, so neither clause, met, would have shown real hospitals more
+> dispersed than the generator. The same mis-attribution underlies "materially larger than the
+> synthetic `s_u = 0.5` value" in §12.1. The settlement
+> (`experiments/out-settled/EICU-PREDICTIONS-SETTLED.md`) scores P2 as registered: direction clause
+> met on 11 of 20 re-splits, interval on 2 of 20, mean 0.0271, verdict falsified. Its note "the
+> synthetic s_u = 0.5 arm gave 0.02" repeats the hard-violation rate. Compared like for like
+> (post-hoc), the eICU values sit below the `s_u = 0.5` arm on both statistics: exceedance fraction
+> 0.0271 against 0.055, and per-hospital hard-violation rate 7 of 477 deployed pools = 0.0147
+> against 0.02. No prediction, interval, settling field, verdict or certified quantity changes.
 
 ---
 
@@ -889,6 +958,22 @@ the channel (the diagnostics above, plus `aps_present` / `apv_present` as named 
 abstention explanations can point at it — P4) rather than imputing it away, and we state the
 limitation instead of claiming robustness the method does not have.
 
+> **Erratum (2026-10-29, post-hoc; the registered paragraph above is unchanged).** "Provably"
+> overstates the basis of the ~400-cluster figure: it is a design-time estimate, not a proof. Audit
+> F34 belongs to the F-numbered audit of the predecessor implementation (SPEC "Audit-lesson
+> conformance"), whose ledger is not in this repository, and no document here derives the figure;
+> "A1" in that sentence is the predecessor design's covariate-shift mode, not amendment A1 of §0.
+> Only the mechanism is arithmetic. Weights clipped at a cap C enter the atoms as w/C to stay in
+> [0, 1], which divides the margin m by C while the information floor ln(1/δ)(1−α)/n does not move,
+> so the margin reaches the floor only when n_cal ≥ C·ln(1/δ)(1−α)/m calibration clusters — and the
+> floor bounds certifying with certainty, not certifying at all (the §0 errata). With the weights
+> averaging one over the calibration sites m ≤ α, so at C = 5 even a perfect head stays below the
+> floor under 135 calibration clusters at α = 0.10 and under 285 at α = 0.05. The cap and margin
+> behind "roughly 400" are not recorded. Read the clause as "a design-time estimate puts
+> certification out of reach below roughly 400 calibration clusters at practical clip caps". No
+> rule, constant, prediction, failure criterion or reported number depends on the figure; the scope
+> cut and the rest of §12.2 stand.
+
 ### 12.3 Records are not independent within a patient (T-5)
 
 Three levels of dependence, with different fates.
@@ -921,6 +1006,18 @@ protocols, different thresholds for ICU admission, different end-of-life practic
 assumption tags are false and the certificate can be confidently wrong. This is not a residual
 concern in a 208-hospital 2014–2015 US ICU cohort; heterogeneity in care process is one of the
 things the dataset exists to study.
+
+> **Erratum (2026-10-29).** The first sentence of §12.4 overstates the condition. A difference in
+> `P(y|x)` between the calibration hospitals and a target hospital does not by itself make both
+> assumption tags false. Under the label-shift tag the target posterior differs from the pooled
+> source posterior by the prevalence tilt, logit P_t(y=1|x) = logit P_s(y=1|x) + ln ρ, with ρ the
+> target-to-source prevalence odds ratio. Under exchangeability a target hospital drawn from the
+> calibration population differs from individual calibration hospitals as they differ from one
+> another, and care-process heterogeneity of that kind is part of the population the certificate
+> averages over (subject to the dispersion clause). The out-of-scope case is a `P(y|x)` that
+> neither mechanism accounts for given the target hospital's own feature distribution; E3, a
+> log-odds tilt with the features held fixed, is one. The remainder of §12.4, including the
+> non-detectability argument, stands.
 
 No unlabeled-data method can detect it. BBSE assumes `P(x|y)` invariant and estimates only a
 prevalence ratio; a genuine change in the outcome mechanism is indistinguishable from ordinary
@@ -970,6 +1067,11 @@ response column saying so.
 | **T-26** | **A join-key FORMAT artifact or key mismatch UNLINKS a child table** — `patientunitstayid` as `141258.0` (pandas float round-trip), scientific notation, a header-only table, or a key shift with row counts intact: 89/161 columns collapse to the fallback, both presence flags die, E-9's `gate_applies` goes false (total absence bypasses the leak gate), and `EICU_REFERENCE_ROW_COUNTS` cannot see the key-shift route | `join_key_unparseable` in `build_raw` meta; `n_key_unparseable` per child table in preflight; both raises projected in `invalid_conditions` (A5) | `unparseable-join-key` past `EICU_MAX_UNPARSEABLE_SHARE`, naming table and tokens; `apache-coverage-collapse` when `n_present < EICU_MIN_OUTCOME_STRATUM ≤ n_cohort` — E-9 must stay evaluable |
 | **T-27** | **A non-`''` NULL token in a `patient` numeric flows silently** — the E-15 gate was `aps_`/`apv_`-scoped, so `\N` zeroed `admissionheight`/`admissionweight` unalarmed, and in `hospitaladmitoffset` silently changed §2.1 first-stay selection (the tie-breaker column) with no attrition trace | `sentinels.patient.<col>.n_unparseable`; `unparseable_tokens.over_cap` (A5) | `unrecognised-null-token` covers every allowlisted numeric; `_parse_windowed` samples the offending tokens so the abort NAMES them |
 
+> **Erratum (2026-10-29), T-9.** The example `'-1' > '0'` is false in Python (those strings order as
+> the numbers do), and so is §5.7's "a string comparison such as `> '0'` accepts `'-1'`"; a pair
+> that shows the bug is `'1e-05' > '0.5'`, true lexically though 1e-05 < 0.5. The response,
+> `float()` first, is unchanged.
+
 ---
 
 ## 13. Deviations from published eICU cohort conventions
@@ -1000,8 +1102,40 @@ on something correlated with the site, and the site is the unit the guarantee is
 The seven predictions registered in §9 are settled clause by clause, read-only from the released
 files, in `experiments/out-settled/EICU-PREDICTIONS-SETTLED.md` (post-hoc, 2026-09-04).
 
+> **Erratum (2026-10-29).** That file's P2 note repeats a mis-attributed comparison value; see the
+> erratum to P2 in §9. The file is not regenerated.
+
 The order is part of the protocol: step 5 must pass before step 6 is run, and step 9 must happen
 before anything is written up.
+
+> **Erratum to step 4 (2026-10-29, post-hoc; the checklist below is unchanged apart from a two-line
+> pointer to this note under step 4, and no constant, gate or released number changes).** Step 4's
+> description of the mock corpus is corrected as follows.
+>
+> - *AUC.* The 0.726 quoted as the outcome's Bayes-optimal AUC is Φ(B/√2), the rare-event binormal
+>   approximation. Under the mock's model P(death) = sigmoid(a + B·z + u_site), z ~ N(0, 1),
+>   u_site ~ N(0, 0.5²), a = −2.6497, the exact population AUC is 0.748 for the Bayes-optimal score
+>   a + B·z + u_site and 0.715 for a score recovering z alone; the mock's leak ceiling of 0.80 sits
+>   above both. At the full scale this step runs, the fitted head reaches 0.69 out of sample; 0.60
+>   is the small arm's value.
+> - *Units.* The oracle margin 0.0354 is in record units; `certify.margin_floor` is in the atom
+>   units of the influence-weighted test, which carry g_c/M = min(n_c, 100)/100. In those units —
+>   0.0354 times the calibration hospitals' mean min(n_c, 100)/100 on replicate 0, 0.394 and
+>   0.945 — the oracle margin is about 0.0140 at 180 hospitals / 9,000 stays and 0.0335 at
+>   208 / 200,859 (an oracle scored on the realized site effects measures 0.0138 and
+>   0.0315–0.0323). The declines at both frozen sizes are measured outcomes on the frozen seeds, not
+>   implications of the floor: below the floor a valid test may still certify, never with certainty
+>   (§0 errata). Even at the record-unit 0.0354, which overstates the atom-unit margin, the bound on
+>   the certify probability is about 0.57 at 63 calibration clusters and about 0.9 at 75.
+> - *Crossing.* n_carrying = 77 is the crossing only when every calibration site carries at least
+>   100 stays. Under `site_split` (24 held-out hospitals, floor() on the 40% and 20% parts) the
+>   calibration count first reaches 77 at 213 hospitals, not ~217; 214 gives 76, and every size from
+>   215 up gives at least 77. At 900 hospitals / 90,000 stays the atom-unit crossing is about 134
+>   calibration clusters.
+> - *"ONLY there."* Not as worded: certification depends on stays per hospital as well as on the
+>   hospital count. A 900-hospital, 90,000-stay mock certifies α = 0.10 (the `CERTGATE_EICU_LARGE`
+>   arm), while a 1,500-hospital, 30,000-stay mock declines every rung: its oracle clears the floor
+>   and its fitted head does not.
 
 ```
 0.  BEFORE downloading — confirm the freeze is committed and CI is green.
@@ -1051,6 +1185,8 @@ before anything is written up.
       $env:CERTGATE_EICU_LARGE = "1"; python -m pytest tests/test_eicu_mock.py -q -k large
     which builds a 900-hospital mock and asserts the same HONESTY contract.
     This step proves the pipeline RUNS end to end at the real scale.
+    ERRATUM (2026-10-29): this step's AUC, margin units, crossing size and "ONLY there"
+    are corrected in the dated note above this checklist.
 
 5.  PREFLIGHT — mandatory, non-certifying, with the reference check ON:
       python -m experiments.run_eicu --data <DATA_DIR> --preflight
@@ -1174,6 +1310,15 @@ Everything derives from `certgate.constants.SEED = 20260721`.
 
 Identical inputs must produce byte-identical certificates. Any change to this is a SPEC change.
 
+> **Erratum (2026-10-29, post-hoc; changes no registered quantity).** "Everything derives from
+> `certgate.constants.SEED`" predates the post-hoc selective reliability panel added to `run_eicu`
+> on 2026-08-01 (§14.2: `EICU_reliability_panel.json`, `EICU_reliability.csv`,
+> `EICU_reliability_panel.png`). The panel's bootstrap streams are rooted at
+> `certgate.reliability.PANEL_SEED = 20260731`, keyed by a sha256 of the panel's own inputs and of
+> the statistic served, not at `SEED`; the panel certifies nothing and settles no registered
+> prediction. All randomness behind the registered quantities still derives from `SEED`, and the
+> mock corpus from `EICU_MOCK_SEED`, as listed above.
+
 ---
 
 ## 15. Compliance
@@ -1193,6 +1338,13 @@ Identical inputs must produce byte-identical certificates. Any change to this is
   `split_idx`) or any list/array longer than `EICU_MAX_OUTPUT_LEN = 512` — above every plausible
   aggregate (208 sites, 24 pools, 20 replicates) and below every record-level array.
   `report["answered_mask"]` is replaced by its `.sum()` before serialisation.
+
+  > **Erratum (2026-10-29).** "Below every record-level array" is not exact: per-hospital target
+  > pools hold as few as 3 records (486 of the 960 released per-hospital rows have `n_target` ≤ 512),
+  > so a record-level array from one of them is shorter than the cap. The length cap does not catch
+  > such arrays; they are refused only when they sit under a forbidden key (`answered_mask`, `x`,
+  > `site_id`, …).
+
 - **Published outputs are aggregate.** Certificates, per-site rates, attrition counts, coverage
   bands, drift tables. No row of any released file is keyed by `patientunitstayid` or `uniquepid`.
 - **Code deposit.** The code that produces the numbers is released; the data is not. Reproduction by

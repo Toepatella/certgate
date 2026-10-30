@@ -1,12 +1,11 @@
 """SPEC "Tests": end-to-end exercise of the raw loader, from_raw.
 
 Draws synthetic multi-site data, then takes it apart into the raw shapes a
-real loader hands us: string or int outcome labels, and raw string site ids.
+real loader hands us: string outcome labels, and raw string site ids.
 Every split is rebuilt through from_raw, and run_certgate is driven to a
 certified rung.
 
 Also covered:
-  - the {1,2} int-label variant
   - the GAP-1 feature-width gate
   - the all-negative target pool, which can only flow via
     from_raw(require_both_classes=False)

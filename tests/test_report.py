@@ -1,7 +1,7 @@
 """SPEC "Tests" for report.py's OR-combination, _combine_alpha.
 
-The OR-rule has two steps. Deploy the most conservative certified threshold
-across modes. Then list only the modes whose own FWER-controlled certified
+The OR-rule has two steps. Deploy the highest of the modes' own deployed
+(lowest certified) thresholds. Then list only the modes whose own FWER-controlled certified
 prefix contains the deployed index.
 
 Until these tests it was exercised only through the in-distribution end-to-end
@@ -148,7 +148,14 @@ _FROZEN_BOTH_010 = (
     "pi_source) intervals are percentile cluster bootstraps -- asymptotic, with "
     "realized joint coverage at small cluster counts measurably below nominal "
     "(see METHODS); the q_target interval is finite-sample Clopper-Pearson for "
-    "single-site pools and a cluster bootstrap for multi-site pools.")
+    "single-site pools and an asymptotic percentile cluster bootstrap for "
+    "multi-site pools. Under label shift the odds ratio rho takes its source "
+    "odds from pi_source, the record-pooled source prevalence, while the "
+    "estimand weights sites by influence, so the reweighted risk is at the "
+    "target class prevalence exactly where the record-pooled and "
+    "influence-weighted source prevalences coincide, and otherwise at the "
+    "prevalence whose odds are rho times those of the influence-weighted "
+    "source prevalence.")
 
 _FROZEN_BBSE_010 = (
     "Under the tagged assumption (label shift), with probability >= 0.95 over "
@@ -171,8 +178,14 @@ _FROZEN_BBSE_010 = (
     "named above. The (c0, c1, pi_source) intervals are percentile cluster "
     "bootstraps -- asymptotic, with realized joint coverage at small cluster "
     "counts measurably below nominal (see METHODS); the q_target interval is "
-    "finite-sample Clopper-Pearson for single-site pools and a cluster "
-    "bootstrap for multi-site pools.")
+    "finite-sample Clopper-Pearson for single-site pools and an asymptotic "
+    "percentile cluster bootstrap for multi-site pools. Under label shift the "
+    "odds ratio rho takes its source odds from pi_source, the record-pooled "
+    "source prevalence, while the estimand weights sites by influence, so the "
+    "reweighted risk is at the target class prevalence exactly where the "
+    "record-pooled and influence-weighted source prevalences coincide, and "
+    "otherwise at the prevalence whose odds are rho times those of the "
+    "influence-weighted source prevalence.")
 
 
 
@@ -203,7 +216,55 @@ def test_bbse_rows_never_claim_a_shared_event():
         assert "shared by every target pool" not in s
         # and the estimand clause must name the reweighting (verification G-1)
         assert "reweighted to the target class prevalence" in s
+        # and the record-pooled source odds behind rho (audit 2026-10 BBSE-3)
+        assert "record-pooled source prevalence" in s
     # baseline-only keeps the (narrowed, G-7) thresholds-shared clause
     sb = _statement(0.10, ("baseline",))
     assert "certified thresholds are a function of the calibration draw" in sb
     assert "reweighted" not in sb
+    assert "record-pooled" not in sb
+
+
+def test_capped_influence_share_is_record_mass_beyond_cap():
+    """The share is the record mass past each site's M-th record (CORE-8).
+
+    sum_c max(n_c - M, 0) / sum_c n_c, not the share of records sitting at
+    capped sites. An empty site label carries no records and counts nowhere.
+
+    Ref: audit 2026-10 CORE-8.
+    """
+    import numpy as np
+    from certgate.constants import M_INFLUENCE
+    from certgate.report import _capped_influence_share
+    from certgate.validate import Cohort
+    sizes = np.array([20, 50, 150, 2000, 0])
+    site_id = np.repeat(np.arange(sizes.size, dtype=np.int64), sizes)
+    rng = np.random.default_rng(0)
+    cal = Cohort(x=rng.normal(size=(site_id.size, 2)),
+                 y=rng.random(site_id.size) < 0.3, site_id=site_id,
+                 site_labels=tuple(f"c{i}" for i in range(sizes.size)))
+    want = 1.0 - np.minimum(sizes, M_INFLUENCE).sum() / sizes.sum()
+    got = _capped_influence_share(cal)
+    assert got == pytest.approx(want, abs=1e-15)
+    assert got == pytest.approx(0.878378, abs=1e-6)
+    capped_site_share = sizes[sizes > M_INFLUENCE].sum() / sizes.sum()
+    assert abs(got - capped_site_share) > 0.05       # 0.968468: not this
+
+
+def test_deploys_max_of_mode_choices_not_union_max():
+    """The deployed tau is the higher of the two modes' own selections.
+
+    baseline certifies down to idx 10 and bbse selects idx 12: idx 12 is
+    deployed, not idx 15, the highest index any mode certified.
+
+    Ref: audit 2026-10 CORE-12.
+    """
+    out = _combine_alpha({
+        "baseline": _mode([15, 13, 10], tau_idx=10),
+        "bbse": _mode([12], tau_idx=12),
+    })
+    assert out["tau_idx"] == 12
+    assert out["deploy_mode"] == "bbse"
+    assert out["modes"] == ["bbse"]
+    assert out["mode_outcomes"] == {"baseline": "certified-not-covering",
+                                    "bbse": "covering"}

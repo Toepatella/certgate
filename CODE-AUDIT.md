@@ -101,6 +101,10 @@ and the durable pointer is the regression test named on each line (`tests/<file>
   `::test_bbse_min_target_sites`. The box's realized coverage is measured post-hoc in
   `experiments/out-bbse-probe/` (implied certificate level about 0.93 in the probe's regime) and
   disclosed in METHODS §5 and in every BBSE guarantee string — the residue is recommendation 17.
+  *(2026-10-29 correction, 2026-10 PROBE-1 / BBSE-5: "implied certificate level about 0.93" charges every box miss to
+  the certificate. The propagated `[rho_lo, rho_hi]` covered the declared site's odds ratio in all 1,163
+  certifiable probe fits (exact 95% upper end of the miss 0.0032), so in the probe's regime the union bound gives
+  a level of at least 0.97; about 0.93 is the looser box-route bound. See "Mathematical-exactness audit, 2026-10".)*
 - **V6 #1 (M-cap deleted) — pinned by** `test_certify.py::test_mcap_supplies_ville_boundedness`.
 - **V6 #2 (baseline walk spends δ = 0.5) — pinned by** `test_pipeline.py::test_delta_accounting_spy`.
 - **V6 #3 (BBSE bet spends the full δ) — pinned by** `test_pipeline.py::test_delta_accounting_spy`.
@@ -161,6 +165,12 @@ and the durable pointer is the regression test named on each line (`tests/<file>
 - **Rec. 17 — OPEN.** Replacing the percentile box with a finite-sample cluster bound is deferred
   post-submission; the manuscript names it as future work (§6.1), and the shortfall it would retire
   is measured (`experiments/out-bbse-probe/`) and disclosed wherever the BBSE guarantee is stated.
+  *(2026-10-29 pointer, 2026-10 BBSE-2: for a pool declaring ten or more target sites the q interval is a fourth
+  percentile bootstrap, unprobed by `experiments/out-bbse-probe/`; retiring the last asymptotic step needs it
+  replaced too.)*
+
+*(2026-10-29: resolutions that landed after the freeze, from the mathematical-exactness audit, are recorded in the
+last section, "Mathematical-exactness audit, 2026-10".)*
 
 ---
 
@@ -665,6 +675,12 @@ prevalence is a cluster-level ratio with heavy site-size tails. Held at medium r
 two-sided so only part is in the certificate-invalidating direction, the step is explicitly disclosed as asymptotic,
 and no invalid certificate was isolated to this cause — unlike V2, whose control isolates it cleanly.
 
+*[Note, 2026-10-29, text above kept verbatim: the "~0.92" charges every box miss to the certificate. The
+dual-endpoint reduction consumes only coverage of the true odds ratio, which box coverage implies but does not
+require; at 36, 42 and 74 auxiliary sites the post-hoc probe (`experiments/out-bbse-probe/`) measured it at 1,163
+of 1,163 certifiable fits, so there the union bound gives a level of at least 0.97 and the box miss bounds the
+level from below rather than setting it. The 83- and 160-site cells above were not re-probed.]*
+
 **Fix.** Replace the naive percentile box with a studentized/BCa bootstrap over the existing site resamples, or
 better, a finite-sample cluster bound: `c0`, `c1`, `π_s` are all ratios of bounded per-site quantities, so the WSR
 machinery already in `certify.py` can be inverted to give finite-sample intervals at `BBSE_DELTA_CONF/BBSE_BONFERRONI`
@@ -765,6 +781,15 @@ statement, and fix. All empirically demonstrated except where noted.
 | **V25** *(CG-R10)* | The gated-exit path returns a diagnostic dict missing five keys `SPEC.md` lists unconditionally (`composition`, `abstention_profile`, `capped_influence_share`, `rm_vs_unweighted`, `bbse`), so a consumer indexing them raises `KeyError` on any gated report. Mitigating: the gated path has `head=None`, so three are genuinely uncomputable. *(The sub-claim that declined rows carry `tier="certified"` is cosmetic — `status` disambiguates — and I would not have filed it alone.)* | `report.py:306-312` vs `:376-391` | Emit a stable key set with explicit `None` values; `capped_influence_share` can actually be computed there. |
 | **V26** *(TS-12)* | `_write_summary` carries forward blocks for experiments not recomputed, but the header records only the current invocation's mode and no marker distinguishes recomputed from preserved sections — so `summary.md` can read `mode: FULL` while its E1 block is an R=10 QUICK result. E5/E6 emit neither `R` nor mode, so a preserved block from an earlier code revision is indistinguishable from a fresh one. Related: `run_E3` raises its poison-verification error before `_write_summary`, so an aborted full run leaves fresh CSVs beside a stale summary. | `run_synthetic.py:1803-1837` (`_existing_summary_blocks` at `:1784-1800`; the `finally` this row prescribes is now `:1866-1869`) | Stamp mode and timestamp per block; prefix preserved sections with a visible marker; write the summary in a `finally` block. |
 
+> *Note (2026-10-29), V21's rationale.* The fix this row prescribes stands; the reason it gives does not. The
+> drop-only loop and top-up-or-decline discard exactly the same resamples, those with zero answered mass, where
+> the ratio is undefined; attempts are i.i.d., so the retained draws follow the same law in both — the resampling
+> law conditional on positive answered mass — and the survivors' quantiles were not biased relative to a topped-up
+> count. Top-up-or-decline holds the Monte-Carlo count at `n_boot` and adds the shortfall rule: fewer than `n_boot`
+> valid draws within the attempt budget (by default `2 * n_boot`, so more than half the attempts had zero answered
+> mass) yields NaN. The `point = 0.0` half of the row is unaffected. The `_bootstrap_estimate` docstring and the
+> `site_bootstrap_ci` shortfall comment, which repeated the reason, are corrected (CORE-10, reliability-7).
+
 ---
 
 ### PLAUSIBLE
@@ -836,6 +861,18 @@ such a sample is inside Ville's budget. I did not rely on it; V3 demonstrates th
 
 - The WSR level itself: lowering the sup-crossing threshold `1/δ → 1/√δ`, removing the λ cap, and dropping the atom
   recentering offset are all **caught** (`test_wsr_boundary_type_I_at_n80`, observed 0.0213 against a 0.08 tolerance).
+  *(2026-10-29 note, NUM-2; the bullet above is kept as filed. It overstates what this check resolves. On {0,1}
+  atoms at n = 80 the test hangs on one integer, the step at which an all-zero run first crosses `1/δ`: at
+  α = 0.05 it rejects exactly when the first 66 atoms are all 0, so the shipped level at this null is
+  0.95^66 = 0.0339, and the 0.08 tolerance has no power against moderate inflation — a `1/(2δ)` bar (exact level
+  0.0756 > δ) scores 42/800 and passes, and a λ computed from the current atom scores the identical 17/800. Of the
+  three mutations named, `1/√δ` (127/800) and the uncapped λ (111/800) are caught here. Dropping the recentering
+  offset is not: read as `α − Z → −Z` it never lets the wealth rise (0/800) and is caught by
+  `test_wsr_power_under_clear_margin`; read as the `+ α` of `influence_atoms` it is caught by
+  `test_atom_range_and_empty_site_neutral`. The same test now also pins the crossing steps exactly (`rng=None`): 66
+  and 33 for an all-zero run at α = 0.05 and 0.10, no recovery from one loss among the first 66 atoms at
+  α = 0.05, and recovery at step 58 from a loss at step 20 at α = 0.10. Those pins go red under the `1/(2δ)` bar
+  and the current-atom λ.)*
 - The baseline walk's `break` — fixed-sequence FWER on that path — is **caught**.
 - The frozen constants, literally pinned by `tests/test_constants.py` including the full `TAU_GRID` array.
 - Determinism: byte-identical reports in one process, across processes, under different `PYTHONHASHSEED`, and after
@@ -919,6 +956,8 @@ Everything above, plus:
     all-NaN gap ranking (V22), the gated-report key set (V25).
 17. **Replace the percentile box with a finite-sample cluster bound** (V8), which also retires the last asymptotic
     step in the chain.
+    *(2026-10-29 pointer: for a pool declaring ten or more target sites the q interval is a fourth percentile
+    bootstrap, unprobed by `experiments/out-bbse-probe/`; it needs the same replacement.)*
 
 ---
 
@@ -928,3 +967,468 @@ The procedure is correct and the certificate overclaims: `certgate` proves a bou
 risk **averaged across sites** and prints it as a bound **at the target site**, which fails at twice δ under
 heterogeneity the design explicitly anticipates; separately, the BBSE mode omits the target pool's sampling error and
 issues genuinely invalid certificates at up to three times δ. Both are fixable without touching the betting core.
+
+---
+
+## Mathematical-exactness audit, 2026-10
+
+Date: 2026-10-29; recorded in `SPEC.md` as PIN AMENDMENT 2026-10-29. A mathematical audit checked every formula,
+constant, quoted number and stated property in `certgate/`, `experiments/`, `tests/`, `examples/` and the documents
+against the code and the released artifacts. About 150 precision defects were confirmed, each by independent skeptic
+verification. None invalidates a released certificate. Unlike the RESOLUTION list above, everything here landed after
+the freeze and after submission; a change that can alter what is certified is labelled post-hoc.
+
+No file under `experiments/out*/` was regenerated. A released artifact that keeps a wrong number or note is listed
+under *Errata* at the end of this section, and corrected values go to new post-hoc sidecar directories:
+`experiments/out-e6-composition/` (E6 BBSE-implied composition), `experiments/out-e8a-rescore/` (E8 comparators
+scored against the exact population `R_M`), `experiments/out-e9-exact/` (closed-form estimands behind the paper's
+§4.14), `experiments/out-derived-r2/` (corrected re-derivation; `out-derived/` stays as released) and
+`experiments/out-eicu-composition/` (eICU composition and the exact `S_aux` margin, from the restricted extract).
+The corrections to the paper, METHODS, SPEC and README for the same ids are made in those documents in the same
+pass; this section records code, tests and artifacts. Ids are the audit's own (`CORE-`, `BBSE-`, `NUM-`, `FNR-`, `PROBE-`, `EICU-`,
+`DOCS-`, `PAPER1-`/`PAPER2-`, `explain-`, `reliability-`, `synthetic-`, and `GAP-` for the coverage-gap round);
+ids that name one defect share a line. These are the 2026-10 audit's ids; its BBSE-1 to BBSE-4 are unrelated to the
+earlier aliases V2 = BBSE-1, V8 = BBSE-2, V13 = BBSE-3 and V14 = BBSE-4 above, and the dated notes above cite them as
+'2026-10 BBSE-n'. Test citations are `tests/<file>::<test>`.
+
+### Behaviour changes
+
+- **NUM-1 — FIXED, post-hoc (certified path).** `fit_bbse` had no cluster floor on `S_aux`. With one site carrying a
+  class, every valid resample reproduces that rate's point estimate, so the (c0, c1, π_s) box had zero width, passed
+  the degenerate-bootstrap check, and `run_certgate` could certify on it. `fit_bbse` now declines
+  `bbse-aux-clustering` when fewer than `BBSE_MIN_AUX_SITES = 10` `S_aux` sites carry a positive record, or fewer
+  than 10 carry a negative one. The count is per class because `c1` resamples only across positive-carrying sites
+  and `c0` only across negative-carrying ones; a count of record-carrying sites would admit ten sites with positives
+  in one, or one site padded with empty labels. The check sits after `bbse-target-clustering` and before any
+  resampling, draws no random number and keeps the 17-key diagnostics, so every fit above the floor is
+  byte-identical. The constant is module-local to `certgate/shift.py`, because `constants.py` is the a-priori
+  pre-extract surface (the `reliability.MIN_SITES_FOR_CI` precedent), and it takes `BBSE_MIN_TARGET_SITES`' value
+  rather than a tuned one. No released fit moves, and this is evidenced: a replay of every synthetic label-shift
+  stream found at least 28 `S_aux` sites carrying each class, and a 20-re-split eICU re-run on the restricted extract
+  (36 auxiliary hospitals), made with the floor in place, reproduced every released eICU table and JSON exactly
+  except the sanctioned composition fields, all 20 released BBSE fits included. The eICU per-class count itself is
+  in no released aggregate; the re-run is the evidence that the floor did not fire. The floor removes the
+  degenerate regime only; the box's finite-cluster under-coverage above it is V8 / Rec. 17 and is unchanged. With
+  the floor in place `bbse-degenerate-bootstrap` is practically unreachable and stays as defence in depth. Pinned by
+  `test_shift.py::test_few_aux_sites_decline_bbse_aux_clustering` (1, 3 and 9 sites, a one-site split padded with
+  empty labels, twelve record-carrying sites with positives in one, and twelve with negatives in one all decline;
+  ten sites fit), `test_pipeline.py::test_one_site_aux_declines_bbse_not_the_run` and
+  `test_constants.py::test_bbse_min_aux_sites`. `test_shift.py::test_degenerate_ten_site_pool` (formerly `test_degenerate_three_site_pool`) and
+  `::test_bootstrap_shortfall_declines_not_reduced_quantile` (V6 #10's pin, name kept) moved to ten-site pools and
+  lower the floor by monkeypatch, so the bootstrap guard behind it stays exercised.
+- **BBSE-1 — FIXED (diagnostic, not the certificate).** `explain.composition`'s BBSE-implied true-class view
+  multiplied each answered record's head odds by `rho_point`, whose denominator is the `S_aux` prevalence, while the
+  logistic head's odds carry the `S_train` prevalence. The multiplier is now
+  `rho_point · odds(pi_source) / odds(pi_train)` = odds(π̂_t)/odds(π_train), with `pi_source` clipped to
+  [`PI_CLIP`, 1 − `PI_CLIP`] as `rho_box_interval` clips it. `rho_point` without both priors raises `ValueError`
+  (`reason=missing-prior`), a `pi_train` outside (0, 1) raises (`reason=bad-prior`), and `bbse_true_class` gains
+  `odds_multiplier`, `pi_source` and `pi_train`. `build_report` takes `pi_train`, which `run_certgate` passes as
+  `mean(train.y)`; `run_synthetic.run_E6` passes both priors. The certification weights, the walk orders and the
+  estimated tier keep `rho_point` unchanged. Pinned by `test_explain.py::test_composition_bbse_divides_out_the_train_prior`,
+  `::test_composition_bbse_view_requires_both_priors`, `::test_composition_three_tagged_objects` and
+  `test_pipeline.py::test_composition_three_way_whenever_bbse_fit_holds`. Released values: *Errata* 1–2.
+- **reliability-11 — FIXED (post-hoc panel; the one sanctioned code divergence from the srp port).**
+  `calibration_pair` topped up `separable` and `single-class` resample refits, which deletes the infinite tail that
+  `truncated-resamples` exists to protect, and still reported `ok`. Those refits now count toward
+  `truncated-resamples`, as `coef-out-of-range` refits already did. `PANEL_DICT_SHA256` is unchanged, every released
+  calibration block (126 of them) is `ok` with no top-up, so no released panel can move, and the certified path does
+  not import the module. Pinned by `test_reliability_panel.py::test_separable_and_single_class_refits_truncate_rather_than_top_up`
+  and `::test_panel_dict_digest_pinned`.
+- **CORE-9, BBSE-6 — FIXED (diagnostic).** Under BBSE deployment `rm_vs_unweighted` compared a ρ-weighted `R_M`
+  with an unweighted record error, so the gap mixed class reweighting with the influence cap. `unweighted_risk` is
+  now Σ w·ans·err / Σ w·ans under the same deploy-mode weights, so the gap isolates the M-cap; under baseline
+  (w = 1) it is bit-identical. Pinned by `test_report_estimated.py::test_rm_gap_isolates_the_influence_cap_under_bbse_weights`.
+- **NUM-13 — FIXED.** `model._sigmoid` warned, or raised under strict floating-point settings, at extreme logits.
+  Its `errstate` now silences overflow, underflow and invalid; the output is bit-identical. `reliability._sigmoid`'s
+  docstring no longer claims a naive form would abort. Pinned by `test_explain.py::test_sigmoid_is_silent_and_exact_at_extreme_logits`.
+- **explain-13, EICU-11 — FIXED (code only).** `run_eicu` re-scored the fresh-pool `R_M`, the per-site exceedance
+  fraction and the abstention ranking at `round(tau, 6)`, one ulp from the deployed grid value at six grid points.
+  `_eval_rung` now carries `tau_raw`, the deployed float64 τ, for all re-scoring; the tables still print the rounded
+  τ. `rescore_e9a` snaps the CSV's 2-dp τ to the `TAU_GRID` double; a scratch re-run matched the released
+  `E9a_rescore.csv` byte for byte on the scoring columns. No released number moves. Pinned by
+  `test_eicu_run.py::test_pooled_rescoring_uses_the_raw_deployed_tau`.
+- **GAP-unreviewed-tests-5 — FIXED.** No test pinned the registered failure criteria F-A to F-E, and F-B and F-D
+  leg 3 compared rounded values with their thresholds. `_failure_criteria` now compares exact values: F-A on
+  n_exceed/n_cert, F-B on the mean of n_answered/n_target, and F-D on unrounded row flags (`rm_fd_alarm`,
+  `leak_auc_alarm`, `leak_ablation_alarm`), which are not CSV columns. The displayed coverage is byte-identical on
+  every released `EICU_pooled.csv`. Pinned by `test_eicu_run.py::test_failure_criteria_thresholds_strictness_and_operative_row`.
+- **EICU-12 — FIXED (settlement and derivation code).** `settle_predictions` and `derive_fixpass_numbers`
+  departed from the registered P3, P4 and P6 rules in ways the released data never exercised. P3's falsification
+  rule is now checked on every pool at both rungs (BBSE covering without baseline, or `bbse:certified-not-covering`);
+  P4 counts one ranking per re-split, at the operative rung, with the registered matcher (`aps_present`,
+  `apv_present`, or an `aps_*` / `apv_*` `__missing` sibling); P6 scores the mean coverage at each re-split's
+  operative rung; P2 tolerates an uncertified re-split. `fig_eicu_abstention_drivers.load_rankings` keeps one
+  ranking per replicate. No released verdict changes. Pinned by `test_sidecars.py::test_settle_p3_rule_reads_per_site_pools_and_both_rungs`,
+  `::test_p4_matcher_is_the_registered_set`, `::test_p4_counts_one_ranking_per_replicate`,
+  `::test_settle_p6_scores_the_registered_mean`, `::test_settle_p2_tolerates_an_uncertified_resplit`,
+  `::test_derive_sens_decline_reasons_are_counts` and `test_eicu_run.py::test_abstention_figure_reads_one_ranking_per_replicate`.
+- **EICU-2, EICU-13 — FIXED.** `derive_fixpass_numbers` looked for the seven columns appended on 2026-09-04 in
+  `out-rev2/EICU_pooled.csv`, which never carried them, and took three ratios from intermediates already rounded for
+  display. It now reads `out-rev2/EICU_comparator.csv` (`rev2.comparator_new_columns`, refusing a comparator file
+  without them with `reason=rev2-columns-missing`) and rounds only its outputs; its docstring counts seven pinned
+  values, not six. Its default output is `experiments/out-derived-r2/`, and `out-derived` joined `FROZEN_DIRS`.
+  Pinned by `test_sidecars.py::test_derive_reads_rev2_comparator_columns`,
+  `::test_rev2_sections_refuses_comparator_without_appended_columns`, `::test_derive_rounds_only_outputs` and
+  `::test_derive_refuses_frozen_targets`. Released values: *Errata* 3.
+- **reliability-1 — FIXED.** `panel_confusion_tables._agg` took medians of 4-dp per-replicate rates and rounded
+  again; it now summarises the exact count ratios, rounded once, with a ratio self-check. No released artifact stores
+  these medians. Pinned by `test_sidecars.py::test_confusion_table_summary_rounds_exact_ratios_once`.
+- **PROBE-3 — FIXED (probe script).** `probe_bbse_coverage` labelled a fit clip-bound when `rho_hi > 100`, but five
+  of the eleven fits so labelled never touch the π_t clip. `CLIP_BOUND_RHO` is gone; `_rho_hi_clip_bound` flags a fit
+  when a (q, c0, c1) box corner implies π_t above 1 − `PI_CLIP`, with `rho_box_interval`'s arithmetic. A re-run
+  would emit a `rho_hi_clip_bound` column and a `clip_bound_rule` key; the module docstring records the released
+  run's figures. `out-bbse-probe/` is now in `FROZEN_DIRS`, so the probe refuses its released directory and a re-run
+  needs `--out` pointing elsewhere. Pinned by
+  `test_sidecars.py::test_probe_clip_bound_reads_the_box_not_a_rho_hi_threshold`. Released values: *Errata* 4.
+- **explain-5 — FIXED (dashboards).** The threshold explorer and the histogram used 4-dp-rounded scores and
+  floating-point bin edges, so they could disagree with the deployed rule. `build_dashboard` now emits integer
+  histogram counts split by the deployed float64 mask and `explore_answered` counts, and the payload no longer
+  carries `all_scores`. Both committed pages were re-rendered. Pinned by
+  `test_explain.py::test_dashboard_histogram_and_explorer_follow_the_deployed_rule`.
+- **explain-6 — FIXED (dashboards).** The abstention-profile panel ranked by the signed gap, not |gap|, and printed
+  the synthetic "no stable driver" caution on eICU builds. The payload carries the library's `gap_ranking` and the
+  panel takes its top 14; the caution names the synthetic null as synthetic. Pinned by
+  `test_reliability_panel.py::test_dashboard_profile_ranks_by_abs_gap`.
+- **GAP-example-builders-1, -2, -3, -4; GAP-estimand-wording-all-surfaces-3, -6 — FIXED (dashboards).** The
+  committed mock page deployed `round(tau, 6) = 0.83` rather than the certified grid value `TAU_GRID[14]`; it now
+  deploys the double and rounds for display only. The eICU page always cross-checked against the replicate-0
+  primary-arm certificate; off replicate 0 or off the primary arm it now says the check is unavailable. Under BBSE
+  deployment the eICU banner's answered risk names its reweighting. Both certificate banners describe `R_M` as
+  M = 100 influence-weighted, state the per-rung 1 − δ and the joint level over the ladder
+  (`joint_confidence_over_ladder = 0.9`), and carry `deploy_mode` and `tagged_assumption` in place of `mode`.
+  Pinned by `test_eicu_mock.py::test_mock_page_deploys_the_unrounded_certified_tau`,
+  `::test_mock_page_banner_carries_selected_claim_joint_level`, `::test_committed_mock_dashboard_certificate_states_joint_level`,
+  `test_eicu_run.py::test_dashboard_skips_cross_check_off_replicate0_or_off_primary` and
+  `::test_dashboard_answered_risk_names_bbse_weighting`.
+- **synthetic-10 — FIXED (stdout only).** `panel_s2_tables.cap_facts` reported only a Monte Carlo share of sites
+  above M; it now also emits the closed form `share_sites_above_M_exact` (0.896). `data.py` states the size draw as
+  floor(clip(exp(N(size_mu, size_sigma²)), size_lo, size_hi)). Pinned by `test_experiments.py::test_cap_share_closed_form`.
+
+### Guarantee text (exact-string pins changed under the SPEC amendment)
+
+- **BBSE-2, DOCS-10 (audit unit multisite-q) — FIXED.** For a pool declaring ten or more target sites the q
+  interval is a fourth percentile bootstrap, and the documents counted three asymptotic intervals. The BBSE box clause now ends "…the q_target
+  interval is finite-sample Clopper-Pearson for single-site pools and an asymptotic percentile cluster bootstrap for
+  multi-site pools." The `BBSEFit`, `_q_interval` and `fit_bbse` docstrings state which rate q names: the declared
+  site's own rate for a single-site pool, the record-pooled rate of the target-site population for ten or more
+  declared sites. Audit Monte Carlo (SimConfig defaults, base rate 0.22, the probe's fixed head; not a released
+  artifact): Clopper–Pearson on the pooled count misses the site-population rate at 0.42–0.61 for K = 10–40 against a
+  nominal 0.00625, and the declared sites' own rate at ≤ 0.0058; the bootstrap misses the site-population rate at
+  0.015–0.06 (largest at K = 10) and the own rate at ≤ 0.001; inside `fit_bbse` (n_aux ∈ {36, 74, 240},
+  K ∈ {10, 24, 40}, 200–300 fits per cell) the four-parameter box misses at 0.045–0.11 against 0.025, while
+  [ρ_lo, ρ_hi] covered the population odds ratio in 2,398 of 2,400 fits and the declared pool's in all. These
+  ranges carry Monte Carlo error of about ±0.01. A multi-site probe sidecar is deferred. Pinned by
+  `test_report.py::test_guarantee_statement_frozen_both_modes`, `::test_guarantee_statement_frozen_bbse_only` and
+  `test_shift.py::test_multi_site_q_interval_targets_the_site_population`.
+- **BBSE-3 — FIXED.** The BBSE rows said the risk is reweighted to the target class prevalence, but ρ takes its
+  source odds from the record-pooled prevalence while `R_M` weights sites by influence. BBSE rows now close: "Under
+  label shift the odds ratio rho takes its source odds from pi_source, the record-pooled source prevalence, while
+  the estimand weights sites by influence, so the reweighted risk is at the target class prevalence exactly where
+  the record-pooled and influence-weighted source prevalences coincide, and otherwise at the prevalence whose odds
+  are rho times those of the influence-weighted source prevalence." Pinned by the two frozen BBSE strings,
+  `test_report.py::test_bbse_rows_never_claim_a_shared_event`, and, for the identity, by
+  `test_shift.py::test_bbse_reweighted_class_mix_is_influence_weighted`.
+
+### Docstrings and comments in `certgate/` (no behaviour change)
+
+- **CORE-1, PAPER1-9, PAPER2-11.** The walk order is by the coverage- and influence-weighted atom margin
+  α − mean_c Z_c = mean_c (g_c/M) a_c (α − e_c), largest first; it need not be monotone in τ or open at the highest
+  threshold. `certify.py` module index and `walk_order`. Pinned by `test_certify.py::test_walk_order_key_is_atom_margin`.
+- **CORE-2, NUM-3, PAPER1-1, DOCS-2.** The information floor ln(1/δ)(1−α)/n was described as an impossibility. At
+  atom-unit margin m every valid level-δ test certifies with probability at most δ(1+m/(1−α))^n ≤ δ·exp(nm/(1−α));
+  certainty needs m ≥ (1−α)(δ^(−1/n) − 1), of which the floor is the first-order term. `margin_floor`'s formula is
+  unchanged: switching to the exact value would move released `feasibility` fields and two constant pins. Pinned
+  by `test_certify.py::test_margin_floor_is_a_first_order_lower_bound`. Registered protocol wording: dated erratum
+  in EICU-PROTOCOL.md §0.
+- **CORE-3, NUM-6.** `_feasibility`'s margin is max_τ cov·(α − risk)·E[g/M] with cov and risk pooled over `S_aux`
+  records — a record-pooled proxy for the atom-unit margin, which it equals only when the record-weighted and
+  g-weighted site averages coincide. Pinned by `test_pipeline.py::test_feasibility_margin_is_the_record_pooled_proxy`.
+- **CORE-4.** A neutral atom (value α) leaves the wealth unchanged but counts toward n and enters the running
+  (μ, s²), so it can move the outcome either way, never the validity; dropping neutral atoms would leave `R_M`
+  unchanged but make the atom count depend on τ. Pinned by `test_certify.py::test_neutral_atom_moves_bets_both_ways`.
+- **CORE-16.** E[Z] ≤ α ⟺ `R_M` ≤ α needs E[g_c a_c] > 0; when nothing answers, `R_M` is 0/0, every atom is α and
+  the test cannot certify. `influence_atoms` docstring and the `run_e9b_positives` analogue ("whenever some site
+  answers a positive"). Pinned by `test_certify.py::test_atom_range_and_empty_site_neutral`.
+- **CORE-13.** The bet's variance term is WSR's predictable plug-in s²_{t−1} = (WSR_S2_0 + Σ_{i<t}(z_i − μ_i)²)/t,
+  μ_i = (WSR_MU0 + Σ_{j≤i} z_j)/(i+1), in processing order — not "the running variance of the atoms processed so
+  far". Pinned by `test_certify.py::test_wsr_variance_is_predictable_plugin`.
+- **CORE-15, DOCS-13.** The permutation-stream construction (`SeedSequence([SEED, alpha index, mode, w1, w2])`,
+  w1 and w2 from a sha256 of the stream label, one permutation per test) is pinned by
+  `test_certify.py::test_certification_rng_matches_documented_construction`.
+- **CORE-5, PAPER1-10, BBSE-6.** The estimated tier estimates the record-pooled answered-set risk on `S_cal`, not
+  `R_M`. `_bootstrap_estimate` docstring; console label "[estimated] record-pooled answered-set risk on S_cal
+  (<mode>-weighted)"; the eICU dashboard helper and the derivation comment say the same. No τ-selection caveat was
+  added (adjudicated: it is disclosed and measured negligible). Pinned by
+  `test_report_estimated.py::test_estimated_point_is_record_pooled_not_rm`.
+- **CORE-10, reliability-7.** The rationale for top-up-or-decline: a resample with zero answered mass has no ratio,
+  and dropping it without a redraw quantiles the same conditional law from fewer draws; top-up restores the
+  Monte-Carlo count, and the shortfall rule (more than half of the default 2·n_boot attempts invalid) declines.
+  `_bootstrap_estimate` docstring and the `site_bootstrap_ci` comment; V21's rationale is annotated beside the LOW
+  table. Behaviour pinned as before by `test_report_estimated.py::test_bootstrap_estimate_tops_up_to_full_count`,
+  `::test_bootstrap_estimate_declines_on_topup_shortfall` and `test_reliability_panel.py::test_top_up_or_decline_attempt_arithmetic`.
+- **CORE-8, NUM-8, DOCS-17.** `_capped_influence_share` computes the record mass beyond the cap. Pinned by
+  `test_report.py::test_capped_influence_share_is_record_mass_beyond_cap`.
+- **CORE-12.** Across modes the report deploys the maximum over certifying modes of each mode's own deployed (lowest
+  certified) τ. Pinned by `test_report.py::test_deploys_max_of_mode_choices_not_union_max`.
+- **GAP-estimand-wording-all-surfaces-8.** `_baseline_walk`: "one set of certified thresholds shared by every target
+  pool", not "one certificate".
+- **NUM-5, BBSE-4, CORE-14, PAPER2-3, PAPER2-4.** `rho_box_interval` said a clipped endpoint "fails to certify"; a
+  clip-bound endpoint is tested like any other and can certify. The clip moves corner prevalences outside
+  [1e-4, 1 − 1e-4] to the nearer bound, so it can exclude odds ratios implied by box points whose target or source
+  prevalence lies outside that range; the interval covers the true ρ whenever the box covers the true parameters
+  and both true prevalences lie in that range. Pinned by `test_shift.py::test_rho_box_interval_clip_semantics`
+  (300 random gated boxes, and a box where the clip excludes the true ρ) and `::test_clip_bound_endpoint_can_certify`.
+  REDTEAM R4's "only widens" is annotated there.
+- **BBSE-8.** `shift.py` module docstring: the misspecification gate declines unless the q_t interval lies wholly
+  inside the box's [c0_lo, c1_hi]; the gap gate is worst-case (lo_c1 − hi_c0). Pinned by
+  `test_shift.py::test_gap_gate_is_worst_case_not_point` and `::test_q_interval_partial_overlap_misspecified`.
+- **DOCS-15.** `test_shift.py`'s module docstring counts six BBSE declines, `bbse-aux-clustering` included.
+- **explain-9, explain-10, explain-11.** `delta_*_min_l2` and `single_feature_delta_*` both carry the headroom; the
+  pinv rationale holds "up to float rounding" (under mean imputation a feature and its own `__missing` sibling are
+  uncorrelated on `S_train`); `declined` is the logit-space test and can disagree with the deployed float64 rule
+  within rounding of the bar. Pinned by `test_explain.py::test_declined_flag_is_the_logit_test_at_the_float64_bar`,
+  `::test_value_and_missing_sibling_are_uncorrelated_on_s_train` and the strengthened single-feature and dead-head
+  tests.
+- **explain-1, PAPER1-14, NUM-7, DOCS-5.** No code change: the counterfactual formulas use the head's coefficient on
+  standardized features, as the code always did; the documents now define it. Pinned by
+  `test_explain.py::test_cohort_gap_factorises_as_abs_standardized_coef` and
+  `::test_counterfactual_formulas_use_standardized_coef_under_nonunit_sd`.
+- **synthetic-4.** `model.py`: the score is thresholded on the fixed `TAU_GRID`, so a temperature change keeps ŷ and
+  the score order but moves the candidate answered sets; only validity is calibration-free. Pinned by
+  `test_certify.py::test_temperature_rescaling_keeps_labels_but_moves_grid_answered_sets`. Released note: *Errata* 7.
+- **synthetic-2, PAPER1-2, DOCS-1.** Conformance is the share of certified draws whose fresh-pool `R_M` exceeds α:
+  a conditional rate, scored on a finite-pool estimate of the population `R_M`; the betting test bounds the joint
+  probability of certifying while the population `R_M` is at or above α. `harness.py`, `_rm_on_pool` and `run_E1`
+  docstrings; the emitted `conformance_metric` string is unchanged. Pinned by
+  `test_experiments.py::test_rm_exceed_rate_is_conditional_on_certified_draws`.
+- **synthetic-3, PAPER1-16.** `exceedance_reference` is a homogeneous-batch yardstick that oscillates at small n and
+  tends to 1/2, not a bound under heterogeneity. Pinned by `test_harness.py::test_exceedance_reference_small_n_lattice`
+  and `::test_exceedance_reference_is_a_homogeneous_yardstick`.
+- **PROBE-6, synthetic-12.** `data.py`: "posterior log-odds", and `logit P(y=1 | x, c) = …`.
+- **reliability-6.** `_is_separated`: the pre-check is the only source of `separable`; data near the cut gives
+  `coef-out-of-range` and a wide gap crawls to `not-converged`. Pinned by
+  `test_reliability_panel.py::test_separation_precheck_names_the_defect_the_loop_cannot`.
+- **reliability-3.** Differencing two marginal interval endpoints ignores their dependence, is typically far wider
+  and has no coverage claim; it is not "strictly wider". Pinned by `::test_brier_difference_can_equal_endpoint_difference`.
+- **reliability-4, NUM-9.** `skill_contrast`: answered_minus_all = w_d · answered_minus_declined − G with G ≥ 0;
+  the inference that the least skill came from the gate's selection is removed. Pinned by `::test_skill_contrast_mixing_identity`.
+- **reliability-12, NUM-14, DOCS-16.** `clipped_logit` saturates at about ±13.8155096, inside
+  |logit| ≤ log(1/ε); five bins, not four, lie wholly below 0.5 for a probability-fed panel. Pinned by
+  `::test_clipped_logit_saturation_value` and `::test_the_binned_quantity_is_predict_proba_not_score`.
+- **reliability-2, reliability-10.** The ECE's plug-in bias is an absolute-value term ≥ 0 plus −Cov(ece, N)/E[N],
+  of either sign; dated comments say how `notes[0]`, `notes[2]` and `WEIGHTING` should be read. Emitted strings are
+  unchanged. Pinned by `::test_ece_plugin_bias_sign_depends_on_site_size_gap_covariance`. Released notes: *Errata* 9.
+- **reliability-8, PAPER2-9.** The IRLS weight floor is a clamp and emits no status. Pinned by
+  `::test_irls_weight_floor_emits_no_status`.
+- **CORE-6, BBSE-7, PAPER2-2.** `N_BOOT` comment: at `CI_LEVEL = 0.95` each endpoint rests on about 50 tail draws.
+
+### Experiment scripts and tests (comments, docstrings, non-emitted strings, new pins)
+
+- **FNR-2, DOCS-3, FNR-8.** The shipped FNR atom's sign identity at FNR_M = E[g·fn/n] / E[g·ap/n] (SPEC's formula
+  had dropped the 1/n_c) is pinned on unequal site sizes either side of the cap by
+  `test_e9b_positives.py::test_shipped_fnr_atom_sign_identity`; the capped positive-count weight by the strengthened
+  `::test_positives_atoms_bounded_in_both_regimes`. `run_e9b_positives` says "i.i.d. draws", not "exchangeable
+  draws". Released README: *Errata* 6.
+- **FNR-4.** The positives arm's weight rationale: validity needs i.i.d. atoms in [0, 1] whose mean crosses b
+  exactly when the named estimand does; the requirement on the weight guards against a site factor that depends on
+  the site's own errors, like the truncation of SI A.3. `run_e9b_positives` docstring; `ESTIMAND_NOTE` unchanged.
+- **FNR-5.** On this generator FNR_M = FNR_M^+ at every τ, so the frontier gap is power, not estimand. Pinned by
+  `test_e9b_positives.py::test_fnr_estimands_coincide_on_generator`.
+- **FNR-1, DOCS-9, PAPER1-7.** b = 0.4 is not a negative control: FNR_M(τ) falls below 0.4 at high τ in most draws,
+  and all six positives-atom certificates at 0.4 hold against the closed-form estimand. `E9_FNR_LADDER` comment,
+  an erratum comment above the frozen E9 note, and the `run_e9b_positives` docstring. Pinned by
+  `test_e9b_positives.py::test_b04_certificates_hold_against_closed_form_estimand`. Released note: *Errata* 7.
+- **FNR-6, NUM-4.** The E9a rescore reweights the fresh pool to the declared pool's realised prevalence, a proxy for
+  the estimand the certificate names; `population_odds_ratio` is the nominal per-site multiplier
+  odds(0.22)/odds(0.095), not the record-pooled population ratio. Comments in `rescore_e9a` and
+  `derive_fixpass_numbers` (keys and emitted strings unchanged). `test_shift.py`'s pure-label-shift test now scores
+  the declared site's own odds ratio (1.886) rather than 2.687. Pinned by
+  `test_shift.py::test_rho_truth_is_the_declared_sites_own`, `::test_pure_label_shift_falsifiability_and_bbse` and
+  `test_sidecars.py::test_e9a_rescore_is_a_proxy_for_the_latent_prevalence_estimand`. Released files: *Errata* 5.
+- **synthetic-5, PAPER1-4, PAPER2-1.** Table S4 replays all 200 validity-grid draws; the six BBSE-deploying draws
+  enter at their baseline-walk threshold and only the self-check is restricted to the other 194. The e1 note string
+  in `derive_fixpass_numbers` is corrected. Pinned by `test_experiments.py::test_table_s4_rows_count_bbse_deploying_draws`
+  and `test_sidecars.py::test_e1_note_says_table_s4_replays_every_draw`. Released note: *Errata* 3.
+- **synthetic-6.** On the generator `R_M` has one population value at every M, so the M-sweep compares procedures on
+  one quantity. Pinned by `test_experiments.py::test_rm_population_value_is_m_invariant_on_generator`.
+- **synthetic-9, PAPER1-17.** The chance reference for E5's modal top-feature share over 186 draws and four
+  features is E[max share] = 0.288, not 0.25. Pinned by
+  `test_sidecars.py::test_e5_modal_share_chance_reference` and `::test_e5_chance_reference_in_paper_text` (which
+  checks that paper/draft.md quotes 0.288 at both places and no longer quotes the 0.25 chance level).
+- **synthetic-11, PAPER1-19.** 0.095 is the base rate of a site with zero random effect, not the prevalence; the
+  population prevalences are pinned by `test_sidecars.py::test_probe_truths_closed_form`.
+- **PROBE-1, BBSE-5.** `probe_bbse_coverage` docstring: the union bound needs only coverage of the declared site's
+  odds ratio, which box coverage implies; `implied_certificate_level` is the plug-in of the looser box-route bound,
+  not the level. Pinned by `test_sidecars.py::test_probe_release_level_reads_from_rho_coverage`. Released reading:
+  *Errata* 4.
+- **PROBE-2.** Each bootstrap interval misses at 1.2–4× its nominal rate and the joint miss is exactly the sum of
+  the parameter misses. Pinned by `test_sidecars.py::test_probe_joint_miss_is_sum_of_parameter_misses`.
+- **PROBE-4, PROBE-5.** Probe denominators (1,163 certifiable fits of 1,200; 384–391 of 400 per cell) and the
+  190-site arm's 33 `S_aux` sites, in docstrings and comments.
+- **PAPER2-15; GAP-seed-stream-aliasing-1, -2, -3.** The E6 reliability panel self-seeds from `PANEL_SEED`, not
+  `SEED`; E5's replication stream `_rng(5, 0)` is the case-study stream `_rng(5)`; draw 0 of E2 sweep arm m is
+  anchor draw 100 + m; the probe's head stream `_rng(9, 2)` shares its entropy with `eicu_etl.site_split(replicate=2)`.
+  Comments and docstrings. Pinned by `test_experiments.py::test_seed_streams_alias_at_trailing_zero`; the panel seed
+  by the existing `test_constants.py::test_panel_schema_and_seed`.
+- **EICU-3, DOCS-6, PAPER2-7.** A dated comment above the P2 note in `settle_predictions` (string unchanged). Pinned
+  by `test_sidecars.py::test_p2_registered_basis_vs_settling_statistic`. Protocol: dated erratum to P2. Released
+  note: *Errata* 8.
+- **EICU-1.** A non-emitted comment in `exact_cis_section`: the `eicu_*` intervals are nominal over dependent units.
+  Released intervals: *Errata* 3.
+- **EICU-8.** `outcome_screen` decides the nine timing-unverified flags under the registered 0.75 rule; it bounds
+  their univariate AUC but cannot establish their timing. Comments in `eicu_etl` and `run_eicu`; protocol erratum
+  at §5.4a.
+- **explain-2.** `run_eicu`, above `EICU_FAITHFULNESS_LABEL`: the Gaussian conditional is exact only for jointly
+  Gaussian drivers. The label is unchanged.
+- **GAP-unreviewed-tests-3, GAP-eicu-mock-math-8.** `site_split`'s refusal messages describe a sufficient floor, not
+  an impossibility (148 sites yield 51 calibration clusters; the largest failing total is 145, which yields 49);
+  reason tags unchanged. Pinned by `test_eicu_etl.py::test_site_split_refuses_below_the_sufficient_site_floor`
+  (formerly `test_site_split_refuses_a_population_it_cannot_calibrate`).
+- **GAP-unreviewed-tests-6, -7.** `EICU_MAX_OUTPUT_LEN`: the length cap does not catch short per-hospital record
+  arrays; only the forbidden-key leg does, and only under a listed key; `eicu_etl.site_split` describes
+  `fixture_etl`'s three pairwise asserts. Protocol errata at §15 and §7.
+- **GAP-unreviewed-tests-4.** The end-to-end honesty assertion is a Wilson gross-violation screen of the
+  record-pooled error, not a validity check (`_eicu_helpers`, `test_eicu_run`, `test_fixture_integration`).
+- **GAP-unreviewed-tests-1, -2.** `test_comparators.py::test_t_and_bootstrap_pinned_and_every_ucb_above_the_mean`
+  tests `t_ucb` and `site_bootstrap_ucb` on non-degenerate input, and a single atom's `hoeffding_ucb` is pinned as
+  inf; three `test_experiments` helper tests gained the cases that separate them from plausible wrong versions
+  (denominator, tie strictness, deploy rule, g/n weighting).
+- **EICU-10, DOCS-12, GAP-unreviewed-tests-8.** Attrition: 1,751 blank-outcome stays and 618 adult-step stays;
+  137,773 patients remain, 1.14% below the reference count.
+  `test_eicu_etl.py::test_reference_check_passes_when_the_constants_match_the_corpus` docstring, checked against the released `EICU_attrition.csv` and `EICU_preflight.json`.
+- **DOCS-7, DOCS-2; GAP-eicu-mock-math-1 to -7, -9; GAP-example-builders-7.** Mock-corpus wording in `eicu_mock`,
+  `explain_dashboard_mock`, the tests and `test_constants` comments: the exact population AUC is 0.748 for the
+  Bayes-optimal score and 0.715 for a score recovering z alone (Φ(B/√2) = 0.726 is the rare-event approximation);
+  the superpopulation prevalence is 9.25%; the head reaches 0.60 at the small arm and 0.68–0.69 at full scale; the
+  declines at the frozen sizes are measured, not implied by the floor, which is in atom units; n_carrying = 77 is the
+  crossing only when every calibration site has at least 100 stays, and `site_split` first reaches it at 213
+  hospitals (214 gives 76; every size from 215 up at least 77); at 900 hospitals / 90,000 stays the crossing is about
+  134, while a 1,500-hospital, 30,000-stay mock declines. Constants and literals are unchanged. Pinned by
+  `test_eicu_etl.py::test_leak_auc_ceiling_sits_just_above_the_mocks_bayes_optimal_auc` (exact quadrature 0.7476)
+  and `test_constants.py::test_eicu_mock_constants_pinned` (the split arithmetic behind the `site_split`
+  breakpoints). Protocol: erratum to §14.1 step 4.
+- **GAP-example-builders-5, -6, -8.** The worked example's comments (the certified quantity is `R_M`; the temp CSVs
+  total about 14 MB) and `test_realdata_path`'s docstring (the pruned int-label variant is no longer claimed).
+- **explain-3, explain-12, NUM-10, synthetic-8.** New or strengthened pins:
+  `test_eicu_etl.py::test_imputed_rows_standardize_to_zero`; `test_explain.py::test_counterfactual_flips_at_float_hostile_thresholds`
+  now derives the float-hostile set from `TAU_GRID`; `::test_single_feature_ranking_is_abs_coef_order_and_off_top_equal_budget_never_flips`.
+- **NUM-2.** `test_certify.py::test_wsr_boundary_type_I_at_n80` keeps its 800-rep loop and now also pins the exact
+  crossing steps; see the note under *What is verified*.
+- **NUM-11, NUM-12, PAPER1-13, PAPER2-16, NUM-15.** Test docstrings: the uncapped atom in
+  `test_mcap_supplies_ville_boundedness` reaches 4.55, not ~3.05 (now asserted); `wilson_lcb(3, 20)` is 0.0616, not
+  ~0.056 (asserted); the Clopper–Pearson exact miss in `test_q_interval_propagation_regression` is 0.0044; the
+  truncation counterexample's 17.5% is the record-weighted risk and `R_M` = 200/3800 (both asserted).
+- **PAPER2-10.** `test_constants.py::test_report_bootstrap_resamples_pinned` pins the report bootstrap's 500
+  resamples and its call site.
+- **DOCS-11.** `test_certify.py::test_weight_cap_divides_atom_margin` pins the mechanism behind the covariate-shift
+  scope cut: weights clipped at C enter the atoms as w/C, which divides the atom margin by C. Protocol: erratum to
+  §12.2 ("provably").
+- **synthetic-1.** E8's comparators are re-scored post hoc against the exact population `R_M` by the new
+  `experiments/rescore_e8a.py` into `experiments/out-e8a-rescore/`; the frozen E8 artifacts are unchanged. Pinned by
+  `tests/test_sidecar_e8a.py` (`::test_replays_frozen_draw_exactly`, `::test_closed_form_matches_record_monte_carlo`,
+  `::test_released_sidecar_carries_pinned_counts`, `::test_refuses_released_output_directories`).
+- **BBSE-1 (E6 sidecar).** `experiments/rescore_e6_composition.py` writes the corrected E6 composition view into
+  `experiments/out-e6-composition/` (*Errata* 1). Pinned by `tests/test_sidecar_e6_composition.py`.
+- **FNR-1, FNR-5, FNR-6 (E9 sidecar).** `experiments/rescore_e9_exact.py` writes the closed-form named estimands
+  behind the E9 certificates into `experiments/out-e9-exact/` (*Errata* 5). Pinned by
+  `tests/test_sidecar_e9_exact.py`.
+- **BBSE-1, CORE-3 (eICU sidecar).** `experiments/eicu_composition_margin.py` replays the released primary arm on
+  the restricted extract, refuses to write unless the replay matches the release, and writes the corrected
+  BBSE-implied composition (published split 0.0307 released, 0.0323 corrected, oracle 0.0458) and the exact
+  `S_aux` atom-unit margin into `experiments/out-eicu-composition/` (*Errata* 2). Pinned by
+  `tests/test_sidecar_eicu_composition.py`.
+
+### Ledger annotations made in this pass
+
+Dated notes, with the annotated text kept as filed: the Critical 2 line of RESOLUTION (the probe's level), the
+Rec. 17 line and recommended action 17 (the multi-site q bootstrap), V8 ("closer to ~0.92"), V21's rationale
+(after the LOW table), and the WSR bullet of *What is verified* (NUM-2). REDTEAM.md carries dated notes on R4
+(both entries), the refuted R3 entry, N1 and the estimand-atoms lens.
+
+### Errata — released artifacts that keep a wrong number or note
+
+The files below are byte-frozen and stay as released. A corrected value is given only where it is read from
+released data or a post-hoc sidecar.
+
+1. **`experiments/out/E6_composition.json`**, `composition.bbse_true_class` (BBSE-1). `positive_fraction` 0.0858
+   (0.0857576903) and `expected_n_positive` 2,170.87 were computed with the `S_aux` prior. With the training
+   split's prior divided out they are 0.0913 (0.0913101048) and 2,311.42, odds multiplier 0.948; the corrected
+   view is in `experiments/out-e6-composition/`.
+2. **eICU BBSE-implied composition** (BBSE-1): `diagnostic.composition.bbse_true_class` in `EICU_certificate.json`
+   (0.0307 on the published split) and `composition_three_way[*].bbse_implied_positive_fraction` in
+   `EICU_diagnostics.json`, in `experiments/out/`, `out-panel/`, `out-sens/`, `out-subgroups/`, `out-faithfulness/`
+   and `out-rev2/`; and `three_way_composition` (`bbse_implied`, `expected_n_positive_bbse`,
+   `bbse_transfer.understatement_of_answered_positive_load`, `per_replicate`) in
+   `experiments/out-derived/fixpass_numbers.json`. All carry the same prior error. The training split's prevalence
+   is in no released artifact, so the corrected value cannot be recovered from them; it is in
+   `experiments/out-eicu-composition/`, from the restricted extract. Certified fields are unaffected.
+3. **`experiments/out-derived/fixpass_numbers.json`**, superseded by `experiments/out-derived-r2/fixpass_numbers.json`:
+   - `rev2.pooled_new_columns` = "no new columns found" read the wrong file (EICU-2). The seven columns are in
+     `out-rev2/EICU_comparator.csv`: head AUC 0.8593 on the pool and 0.8098 on the answered set, APACHE-IVa AUC
+     0.8601 on the pool. `_run.inputs` hashes `out-rev2/EICU_pooled.csv` in place of the comparator file.
+   - Double rounding (EICU-2): `three_way_composition.bbse_transfer.true_odds_ratio_vs_pi_s` is 0.984, not 0.983;
+     `fairness.age_gradients.answered_err_ratio` is 3.88, not 3.89; `rev2.faithfulness_spearman.mean` is 0.4848,
+     not 0.4849.
+   - `e1.note` says the six BBSE-deploying draws are excluded from Table S4. They are not: Table S4 replays all 200
+     draws, the six at their baseline-walk threshold; the counts (194 of 200) stand (synthetic-5).
+   - `e9a_frozen.population_odds_ratio` 2.687 is the nominal per-site multiplier odds(0.22)/odds(0.095), not
+     the record-pooled population odds ratio, which is 2.6013 (`out-bbse-probe/BBSE_probe.json`) (NUM-4, FNR-6).
+   - `p4_signed.rule` names "an *__missing sibling"; the registered matcher, and the corrected code, take
+     `aps_*` / `apv_*` `__missing` siblings only. The verdict is unchanged (EICU-12).
+   - `exact_cis` `eicu_*` entries and `fairness_cells_8_of_570` are Clopper–Pearson intervals over dependent units
+     (pools and cells of one re-split share its head and threshold, hospitals recur across re-splits, the re-splits
+     partition one hospital list): nominal only (EICU-1).
+   - The probe headline copied into the derivation reads the box-route plug-in as an "implied level" (*Errata* 4).
+   - `_run.inputs` records sha256 `059e8e…` for `out-settled/EICU-PREDICTIONS-SETTLED.json`, and
+     `sidecars.settled.run` an earlier stamp: the settlement file was re-emitted after the derivation was written
+     (2026-09-07T01:29:12+00:00), with the same headline, so the recorded hash does not match the committed file.
+4. **`experiments/out-bbse-probe/`** (PROBE-1, BBSE-5, PROBE-3).
+   - The `implied_certificate_level` blocks of `BBSE_probe.json`, its headline, and `README.md`'s "The implied
+     certificate level is 1 − (measured box miss + δ_bet)" read a looser bound as the level. The union bound needs
+     only coverage of the declared site's odds ratio, which held in all 1,163 certifiable fits (exact 95% upper end
+     of the miss 0.0032, pooled; every per-cell bound at least 0.965), so in the probe's regime the level is at least
+     1 − (0.0032 + 0.025) = 0.9718; the box-route 0.928 (0.914 at the upper end of the pooled interval) charges every
+     box miss to the certificate. Outside that regime — multi-site pools, other heads, other auxiliary-site counts —
+     no released artifact measures the odds-ratio coverage (for multi-site pools, BBSE-2 above records an unreleased
+     audit Monte Carlo).
+   - `box_width_rho.n_clip_bound` 4, 3 and 4 (11 pooled) and `mean_excluding_clip_bound` 7.5922, 7.2638 and 6.4655
+     (7.106) counted `rho_hi > 100` as clip-bound. Against the clip flag the released CSV holds 2, 2 and 2 (6) and
+     mean widths 8.2248, 7.538 and 8.5153 (8.0908). The clip block's `rho_hi_clip_bound_above` key names the
+     superseded threshold.
+5. **`experiments/out-e9a-rescore/`** (`README.md`; `E9a_rescore.json` `estimand`) (FNR-6). `pi_target` is the
+   declared pool's realised prevalence, so `rm_rescored` and `rho_site` are proxies. The single-site
+   Clopper–Pearson box targets the site's latent prevalence: the exact named estimand of the three frozen-exceeding
+   rows is 0.0163, 0.0398 and 0.0792 against proxies 0.0175, 0.0408 and 0.0586, and it is within budget in all 44
+   single-site certificates; the k40 bootstrap targets the target-site population. `population_odds_ratio`
+   (2.6869) is the per-site multiplier odds(0.22)/odds(0.095); the pooled ratio is 2.6013
+   (`out-bbse-probe/BBSE_probe.json`), covered by the 1,200-site α = 0.10 single-site boxes in 16 of 20 (15 against
+   the fresh pools' realised ratio; the k40 boxes cover it in 47 of 47). The closed-form estimands are in
+   `experiments/out-e9-exact/`.
+6. **`experiments/out-e9b-positives/README.md`** (FNR-4, FNR-8). The weight rationale ("one fixed functional … the
+   estimand is fixed", lines 39–44) is superseded by the validity wording in `run_e9b_positives`, and "exchangeable
+   draws" (line 46) should read "i.i.d. draws". The E9b JSON's `ESTIMAND_NOTE` is consistent and stands.
+7. **`experiments/out/summary.md`**. The E8 block's `notes` (arm C: "temperature miscalibration is analytically a
+   no-op for the gate") is wrong: on the fixed `TAU_GRID` a temperature change moves the answered sets, the deployed
+   τ and coverage, and only validity is calibration-free (synthetic-4). The E9 block's `notes` ("0.4 is the built-in
+   always-refuses negative control") is wrong: 0.4 is not a negative control, and the shipped atom's 0 of 600 there
+   is a power limit (FNR-1, DOCS-9). Erratum comments sit above both strings in `run_synthetic.py`.
+8. **`experiments/out-settled/EICU-PREDICTIONS-SETTLED.md` and `.json`** (EICU-3, DOCS-6, EICU-12). P2's note "the
+   synthetic s_u = 0.5 arm gave 0.02" quotes E1's hard-violation rate; on `per_site_exceed_frac`, the statistic P2
+   settles on, that arm gave 0.055. The P4 clause label describes the broader matcher. No verdict changes; the
+   registered copies of the P2 text in `out/EICU-SUMMARY.md`, `out/EICU_preflight.json` and their `out-timing/`
+   twins are covered by the dated erratum to P2 in EICU-PROTOCOL.md §9.
+9. **Released reliability panels** (`experiments/out/E6_reliability.json` and every `EICU_reliability_panel.json`)
+   (reliability-2, reliability-10). `notes[2]`'s "positively biased" names only the absolute-value term of the
+   ECE's plug-in bias, whose net sign is not fixed; `notes[0]` and `WEIGHTING`'s "ratio of sums" holds for rates,
+   fractions, Brier scores and reliability points, while the ECE, the skill margin and the calibration fit are
+   functions of such ratios or pooled score equations, all record-weighted. The strings are hashed into
+   `PANEL_DICT_SHA256` and stay as emitted.
+
+The registered protocol text keeps its own errata, as dated blockquotes in EICU-PROTOCOL.md indexed in its §0.
+
+### Still open
+
+- Rec. 17: the percentile box, and for multi-site pools the q bootstrap, remain asymptotic. The NUM-1 floor admits
+  `S_aux` splits from ten sites per class, but the box's coverage has a released measurement only at 36, 42 and 74
+  auxiliary sites and a single declared target site; a post-hoc probe sidecar, written to a new directory, is needed
+  before any figure for fewer sites or for multi-site pools is quoted.

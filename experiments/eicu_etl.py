@@ -1168,7 +1168,10 @@ def outcome_screen(x_raw, meta, *, names=None):
     activetx above all, since active treatment versus comfort measures is
     decided during the stay and is adjacent to death by definition. Nothing in
     the DDL comments can settle that on a dataset whose sentinel convention the
-    DDL already gets wrong, so it is settled from the data instead.
+    DDL already gets wrong, so the screen decides it from the data instead,
+    under the registered EICU_FEATURE_AUC_REVIEW rule. That bounds each flag's
+    univariate AUC; it cannot establish measurement timing, so a weaker leak
+    through such a flag is not excluded (audit 2026-10 EICU-8).
 
     Returns an aggregate-only dict. Per feature: outcome prevalence by stratum
     (binary) or in the top versus bottom decile (continuous), the univariate
@@ -1661,7 +1664,8 @@ def build_raw(data_dir, *, arm="primary", strict_levels=True, verbose=True):
         res_seen[version][r] = True
         res_id[version][r] = sid
         # VARCHAR(50) holding a probability: float() first, then compare. A
-        # string comparison ('-1' > '0') is a bug. Ref: threat T-9.
+        # string comparison ('1e-05' > '0.5' lexically, though 1e-05 < 0.5) is
+        # a bug. Ref: threat T-9; audit 2026-10 GAP-eicu-mock-math-9.
         pv = _maybe_float(row["predictedhospitalmortality"])
         res_pred[version][r] = (np.nan if pv is None
                                 or pv == EICU_SENTINEL_MISSING else pv)
@@ -1961,9 +1965,9 @@ def site_split(site_raw, *, replicate=0):
     208 hospitals: rest 184 -> train 73 / aux 36 / cal 75, against
     MIN_CAL_CLUSTERS = 50, i.e. 50% headroom.
 
-    Disjointness is asserted pairwise. That is a deliberate deviation from
-    fixture_etl.site_split, whose assert not (a & b & c) is a triple
-    intersection and strictly weaker -- it passes on any two-way overlap.
+    Disjointness is asserted pairwise over all four sets, target included;
+    fixture_etl.site_split asserts the three train/aux/cal pairs and leaves
+    target disjointness to construction (audit 2026-10 GAP-unreviewed-tests-7).
 
     Keys are exactly ('train','aux','cal','target') and index arrays are
     dtype=int. Raises EicuError with reason=too-few-sites below
@@ -1973,9 +1977,12 @@ def site_split(site_raw, *, replicate=0):
     uniq = sorted(set(site_raw))
     if len(uniq) < EICU_MIN_TOTAL_SITES:
         raise _err("site_split",
-                   f"the 40/20/40 remainder cannot yield MIN_CAL_CLUSTERS="
-                   f"{MIN_CAL_CLUSTERS} calibration sites below "
-                   f"EICU_MIN_TOTAL_SITES={EICU_MIN_TOTAL_SITES} total sites",
+                   f"{len(uniq)} total sites is below the sufficient floor "
+                   f"EICU_MIN_TOTAL_SITES={EICU_MIN_TOTAL_SITES}, at and above "
+                   f"which the 40/20/40 remainder always yields "
+                   f"MIN_CAL_CLUSTERS={MIN_CAL_CLUSTERS} calibration sites "
+                   f"(the tight breakpoint is 146: 145 yields 49; the floor "
+                   f"keeps 3 sites of slack)",
                    len(uniq), reason="too-few-sites")
     rng = np.random.default_rng(
         np.random.SeedSequence([SEED, EICU_SPLIT_NAMESPACE, int(replicate)]))

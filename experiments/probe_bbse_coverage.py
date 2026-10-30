@@ -11,8 +11,8 @@ configuration, seeds and numbers were never put on the record, and the
 pointer to them was circular. This file is that probe, re-run so the record
 exists.
 
-The head is held fixed: one 208-site cohort is drawn and split on a stream
-of its own, the head fitted once, and its population confusion rates
+The head is held fixed: one 208-site cohort is drawn and split on the stream
+_rng(9, 2), the head fitted once, and its population confusion rates
 computed in closed form. Under the class-conditional Gaussian generator the
 head's decision logit is Gaussian within each class, so c_y = Phi(m_y / s)
 with m_y the class-conditional mean logit and s its standard deviation; a
@@ -35,21 +35,48 @@ travel with them.
 
 The implied certificate level follows the panel's decomposition. The
 certificate spends delta_bet = 0.025 on the betting test and delta_conf =
-0.025 on the box; if the box misses more often than its budget, the
-guarantee's level is 1 minus (measured box miss plus delta_bet), and the
-manuscript should say so rather than print 0.95. Two versions are reported:
-the measured miss rate of the four-parameter box, and the panel's own sum
-(three-parameter miss plus the q share plus delta_bet). Both come with the
-exact interval of a 400-fit estimate, because part of any shortfall here is
+0.025 on the box. The union bound consumes only the event that [rho_lo,
+rho_hi] covers the true odds ratio, so the level is at least 1 minus
+(P(rho miss) plus delta_bet); box coverage implies rho coverage (corner
+monotonicity, true pi_t inside the clip), so the level is also at least
+1 minus (P(box miss) plus delta_bet). implied_certificate_level is that
+second, looser bound with the measured miss plugged in -- a box-route
+reading, not the level; the rho coverage the first bound needs is reported
+beside it as rho_declared_site (audits PROBE-1, BBSE-5). Two versions are
+reported: the measured miss rate of the four-parameter box, and the panel's
+own sum (three-parameter miss plus the q share plus delta_bet). Only the
+first also carries a conservative level, from the upper end of the exact
+interval on its miss rate, which is estimated over the certifiable fits
+rather than all fits drawn (384 to 391 of each cell's 400, 1,163 of 1,200
+pooled, in the released run; audit PROBE-4). Part of any shortfall here is
 resolution: each percentile endpoint sits at the 0.3125% tail of 2,000
 resamples, about six draws, and BBSE_BOOT is a frozen constant this file
 reads and never changes.
 
 Run: python -m experiments.probe_bbse_coverage [--fits 400]
-        [--n-aux 36,42,74] [--out DIR]
+        [--n-aux 36,42,74] --out DIR
+     (the released out-bbse-probe/ is refused, so a bare run writes nothing)
 
-Writes BBSE_probe.csv and BBSE_probe.json into experiments/out-bbse-probe/.
+Writes BBSE_probe.csv and BBSE_probe.json into DIR; the released copy is
+experiments/out-bbse-probe/, frozen as released.
 The JSON carries a _run block (UTC, git sha; the probe reads no frozen file).
+
+A fit is clip-bound when the pi_t clip at 1 - PI_CLIP sets its rho_hi:
+some (q, c0, c1) corner of its box implies pi_t above 1 - PI_CLIP (the
+per-fit flag rho_hi_clip_bound). The released run in out-bbse-probe/ (_run
+utc 2026-09-05) predates the flag and counted rho_hi > 100 instead, which
+also took in five fits whose largest corner pi_t is 0.895 to 0.981 and
+whose rho_hi, 103 to 675, the clip never touched. Read against the flag,
+the released CSV holds 2, 2 and 2 clip-bound fits at n_aux = 36, 42 and 74
+(6 pooled), where the JSON's box_width_rho.n_clip_bound says 4, 3 and 4
+(11), and mean widths excluding them of 8.2248, 7.538 and 8.5153 (8.0908
+pooled), where mean_excluding_clip_bound says 7.5922, 7.2638 and 6.4655
+(7.106). Every certifiable fit clears 1 - PI_CLIP by at least 0.0065 in
+corner pi_t, so the CSV's six decimals settle each one. The manuscript
+quotes neither field, and its "handful of clip-bound fits" holds under the
+flag: the two in each cell carry 98.4 to 98.8% of that cell's summed
+width. The released files stay as they are (post-hoc note, 2026-10-29;
+audit PROBE-3).
 
 Refs: SPEC "shift.py"; METHODS 5 (the disclosure); fix-pass plan WP2; panel
 action item 19.
@@ -77,9 +104,13 @@ from experiments.derive_fixpass_numbers import (EXP_DIR, assert_not_frozen,
 from experiments.run_eicu import _write_json
 
 OUT_DIR = os.path.join(EXP_DIR, "out-bbse-probe")
-N_AUX_SWEEP = (36, 42, 74)                  # eICU S_aux at 190/207 sites; 208 x 0.2; eICU S_cal
+N_AUX_SWEEP = (36, 42, 74)                  # eICU S_aux at 207 sites (33 at the 190-site arm); round(208 x 0.2); eICU S_cal at 207 sites
 N_FITS = 400
-STREAM_HEAD = (9, 2)                        # arm index 2 of the E9 family: unused by run_synthetic
+# arm index 2 of the E9 family: unused by run_synthetic; the same entropy
+# [SEED, 9, 2] seeds eicu_etl.site_split(replicate=2), which only shuffles
+# real hospital labels, so nothing couples the two (audit
+# GAP-seed-stream-aliasing-3)
+STREAM_HEAD = (9, 2)
 STREAM_FIT = (9, 2, 1)
 MC_RECORDS = 200_000
 MC_TOL = 0.004
@@ -89,7 +120,6 @@ NOMINAL = dict(per_parameter=1.0 - LVL,
                joint_four=1.0 - BBSE_DELTA_CONF,
                certificate=1.0 - DELTA)
 PARAMS = ("c0", "c1", "pi_s", "q")
-CLIP_BOUND_RHO = 100.0                      # rho_hi beyond this: the PI_CLIP corner bound it
 
 POST_HOC = ("[MEASURE] POST-HOC (2026-09-04): coverage probe of the BBSE "
             "uncertainty box with the head held fixed; a diagnostic of the "
@@ -144,7 +174,7 @@ def _mc_confusion_rates(head, cfg, rng, n=MC_RECORDS):
 
 
 def fixed_head(cfg=None):
-    """One 208-site cohort on the probe's own stream; the head fitted once."""
+    """One 208-site cohort on stream _rng(9, 2); the head fitted once."""
     cfg = cfg or SimConfig()
     rng = _rng(*STREAM_HEAD)
     coh = draw_cohort(cfg, ANCHOR_SITES, rng)
@@ -168,6 +198,24 @@ def fixed_head(cfg=None):
 
 def _covers(ci, value):
     return None if ci is None else bool(ci[0] <= value <= ci[1])
+
+
+def _rho_hi_clip_bound(diag):
+    """Whether the pi_t clip at 1 - PI_CLIP set a certifiable fit's rho_hi.
+
+    rho_box_interval clips each corner's pi_t = (q - c0)/(c1 - c0) into
+    [PI_CLIP, 1 - PI_CLIP]. The top clip sets rho_hi exactly when some
+    (q, c0, c1) corner implies pi_t above 1 - PI_CLIP, that is when
+    q_hi > (1 - PI_CLIP) c1_lo + PI_CLIP c0_lo; rho_hi is then
+    (1 - PI_CLIP)/PI_CLIP over the odds of pi_s_lo (clipped into the same
+    range), about 1e5 here. rho_hi alone cannot tell: a corner pi_t near 0.9
+    already puts it near 100 with the clip idle. Read off the unrounded box,
+    with the same arithmetic as rho_box_interval; the gap gate keeps
+    c1 > c0 at every corner of a certifiable fit (audit PROBE-3).
+    """
+    return bool(max((q - c0) / (c1 - c0) for q in diag["q_ci"]
+                    for c0 in diag["c0_ci"] for c1 in diag["c1_ci"])
+                > 1.0 - PI_CLIP)
 
 
 def probe_fit(head, truth, n_aux, rep, cfg=None):
@@ -212,11 +260,13 @@ def probe_fit(head, truth, n_aux, rep, cfg=None):
     row.update(covers_joint3=joint3, covers_joint4=joint4)
     if fit.declined:
         row.update(rho_lo=None, rho_hi=None, rho_point=None, box_width=None,
-                   covers_rho_site=None, covers_rho_pop=None)
+                   rho_hi_clip_bound=None, covers_rho_site=None,
+                   covers_rho_pop=None)
     else:
         row.update(rho_lo=round(fit.rho_lo, 6), rho_hi=round(fit.rho_hi, 6),
                    rho_point=round(fit.rho_point, 6),
                    box_width=round(fit.rho_hi - fit.rho_lo, 6),
+                   rho_hi_clip_bound=_rho_hi_clip_bound(d),
                    covers_rho_site=bool(fit.rho_lo <= rho_site <= fit.rho_hi),
                    covers_rho_pop=bool(fit.rho_lo <= truth["rho_pop"]
                                        <= fit.rho_hi))
@@ -250,10 +300,11 @@ def summarise_cell(rows):
     cov_fit["rho_declared_site"] = _rate(fitted, "covers_rho_site")
     cov_fit["rho_population"] = _rate(fitted, "covers_rho_pop")
     widths = [r["box_width"] for r in fitted]
-    # A rho_hi in the hundreds or beyond means the q interval reached the
-    # box's c1 edge and the pi_t clip at 1 - PI_CLIP bound the corner: the
-    # interval is then wide rather than wrong, and the mean width follows it.
-    clip_bound = sum(1 for r in fitted if r["rho_hi"] > CLIP_BOUND_RHO)
+    # The mean width follows the fits whose rho_hi the pi_t clip at
+    # 1 - PI_CLIP set (rho_hi about 1e5; see _rho_hi_clip_bound). They are
+    # counted from the per-fit flag, not from a rho_hi threshold: rho_hi
+    # reaches the hundreds with the clip idle (audit PROBE-3).
+    clip_bound = sum(1 for r in fitted if r["rho_hi_clip_bound"])
     miss4 = cov_fit["joint_four"]["miss"]
     miss3 = cov_fit["joint_three_bootstrap"]["miss"]
     miss4_hi = (cov_fit["joint_four"]["miss_ci95"] or [None, None])[1]
@@ -281,7 +332,7 @@ def summarise_cell(rows):
                             n_clip_bound=clip_bound,
                             mean_excluding_clip_bound=round(float(np.mean(
                                 [w for w, r in zip(widths, fitted)
-                                 if r["rho_hi"] <= CLIP_BOUND_RHO])), 4)
+                                 if not r["rho_hi_clip_bound"]])), 4)
                             if clip_bound < len(widths) else None)
                        if widths else None),
         mean_rho_point=(round(float(np.mean([r["rho_point"]
@@ -338,7 +389,11 @@ def run(n_aux_sweep=N_AUX_SWEEP, n_fits=N_FITS, log=print):
                truth={k: (round(v, 6) if isinstance(v, float) else v)
                       for k, v in truth.items()},
                nominal=NOMINAL, cells=cells, pooled_over_n_aux=pooled,
-               clip=dict(pi_clip=PI_CLIP, rho_hi_clip_bound_above=CLIP_BOUND_RHO,
+               clip=dict(pi_clip=PI_CLIP,
+                         clip_bound_rule=("rho_hi_clip_bound: a (q, c0, c1) "
+                                          "corner implies pi_t above "
+                                          "1 - PI_CLIP, so the clip sets "
+                                          "rho_hi"),
                          note="the pi_t clip costs width, not coverage: the "
                               "unclipped odds ratio stays covered whenever the "
                               "true pi_t lies inside [PI_CLIP, 1 - PI_CLIP]"),
@@ -353,7 +408,8 @@ FIELDS = (["n_aux", "rep", "n_target", "n_target_positive", "declined",
           + [f"{p}_{s}" for p in PARAMS for s in ("lo", "hi")]
           + [f"covers_{p}" for p in PARAMS]
           + ["covers_joint3", "covers_joint4", "rho_lo", "rho_hi",
-             "rho_point", "box_width", "covers_rho_site", "covers_rho_pop"])
+             "rho_point", "box_width", "rho_hi_clip_bound",
+             "covers_rho_site", "covers_rho_pop"])
 
 
 def main(argv=None):

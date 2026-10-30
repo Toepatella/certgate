@@ -2,12 +2,14 @@
 
 Three contracts:
   - the additive attributions are exact: sum(phi) + base == logit
-  - the abstention margin is > 0 exactly for declined cases
+  - the abstention margin is > 0 exactly for the declined cases of a fixture
+    with no case within float64 rounding of the bar
   - the composition object reports the three tagged views
 
-Refs: audit F25.
+Refs: audit F25; audit 2026-10 explain-11.
 """
 import numpy as np
+import pytest
 
 from certgate.data import SimConfig, draw_cohort, split_sites
 from certgate.model import fit_head
@@ -116,7 +118,8 @@ def test_abstention_margin_positive_iff_declined():
 def test_composition_three_tagged_objects():
     head, pool = _head_and_pool()
     answered = head.score(pool.x) >= 0.7
-    comp = composition(head, pool.x, answered, rho_point=2.0, oracle_y=pool.y)
+    comp = composition(head, pool.x, answered, rho_point=2.0, oracle_y=pool.y,
+                       pi_source=0.1, pi_train=0.1)
     assert set(comp) == {"predicted_class", "bbse_true_class",
                          "oracle_true_class"}
     assert comp["predicted_class"]["tag"] == "estimated"
@@ -132,6 +135,60 @@ def test_composition_omits_untagged_views_when_inputs_absent():
     answered = head.score(pool.x) >= 0.7
     comp = composition(head, pool.x, answered)               # no rho, no oracle
     assert set(comp) == {"predicted_class"}
+
+
+def test_composition_bbse_divides_out_the_train_prior():
+    """The BBSE view shifts the head's own prior, S_train's, not S_aux's.
+
+    rho_point = odds(pi_t)/odds(pi_aux), but a logistic head with an
+    unpenalized intercept carries the S_train prevalence in its odds. With
+    pi_t equal to pi_train the view over S_train itself must return the
+    head's mean training probability, whatever S_aux's prevalence; the
+    rho-only multiplier returned 0.161 against 0.128 here.
+
+    Ref: audit 2026-10 BBSE-1.
+    """
+    cfg = SimConfig()
+    rng = np.random.default_rng(11)
+    train, aux, _ = split_sites(draw_cohort(cfg, 40, rng), rng)
+    head = fit_head(train)
+    pi_train, pi_aux = float(train.y.mean()), float(aux.y.mean())
+    assert abs(pi_train - pi_aux) > 0.01
+    odds = lambda p: p / (1.0 - p)
+    rho = odds(pi_train) / odds(pi_aux)
+    every = np.ones(train.n, dtype=bool)
+    bt = composition(head, train.x, every, rho_point=rho, pi_source=pi_aux,
+                     pi_train=pi_train)["bbse_true_class"]
+    assert abs(bt["odds_multiplier"] - 1.0) < 1e-12
+    assert bt["pi_source"] == pi_aux and bt["pi_train"] == pi_train
+    assert abs(bt["positive_fraction"]
+               - float(head.predict_proba(train.x).mean())) < 1e-12
+    assert abs(bt["positive_fraction"] - pi_train) < 1e-3
+
+
+def test_composition_bbse_view_requires_both_priors():
+    """rho_point without both priors raises; pi_source is clipped.
+
+    pi_source is clipped to [PI_CLIP, 1 - PI_CLIP] exactly as
+    rho_box_interval clips it, and the clipped value is the one recorded.
+
+    Ref: audit 2026-10 BBSE-1.
+    """
+    from certgate.constants import PI_CLIP
+    head, pool = _head_and_pool()
+    answered = head.score(pool.x) >= 0.7
+    for kw in ({}, {"pi_source": 0.1}, {"pi_train": 0.1}):
+        with pytest.raises(ValueError, match=r"\(reason=missing-prior\)$"):
+            composition(head, pool.x, answered, rho_point=2.0, **kw)
+    for bad in (0.0, 1.0):
+        with pytest.raises(ValueError, match="bad-prior"):
+            composition(head, pool.x, answered, rho_point=2.0,
+                        pi_source=0.1, pi_train=bad)
+    bt = composition(head, pool.x, answered, rho_point=2.0, pi_source=0.0,
+                     pi_train=0.1)["bbse_true_class"]
+    assert bt["pi_source"] == PI_CLIP
+    want = 2.0 * (PI_CLIP / (1.0 - PI_CLIP)) / (0.1 / 0.9)
+    assert bt["odds_multiplier"] == pytest.approx(want, rel=1e-15)
 
 
 def test_empty_population_gap_ranking_is_empty():
@@ -211,27 +268,35 @@ def test_counterfactual_min_l2_flips_deployed_rule_and_is_minimal():
 
 
 def test_counterfactual_flips_at_float_hostile_thresholds():
-    """The headroom must clear every declined case at the two worst thresholds.
+    """The headroom must flip every declined case at every float-hostile grid threshold.
 
-    At 6 of the 23 frozen grid thresholds sigmoid(L*) < tau in float64, so a
-    delta landing exactly on the bar is still declined by the deployed rule.
+    At 6 of the 23 frozen grid thresholds sigmoid(L*) < tau in float64, each by
+    1 ULP, so a delta landing exactly on the bar is still declined by the
+    deployed rule. The hostile set is computed from TAU_GRID itself: the
+    literal 0.93 is not a grid value (TAU_GRID[19] == 0.9299999999999999) and
+    is not hostile.
 
     That gave 18.2% of the fixture head's declines a non-flipping
     "counterfactual" while the old tolerance-based flip_verified said True.
 
-    Refs: boundary finding 2026-07-31.
+    Refs: boundary finding 2026-07-31; audit 2026-10 explain-12, NUM-10.
     """
+    from certgate.constants import TAU_GRID
+    from certgate.model import _sigmoid
     from certgate.explain import counterfactual_to_answer
     head, pool = _head_and_pool()
-    for tau_star in (0.63, 0.93):
-        scores = head.score(pool.x)
+    hostile = [float(t) for t in TAU_GRID
+               if float(_sigmoid(np.log(t / (1.0 - t)))) < t]
+    assert hostile, "no float-hostile grid threshold on this platform"
+    scores = head.score(pool.x)
+    for tau_star in hostile:
         declined_idx = np.flatnonzero(scores < tau_star)
         assert declined_idx.size >= 1
-        for i in declined_idx[:20]:
+        for i in declined_idx:
             cf = counterfactual_to_answer(head, pool.x[i], tau_star)
             x_cf = (pool.x[i] + cf["delta_x_min_l2"]).reshape(1, -1)
             assert float(head.score(x_cf)[0]) >= tau_star, (
-                f"deployed rule still declines case {i} at tau={tau_star}")
+                f"deployed rule still declines case {i} at tau={tau_star!r}")
             assert cf["flip_verified"]
 
 
@@ -239,15 +304,23 @@ def test_counterfactual_single_feature_flips_and_shorter_fails():
     """The top-ranked single-feature delta flips the case.
 
     It flips under the deployed rule, and (1 - 1e-4) of it still declines.
-    The ranking is ascending in |delta_z| over the finite entries.
+    The ranking is ascending in |delta_z| over the finite entries. The
+    single-feature deltas carry the same _EPS_ANSWER_LOGIT headroom as the
+    minimal-L2 delta (audit 2026-10 explain-9).
     """
-    from certgate.explain import counterfactual_to_answer
+    from certgate.explain import _EPS_ANSWER_LOGIT, counterfactual_to_answer
     head, pool = _head_and_pool()
     tau_star = 0.8
     scores = head.score(pool.x)
     declined_idx = np.flatnonzero(scores < tau_star)
     for i in declined_idx[:5]:
         cf = counterfactual_to_answer(head, pool.x[i], tau_star)
+        dz_all = cf["single_feature_delta_z"]
+        fin = np.isfinite(dz_all)
+        assert np.all(np.abs(cf["direction"] * head.coef[fin] * dz_all[fin]
+                             - (cf["margin_to_answer"] + _EPS_ANSWER_LOGIT))
+                      < 1e-12)
+        assert not np.any(np.isneginf(dz_all))
         j = int(cf["single_feature_ranking"][0])
         x_cf = pool.x[i].copy()
         x_cf[j] += cf["single_feature_delta_x"][j]
@@ -292,7 +365,7 @@ def test_counterfactual_dead_and_degenerate_heads():
                 mu=np.zeros(3), sd=np.ones(3))
     cf = counterfactual_to_answer(head, np.array([0.3, -0.1, 0.2]), 0.9)
     assert cf["declined"]
-    assert np.isinf(cf["single_feature_delta_z"][0])
+    assert cf["single_feature_delta_z"][0] == np.inf     # +inf, never -inf
     assert 0 not in cf["single_feature_ranking"].tolist()
     assert cf["flip_verified"]
 
@@ -305,3 +378,229 @@ def test_counterfactual_dead_and_degenerate_heads():
     assert cf2["single_feature_ranking"].size == 0
     assert cf2["confidence_at_flip"] is None
     assert cf2["answered_class_on_flip"] is None
+
+
+def test_single_feature_ranking_is_abs_coef_order_and_off_top_equal_budget_never_flips():
+    """The ranking is the descending-|coef| order; equal budget off the top fails.
+
+    For the linear head every declined case gets the same ranking, the
+    descending-|coef| order. Spending the top feature's |delta_z| in the
+    favourable direction on any other feature shifts the logit by only
+    |coef_j|/|coef_top| of the padded margin, so it cannot flip a case whose
+    margin is far above the 1e-9 headroom. E5's random-feature control rate
+    therefore measures 1/d, not the ranking's informativeness.
+
+    Ref: audit 2026-10 synthetic-8.
+    """
+    from certgate.explain import counterfactual_to_answer
+    head, pool = _head_and_pool()
+    tau_star = 0.8
+    nz = np.flatnonzero(head.coef != 0.0)
+    want = nz[np.argsort(-np.abs(head.coef[nz]), kind="stable")]
+    scores = head.score(pool.x)
+    n_checked = 0
+    for i in np.flatnonzero(scores < tau_star)[:20]:
+        cf = counterfactual_to_answer(head, pool.x[i], tau_star)
+        if cf["margin_to_answer"] <= 1e-6:
+            continue
+        rank = cf["single_feature_ranking"]
+        assert np.array_equal(rank, want)
+        top = int(rank[0])
+        budget = abs(cf["single_feature_delta_z"][top])
+        for j in rank[1:]:
+            x_alt = pool.x[i].copy()
+            x_alt[j] += (head.sd[j] * cf["direction"]
+                         * np.sign(head.coef[j]) * budget)
+            assert float(head.score(x_alt.reshape(1, -1))[0]) < tau_star
+        n_checked += 1
+    assert n_checked >= 5
+
+
+def test_cohort_gap_factorises_as_abs_standardized_coef():
+    """w_j is the standardized coefficient, so phi_j = w_j z_j (explain-1).
+
+    With sd far from 1, phi equals coef * z and (coef / sd) * (x - mu), base
+    is the logit at the training mean, and the cohort gap factorises as
+    |coef_j| times the difference in mean |z_j| -- not |coef_j / sd_j| times
+    it.
+
+    Ref: audit 2026-10 explain-1, PAPER1-14, NUM-7, DOCS-5.
+    """
+    from certgate.model import Head
+    from certgate.explain import cohort_abstention_profile
+    head = Head(coef=np.array([0.9, -0.6, 0.35, 1.2]), intercept=-0.4,
+                mu=np.array([0.2, 50.0, 7.3, -1.0]),
+                sd=np.array([1.0, 12.0, 0.15, 3.0]))
+    rng = np.random.default_rng(7)
+    x = head.mu + head.sd * rng.standard_normal((400, 4))
+    z = (x - head.mu) / head.sd
+    for i in (0, 1, 2):
+        attr = local_attribution(head, x[i])
+        assert np.allclose(attr["phi"], head.coef * z[i], rtol=0, atol=1e-12)
+        assert np.allclose(attr["phi"], (head.coef / head.sd) * (x[i] - head.mu),
+                           rtol=0, atol=1e-12)
+    assert local_attribution(head, head.mu)["base"] == float(
+        head.logit(head.mu))
+    answered = head.score(x) >= 0.75
+    assert answered.any() and (~answered).any()
+    prof = cohort_abstention_profile(head, x, answered)
+    dmean = (np.abs(z[answered]).mean(axis=0)
+             - np.abs(z[~answered]).mean(axis=0))
+    assert np.allclose(prof["gap"], np.abs(head.coef) * dmean,
+                       rtol=0, atol=1e-12)
+    assert not np.allclose(prof["gap"], np.abs(head.coef / head.sd) * dmean,
+                           rtol=0, atol=1e-6)
+
+
+def test_counterfactual_formulas_use_standardized_coef_under_nonunit_sd():
+    """The closed-form moves use the standardized coef, w = head.coef.
+
+    Under sd far from 1 the minimal standardized move is s*m_eff*w/||w||^2 at
+    distance m/||w||, and the single-feature move is s*m_eff/w_j, i.e.
+    sd_j times that in raw units. Reading w as the raw-space coefficient
+    coef/sd gives a standardized move that falls short of the bar.
+
+    Ref: audit 2026-10 NUM-7, DOCS-5, explain-1.
+    """
+    from certgate.model import Head
+    from certgate.explain import _EPS_ANSWER_LOGIT, counterfactual_to_answer
+    head = Head(coef=np.array([0.9, -0.6, 0.35, 1.2]), intercept=-0.4,
+                mu=np.array([0.2, 50.0, 7.3, -1.0]),
+                sd=np.array([1.0, 10.0, 0.2, 3.0]))
+    tau = 0.8
+    x0 = head.mu.copy()                           # logit = intercept = -0.4
+    cf = counterfactual_to_answer(head, x0, tau)
+    assert cf["declined"] and cf["flip_verified"]
+    s, m = cf["direction"], cf["margin_to_answer"]
+    w = head.coef
+    m_eff = m + _EPS_ANSWER_LOGIT
+    assert np.allclose(cf["delta_z_min_l2"], s * m_eff * w / (w @ w),
+                       rtol=0, atol=1e-15)
+    assert abs(cf["l2_distance_z"] - m / np.linalg.norm(w)) < 1e-15
+    assert np.allclose(cf["single_feature_delta_z"], s * m_eff / w,
+                       rtol=1e-15, atol=0)
+    assert np.allclose(cf["single_feature_delta_x"],
+                       head.sd * cf["single_feature_delta_z"],
+                       rtol=1e-15, atol=0)
+    a = w / head.sd                               # the raw-space coefficient
+    dz_raw_reading = s * m * a / (a @ a)
+    x_wrong = (x0 + head.sd * dz_raw_reading).reshape(1, -1)
+    assert float(head.score(x_wrong)[0]) < tau
+
+
+def test_declined_flag_is_the_logit_test_at_the_float64_bar():
+    """`declined` is the logit-space test, not the deployed score rule.
+
+    On the bar itself, |logit| == L* exactly, the margin is 0 and the flag is
+    False, while at the float-hostile threshold 0.63 the deployed rule
+    head.score(x) >= tau still declines (sigmoid(L*) < tau by 1 ULP). The
+    documented band where the two can disagree is pinned here.
+
+    Ref: audit 2026-10 explain-11.
+    """
+    from certgate.constants import TAU_GRID
+    from certgate.model import Head
+    from certgate.explain import counterfactual_to_answer
+    head = Head(coef=np.array([1.0]), intercept=0.0, mu=np.array([0.0]),
+                sd=np.array([1.0]))
+    tau = float(TAU_GRID[4])
+    assert abs(tau - 0.63) < 1e-12
+    x = np.array([np.log(tau / (1.0 - tau))])
+    exp = abstention_explanation(head, x, tau)
+    assert exp["margin_to_answer"] == 0.0
+    assert exp["declined"] is False
+    assert float(head.score(x.reshape(1, -1))[0]) < tau
+    cf = counterfactual_to_answer(head, x, tau)
+    assert cf["declined"] is False
+    assert cf["flip_verified"] is False
+
+
+def test_value_and_missing_sibling_are_uncorrelated_on_s_train():
+    """Mean imputation plus S_train standardization decorrelates a feature
+    from its __missing sibling, up to float rounding, so the pair is not what
+    makes cov_SS singular in gaussian_conditional_shapley_matrix.
+
+    Ref: audit 2026-10 explain-10.
+    """
+    rng = np.random.default_rng(29)
+    n = 500
+    v = rng.lognormal(0.0, 1.0, n)
+    missing = v > np.quantile(v, 0.7)             # MNAR: large values missing
+    x0 = np.where(missing, v[~missing].mean(), v)
+    xs = np.column_stack([x0, missing.astype(np.float64)])
+    z = (xs - xs.mean(axis=0)) / xs.std(axis=0)
+    assert abs(float((z.T @ z / n)[0, 1])) < 1e-12
+
+
+def test_sigmoid_is_silent_and_exact_at_extreme_logits():
+    """Both np.where branches are evaluated; the discarded one must not leak a
+    RuntimeWarning or, under a strict error state, a FloatingPointError, and
+    silencing must not move a bit. Ref: audit 2026-10 NUM-13."""
+    import math
+    import warnings
+    from certgate import model
+    z = np.array([-np.inf, -1e4, -800.0, -709.79, -40.0, -0.0, 0.0, 40.0,
+                  709.79, 800.0, 1e4, np.inf])
+    head = model.Head(coef=np.array([1.0]), intercept=0.0, mu=np.zeros(1),
+                      sd=np.ones(1))
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        with np.errstate(all="raise"):
+            p = model._sigmoid(z)
+            p0 = model._sigmoid(800.0)           # the 0-d path local_attribution uses
+            s = head.score(np.array([[1e3], [-1e3], [5.0]]))
+    assert p[:3].tolist() == [0.0, 0.0, 0.0]
+    assert 0.0 < p[3] < 1e-308                   # gradual underflow, neither 0 nor NaN
+    assert abs(p[4] / math.exp(-40.0) - 1.0) < 1e-15
+    assert p[5:7].tolist() == [0.5, 0.5]
+    assert p[7:].tolist() == [1.0] * 5
+    assert float(p0) == 1.0
+    assert s[:2].tolist() == [1.0, 1.0]
+    assert abs(s[2] - 1.0 / (1.0 + math.exp(-5.0))) < 1e-15
+    rng = np.random.default_rng(13)
+    w = np.concatenate([rng.normal(0.0, 5.0, 4096), rng.uniform(-750.0, 750.0, 4096)])
+    with np.errstate(all="ignore"):
+        ref = np.where(w >= 0, 1.0 / (1.0 + np.exp(-w)), np.exp(w) / (1.0 + np.exp(w)))
+    assert np.array_equal(model._sigmoid(w).view(np.uint64), ref.view(np.uint64))
+
+
+def test_dashboard_histogram_and_explorer_follow_the_deployed_rule(tmp_path):
+    """The dashboard's histogram follows the deployed rule exactly; the
+    threshold explorer counts at its 2-dp bars.
+
+    Both are computed in build_dashboard on the same float64 scores as the
+    answered mask, never re-derived from 4-dp scores in the page, and the
+    payload no longer carries all_scores. The histogram splits by
+    score >= tau. The explorer is an intuition aid whose entries count
+    score >= k/100, k = 55..99, so at a deployed grid tau one ulp off its 2-dp
+    value (TAU_GRID[14] = 0.8300000000000001) its opening reading can differ
+    from the answered count by scores inside that ulp.
+
+    Ref: audit 2026-10 explain-5.
+    """
+    import json
+    from certgate.constants import SEED, TAU_GRID
+    from examples.explain_dashboard import build_dashboard
+    rng = np.random.default_rng(SEED)
+    cfg = SimConfig()
+    coh = draw_cohort(cfg, 40, rng)
+    train = split_sites(coh, rng)[0]
+    head = fit_head(train)
+    pool = draw_cohort(cfg, 4, rng, site_label_prefix="demo")
+    scores = head.score(pool.x)
+    prefix = "const DATA = "
+    for tau in (0.77, float(TAU_GRID[15]), float(TAU_GRID[18]), 0.83):
+        out = tmp_path / f"dash_{tau!r}.html"
+        build_dashboard(head, pool.x, tau, str(out))
+        line = next(l for l in out.read_text(encoding="utf-8").splitlines()
+                    if l.startswith(prefix))
+        payload = json.loads(line[len(prefix):].rstrip(";"))
+        assert "all_scores" not in payload
+        ha = np.array(payload["hist"]["answered"])
+        hd = np.array(payload["hist"]["declined"])
+        assert ha.sum() == int((scores >= tau).sum())
+        assert hd.sum() == int((scores < tau).sum())
+        k = int(round((tau - 0.5) * 100))
+        assert ha[:k].sum() == 0 and hd[k:].sum() == 0
+        assert payload["explore_answered"] == [
+            int((scores >= j / 100).sum()) for j in range(55, 100)]

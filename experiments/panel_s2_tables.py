@@ -5,8 +5,15 @@ Two things the main grid does not emit.
 Table S4, influence-cap sensitivity. Replays E1's s_u=0.5 arm in baseline mode
 at each candidate M, re-deriving both the S_aux walk order and the calibration
 walk. Each certificate is then rescored against R_M at that same M, on one
-fresh 200-site evaluation pool. Every M certifies its own estimand, so the
-table compares procedures, not one quantity.
+fresh 200-site evaluation pool. Every M certifies its own estimand, but on
+this generator they share one value: draw_cohort draws site size
+independently of the site random effect, the only thing that sets a site's
+record distribution, so R_M(tau) is the same function of tau at every M. The
+table therefore compares seven procedures on one quantity: its mean R_M
+column tracks the deployed tau, not M (re-weighting one pool at a fixed tau
+moves R_M only by that pool's sampling noise), and what erodes with M is the
+atom margin, alpha - E[Z] = (E[min(n_c, M)] / M) E[a_c] (alpha - R_M), as
+the M_SWEEP comment says (audit synthetic-6).
 
 The Table S4 self-check: at M=100 the replay must reproduce every
 baseline-deploying draw's tau in the recorded E1_validity.csv exactly.
@@ -18,7 +25,8 @@ deployment). Plus the always-negative comparator error rate that Sections 3.1
 and 4.2 weigh alpha against.
 
 Also emitted:
-  - the Section 3.3 cap facts: share of sites above M, share of records above
+  - the Section 3.3 cap facts: share of sites above M (simulated, and in
+    closed form from the size law), share of records above
     their site's cap, min g_c/n_c
   - the record-level-vs-R_M gap for E1 and E6
   - the record-carrying-but-silent (neutral atom) counts
@@ -41,6 +49,7 @@ import os
 import sys
 
 import numpy as np
+from scipy.stats import norm
 
 from certgate.certify import (certification_rng, fixed_sequence_walk,
                               influence_atoms, walk_order)
@@ -267,9 +276,17 @@ def cap_facts(n_reps=400):
     rng = np.random.default_rng(SEED)
     sizes = np.concatenate([draw_cohort(cfg, ANCHOR_SITES, rng).site_sizes
                             .astype(float) for _ in range(n_reps)])
+    # n_c = floor(clip(exp(N(size_mu, size_sigma^2)), size_lo, size_hi)), so
+    # n_c > M exactly when exp(N) >= M + 1; the closed form below is exact
+    # while size_lo <= M + 1 <= size_hi (0.896 at the defaults, against the
+    # simulated share's 0.8949; audit synthetic-10).
+    assert cfg.size_lo <= M_INFLUENCE + 1 <= cfg.size_hi
+    share_exact = float(norm.sf((np.log(M_INFLUENCE + 1) - cfg.size_mu)
+                                / cfg.size_sigma))
     return dict(
         sites=len(sizes),
         share_sites_above_M=round(float((sizes > M_INFLUENCE).mean()), 4),
+        share_sites_above_M_exact=round(share_exact, 4),
         share_records_above_own_cap=round(
             float(np.maximum(sizes - M_INFLUENCE, 0).sum() / sizes.sum()), 4),
         min_g_over_n=round(float((np.minimum(sizes, M_INFLUENCE)

@@ -43,11 +43,13 @@ tests/test_eicu_mock.py and tests/test_eicu_etl.py assert them one by one.
   W10 decimal-point entry errors in admissionweight / admissionheight
       (544.00 kg, 612.6 cm), and 0 -- not -1 -- as their missing encoding.
   W11 fio2 in both conventions (0.21-1.0 and 21-100) and temperature with
-      Fahrenheit contamination, plus values outside both windows (T-10).
+      Fahrenheit contamination, plus values meant to fall outside both
+      windows (T-10; every temperature one does, ~20% of the fio2 ones land
+      inside the fraction window).
   W12 duplicate patientunitstayid rows in apacheApsVar / apachePredVar.
   W13 hospital with blank numbedscategory/region, teachingstatus in both
       renderings ('True'/'False' and 't'/'f'), and both bed-band spellings
-      ('250-499'/'>=500' and '250-500'/'>500') mixed across rows.
+      ('250 - 499'/'>= 500' and '250-500'/'>500') mixed across rows.
   W14 a uniquepid appearing at two hospitalids -- correlated records that
       assert_site_disjoint, which compares site labels, cannot see (T-5).
   W15 a UTF-8 BOM on patient.csv.gz.
@@ -61,19 +63,25 @@ must reach the feature matrix as aps_*__missing == 1.0, never as a finite -1.
 
 --signal is on by default, unlike synth_fixture: a mortality corpus with no
 outcome has no use here. It plants a latent severity z ~ N(0,1) per stay, and
-every allowed feature is a noisy view of z -- age, the 24 apacheApsVar
-physiology columns, the 19 apachePredVar comorbidity flags.
+most allowed features are noisy views of z -- age, admissionweight, the 24
+apacheApsVar physiology columns and 18 of the 19 allowlisted apachePredVar
+columns (17 flags and ejectfx; graftcount is drawn independently of z). The
+other patient-table features carry no z.
 
 The outcome is drawn from P(death) = sigmoid(a + EICU_MOCK_SIGNAL_B*z + u_site)
 with a per-site random effect u_site ~ N(0, EICU_MOCK_SITE_SIGMA_U^2) and `a`
-solved from EICU_MOCK_BASE_RATE. Prevalence lands on 9.5% with real
-between-site heterogeneity, and mortality is genuinely predictable: head AUC
-0.69 held out at full scale, against a ceiling of Phi(B/sqrt(2)) = 0.73.
+solved from EICU_MOCK_BASE_RATE. Prevalence is 9.25% in the superpopulation
+(realized 9.38% in the 180-hospital cohort, 9.50% at 208, 9.83% at 900) with
+real between-site heterogeneity, and mortality is genuinely predictable: head
+AUC 0.69 held out at full scale, against an exact population ceiling of 0.748
+for the Bayes-optimal score a + B*z + u_site (0.715 for a score recovering z
+alone; Phi(B/sqrt(2)) = 0.726 is only the rare-event binormal approximation).
 
 That ceiling is also a limit, stated here rather than discovered later. At the
 frozen EICU_MOCK_SIGNAL_B = 0.85, run_certgate declines every rung at both
-frozen corpus sizes; the calibration note on EICU_MOCK_SIGNAL_LOAD carries the
-margin-versus-floor numbers. The contracted test asserts an honest outcome, not
+frozen corpus sizes (measured); the calibration note on EICU_MOCK_SIGNAL_LOAD
+carries the atom-unit margin-versus-floor numbers. The contracted test asserts
+an honest outcome, not
 certification, so a decline is conformant -- and only that branch is exercised.
 
 The leak columns -- diedinhospital, actualhospitalmortality,
@@ -134,8 +142,11 @@ EICU_MOCK_MIN_STAYS_PER_SITE = 12
 EICU_MOCK_SITE_SIGMA = 1.1          # lognormal sd of site weights; 0 = uniform
 EICU_MOCK_SITE_SIGMA_U = 0.5        # per-site outcome random effect sd
 EICU_MOCK_SIGNAL_B = 0.85           # latent-severity slope (log-odds per unit z)
-EICU_MOCK_BASE_RATE = 0.095         # matches the synthetic generator and the
-                                    # literature's 8.4-9.9% in-hospital mortality
+EICU_MOCK_BASE_RATE = 0.095         # the same literal as SimConfig.base_rate,
+                                    # which there is the median-site rate
+                                    # (marginal 10.4%) and here an approximate
+                                    # marginal target (9.25%); the literature's
+                                    # 8.4-9.9% in-hospital mortality
 EICU_MOCK_MULTISTAY_RATE = 0.17     # share of hospital admissions with >1 unit stay
 EICU_MOCK_AGE_MASK_RATE = 0.035     # '> 89' share (7081/200859)
 EICU_MOCK_STATUS_MISSING_RATE = 0.0087   # blank hospitaldischargestatus (1751/200859)
@@ -155,7 +166,8 @@ EICU_MOCK_HEADER_CASES = ("camel", "lower")
 
 # Mirrors eicu_etl.EICU_MIN_TOTAL_SITES. Duplicated for the same reason the
 # level tuples below are: importing eicu_etl would pull numpy into a
-# stdlib-only module. tests/test_eicu_mock.py pins the duplication.
+# stdlib-only module. tests/test_constants.py::test_eicu_mock_constants_pinned
+# pins the duplication.
 EICU_MOCK_MIN_TOTAL_SITES = 149
 
 # Secondary rates, all generator parameters (not protocol).
@@ -208,10 +220,13 @@ _UNLISTED_UNITSTAYTYPE = ("stepdown",)
 _DRIFT_GENDER = ("F", "M")
 
 # --- latent-severity model --------------------------------------------------
-# The intercept is derived from EICU_MOCK_BASE_RATE rather than pinned, so the
-# advertised prevalence and the emitted prevalence cannot drift apart.
-# The logistic-normal correction lambda = 1/sqrt(1 + pi*s^2/8) maps the
-# marginal mean back onto the logit scale for s^2 = B^2 + sigma_u^2.
+# The intercept is derived from EICU_MOCK_BASE_RATE through the probit
+# approximation sigmoid(x) ~ Phi(x*sqrt(pi/8)): lambda = 1/sqrt(1 + pi*s^2/8)
+# for s^2 = B^2 + sigma_u^2 makes the marginal prevalence approximately the
+# base rate. At the frozen B and sigma_u the exact superpopulation prevalence
+# is 9.25% (an exact 9.5% would need intercept -2.6173, not -2.6497), and the
+# site-effect draws move the realized value further.
+# Ref: audit 2026-10 GAP-eicu-mock-math-5.
 _SIGNAL_SD = math.sqrt(EICU_MOCK_SIGNAL_B ** 2 + EICU_MOCK_SITE_SIGMA_U ** 2)
 _SIGNAL_LAMBDA = 1.0 / math.sqrt(1.0 + math.pi * _SIGNAL_SD ** 2 / 8.0)
 EICU_MOCK_SIGNAL_INTERCEPT = (
@@ -220,34 +235,60 @@ EICU_MOCK_SIGNAL_INTERCEPT = (
 # How strongly each ALLOWED feature leaks z. No leak column carries a loading:
 # the leaks are driven by the outcome directly, which is the point.
 #
-# Calibration note (measured, not guessed). EICU_MOCK_SIGNAL_B alone fixes the
-# AUC ceiling -- a score that recovered z perfectly would reach
-# Phi(B/sqrt(2)) = 0.73 at B = 0.85. The loadings decide only how much of that
-# ceiling a head reaches, so severity sits in the drivers a clinician would
-# name (GCS motor, mean BP, BUN, creatinine, respiratory rate, urine output,
-# age) instead of spreading thin over twenty weak columns. Measured on the
-# small arm: single-column AUC 0.62-0.63; head AUC 0.59 held out at 9 000
-# stays, 0.66 once the split can fit 161 coefficients on more than ~270 events.
+# Calibration note (measured, not guessed). EICU_MOCK_SIGNAL_B, with the
+# intercept and EICU_MOCK_SITE_SIGMA_U, fixes the AUC ceiling -- a score that
+# recovered z perfectly would reach 0.715 at B = 0.85, and the Bayes-optimal
+# a + B*z + u_site 0.748 (Phi(B/sqrt(2)) = 0.726 is the rare-event
+# approximation). The loadings decide only how much of that ceiling a head
+# reaches, so severity sits in the drivers a clinician would name (GCS motor,
+# mean BP, BUN, creatinine, respiratory rate, urine output, age) instead of
+# spreading thin over twenty weak columns. Measured on the small arm:
+# single-column AUC 0.62-0.63; head AUC 0.60 on the calibration split at
+# 9 000 stays (0.59 on the target pool; 232 training events), 0.68-0.69 at
+# 90 000-200 859 stays (2 785-4 837 training events).
+# Ref: audit 2026-10 DOCS-7, GAP-eicu-mock-math-4.
 #
-# Certification is not reachable at B = 0.85 at the two frozen corpus sizes.
-# The walk needs the best margin max_tau cov*(alpha - risk) to clear
-# certify.margin_floor(n_carrying, DELTA, alpha). An oracle ranking by true
-# risk -- which no head can beat -- gives 0.0354 at alpha = 0.10, against a
-# floor of 0.0428 at EICU_MOCK_SMALL_SITES = 180 (63 calibration clusters) and
-# 0.0359 at EICU_MOCK_FULL_SITES = 208 (75). Both frozen arms therefore
-# decline, and the default suite exercises the decline branch.
+# Certification is not reached at B = 0.85 at the two frozen corpus sizes --
+# a measured outcome, not an implication of the floor. The walk tests atoms
+# Z_c in [0, 1] whose margin alpha - mean(Z) = mean_c (g_c/M) cov_c
+# (alpha - risk_c) carries the influence factor g_c/M = min(n_c, 100)/100,
+# and certify.margin_floor(n_carrying, DELTA, alpha) -- a heuristic for the
+# margin a level-delta test needs, not an impossibility -- is in those atom
+# units. An oracle ranking by true risk, which no head beats in population,
+# has record-unit margin 0.0354 at alpha = 0.10 (0.0352 on TAU_GRID). Scaled
+# by the calibration hospitals' mean g/M on replicate 0 (0.394 at
+# EICU_MOCK_SMALL_SITES = 180 / 9 000 stays, 0.945 at EICU_MOCK_FULL_SITES =
+# 208 / 200 859) that is about 0.0140 and 0.0335, against floors of 0.0428
+# (63 calibration clusters) and 0.0359 (75). Measured on replicate 0: the
+# head's best alpha = 0.10 calibration margin is 0.0064 and 0.0238, both
+# arms decline every rung, and the oracle, tested at its best threshold,
+# certifies in none of the outcome redraws tried at either size.
 #
-# Those two sizes are the whole of that claim. margin_floor scales as
-# 1/n_carrying, so the floor drops below 0.0354 at n_carrying = 77
-# (~217 hospitals), and a 900- or 1500-hospital mock certifies alpha = 0.10
-# with this constant untouched -- which is what
+# Those two sizes are the whole of that claim. The crossing depends on how
+# many calibration hospitals there are and on how many stays each carries.
+# With every calibration site at >= 100 stays the floor drops below the
+# oracle margin at n_carrying = 77 (first at 213 hospitals; every total from
+# 215 up yields at least 77); at the full arm's size distribution, at 81;
+# at 900 hospitals / 90 000 stays (mean g/M 0.568), at 134. The fitted head
+# sits below the oracle, so clearing the oracle's crossing does not settle
+# the outcome. The 900-hospital, 90 000-stay mock certifies alpha = 0.10
+# (tau = 0.83, coverage 0.881) with this constant untouched -- the corpus
 # tests/test_eicu_mock.py::test_large_mock_reaches_the_certified_branch
-# (CERTGATE_EICU_LARGE=1, 900 hospitals) exercises. Raising EICU_MOCK_SIGNAL_B
-# to 2.0 (synth_fixture.SIGNAL_B, matching certgate SimConfig.sep = 2.2) lifts
-# the oracle margin to 0.0585 and would reach the certified branch at the
-# frozen sizes too, but that is a SPEC + test_constants change.
+# (CERTGATE_EICU_LARGE=1) generates. A 1500-hospital, 30 000-stay mock
+# declines every rung: its oracle clears the floor (0.0059 against 0.0046),
+# its head (0.0034) does not.
 #
-# Ref: audit E-20 (2026-07-31).
+# Raising EICU_MOCK_SIGNAL_B to 2.0 (synth_fixture.SIGNAL_B; not matched to
+# certgate SimConfig.sep = 2.2, whose AUC Phi(2.2/sqrt 2) is 0.94 against
+# 0.89 here) lifts the record-unit oracle margin to 0.0585 -- about 0.055 in
+# atom units at the full frozen size, above its 0.0359 floor, but 0.023 at
+# the small one, below 0.0428. Measured on replicate 0: at 180 hospitals /
+# 9 000 stays the head reaches AUC 0.82 and every rung still declines; at
+# 208 / 200 859 alpha = 0.10 certifies (tau = 0.85). So it would reach the
+# certified branch at 208 hospitals only, and either way it is a SPEC +
+# test_constants change.
+#
+# Ref: audit E-20 (2026-07-31); audit 2026-10 GAP-eicu-mock-math-1, -2, -6.
 EICU_MOCK_SIGNAL_LOAD = {
     "age": 15.0,                # years, on gauss(63, 16), clamped to [18, 89]
     "aps_urine": -1250.0,
@@ -876,7 +917,8 @@ def plan_stays(rng: random.Random, cfg: MockConfig, hospitals: list[int],
                     if remaining <= 0:
                         break
                     stayid += rng.randrange(1, 30)
-                    # 335 units across 208 hospitals: ~1.6 wards per hospital.
+                    # eICU has 335 units across 208 hospitals (~1.6 per
+                    # hospital); the mock uses up to two wards per hospital.
                     # wardid is denylisted as a feature: it is the same site
                     # identity one level down (protocol A.4).
                     ward = hid * 100 + rng.randrange(1, 3)
@@ -957,10 +999,11 @@ def build_hospital_row(rng: random.Random, cfg: MockConfig, hid: int) -> list:
 def build_patient_row(rng: random.Random, cfg: MockConfig, s: dict) -> list:
     """The cohort spine, the label, the site key and the admission-time features.
 
-    Every allowed feature here is a noisy view of the latent severity z. Every
-    leak column -- hospitaldischargelocation, unitdischargestatus, the two
-    discharge offsets, dischargeweight -- is driven by the outcome on purpose,
-    so assert_no_leak_columns has something real to exclude.
+    Of the allowed features here, age and admissionweight are noisy views of
+    the latent severity z; the rest carry none. Every leak column --
+    hospitaldischargelocation, unitdischargestatus, the two discharge
+    offsets, dischargeweight -- is driven by the outcome on purpose, so
+    assert_no_leak_columns has something real to exclude.
     """
     z = s["z"]
     y = s["y"]
@@ -1121,7 +1164,11 @@ def _aps_value(rng: random.Random, col: str, z: float, warts: bool) -> str:
         r = rng.random()
         if warts and r < 0.42:           # W11: the percent convention
             return _num(v * 100.0, 1)
-        if warts and r < 0.45:           # outside both windows -> missing
+        # below both windows (-> missing) when v < 0.586; for v >= 0.586 (~20%
+        # of these cells) v*0.35 renders >= 0.21, INSIDE the fraction window,
+        # and is kept as a wrong-but-valid fio2. Ref: audit 2026-10
+        # GAP-eicu-mock-math-7.
+        if warts and r < 0.45:
             return _num(v * 0.35, 2)
         return _num(v, 2)
     mean, sd, key, floor_, dp = _APS_GAUSS[col]
@@ -1259,8 +1306,9 @@ def build_result_rows(rng: random.Random, cfg: MockConfig, s: dict, next_id):
     """W5 / T-8 / T-9: one row per apacheversion, usually 'IV' and 'IVa' both.
 
     predictedhospitalmortality is VARCHAR(50) holding a probability, with '-1'
-    for unavailable. Comparing it as a string ('-1' > '0' lexically) is the
-    silent way to get the comparator wrong, so the ETL must float() first.
+    for unavailable. Comparing it as a string ('1e-05' > '0.5' lexically,
+    though 1e-05 < 0.5) is the silent way to get the comparator wrong, so the
+    ETL must float() first.
 
     Nothing in this table may become a feature. 8.65% of hospitals have zero
     rows here, so any feature drawn from it is either a site-restricted cohort
@@ -1323,9 +1371,11 @@ def generate(cfg: MockConfig) -> dict:
     if cfg.sites < EICU_MOCK_MIN_TOTAL_SITES and cfg.signal:
         raise ValueError(
             f"eicu_mock.generate: a signalled corpus must carry at least "
-            f"{EICU_MOCK_MIN_TOTAL_SITES} sites (eicu_etl.site_split's floor -- "
-            f"below it the 40/20/40 remainder cannot yield MIN_CAL_CLUSTERS "
-            f"calibration sites), got {cfg.sites} (reason=mock-too-few-sites)")
+            f"{EICU_MOCK_MIN_TOTAL_SITES} sites (eicu_etl.site_split's "
+            f"sufficient floor -- at and above it the 40/20/40 remainder "
+            f"always yields MIN_CAL_CLUSTERS calibration sites; below it "
+            f"some totals do not, e.g. 145 gives 49), got {cfg.sites} "
+            f"(reason=mock-too-few-sites)")
     if cfg.header_case not in EICU_MOCK_HEADER_CASES:
         raise ValueError(
             f"eicu_mock.generate: header_case must be one of "
@@ -1488,8 +1538,11 @@ def parse_args(argv=None) -> MockConfig:
                         "severity model (stream positions are unchanged)")
     p.add_argument("--no-warts", action="store_true",
                    help="drop the CSV-hostile and unit-ambiguous plants (W8, "
-                        "W10-W13, W15, W16 and the planted rows); the "
-                        "structural warts W1-W7, W9 and W14 always stay")
+                        "W10's decimal errors, W11, W12, W13's dual "
+                        "renderings, W15, W16, W7's planted offset tie and "
+                        "the planted sentinel rows); the structural warts "
+                        "W1-W7, W9 and W14, W10's 0-as-missing and W13's "
+                        "blanks always stay")
     p.add_argument("--site-sigma", type=float, default=EICU_MOCK_SITE_SIGMA,
                    help="lognormal sd of per-site weights (default "
                         f"{EICU_MOCK_SITE_SIGMA}); 0 gives uniform site sizes")

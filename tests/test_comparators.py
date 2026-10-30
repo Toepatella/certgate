@@ -1,8 +1,12 @@
 """SPEC "Experiments" companion tests: experiments/comparators.py (E8 arm A).
 
 What gets pinned:
-  - the MP-EB arithmetic, byte-compatible with the old test-local reference
-  - one-sided validity-side sanity for every bound
+  - the MP-EB arithmetic, pinned (np.isclose) to literals from the old
+    test-local reference; the t bound (equal to its closed form) and the
+    percentile-bootstrap bound pinned to literals from the current
+    implementation
+  - one-sided validity-side sanity for every bound: each UCB is at least the
+    atom mean
   - site-resampling determinism for the bootstrap
   - the inf-never-certifies edges
 
@@ -32,9 +36,8 @@ def test_hoeffding_matches_closed_form():
 
 def test_degenerate_inputs_never_certify():
     one = np.array([0.02])
-    assert hoeffding_ucb(one, 0.05) > 0.02          # widened, finite
-    with np.errstate(divide="ignore"):
-        assert not np.isfinite(mpeb_ucb(one, 0.05))  # n-1 division -> inf
+    assert not np.isfinite(hoeffding_ucb(one, 0.05))  # fewer than two atoms: inf, never certifies
+    assert not np.isfinite(mpeb_ucb(one, 0.05))       # n < 2 guard -> inf
     assert not np.isfinite(t_ucb(one, 0.05))
     assert not np.isfinite(
         site_bootstrap_ucb(one, 0.05, 100, np.random.default_rng(0)))
@@ -49,3 +52,18 @@ def test_bootstrap_resamples_sites_deterministically():
     assert a != c
     # percentile of resampled means stays inside the atom range
     assert 0.0 <= a <= 0.3 + 1e-12
+
+
+def test_t_and_bootstrap_pinned_and_every_ucb_above_the_mean():
+    """Literal pins for the t and percentile-bootstrap bounds, and the
+    validity-side sanity that every UCB sits at or above the atom mean.
+
+    Refs: audit GAP-unreviewed-tests-1.
+    """
+    z = np.linspace(0.0, 1.0, 11)
+    assert np.isclose(t_ucb(z, 0.05), 0.6812461122811677)
+    zb = np.random.default_rng(11).random(60) * 0.3
+    a = site_bootstrap_ucb(zb, 0.05, 500, np.random.default_rng(42))
+    assert np.isclose(a, 0.15253130017332314) and a >= zb.mean()
+    for f in (hoeffding_ucb, mpeb_ucb, t_ucb):
+        assert f(zb, 0.05) >= zb.mean()

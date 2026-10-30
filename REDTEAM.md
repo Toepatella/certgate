@@ -36,6 +36,15 @@ nothing actionable.
   replacing the false "containment only" claim. *(2026-08-25 pointer: certgate/shift.py:167-184 and
   SPEC.md:267-275. Both were later reworded to REVIEW-FABLE B-3's (in git history) corner-coverage phrasing, so
   neither still contains "widens" or "containment only".)*
+  *(2026-10-29 correction, mathematical-exactness audit NUM-5 / BBSE-4 / CORE-14 / PAPER2-3: the
+  salvage's "any inner-corner clip only *widens* [ρ_lo, ρ_hi] (conservative)" is false. The clip
+  moves every corner prevalence outside [1e-4, 1−1e-4] to the nearer bound — raising a corner π_t in
+  (0, 1e-4) can raise ρ_lo, lowering one in (1−1e-4, 1) can lower ρ_hi — so it can exclude odds
+  ratios implied by box points whose target or source prevalence lies outside that range. The
+  interval covers the true ρ whenever the box covers the true parameters and both true prevalences
+  lie in [1e-4, 1−1e-4]. "The range gate guards only the widest corner" stands. Pinned by
+  `tests/test_shift.py::test_rho_box_interval_clip_semantics`; ledger entry in CODE-AUDIT.md,
+  "Mathematical-exactness audit, 2026-10".)*
 - **R5 — salvaged.** Every conditional rate in the E1–E3 summaries now carries `n_certified`, and a
   zero-certificate rung reports `null` (not 0.0) with a "no certificates" figure annotation.
 - **N2 — FIXED.** BBSE guarantee text (report.py:152-161) now attributes δ_conf=0.025 to the S_aux bootstrap
@@ -120,6 +129,10 @@ false test-citation parenthetical. Either way the action items are identical to 
   establishes; WSR type-I is separately unit-tested at the boundary; and METHODS 7 defines the
   metric honestly. *Salvage:* add one sentence to METHODS §7 framing E1 as "no evidence of violation
   at the tested power," and/or a detectability note (smallest excess the R=200 design can see).
+  *(2026-10-29 note, audit NUM-2: that boundary test is coarse. On {0,1} atoms at n = 80 its outcome
+  hangs on the step at which an all-zero run first crosses 1/δ, and its 0.08 tolerance also passes a
+  1/(2δ) crossing bar of exact level 0.0756, so the same test now also pins the exact crossing steps;
+  see CODE-AUDIT.md, "What is verified".)*
 - **R4 — PI_CLIP "containment only" comment is wrong at inner box corners** (bbse lens, filed
   minor, refuted). The clip *can* bind at inner corners in principle, but the skeptic instrumented
   all 158 successful BBSE fits across the shipped generators: **0 bindings**, and any binding only
@@ -128,6 +141,9 @@ false test-citation parenthetical. Either way the action items are identical to 
   *(2026-08-25 pointer: the comment is now the `rho_box_interval` docstring, certgate/shift.py:167-184,
   clip paragraph :178-181, with SPEC.md:267-275. Both were later reworded to REVIEW-FABLE B-3's (in git history)
   corner-coverage phrasing, so neither still contains "widens" or "containment only".)*
+  *(2026-10-29 correction: "any binding only widens the ρ interval (conservative)" is false — a
+  binding can exclude the true ρ when a true prevalence lies outside [1e-4, 1−1e-4]; see the
+  2026-10-29 note on R4 in RESOLUTION above.)*
 - **R5 — E2 BBSE "0.0 violations" rests on 9 certified draws** (harness lens, filed minor,
   refuted). Wrong quantity: the guarantee bounds the *joint* event P(certify AND violate); over all
   200 draws that's 0/200 (rule-of-three UB ≈ 0.015 < δ). Declines satisfy the guarantee vacuously.
@@ -138,6 +154,10 @@ false test-citation parenthetical. Either way the action items are identical to 
 - **N1** Bootstrap validity-conditioning (≥1 pos & ≥1 neg per resample) is a finite-sample selection
   distinct from the disclosed asymptotic caveat — negligible in the operating regime; the
   degenerate decline covers the regime where it wouldn't be.
+  *(2026-10-29 pointer: with the post-hoc S_aux floor of audit NUM-1 — at least ten sites carrying
+  each class wherever a box is fit — a resample misses every positive-carrying (or every
+  negative-carrying) site with probability at most e^−10, so it is invalid with probability at most
+  2e^−10 ≈ 9e-5.)*
 - **N2** BBSE guarantee text attributes the full 1−δ to "the draw of calibration sites," but
   δ_conf=0.025 is spent over the **S_aux** bootstrap box. Level is right; the randomness-source
   attribution is loose. Cheap fix in `report._statement` for BBSE rows.
@@ -152,6 +172,8 @@ false test-citation parenthetical. Either way the action items are identical to 
 
 - **estimand-atoms** — Z_c ∈ [0,1] incl. weighted mode, E[Z]≤α ⟺ R_M≤α with neutral atoms,
   M-cap data-independence, Hole-1 regression adequacy: no findings.
+  *(2026-10-29 note, audit CORE-16: the equivalence E[Z] ≤ α ⟺ R_M ≤ α needs E[g_c a_c] > 0; when
+  nothing answers, R_M is 0/0, every atom equals α, and the test cannot certify.)*
 - **wsr-walk** — λ predictability, supermartingale validity under the λ-cap, log-clamp never binds
   in range, fixed-sequence multiplicity argument incl. correlated permutation streams, deploy rule,
   seed-rule collisions: no findings.

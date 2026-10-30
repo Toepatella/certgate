@@ -10,8 +10,12 @@ conditional Shapley values differ from these, and the efficiency identity does
 not tell the two apart, since both decompositions satisfy it.
 
 Abstentions are explained against the answering bar L* = log(tau*/(1-tau*)).
-Answering requires |logit| >= L*, so the margin-to-answer is L* - |logit| and
-is positive exactly for declined cases.
+In exact arithmetic answering requires |logit| >= L*, so the margin-to-answer
+L* - |logit| is positive exactly for declined cases. The returned `declined`
+flag is that logit-space test. In float64 it can disagree, in either
+direction, with the deployed rule head.score(x) >= tau* when |logit| is
+within rounding error of L* (summation order, sigmoid rounding; see
+_EPS_ANSWER_LOGIT). Ref: audit 2026-10 explain-11.
 
 Declined cases also carry an exact contrastive artifact,
 counterfactual_to_answer: the closed-form minimal move, whole-vector or
@@ -24,6 +28,7 @@ from __future__ import annotations
 
 import numpy as np
 
+from certgate.constants import PI_CLIP
 from certgate.model import _sigmoid
 
 
@@ -66,14 +71,16 @@ def local_attribution(head: "Head", x_row) -> dict:
 def abstention_explanation(head: "Head", x_row, tau_star) -> dict:
     """Explain why a case is answered or declined at threshold tau_star.
 
-    The answering bar is L* = log(tau*/(1-tau*)), so answering requires
-    |logit| >= L*.
+    The answering bar is L* = log(tau*/(1-tau*)), so in exact arithmetic
+    answering requires |logit| >= L*.
 
-    Reports the signed margin-to-answer, positive exactly when the case is
-    declined, and each feature's signed contribution toward or away from the
-    decided-class confidence.
+    Reports the signed margin-to-answer, declined = (margin > 0), and each
+    feature's signed contribution toward or away from the decided-class
+    confidence. declined is the logit-space test: within float64 rounding of
+    |logit| = L* it can disagree, either way, with the deployed rule
+    head.score(x) >= tau_star.
 
-    Refs: SPEC "explain.py".
+    Refs: SPEC "explain.py"; audit 2026-10 explain-11.
     """
     attr = local_attribution(head, x_row)
     logit = attr["logit"]
@@ -124,7 +131,8 @@ def counterfactual_to_answer(head: "Head", x_row, tau_star) -> dict:
       delta_x_j = sd_j * delta_z_j, and inf where coef_j == 0.
 
     The reported distances are those exact minima. The returned delta vectors
-    instead use m + _EPS_ANSWER_LOGIT, so the flip survives the deployed
+    -- delta_*_min_l2 and single_feature_delta_* -- instead use
+    m + _EPS_ANSWER_LOGIT, so the flip survives the deployed
     float64 rule head.score(x_cf) >= tau_star -- an exact landing on the bar
     provably does not. flip_verified re-evaluates that deployed rule with no
     tolerance.
@@ -143,7 +151,12 @@ def counterfactual_to_answer(head: "Head", x_row, tau_star) -> dict:
     an empty ranking, never the argsort-of-degenerate identity permutation. An
     all-zero head cannot flip: distance inf, flip_verified False.
 
-    Refs: _EPS_ANSWER_LOGIT; audit V22.
+    declined is the logit-space test margin > 0, as in abstention_explanation,
+    so within float64 rounding of the bar it can disagree with the deployed
+    rule either way; flip_verified always reports the deployed rule at the
+    returned point.
+
+    Refs: _EPS_ANSWER_LOGIT; audit V22; audit 2026-10 explain-9, explain-11.
     """
     attr = local_attribution(head, x_row)
     logit = attr["logit"]
@@ -251,7 +264,13 @@ def gaussian_conditional_shapley_matrix(coef, cov) -> np.ndarray:
     with a_S[S] = w_S + cov_SS^{-1} cov_SSbar w_Sbar and a_S[Sbar] = 0. The
     Shapley sum over the 2^k coalitions then collapses to one k x k matrix,
     computed exactly by enumeration, no sampling. pinv handles a singular
-    cov_SS, which is what a feature beside its __missing sibling produces.
+    cov_SS: an S_train-constant column (z == 0 under the guarded sd), two
+    exactly collinear columns (e.g. __missing indicators with one pattern),
+    or a complete one-hot group. A feature beside its own __missing sibling
+    is not a source: under S_train mean imputation and S_train
+    standardization the two are uncorrelated on S_train, up to float
+    rounding (z_j is 0 on every imputed row and sums to 0). Ref: audit
+    2026-10 explain-10.
 
     Two checks on B. Its columns sum to w -- efficiency, sum_j phi_j = w . z.
     And B == diag(w) when cov is the identity, where conditional and
@@ -288,18 +307,29 @@ def gaussian_conditional_shapley_matrix(coef, cov) -> np.ndarray:
     return b
 
 
-def composition(head: "Head", target_x, answered_mask, rho_point=None, oracle_y=None) -> dict:
+def composition(head: "Head", target_x, answered_mask, rho_point=None,
+                oracle_y=None, *, pi_source=None, pi_train=None) -> dict:
     """Answered-set class composition, reported up to three tagged ways.
 
     - predicted_class (estimated): the fraction the head calls positive.
     - bbse_true_class (estimated, label-shift-tagged, only when rho_point is
-      given): the label-shift-corrected true-positive fraction, from
-      re-weighting the source posterior odds by rho per record.
+      given): the label-shift-corrected true-positive fraction. A logistic
+      head fit on S_train carries the S_train prevalence in its posterior
+      odds (its unpenalized intercept makes the mean training probability
+      pi_train at the optimum), so each record's odds are re-weighted by
+      odds(pi_t)/odds(pi_train) = rho_point * odds(pi_source)/odds(pi_train),
+      with pi_source the S_aux prevalence rho_point divides out (the fit's
+      diagnostics key "pi_s", clipped here to [PI_CLIP, 1 - PI_CLIP] exactly
+      as rho_box_interval clips it) and pi_train the S_train record
+      prevalence, train.y.mean(). Re-weighting by rho_point alone left
+      odds(pi_train)/odds(pi_source) in every record, so rho_point without
+      both priors raises. The object records rho, the clipped pi_source,
+      pi_train and the resulting odds_multiplier.
     - oracle_true_class (diagnostic, only when oracle_y is given): the realized
       true-positive fraction from oracle labels. This is what reveals a
       certificate earned by answering only easy negatives.
 
-    Refs: SPEC "explain.py"; audit F25.
+    Refs: SPEC "explain.py"; audit F25; audit 2026-10 BBSE-1.
     """
     target_x = np.asarray(target_x, dtype=np.float64)
     answered_mask = np.asarray(answered_mask, dtype=bool)
@@ -317,15 +347,31 @@ def composition(head: "Head", target_x, answered_mask, rho_point=None, oracle_y=
     }
 
     if rho_point is not None:
-        p_s = np.asarray(head.predict_proba(target_x), dtype=np.float64)
-        odds_s = p_s / np.clip(1.0 - p_s, 1e-12, None)
-        odds_t = float(rho_point) * odds_s
+        if pi_source is None or pi_train is None:
+            raise ValueError(
+                "composition: rho_point needs pi_source (the S_aux prevalence "
+                "BBSE divides out) and pi_train (the S_train prevalence the "
+                "head's odds carry) (reason=missing-prior)")
+        pi_train = float(pi_train)
+        if not 0.0 < pi_train < 1.0:
+            raise ValueError(
+                f"composition: pi_train={pi_train!r} must lie in (0, 1) "
+                f"(reason=bad-prior)")
+        ps = float(np.clip(float(pi_source), PI_CLIP, 1.0 - PI_CLIP))
+        mult = (float(rho_point) * (ps / (1.0 - ps))
+                / (pi_train / (1.0 - pi_train)))
+        p_h = np.asarray(head.predict_proba(target_x), dtype=np.float64)
+        odds_h = p_h / np.clip(1.0 - p_h, 1e-12, None)
+        odds_t = mult * odds_h
         p_t = odds_t / (1.0 + odds_t)
         out["bbse_true_class"] = {
             "tag": "estimated (label-shift assumption)",
             "positive_fraction": float(p_t[answered_mask].mean()) if n_ans else float("nan"),
             "expected_n_positive": float(p_t[answered_mask].sum()) if n_ans else float("nan"),
             "rho": float(rho_point),
+            "odds_multiplier": float(mult),
+            "pi_source": ps,
+            "pi_train": pi_train,
             "n_answered": n_ans,
         }
 

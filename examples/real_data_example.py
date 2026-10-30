@@ -69,7 +69,7 @@ def _write_features_only_csv(path, cohort):
 
     The site column must still travel with the batch. A multi-site pool hands it
     to run_certgate as target_site_id, which feeds both the per-site target
-    disjointness gate and BBSE's cluster-correct q interval.
+    disjointness gate and BBSE's cluster-robust (asymptotic) q interval.
     """
     d = cohort.d
     with open(path, "w", newline="") as fh:
@@ -123,7 +123,8 @@ def _split_by_site(sites, outcomes, feats, rng):
         train/aux/cal, and rejects a target naming any train/aux/cal site -- the
         target must be a genuinely new site too. For a multi-site pool, pass
         target_site_id so the check runs per site; it also gives BBSE its
-        cluster-correct q_t interval. This example's pool spans 12 sites.
+        cluster-robust (asymptotic) q_t interval. This example's pool spans 12
+        sites.
       - Even if that slipped through, a record-level split would silently break
         the finite-sample guarantee by leaking across the calibration draw.
 
@@ -181,7 +182,7 @@ def main():
     # The documented 208-site generator (SimConfig defaults). 40% of 208 is
     # about 83 calibration sites, clearing the 50-record-carrying floor, and
     # this exact draw is the split tests/test_pipeline.py pins as certifying
-    # alpha=0.10. The temp CSV is ~35 MB, the price of realistic site sizes:
+    # alpha=0.10. The temp CSVs total ~14 MB, the price of realistic site sizes:
     # feasibility rides on both cluster count and per-site atom noise.
     cfg = SimConfig()
     historical = draw_cohort(cfg, 208, rng)
@@ -216,8 +217,12 @@ def main():
           f"{len(set(target_sites))} sites")
 
     # ---- run the gate without oracle labels ----
-    # Certification NEVER needs target labels. It certifies the answered-set
-    # error rate from the calibration draw. Without oracle labels the report
+    # Certification NEVER needs target labels. From the labeled calibration
+    # sites it certifies, at confidence >= 1-delta, that the M=100
+    # influence-weighted answered-set risk averaged over the site population
+    # is <= alpha (in BBSE mode reweighted to the target class prevalence, the
+    # unlabeled target pool entering through the q_t interval); it does not
+    # bound this batch's error count. Without oracle labels the report
     # only omits the diagnostic oracle composition; every certified or
     # estimated number still fires.
     # target_site_id carries the pool's per-record raw site labels, so the

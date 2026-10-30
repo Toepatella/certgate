@@ -14,12 +14,13 @@ __pycache__/
 # (run_eicu.assert_aggregate_only gates every write), so they stay tracked too.
 # The same reasoning covers the real-extract sidecar output dirs
 # (experiments/out-sens/, experiments/out-panel/, out-subgroups/, out-faithfulness/,
-# and the 2026-09 POST-HOC fix-pass runs out-timing/ and out-rev2/): every write
-# passes the same gate, and an audit of out-panel/ (2026-08-09) found no array
-# longer than 10. The remaining POST-HOC sidecars are tracked for the same reason
-# with less to gate: out-e9a-rescore/, out-e9b-positives/ and out-bbse-probe/ are
-# synthetic-only; out-settled/ and out-derived/ are read-only derivations from the
-# released aggregates.
+# the 2026-09 POST-HOC fix-pass runs out-timing/ and out-rev2/, and the 2026-10
+# POST-HOC out-eicu-composition/): every write passes the same gate, and an audit
+# of out-panel/ (2026-08-09) found no array longer than 10. The remaining POST-HOC
+# sidecars are tracked for the same reason with less to gate: out-e9a-rescore/,
+# out-e9b-positives/, out-bbse-probe/, out-e6-composition/, out-e8a-rescore/ and
+# out-e9-exact/ are synthetic-only; out-settled/, out-derived/ and out-derived-r2/
+# are read-only derivations from the released aggregates.
 
 # ---------------------------------------------------------------------------
 # eICU-CRD v2.0 — the extract is NOT redistributable and MUST NOT be committed

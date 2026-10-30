@@ -14,7 +14,7 @@ Nothing under experiments/out*/ is opened for writing and no pipeline is
 re-run. The restricted extract is never touched: every input is an aggregate
 artifact already in the repository.
 
-Six values are pinned. They are the ones the manuscript quotes most and the
+Seven values are pinned. They are the ones the manuscript quotes most and the
 ones a referee reaches for first; if the derivation stops reproducing any of
 them the script refuses to emit anything, in the manner of
 experiments/panel_confusion_tables.py. That makes this the repository's first
@@ -27,13 +27,16 @@ re-emitted eICU run (experiments/out-rev2/) is likewise read when present.
 
 Run: python -m experiments.derive_fixpass_numbers [--out PATH]
 
-Writes experiments/out-derived/fixpass_numbers.json and prints it. The JSON
-carries a _run block (UTC, git sha, sha256 of every input read).
+Writes experiments/out-derived-r2/fixpass_numbers.json and prints it; the
+first emission, experiments/out-derived/fixpass_numbers.json, stays frozen
+as released. The JSON carries a _run block (UTC, git sha, sha256 of every
+input read).
 
 Refs: fix-pass plan WP2; panel action items 4-14, 19, 23, 27.
 """
 
 import argparse
+import collections
 import csv
 import datetime
 import hashlib
@@ -54,13 +57,25 @@ from experiments.panel_confusion_tables import derive as _confusion_tables
 
 EXP_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_DIR = os.path.dirname(EXP_DIR)
-OUT_DIR = os.path.join(EXP_DIR, "out-derived")
+OUT_DIR = os.path.join(EXP_DIR, "out-derived-r2")
 OUT_PATH = os.path.join(OUT_DIR, "fixpass_numbers.json")
 
 # The frozen output directories. Every sidecar in this fix pass refuses to
 # write into them; the three byte-identity gates are what certify them.
+# out-derived/ keeps the released 2026-09-07 derivation as released; the
+# corrected derivation is written to out-derived-r2/ (audit 2026-10 EICU-2).
+# The last six are the re-emitted run and the released post-hoc sidecars,
+# frozen as released; each sidecar's own default directory is refused, so a
+# re-run needs --out <new dir>.
 FROZEN_DIRS = ("out", "out-panel", "out-sens", "out-subgroups",
-               "out-faithfulness")
+               "out-faithfulness", "out-derived", "out-rev2", "out-timing",
+               "out-settled", "out-bbse-probe", "out-e9a-rescore",
+               "out-e9b-positives")
+# The 2026-10 audit's post-hoc sidecars. Each script writes only its own
+# directory, so assert_not_frozen refuses every other one as frozen too; the
+# caller names its own with `own` (audit 2026-10 tests-5).
+AUDIT_SIDECAR_DIRS = ("out-derived-r2", "out-e6-composition", "out-e8a-rescore",
+                      "out-e9-exact", "out-eicu-composition")
 
 INPUTS = dict(
     panel="out/EICU_reliability_panel.json",
@@ -84,12 +99,12 @@ SIDECARS = dict(
     e9b_positives="out-e9b-positives/E9b_fnr_positives.json",
     bbse_probe="out-bbse-probe/BBSE_probe.json",
     settled="out-settled/EICU-PREDICTIONS-SETTLED.json",
-    rev2_pooled="out-rev2/EICU_pooled.csv",
+    rev2_comparator="out-rev2/EICU_comparator.csv",
     rev2_faithfulness="out-rev2/EICU_faithfulness.csv",
     rev2_diagnostics="out-rev2/EICU_diagnostics.json",
 )
 
-# The six pinned values (path -> expected, decimals compared). If any stops
+# The seven pinned values (path -> expected, decimals compared). If any stops
 # reproducing, nothing is written. Paths are '/'-joined because one key
 # ("alpha0.10") carries a dot of its own.
 PINS = {
@@ -106,7 +121,7 @@ PINS = {
     "e1/baseline_deploying_draws_alpha0.10": (194, 0),
 }
 
-APACHE_ABSENCE_TOKENS = ("aps_present", "apv_present", "__missing")
+APACHE_PRESENCE_FLAGS = ("aps_present", "apv_present")
 OVER_CAP_CANDIDATES = ("apv_ejectfx__missing", "apv_electivesurgery__missing")
 
 
@@ -143,15 +158,22 @@ def run_block(input_paths):
         inputs={rel_path(p): sha256_file(p) for p in input_paths})
 
 
-def assert_not_frozen(path):
-    """Refuse any write that would land in a frozen output directory."""
+def assert_not_frozen(path, own="out-derived-r2"):
+    """Refuse any write that would land in a frozen output directory.
+
+    Frozen means a released directory (FROZEN_DIRS) or another post-hoc
+    sidecar's directory (AUDIT_SIDECAR_DIRS other than `own`, the caller's
+    own; the default is this script's out-derived-r2).
+    """
     target = os.path.normcase(os.path.abspath(path))
-    for name in FROZEN_DIRS:
+    others = tuple(d for d in AUDIT_SIDECAR_DIRS if d != own)
+    for name in FROZEN_DIRS + others:
         frozen = os.path.normcase(os.path.join(EXP_DIR, name))
         if target == frozen or target.startswith(frozen + os.sep):
             raise SystemExit(
                 f"refusing to write {path}: experiments/{name}/ is frozen "
-                f"(byte-identical by gate); sidecars write to their own "
+                f"to this script (byte-identical by gate, or another "
+                f"sidecar's output); sidecars write to their own "
                 f"directory (reason=frozen-output-dir)")
     if os.path.basename(path) == "EICU-SUMMARY.md":
         raise SystemExit(
@@ -191,6 +213,32 @@ def _ci(k, n):
                 ci95=_rate_ci95(k, n))
 
 
+def is_apache_absence(feature):
+    """The registered P4 set (EICU-PROTOCOL section 9): aps_present,
+    apv_present, or an aps_*__missing / apv_*__missing sibling. The four
+    non-APACHE missingness flags (age__missing, admissionheight__missing,
+    admissionweight__missing, pre_icu_hours__missing) are not in it.
+
+    Audit 2026-10 EICU-12: a bare "__missing" substring took those four in."""
+    return feature in APACHE_PRESENCE_FLAGS or (
+        feature.startswith(("aps_", "apv_")) and feature.endswith("__missing"))
+
+
+def operative_rankings(diagnostics):
+    """One abstention ranking per re-split: the operative rung's, i.e. the
+    strictest certified alpha. run_eicu writes one key per certified
+    (replicate, rung), e.g. "replicate3_alpha0.1", so a re-split certified
+    at both rungs carries two rankings (audit 2026-10 EICU-12)."""
+    best = {}
+    for key, blk in diagnostics["abstention_gap_ranking"].items():
+        rep_part, alpha_part = key.split("_", 1)
+        rep = int(rep_part[len("replicate"):])
+        alpha = float(alpha_part[len("alpha"):])
+        if rep not in best or alpha < best[rep][0]:
+            best[rep] = (alpha, blk)
+    return {rep: best[rep][1] for rep in sorted(best)}
+
+
 # ------------------------------------------------------------ eICU sections
 
 def composition_section(panel):
@@ -220,7 +268,8 @@ def head_auc_section(pooled):
                 ablation_drop=_stats([float(r["ablation_drop"]) for r in rows]),
                 note=("the manuscript's 'peaks at 0.867' is this maximum, "
                       "replicate 4, on S_cal; pool and answered-set AUC "
-                      "come from the out-rev2 re-emission when present"))
+                      "and Brier are under rev2.comparator_new_columns "
+                      "(out-rev2/EICU_comparator.csv) when present"))
 
 
 def calibration_section(panel):
@@ -281,12 +330,17 @@ def three_way_section(cert, diagnostics):
         _pool_prevalence_rep0_oracle_answered=pool_prev)
 
 
-def _finish_three_way(section, panel):
-    """Add the pool-prevalence arithmetic once the panel is at hand."""
-    p0 = panel["panels"][0]
-    pool_prev = p0["composition"]["all"]["observed_positive_fraction"]
+def _finish_three_way(section, panel, cert):
+    """Add the pool-prevalence arithmetic once the panel is at hand.
+
+    The arithmetic runs on the certificate's unrounded BBSE estimates and the
+    panel's pool counts; only the outputs are rounded (audit 2026-10 EICU-2:
+    pi_s entered rounded to 0.0912 and moved the odds ratio 0.984 to 0.983)."""
+    allp = panel["panels"][0]["composition"]["all"]
+    pool_prev = allp["n_observed_positive"] / allp["n"]
+    bb = cert["diagnostic"]["bbse"]
+    c0, c1, pi_s = bb["c0"], bb["c1"], bb["pi_s"]
     bt = section["bbse_transfer"]
-    c0, c1, pi_s = bt["c0"], bt["c1"], bt["pi_s"]
     bt["pool_prevalence_observed"] = round(pool_prev, 4)
     bt["expected_q_at_observed_prevalence"] = round(
         c0 * (1.0 - pool_prev) + c1 * pool_prev, 4)
@@ -395,12 +449,11 @@ def over_cap_section(preflight, diagnostics):
 def p4_signed_section(diagnostics):
     """The registered P4 rule (unsigned top-3) and its signed reading."""
     per = []
-    for key, blk in diagnostics["abstention_gap_ranking"].items():
-        rep = int(key.split("_")[0].replace("replicate", ""))
+    for rep, blk in operative_rankings(diagnostics).items():
         top3 = blk["ranking"][:3]
         hits = [dict(feature=e["feature"], rank=i + 1, gap=e["gap"])
                 for i, e in enumerate(top3)
-                if any(t in e["feature"] for t in APACHE_ABSENCE_TOKENS)]
+                if is_apache_absence(e["feature"])]
         per.append(dict(replicate=rep,
                         top3=[(e["feature"], e["gap"]) for e in top3],
                         unsigned_hit=bool(hits),
@@ -410,7 +463,8 @@ def p4_signed_section(diagnostics):
     exceptions = [d for d in per if d["unsigned_hit"]]
     return dict(
         rule=("an APACHE-absence feature (aps_present, apv_present or an "
-              "*__missing sibling) in the top 3 of the |gap| ranking"),
+              "aps_*__missing / apv_*__missing sibling) in the top 3 of the "
+              "|gap| ranking"),
         unsigned_satisfied=sum(d["unsigned_hit"] for d in per),
         signed_satisfied=sum(d["signed_hit"] for d in per),
         n_replicates=len(per),
@@ -478,12 +532,24 @@ def fairness_section(subgroups, alpha=0.10):
             declined_mortality=(round(float(np.mean(dec_mort)), 3)
                                 if dec_mort else None))
     bands = sorted(age)
-    lo, hi = age[bands[0]], age[bands[-1]]
+
+    def _unrounded(level):
+        # the ratios are taken on unrounded means; the 4-dp means above are
+        # display values only (audit 2026-10 EICU-2)
+        grp = by_level[("age_band", level)]
+        err = float(np.mean([_f(c["answered_err_rate"]) for c in grp
+                             if c["status"] == "ok"
+                             and _f(c["answered_err_rate"]) is not None]))
+        cov = float(np.mean([_f(c["coverage"]) for c in grp
+                             if _f(c["coverage"]) is not None]))
+        return err, 1.0 - cov
+
+    (err_lo, def_lo), (err_hi, def_hi) = (_unrounded(bands[0]),
+                                          _unrounded(bands[-1]))
     gradients = dict(
         bands=[bands[0], bands[-1]],
-        answered_err_ratio=round(hi["answered_err_mean"]
-                                 / lo["answered_err_mean"], 2),
-        deferral_ratio=round(hi["deferral_mean"] / lo["deferral_mean"], 2))
+        answered_err_ratio=round(err_hi / err_lo, 2),
+        deferral_ratio=round(def_hi / def_lo, 2))
     over_rows = [dict(replicate=int(c["replicate"]), dim=c["dim"],
                       level=c["level"], answered_err_rate=_f(c["answered_err_rate"]),
                       n_answered=int(float(c["n_answered"])))
@@ -564,8 +630,8 @@ def sens_section(sens_pooled, sens_attrition):
         rm_exceed=sum(1 for r in certs if r["rm_exceed"] == "True"),
         n_cal_carrying=int(rows[0]["n_cal_carrying"]),
         head_auc_s_cal=_stats([float(r["head_auc_oos"]) for r in rows]),
-        decline_reasons={r["decline_reason"]: 1 for r in rows
-                         if r["certified"] != "True"})
+        decline_reasons=dict(collections.Counter(
+            r["decline_reason"] for r in rows if r["certified"] != "True")))
 
 
 def primary_pooled_section(pooled, attrition):
@@ -603,13 +669,21 @@ def e1_section(e1):
             and r["deploy_mode"] == "baseline"]
     return {"baseline_deploying_draws_alpha0.10": len(base),
             "draws": len(sub),
-            "note": ("the influence-cap sweep replays these draws; six "
-                     "validity-grid draws deployed a BBSE threshold and are "
-                     "excluded from Table S4")}
+            "note": ("the influence-cap sweep (Table S4) replays all of "
+                     "these draws in baseline mode; the six that deployed a "
+                     "BBSE threshold enter it at their baseline-walk "
+                     "threshold, and only its threshold self-check is "
+                     "restricted to the baseline-deploying draws")}
 
 
 def e9a_section(e9a):
     odds = lambda p: p / (1.0 - p)
+    # population_odds_ratio is the nominal, site-conditional odds ratio
+    # exp(logit 0.22 - logit 0.095) = 2.687, the log-odds shift every site
+    # receives, not the record-pooled population one rho_pop estimates,
+    # odds(0.23126)/odds(0.103657) = 2.601 at s_u = 0.5 (truth.rho_pop in
+    # out-bbse-probe/BBSE_probe.json). The key name stays as released; no
+    # manuscript number reads it (audit 2026-10 NUM-4, FNR-6).
     out = dict(population_odds_ratio=round(odds(SHIFT_BASE) / odds(0.095), 3),
                cells={}, exceeding_rows=[])
     keys = sorted({(int(r["n_source_sites"]), r["target_mode"], r["alpha"])
@@ -688,6 +762,11 @@ def r_counts_section(summary_path):
 
 
 def exact_cis_section(fair, disp, primary, e9a):
+    # The eicu_* entries are Clopper-Pearson intervals over dependent units:
+    # pools and cells of one re-split share its head and threshold, hospitals
+    # recur across re-splits, and the re-splits partition one hospital list.
+    # They are nominal only (paper Section 4.10, Tables 2 and S8; audit
+    # 2026-10 EICU-1). The emitted "note" is left as released.
     return {
         "eicu_rm_exceed_0_of_20": primary["rm_exceed"]["ci95"],
         "eicu_alpha0_10_certified_20_of_20": primary["certified_alpha0_10"]["ci95"],
@@ -712,6 +791,8 @@ def floor_section(cert):
                for a in ALPHA_LADDER},
         margin_on_s_aux={k: round(v["margin"], 4) for k, v in feas.items()},
         ratio={k: round(v["ratio"], 3) for k, v in feas.items()},
+        # record-pooled answered error on S_cal, not R_M (frozen key name
+        # kept; audit 2026-10 CORE-5)
         estimated_answered_risk_s_cal=round(cert["estimated"]["point"], 4),
         note=("ln(1/delta)(1-alpha)/n at the record-carrying calibration "
               "count; a margin in atom units, a feasibility diagnostic, "
@@ -732,32 +813,54 @@ def _sidecar_headline(name, path):
     return dict(status="present", path=rel_path(path))
 
 
+# The seven columns run_eicu appended to EICU_comparator.csv on 2026-09-04
+# (run_eicu._write_artifacts). The re-emitted EICU_pooled.csv gained none; it
+# is byte-identical to the released one (out-rev2/GATE2-REPORT.json).
+REV2_COMPARATOR_COLUMNS = (
+    "head_auc_pool", "head_brier_pool", "head_auc_answered",
+    "head_brier_answered", "apache_iva_auc_pool", "apache_iva_brier_pool",
+    "n_apache_available_pool")
+
+
 def _rev2_sections(paths):
-    """Lane C's re-emitted run: only the new columns, only when present."""
+    """Lane C's re-emitted run: only the new columns, only when present.
+
+    A present comparator file without the appended columns stops the
+    derivation rather than reporting that none were found (audit 2026-10
+    EICU-2: the first emission read EICU_pooled.csv, which never carries
+    them)."""
     out = {}
-    p = paths["rev2_pooled"]
+    p = paths["rev2_comparator"]
     if os.path.exists(p):
         rows = [r for r in _read_csv(p) if r["alpha"] == "0.1"]
-        new_cols = ("head_auc_pool", "head_brier_pool", "head_auc_answered",
-                    "head_brier_answered", "apache_iva_auc_pool",
-                    "apache_iva_brier_pool", "n_apache_available_pool")
-        found = {c: _stats([_f(r[c]) for r in rows]) for c in new_cols
-                 if rows and c in rows[0]}
-        out["pooled_new_columns"] = found or "no new columns found"
+        missing = [c for c in REV2_COMPARATOR_COLUMNS
+                   if not rows or c not in rows[0]]
+        if missing:
+            raise SystemExit(
+                f"derive_fixpass_numbers: {p} has no alpha=0.1 row carrying "
+                f"{missing} (reason=rev2-columns-missing)")
+        out["comparator_new_columns"] = {
+            c: _stats([_f(r[c]) for r in rows])
+            for c in REV2_COMPARATOR_COLUMNS}
     p = paths["rev2_faithfulness"]
     if os.path.exists(p):
         rows = _read_csv(p)
         reps = sorted({r["replicate"] for r in rows}, key=int)
-        per = {}
+        per, rhos = {}, []
         for rep in reps:
             sec = faithfulness_section(rows, rep)
+            # summary on unrounded correlations; per[rep] keeps the 4-dp value
+            # (audit 2026-10 EICU-2)
+            sub = [r for r in rows if r["replicate"] == rep]
+            rhos.append(float(spearmanr(
+                [abs(float(r["coef"])) for r in sub],
+                [abs(float(r["gap_int"])) for r in sub]).statistic))
             per[rep] = dict(spearman=sec["spearman_abs_coef_vs_abs_gap"],
                             top_driver=sec["features"][0]["feature"],
                             top_driver_delta_mean_abs_z=sec["features"][0]
                             ["delta_mean_abs_z"])
         out["faithfulness_by_replicate"] = per
-        out["faithfulness_spearman"] = _stats(
-            [v["spearman"] for v in per.values()])
+        out["faithfulness_spearman"] = _stats(rhos)
     return out or dict(status="absent")
 
 
@@ -790,7 +893,8 @@ def derive():
     disp = dispersion_section(per_site)
     primary = primary_pooled_section(pooled, attrition)
     e9a_sec = e9a_section(e9a)
-    three = _finish_three_way(three_way_section(cert, diagnostics), panel)
+    three = _finish_three_way(three_way_section(cert, diagnostics), panel,
+                              cert)
     doc = {
         "post_hoc": ("[MEASURE] POST-HOC (2026-09-04): read-only derivation "
                      "from released artifacts for the fix pass; certifies "

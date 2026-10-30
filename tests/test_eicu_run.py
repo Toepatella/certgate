@@ -37,7 +37,8 @@ def test_smoke_end_to_end_reaches_an_honest_outcome(pipeline_small):
 
     The pooled arm holds 24 hospitals; the per-hospital pool has K == 1.
     Certification is never asserted. The assertion is that whatever is issued
-    survives the oracle.
+    is not grossly violated on the oracle pool (a Wilson screen, not a validity
+    check).
     """
     rep, ctx = pipeline_small["rep"], pipeline_small
     outcome = _assert_honest(rep, ctx)
@@ -126,7 +127,7 @@ def test_mock_run_writes_the_reliability_panel(mock_certified_run):
     """The post-hoc panel reaches disk, gated and labelled.
 
     Added 2026-08-01, after the extract was read. The mock declines every rung
-    by arithmetic, so this also exercises the tau_star=None, all-False-mask
+    at the frozen sizes (measured), so this also exercises the tau_star=None, all-False-mask
     branch on the runner. That branch is a legal shape, not a crash: every
     answered statistic is None carrying undefined-point, and the artifact is
     still strict JSON.
@@ -591,7 +592,7 @@ def test_run_eicu_refuses_record_level_output():
         with pytest.raises(etl.EicuError, match="record-level-output"):
             run_eicu.assert_aggregate_only(payload, "test")
 
-    assert run_eicu.EICU_MAX_OUTPUT_LEN == 512     # > 208 sites, < any record array
+    assert run_eicu.EICU_MAX_OUTPUT_LEN == 512     # > 208 sites; short per-hospital record arrays escape the cap and are caught only under a forbidden key
     # an aggregate payload of the shape the runner actually writes passes
     run_eicu.assert_aggregate_only(
         {"alpha": 0.1, "coverage": 0.72, "per_site": [{"site": "hosp-1",
@@ -998,3 +999,191 @@ def test_dashboard_out_guard_refuses_any_out_prefixed_directory(tmp_path):
             dash_eicu._check_out_path(bad)
     ok = os.path.join(str(tmp_path), "pages", "explain_dashboard_eicu.html")
     assert dash_eicu._check_out_path(ok) == os.path.abspath(ok)
+
+
+# ============================ audit 2026-10: exactness of re-applied values ===
+# Code-only changes on inputs no released run reaches; nothing frozen moves.
+
+def test_pooled_rescoring_uses_the_raw_deployed_tau():
+    """Re-scoring the pool uses the deployed float64 tau, never its 6 dp copy.
+
+    round(TAU_GRID[14], 6) == 0.83 is one ulp below the deployed
+    0.8300000000000001, so a score of exactly 0.83 is declined by the
+    deployed rule and answered by the rounded one. Row 0 below scores 0.83
+    exactly. Ref: audit 2026-10 explain-13 / EICU-11 (contract C4).
+    """
+    import ast
+    import inspect
+
+    from certgate.constants import TAU_GRID
+    from certgate.model import Head
+
+    tau_dep = float(TAU_GRID[14])
+    report = {"reason": None,
+              "certified": [dict(alpha=0.1, status="certified", tau=tau_dep,
+                                 tau_idx=14, deploy_mode="baseline",
+                                 modes=["baseline"], mode_outcomes={})]}
+    head = Head(coef=np.array([1.0]), intercept=0.0, mu=np.array([0.0]),
+                sd=np.array([1.0]))
+    x = np.array([[1.585627263740381], [3.0], [0.1]])
+    y = np.array([True, True, False])
+
+    ev = run_eicu._eval_rung(head, report, 0.1, x, y)
+    assert ev["tau"] == 0.83 and ev["tau_raw"] == tau_dep
+    assert ev["n_answered"] == 1
+    assert run_eicu._abstention_ranking(head, x, ev["tau_raw"],
+                                        ["f0"])["n_answered"] == 1
+    assert run_eicu._abstention_ranking(head, x, ev["tau"],
+                                        ["f0"])["n_answered"] == 2
+
+    # every re-scoring call in the runner passes ev["tau_raw"]
+    tree = ast.parse(inspect.getsource(run_eicu.run_certification))
+    seen = 0
+    for node in ast.walk(tree):
+        if (isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+                and node.func.id in ("_rm_on_pool", "_per_site_exceed_frac",
+                                     "_abstention_ranking")):
+            seen += 1
+            assert any(isinstance(a, ast.Subscript)
+                       and isinstance(a.slice, ast.Constant)
+                       and a.slice.value == "tau_raw" for a in node.args), (
+                f"{node.func.id} is not called with ev['tau_raw']")
+    assert seen == 3
+
+
+def _fc_row(rep, alpha, *, certified=True, n_target=100, n_answered=80,
+            rm_exceed=False, rm_fd_alarm=False, rm_fresh=0.05,
+            head_auc_oos=0.70, ablation_drop=0.0, leak_auc_alarm=False,
+            leak_ablation_alarm=False):
+    return dict(replicate=rep, alpha=alpha, certified=certified,
+                n_target=n_target, n_answered=n_answered,
+                coverage=(round(n_answered / n_target, 4) if certified
+                          else None),
+                rm_exceed=rm_exceed, rm_fd_alarm=rm_fd_alarm,
+                rm_fresh=rm_fresh, head_auc_oos=head_auc_oos,
+                ablation_drop=ablation_drop, leak_auc_alarm=leak_auc_alarm,
+                leak_ablation_alarm=leak_ablation_alarm)
+
+
+def test_failure_criteria_thresholds_strictness_and_operative_row():
+    """F-A..F-E compare exact quantities, never a rounded display value.
+
+    Each case sits on a registered threshold, where a 4 or 6 dp rounding
+    would flip the verdict. Ref: audit 2026-10 GAP-unreviewed-tests-5.
+    """
+    fc = run_eicu._failure_criteria
+    sites = {"primary-cohort": 207}
+
+    # F-A: 1/20 exceedances is not > delta = 0.05; 2/20 is
+    rows = [_fc_row(r, 0.1, rm_exceed=(r < 1)) for r in range(20)]
+    assert fc(rows, sites, 20)["F-A"]["fired"] is False
+    rows = [_fc_row(r, 0.1, rm_exceed=(r < 2)) for r in range(20)]
+    assert fc(rows, sites, 20)["F-A"]["fired"] is True
+
+    # F-B: mean exact coverage 0.20 holds; 0.1999 and 0.19996 (which the
+    # 4 dp display rounds to 0.2) fire
+    for n_ans, fires in ((20000, False), (19990, True), (19996, True)):
+        rows = [_fc_row(r, 0.1, n_target=100000, n_answered=n_ans)
+                for r in range(20)]
+        out = fc(rows, sites, 20)["F-B"]
+        assert out["fired"] is fires, n_ans
+    assert out["mean_operative_coverage"] == 0.2      # display only
+
+    # F-D leg 3: alpha = 0.05, coverage > 0.90 and rm under 0.01 (the flag
+    # carries the unrounded comparison; rm_fresh = 0.01 is its 6 dp display)
+    for n_ans, fires in ((91, True), (90, False)):
+        rows = [_fc_row(0, 0.05, n_answered=n_ans, rm_fd_alarm=True,
+                        rm_fresh=0.01)]
+        leg = fc(rows, sites, 1)["F-D"]["legs"]["unfalsifiable_success"]
+        assert leg["fired"] is fires, n_ans
+    rows = [_fc_row(0, 0.05, n_answered=95, rm_fd_alarm=False)]
+    assert fc(rows, sites, 1)["F-D"]["fired"] is False
+
+    # F-D legs 1-2 read the probe's own alarm booleans
+    for kw, leg_name in (("leak_auc_alarm", "discrimination"),
+                         ("leak_ablation_alarm", "missingness_ablation")):
+        for on in (True, False):
+            rows = [_fc_row(0, 0.1, head_auc_oos=0.90, ablation_drop=0.05,
+                            **{kw: on})]
+            out = fc(rows, sites, 1)["F-D"]
+            assert out["legs"][leg_name]["fired"] is on
+            assert out["fired"] is on
+
+    # F-E: below 200 surviving primary-cohort sites
+    rows = [_fc_row(0, 0.1)]
+    assert fc(rows, {"primary-cohort": 199}, 1)["F-E"]["fired"] is True
+    assert fc(rows, {"primary-cohort": 200}, 1)["F-E"]["fired"] is False
+
+    # a replicate certified at both rungs is read at alpha = 0.05
+    rows = [_fc_row(0, 0.1, rm_exceed=True, n_answered=90),
+            _fc_row(0, 0.05, rm_exceed=False, n_answered=10)]
+    out = fc(rows, sites, 1)
+    assert out["F-A"]["n_rm_exceed"] == 0
+    assert out["F-B"]["mean_operative_coverage"] == 0.1
+    assert out["F-B"]["fired"] is True
+
+
+def test_dashboard_skips_cross_check_off_replicate0_or_off_primary(
+        monkeypatch):
+    """The released certificate records replicate 0 of the primary arm only.
+
+    A page for any other replicate or arm has nothing to compare against, so
+    it is labelled unverified and _cross_check is never called.
+    Ref: audit 2026-10 GAP-example-builders-2.
+    """
+    calls = []
+
+    def _fake_cross_check(row, cal, coverage, ref_path):
+        calls.append(ref_path)
+        return "checked"
+
+    monkeypatch.setattr(dash_eicu, "_cross_check", _fake_cross_check)
+    row = {"alpha": 0.1, "tau": 0.85, "tau_idx": 15, "deploy_mode": "baseline"}
+    for replicate, arm in ((1, "primary"), (0, "apache-complete"),
+                           (3, "apache-complete")):
+        msg = dash_eicu._verification(True, False, 0.1, replicate, arm, row,
+                                      _CalStub(), 0.855, "ref.json")
+        assert msg.startswith(dash_eicu._UNVERIFIED), (replicate, arm)
+        assert f"replicate {replicate}, arm {arm}" in msg
+    assert calls == []
+    assert dash_eicu._verification(True, False, 0.1, 0, "primary", row,
+                                   _CalStub(), 0.855, "ref.json") == "checked"
+    assert calls == ["ref.json"]
+
+
+def test_dashboard_answered_risk_names_bbse_weighting():
+    """Under BBSE deployment the S_cal estimate is reweighted, and says so.
+
+    The baseline string stays byte-identical. Ref: audit 2026-10
+    GAP-example-builders-3.
+    """
+    est = {"point": 0.0387, "ci95": (0.0356, 0.0422)}
+    assert dash_eicu._answered_risk({"estimated": dict(est)}) == \
+        "0.0387 (95% CI 0.0356-0.0422)"
+    s = dash_eicu._answered_risk({"estimated": dict(est, weighting="bbse")})
+    assert s.startswith("0.0387 (95% CI 0.0356-0.0422); ")
+    assert s.endswith("not the calibration sites' own rate")
+
+
+def test_abstention_figure_reads_one_ranking_per_replicate(tmp_path):
+    """run_eicu writes one ranking per certified (replicate, rung); the figure
+    reads the operative rung's (the strictest alpha), one per re-split, in
+    numeric replicate order. Ref: audit 2026-10 EICU-12."""
+    from experiments import fig_eicu_abstention_drivers as fig
+
+    def blk(name):
+        return {"n_answered": 1, "n_declined": 1,
+                "ranking": [{"feature": name, "gap": 0.1}]}
+
+    doc = {"abstention_gap_ranking": {
+        "replicate0_alpha0.1": blk("loose0"),
+        "replicate0_alpha0.05": blk("strict0"),
+        "replicate10_alpha0.1": blk("loose10"),
+        "replicate2_alpha0.1": blk("loose2")}}
+    path = tmp_path / "EICU_diagnostics.json"
+    path.write_text(json.dumps(doc), encoding="utf-8")
+    got = fig.load_rankings(str(path))
+    assert [k for k, _ in got] == ["replicate0_alpha0.05",
+                                   "replicate2_alpha0.1",
+                                   "replicate10_alpha0.1"]
+    assert got[0][1][0]["feature"] == "strict0"

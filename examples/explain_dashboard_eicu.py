@@ -22,8 +22,10 @@ worse than no page.
 
 The outcome of that check rides in the certificate banner as `verification`, so
 a page that skipped it is never byte-identical to one that passed. A page skips
-it under --no-cross-check, a missing released certificate, or an --alpha rung
-the released certificate does not record.
+it under --no-cross-check, a missing released certificate, an --alpha rung the
+released certificate does not record, or a replicate other than 0 or an arm
+other than primary (the released certificate records replicate 0 of the
+primary arm only).
 
 This module writes ONE html file. It never touches experiments/out, never
 re-runs the certification arms, and computes no new certified quantity: the
@@ -39,9 +41,10 @@ import math
 import os
 import sys
 
-from certgate.constants import DELTA
+from certgate.constants import ALPHA_LADDER, DELTA
 from certgate.model import fit_head
 from certgate.pipeline import run_certgate
+from certgate.report import _ASSUMPTION
 from examples.explain_dashboard import build_dashboard
 from experiments import eicu_etl as etl
 from experiments.run_eicu import _build_cohorts, _row_for
@@ -118,12 +121,19 @@ def _operative(report, alpha=None):
 
 
 def _answered_risk(report):
-    """The estimated answered-set risk, formatted as the page displays it.
+    """The estimated tier's record-pooled answered error on S_cal (not R_M),
+    formatted as the page displays it.
 
-    Note the pool. report['estimated'] is bootstrapped over S_cal, so this
-    number's denominator is the CALIBRATION hospitals, not the held-out pool the
-    rest of the page is about. Every other banner field -- alpha, tau, mode,
-    n_cal_hospitals -- is a property of the certificate itself.
+    Note the pool. report["estimated"] is computed from S_cal records and
+    bootstrapped over S_cal sites, so its denominator is the CALIBRATION
+    hospitals, not the held-out pool the rest of the page is about. Under
+    baseline deployment it is their record-pooled answered error; under BBSE
+    deployment (estimated["weighting"] == "bbse") calibration positives are
+    reweighted by rho_point, so it estimates the answered risk at the target
+    class prevalence, and the value says so. Either way it is record-pooled,
+    not the certified R_M. Every other banner field -- alpha, tau,
+    deploy_mode, n_cal_hospitals -- is a property of the certificate itself.
+    Ref: audit 2026-10 CORE-5, GAP-example-builders-3.
 
     The banner renders bare `key = value` pairs, so the key this number is filed
     under is the only place its pool can be named. It is also bootstrapped at
@@ -140,7 +150,11 @@ def _answered_risk(report):
     # Ref: audit V21.
     if not (math.isfinite(point) and all(math.isfinite(c) for c in ci)):
         return None
-    return f"{point:.4f} (95% CI {ci[0]:.4f}-{ci[1]:.4f})"
+    s = f"{point:.4f} (95% CI {ci[0]:.4f}-{ci[1]:.4f})"
+    if est.get("weighting") == "bbse":
+        s += ("; BBSE-reweighted to the estimated target class prevalence, "
+              "not the calibration sites' own rate")
+    return s
 
 
 def _cross_check(row, cal, coverage, ref_path):
@@ -200,6 +214,32 @@ def _cross_check(row, cal, coverage, ref_path):
             f"all match the released certificate ({os.path.basename(ref_path)})")
 
 
+def _verification(cross_check, off_operative, op_alpha, replicate, arm, row,
+                  cal, coverage, ref_path):
+    """The banner's verification string: a cross-check, or why there is none.
+
+    The released certificate records replicate 0 of the primary arm only, so a
+    page for any other replicate or arm has nothing to be compared against and
+    says so rather than reporting every field as a disagreement.
+    Ref: audit 2026-10 GAP-example-builders-2.
+    """
+    if not cross_check:
+        return (f"{_UNVERIFIED} --no-cross-check was passed, so these "
+                f"numbers were not compared against the published run")
+    if off_operative:
+        return (
+            f"{_UNVERIFIED} --alpha selected the {row['alpha']} rung while "
+            f"this replicate's operative rung is {op_alpha}; the released "
+            f"certificate records only the operative rung, so there is nothing "
+            f"to compare this one against")
+    if replicate != 0 or arm != "primary":
+        return (
+            f"{_UNVERIFIED} replicate {replicate}, arm {arm}: the released "
+            f"certificate records replicate 0 of the primary arm only, so "
+            f"there is nothing to compare this run against")
+    return _cross_check(row, cal, coverage, ref_path)
+
+
 def build(data_dir, out, *, arm="primary", replicate=0, alpha=None,
           cross_check=True, verbose=True):
     """Render one replicate's held-out pool. Returns the written path."""
@@ -244,20 +284,11 @@ def build(data_dir, out, *, arm="primary", replicate=0, alpha=None,
                 else float(report["operative"]["alpha"]))
     off_operative = (alpha is not None and op_alpha is not None
                      and float(alpha) != op_alpha)
-    if not cross_check:
-        verification = (f"{_UNVERIFIED} --no-cross-check was passed, so these "
-                        f"numbers were not compared against the published run")
-    elif off_operative:
-        verification = (
-            f"{_UNVERIFIED} --alpha selected the {row['alpha']} rung while "
-            f"this replicate's operative rung is {op_alpha}; the released "
-            f"certificate records only the operative rung, so there is nothing "
-            f"to compare this one against")
-    else:
-        ref_path = os.path.join(os.path.dirname(os.path.dirname(
-            os.path.abspath(__file__))), "experiments", "out",
-            "EICU_certificate.json")
-        verification = _cross_check(row, cal, coverage, ref_path)
+    ref_path = os.path.join(os.path.dirname(os.path.dirname(
+        os.path.abspath(__file__))), "experiments", "out",
+        "EICU_certificate.json")
+    verification = _verification(cross_check, off_operative, op_alpha,
+                                 replicate, arm, row, cal, coverage, ref_path)
     if verification.startswith(_UNVERIFIED):
         print("[MEASURE] " + verification, file=sys.stderr, flush=True)
     else:
@@ -268,7 +299,13 @@ def build(data_dir, out, *, arm="primary", replicate=0, alpha=None,
         "alpha": float(row["alpha"]),
         "delta": float(DELTA),
         "tau": tau,
-        "mode": row["deploy_mode"],
+        # delta is per rung; the operative rung is a data-driven selection
+        # over ALPHA_LADDER, so the selected claim holds jointly at the union
+        # bound 1 - len(ALPHA_LADDER)*delta. Ref: audit 2026-10
+        # GAP-estimand-wording-all-surfaces-6, GAP-example-builders-4.
+        "deploy_mode": row["deploy_mode"],
+        "tagged_assumption": " or ".join(_ASSUMPTION[m] for m in row["modes"]),
+        "joint_confidence_over_ladder": round(1.0 - len(ALPHA_LADDER) * DELTA, 2),
         "n_cal_hospitals": int(cal.n_sites),
         # Keyed by its pool, not merely documented. This is the S_cal estimate
         # (see _answered_risk), and the banner prints bare `key = value` pairs

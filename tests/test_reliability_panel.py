@@ -1,7 +1,8 @@
 """Tests for the post-hoc selective reliability panel.
 
 certgate/reliability.py is a byte-exact port of the selective-reliability-panel
-sandbox, so this file has two jobs.
+sandbox, apart from calibration_pair's RP-4 refit classification (separable and
+single-class resample refits truncate), so this file has two jobs.
 
   - Re-assert the sandbox's contract on certgate soil: every number in the
     analytic fixture is computed by hand here, never read back from the
@@ -267,6 +268,40 @@ def test_analytic_reference_block_on_the_same_records():
     assert panel["counts"]["reference_supplied"] is True
 
 
+def test_ece_plugin_bias_sign_depends_on_site_size_gap_covariance():
+    """notes[2]'s "positively biased" is the absolute-value term only.
+
+    Audit 2026-10 reliability-2. One populated bin (p = 0.5) and deterministic
+    labels, so only the site draw is random and E[ece] is an exact binomial sum
+    over the number m of large sites among K. Small sites (2 records, one
+    positive) are calibrated; large sites (20 records, none positive) carry a
+    gap of 0.5. The plug-in is 10m / (18m + 2K), concave in m, so E[ece] falls
+    below the population value w*10 / (w*20 + (1-w)*2): the ratio term
+    -Cov(ece, N)/E[N] is negative, and the net bias with it. With equal site
+    sizes N is fixed, the term vanishes, and this design is exactly unbiased.
+    """
+    K, w = 10, 0.3
+
+    def ece_with(m, small_n):
+        sizes = [20] * m + [small_n] * (K - m)
+        site = np.repeat(np.arange(K, dtype=np.int64), sizes)
+        y = np.concatenate([np.zeros(20, dtype=bool)] * m
+                           + [np.arange(small_n) < small_n // 2] * (K - m))
+        p = np.full(site.size, 0.5)
+        out = rp.expected_calibration_error(
+            p, y, site, K, digest=DIGEST, scope="answered", min_sites=K + 1)
+        assert out["n_attempts"] == 0         # interval suppressed, no resampling
+        return out["ece"]
+
+    pmf = [math.comb(K, m) * w ** m * (1 - w) ** (K - m) for m in range(K + 1)]
+    theta = w * 10.0 / (w * 20.0 + (1 - w) * 2.0)            # 0.405405
+    unequal = sum(q * ece_with(m, 2) for m, q in enumerate(pmf))
+    assert unequal == pytest.approx(0.379528, abs=1e-6)
+    assert unequal < theta - 0.02                           # net bias negative
+    equal = sum(q * ece_with(m, 20) for m, q in enumerate(pmf))
+    assert equal == pytest.approx(w * 10.0 / 20.0, abs=1e-12)
+
+
 # ==========================================================================
 # 2. binning and the 1.01 sentinel
 # ==========================================================================
@@ -378,12 +413,47 @@ def test_dashboard_bin_edges_match(tmp_path):
         panel["counts"]["n_answered"]
 
     # 3. and the same binned quantity, predict_proba and never score: a
-    #    dashboard binning score would put every record in the top three bins.
+    #    dashboard binning score would put every record in the top two bins.
     for d_bin, p_bin in zip(payload["reliability"],
                             panel["reliability"]["answered"]):
         if d_bin["n"]:
             assert d_bin["mean_predicted"] == pytest.approx(
                 p_bin["mean_predicted"], abs=1e-4)
+
+
+def test_dashboard_profile_ranks_by_abs_gap(tmp_path):
+    """The abstention panel ranks by |answered - declined|, the library's rule.
+
+    Audit 2026-10 explain-6. The page used to sort by the signed gap
+    (declined - answered) and to state the synthetic E5 null as if it held for
+    every cohort. It now ranks by cohort_abstention_profile's gap_ranking (the
+    rule of paper Figure 3) and says so in its header.
+    """
+    from certgate.explain import cohort_abstention_profile
+    from examples import explain_dashboard as dash
+
+    rng = np.random.default_rng(20260802)
+    cfg = SimConfig(d=4, size_mu=4.0, size_sigma=0.4)
+    cohort = draw_cohort(cfg, 24, rng)
+    train, _aux, cal = split_sites(cohort, rng)
+    head = fit_head(train)
+    tau = 0.8
+
+    out = tmp_path / "explain_dashboard.html"
+    dash.build_dashboard(head, cal.x, tau, str(out), oracle_y=cal.y,
+                         site_ids=[cal.site_labels[i] for i in cal.site_id])
+    html = out.read_text(encoding="utf-8")
+    prefix = "const DATA = "
+    line = next(l for l in html.splitlines() if l.startswith(prefix))
+    payload = json.loads(line[len(prefix):].rstrip(";"))
+
+    answered = np.asarray(head.score(cal.x)) >= tau
+    prof = cohort_abstention_profile(head, cal.x, answered)
+    assert payload["abstention_profile"]["gap_ranking"] == \
+        [int(j) for j in prof["gap_ranking"]]
+    assert "top 14 by |answered" in html
+    assert "top 14 by gap<" not in html
+    assert "a decline is a CANCELLATION" not in html
 
 
 # ==========================================================================
@@ -423,6 +493,7 @@ def test_the_binned_quantity_is_predict_proba_not_score(head_cohort):
         conf, answered, tgt.site_id, tgt.y, **fast())
 
     low = [b for b in proba_panel["reliability"]["answered"] if b["hi"] <= 0.5]
+    assert len(low) == 5    # bins wholly below 0.5 (audit 2026-10 reliability-12)
     assert low, "the frozen edges must define at least one bin at or below 0.5"
     assert any(b["n"] > 0 for b in low), (
         "predict_proba must populate at least one bin at or below 0.5")
@@ -793,6 +864,65 @@ def test_calibration_fit_status_coverage():
         assert fit["slope"] is None and fit["intercept"] is None
 
 
+def test_separation_precheck_names_the_defect_the_loop_cannot(monkeypatch):
+    """Without the pre-loop test a separated fit stops on a wrong status.
+
+    Audit 2026-10 reliability-6. Records close to the cut leave the range on
+    the first Newton step; a wide gap sinks the weights to the floor and crawls
+    to the iteration cap.
+    """
+    n = 200
+    y_near = np.arange(n) % 2 == 0
+    p_near = np.where(y_near, 0.501, 0.499)
+    p_wide = np.r_[np.linspace(0.01, 0.10, 30), np.linspace(0.90, 0.99, 30)]
+    y_wide = np.r_[np.zeros(30, dtype=bool), np.ones(30, dtype=bool)]
+    for p, y in ((p_near, y_near), (p_wide, y_wide)):
+        fit = rp.fit_calibration_line(p, y)
+        assert fit["status"] == "separable" and fit["iterations"] == 0
+    monkeypatch.setattr(rp, "_is_separated", lambda z, yf: False)
+    near = rp.fit_calibration_line(p_near, y_near)
+    assert near["status"] == "coef-out-of-range" and near["iterations"] == 1
+    wide = rp.fit_calibration_line(p_wide, y_wide)
+    assert wide["status"] == "not-converged"
+    assert wide["iterations"] == rp.IRLS_MAX_ITER
+
+
+def test_clipped_logit_saturation_value():
+    """At eps = 1e-6 the clipped logit saturates at +/-log((1 - eps) / eps).
+
+    Audit 2026-10 reliability-12 / NUM-14. That is about 13.8155096, strictly
+    inside the pinned bound log(1 / eps) = 13.815510557964274.
+    """
+    z = rp.clipped_logit(np.array([0.0, 1.0]))
+    assert z[0] == pytest.approx(-math.log(999999.0), abs=1e-9)
+    assert z[1] == pytest.approx(math.log(999999.0), abs=1e-9)
+    assert np.all(np.abs(z) < 13.815510557964274)
+
+
+def test_irls_weight_floor_emits_no_status():
+    """The working-weight floor is not a gate: it emits no status.
+
+    Audit 2026-10 reliability-8. A hundred saturated records (p == 0.0 with
+    y == 0, p == 1.0 with y == 1) sit on the floor at the optimum, yet the fit
+    reports 'ok' and equals the unpenalised MLE.
+    """
+    from sklearn.linear_model import LogisticRegression
+    rng = np.random.default_rng(411)
+    pm = rng.uniform(0.2, 0.8, 300)
+    ym = rng.random(300) < _sigmoid(2.5 * np.log(pm / (1.0 - pm)))
+    p = np.concatenate([pm, np.zeros(50), np.ones(50)])
+    y = np.concatenate([ym, np.zeros(50, dtype=bool), np.ones(50, dtype=bool)])
+    fit = rp.fit_calibration_line(p, y)
+    assert fit["status"] == "ok"
+    mu = _sigmoid(fit["intercept"] + fit["slope"] * rp.clipped_logit(p))
+    assert int(np.count_nonzero(mu * (1.0 - mu) < rp.IRLS_MIN_WEIGHT)) == 100
+    z = rp.clipped_logit(p).reshape(-1, 1)
+    ref = LogisticRegression(C=np.inf, solver="lbfgs",
+                             max_iter=5000, tol=1e-10).fit(z, y)
+    assert fit["slope"] == pytest.approx(float(ref.coef_[0][0]), abs=1e-6)
+    assert fit["intercept"] == pytest.approx(float(ref.intercept_[0]), abs=1e-6)
+
+
 def test_calibration_fit_matches_the_sklearn_reference_implementation():
     """Cross-check the hand-rolled IRLS fit against scikit-learn.
 
@@ -869,6 +999,46 @@ def test_truncated_resamples_suppresses_both_intervals():
     assert block["n_sites_carrying"] == n_sites
 
 
+def test_separable_and_single_class_refits_truncate_rather_than_top_up():
+    """A resample refit with no finite MLE is a value rejection (audit RP-4).
+
+    Audit 2026-10 reliability-11, the one code divergence from srp. Sites 0-9
+    are separated (negatives at p <= 0.10, positives at p >= 0.90) and only
+    sites 10 and 11 overlap, so a resample missing both -- about
+    (10/12)**12 = 11% of draws -- is 'separable', its slope at +infinity.
+    Topping those up quantiles a law that has lost its upper tail. The
+    'miscalibrated' fixture's answered scope holds one positive, so a resample
+    missing its site is 'single-class'; that is refused the same way.
+    """
+    rng = np.random.default_rng(7)
+    p, y, site_id = [], [], []
+    for s in range(10):
+        p += list(rng.uniform(0.01, 0.10, 4)) + list(rng.uniform(0.90, 0.99, 4))
+        y += [False] * 4 + [True] * 4
+        site_id += [s] * 8
+    for s in (10, 11):
+        p += list(rng.uniform(0.2, 0.8, 10))
+        y += list(rng.random(10) < 0.5)
+        site_id += [s] * 10
+    p = np.asarray(p, dtype=np.float64)
+    y = np.asarray(y, dtype=bool)
+    site_id = np.asarray(site_id, dtype=np.int64)
+
+    block = rp.calibration_pair(p, y, site_id, 12, digest=DIGEST,
+                                scope="declined", n_boot=FAST_N_BOOT)
+    assert block["status"] == "ok" and block["slope"] is not None
+    assert block["ci"] is None
+    assert block["ci_status"] == "truncated-resamples"
+    assert block["n_attempts"] > block["n_boot_valid"]
+
+    kw = _adversarial("miscalibrated")
+    panel = rp.selective_reliability_panel(kw["p"], kw["answered"], kw["site_id"],
+                                           kw["y"], kw["p_ref"], **fast())
+    cal = panel["calibration"]["answered"]
+    assert cal["status"] == "ok" and cal["n_positive"] == 1
+    assert cal["ci"] is None and cal["ci_status"] == "truncated-resamples"
+
+
 def test_calibration_pair_suppresses_entirely_when_the_point_fit_declines():
     p = np.linspace(0.05, 0.95, 600)
     y = np.zeros(600, dtype=bool)
@@ -941,6 +1111,35 @@ def test_the_prohibition_on_the_wider_denominator_is_emitted_verbatim():
     assert len(panel["notes"]) == 6
     assert "never against brier.primary_answered" in panel["notes"][4]
     assert "MARGINAL" in panel["notes"][1]          # the no-simultaneity clause
+
+
+def test_brier_difference_can_equal_endpoint_difference():
+    """Endpoint differencing is typically wider, not strictly wider.
+
+    Audit 2026-10 reliability-3. Each record's two squared errors sum to one
+    constant c, so on every resample reference + matched == c exactly and the
+    paired difference is c - 2 * matched. Its percentile interval then equals
+    [lo_reference - hi_matched, hi_reference - lo_matched], the differenced
+    marginal endpoints, to float noise.
+    """
+    rng = np.random.default_rng(20261029)
+    n_sites, per_site, c = 16, 25, 0.2
+    site_id = np.repeat(np.arange(n_sites, dtype=np.int64), per_site)
+    n = site_id.size
+    y = rng.random(n) < 0.4
+    p = np.where(y, rng.uniform(0.6, 0.9, n), rng.uniform(0.1, 0.4, n))
+    err_ref = c - (p - y) ** 2                   # in [0.04, 0.19]
+    p_ref = np.where(y, 1.0 - np.sqrt(err_ref), np.sqrt(err_ref))
+    assert np.allclose((p_ref - y) ** 2 + (p - y) ** 2, c, atol=1e-15)
+
+    block = rp.brier_block(p, y, site_id, n_sites, p_ref, digest=DIGEST,
+                           n_boot=FAST_N_BOOT)["reference"]
+    assert block["ci_status"] == "ok"
+    ci = block["ci"]
+    lo = ci["brier_reference"]["lo"] - ci["brier_primary_matched"]["hi"]
+    hi = ci["brier_reference"]["hi"] - ci["brier_primary_matched"]["lo"]
+    assert ci["brier_difference"]["lo"] == pytest.approx(lo, abs=1e-12)
+    assert ci["brier_difference"]["hi"] == pytest.approx(hi, abs=1e-12)
 
 
 # ==========================================================================
@@ -1026,6 +1225,76 @@ def test_headline_selected_vs_accurate():
     assert con["answered_minus_declined"] < -0.05
     assert con["ci_status"] == "ok"
     assert con["ci"]["answered_minus_all"]["hi"] < 0.0
+
+
+def _contrast_identity_terms(p, y, answered):
+    """w_d, G and the two contrasts, computed by hand from the records."""
+    yhat = p >= rp.DECISION_THRESHOLD
+    err = (yhat != y).astype(np.float64)
+    yf = y.astype(np.float64)
+
+    def margin(mask):
+        pi = float(yf[mask].mean())
+        return min(pi, 1.0 - pi) - float(err[mask].mean()), min(pi, 1.0 - pi)
+
+    m_a, c_a = margin(answered)
+    m_d, c_d = margin(~answered)
+    m_all, c_all = margin(np.ones(p.size, dtype=bool))
+    w_d = float(np.count_nonzero(~answered)) / p.size
+    gap = c_all - ((1.0 - w_d) * c_a + w_d * c_d)
+    return w_d, gap, m_a - m_all, m_a - m_d
+
+
+def test_skill_contrast_mixing_identity():
+    """answered_minus_all == w_d * answered_minus_declined - G, with G >= 0.
+
+    Audit 2026-10 reliability-4 / NUM-9. G is the concavity gap of
+    min(pi, 1 - pi) across the two subsets: zero when they share a majority
+    class, positive when it flips. A strongly negative answered_minus_all is
+    then possible with equal, or even larger, skill on the answered subset.
+    """
+    def contrast(p, y, answered, site_id, n_sites):
+        out = rp.skill_contrast(p, y, answered, site_id, n_sites, digest=DIGEST,
+                                n_boot=8, min_sites=n_sites + 1)
+        assert out["n_attempts"] == 0         # point only, no resampling
+        return out["answered_minus_all"], out["answered_minus_declined"]
+
+    # random data, with and without a majority flip between the subsets
+    rng = np.random.default_rng(20261029)
+    n_sites, n = 12, 600
+    site_id = rng.integers(0, n_sites, n).astype(np.int64)
+    p = rng.uniform(0.0, 1.0, n)
+    answered = rng.random(n) < 0.6
+    for flip in (False, True):
+        rate = np.where(answered, 0.2, 0.8 if flip else 0.35)
+        y = rng.random(n) < np.clip(rate + 0.2 * (p - 0.5), 0.0, 1.0)
+        w_d, gap, amall, amdec = _contrast_identity_terms(p, y, answered)
+        got_all, got_dec = contrast(p, y, answered, site_id, n_sites)
+        assert got_all == pytest.approx(amall, abs=1e-12)
+        assert got_dec == pytest.approx(amdec, abs=1e-12)
+        assert got_all == pytest.approx(w_d * got_dec - gap, abs=1e-12)
+        assert gap >= 0.0
+        assert (gap > 0.01) is flip
+
+    site_id = np.repeat(np.arange(4, dtype=np.int64), 50)
+    answered = np.r_[np.ones(100, dtype=bool), np.zeros(100, dtype=bool)]
+
+    # equal skill, flipped majority: pi_a = 0.1 and pi_d = 0.9, five errors
+    # each, both margins 0.05; G = 0.5 - 0.1 = 0.4
+    y = np.r_[np.ones(10), np.zeros(90), np.ones(90), np.zeros(10)].astype(bool)
+    p = np.r_[[0.3] * 5, [0.7] * 5, [0.1] * 90,           # answered: 5 wrong
+              [0.2] * 5, [0.9] * 85, [0.2] * 10]           # declined: 5 wrong
+    got_all, got_dec = contrast(p, y, answered, site_id, 4)
+    assert got_all == pytest.approx(-0.40, abs=1e-12)
+    assert got_dec == pytest.approx(0.0, abs=1e-12)
+
+    # larger answered skill, still strongly negative: pi_a = 0, pi_d = 1,
+    # no answered errors and five declined; G = 0.5
+    y = np.r_[np.zeros(100), np.ones(100)].astype(bool)
+    p = np.r_[[0.1] * 100, [0.2] * 5, [0.9] * 95]
+    got_all, got_dec = contrast(p, y, answered, site_id, 4)
+    assert got_all == pytest.approx(-0.475, abs=1e-12)
+    assert got_dec == pytest.approx(0.05, abs=1e-12)
 
 
 # ==========================================================================

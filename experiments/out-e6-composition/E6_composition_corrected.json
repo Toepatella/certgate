@@ -1,0 +1,96 @@
+{
+  "_run": {
+    "utc": "2026-10-30T00:38:44+00:00",
+    "git_sha": "c27e7980fbfbdf215f4832cf611c078905c1f7fc",
+    "inputs": {
+      "experiments/out/E6_composition.json": "312c829eb4359d76574c8a5d8ebf36d1380ce3e3165893ff92992d957ce91164"
+    }
+  },
+  "post_hoc": "[MEASURE] POST-HOC (2026-10-29): in-memory replay of E6 and a re-derivation of its BBSE-implied answered-set composition against the head's S_train prior (audit 2026-10 BBSE-1). experiments/out/E6_composition.json is unchanged and keeps the rho-only multiplier. The BBSE-implied view is an estimated, label-shift-tagged diagnostic; no certified quantity descends from this file.",
+  "formula": "released: odds_t = rho_point * odds_head, with rho_point = odds(pi_t)/odds(clip(pi_source)) and pi_source the record-pooled S_aux prevalence. corrected: odds_t = odds_multiplier * odds_head, with odds_multiplier = rho_point * odds(clip(pi_source))/odds(pi_train) = odds(pi_t)/odds(pi_train) and pi_train = train.y.mean(), the S_train prevalence the logistic head's odds carry. clip is to [PI_CLIP, 1 - PI_CLIP], as rho_box_interval clips it. Both views average p_t = odds_t/(1 + odds_t) over the answered records.",
+  "headline": "E6 BBSE-implied true-class fraction: released 0.0857576903 (2170.870 expected), corrected 0.0913101048 (2311.424 expected, multiplier 0.9475924166); oracle 0.0914908746 (2316 of 25314)",
+  "bbse_true_class": {
+    "released": {
+      "tag": "estimated (label-shift assumption)",
+      "positive_fraction": 0.0857576903004051,
+      "expected_n_positive": 2170.8701722644546,
+      "odds_multiplier": 0.8296804526028088,
+      "rho": 0.8296804526028088,
+      "pi_train": 0.10237813831882812,
+      "pi_source": 0.11525097722901284,
+      "n_answered": 25314.0,
+      "note": "the released multiplier is rho alone, i.e. the head's odds were treated as carrying pi_source; pi_train and pi_source are recorded here for comparison, they are not keys of the frozen file"
+    },
+    "corrected": {
+      "tag": "estimated (label-shift assumption)",
+      "positive_fraction": 0.0913101048407025,
+      "expected_n_positive": 2311.423993937543,
+      "odds_multiplier": 0.9475924165850844,
+      "rho": 0.8296804526028088,
+      "pi_train": 0.10237813831882812,
+      "pi_source": 0.11525097722901284,
+      "n_answered": 25314
+    }
+  },
+  "oracle_true_class": {
+    "tag": "diagnostic (oracle)",
+    "positive_fraction": 0.09149087461483764,
+    "n_positive": 2316,
+    "n_answered": 25314
+  },
+  "predicted_class": {
+    "tag": "estimated",
+    "positive_fraction": 0.06304811566721973,
+    "n_positive": 1596,
+    "n_answered": 25314
+  },
+  "relative_error_vs_oracle": {
+    "released": -0.06266400161292973,
+    "corrected": -0.0019758229976066448
+  },
+  "bbse_fit": {
+    "rho_point": 0.8296804526028088,
+    "pi_s_unclipped": 0.11525097722901284,
+    "pi_t_implied": 0.09753606661180968,
+    "q_target": 0.06821898606027568,
+    "c0": 0.016971142045653774,
+    "c1": 0.5423956931359354,
+    "rho_lo": 0.46856771577939377,
+    "rho_hi": 1.45210434258093
+  },
+  "replay": {
+    "stream": "_rng(6)",
+    "anchor_sites": 208,
+    "target_sites": 40,
+    "target_prefix": "e6t",
+    "tau_star": 0.55,
+    "pi_train_definition": "train.y.mean()",
+    "n_train": 55842,
+    "n_train_positive": 5717
+  },
+  "self_check": {
+    "exact_equality_with": "experiments/out/E6_composition.json",
+    "fields": [
+      "bbse_true_class.expected_n_positive (released formula)",
+      "bbse_true_class.n_answered",
+      "bbse_true_class.positive_fraction (released formula)",
+      "bbse_true_class.rho",
+      "oracle_true_class.n_answered",
+      "oracle_true_class.n_positive",
+      "oracle_true_class.positive_fraction",
+      "predicted_class.n_answered",
+      "predicted_class.n_positive",
+      "predicted_class.positive_fraction"
+    ],
+    "mismatches": 0,
+    "verdict_expected": {
+      "positive_fraction": 0.0913101048,
+      "expected_n_positive": 2311.424,
+      "odds_multiplier": 0.9475924166,
+      "pi_train": 0.1023781383,
+      "pi_source": 0.1152509772
+    }
+  },
+  "not_moved": "no certificate, certified tier, estimated tier, rho_point, rho box, walk order or guarantee string; the predicted-class and oracle views are unchanged",
+  "wall_clock_s": 1.2
+}

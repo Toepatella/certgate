@@ -9,9 +9,15 @@ criteria F-A-F-E. Every number it produces from the real extract carries
 POST_HOC_LABEL.
 
 The code is a byte-exact port of the verified selective-reliability-panel/srp
-reference (581 tests green). Identical input arrays must give an identical
-panel dict, down to every bootstrap endpoint. Three things follow, and they
-are why the values below are srp's rather than a fresh derivation's:
+reference (581 tests green), with one deliberate divergence (2026-10-29, audit
+RP-4, reliability-11): calibration_pair's resample closure counts 'separable'
+and 'single-class' refits toward 'truncated-resamples' instead of letting the
+driver top them up. The srp sandbox itself is not edited. Wherever no
+calibration resample refit returns either status -- every released panel
+artifact and the PANEL_DICT_SHA256 fixture among them -- identical input
+arrays give srp's panel dict, down to every bootstrap endpoint. Three things
+follow, and they are why the values below are srp's rather than a fresh
+derivation's:
 
   - The digest prefix stays the byte literal b"srp/1" and SCHEMA_VERSION stays
     "srp/1". The prefix is the first thing hashed into input_digest and the
@@ -39,7 +45,8 @@ or the certified path. It reaches head by duck typing inside panel_from_head.
 
 Note: the comments and docstrings in this file were rewritten for readability
 on 2026-08-24 and no longer match the sandbox text verbatim. The CODE is still
-the byte-exact port. A re-pipe-back from the sandbox would overwrite the prose.
+the byte-exact port, apart from the calibration_pair divergence above. A
+re-pipe-back from the sandbox would overwrite the prose.
 
 Refs: SPEC "reliability.py"; EICU-PROTOCOL.md (P1-P7, F-A-F-E, amendment A6);
 audit F16.
@@ -101,7 +108,9 @@ IRLS_MIN_WEIGHT = 1e-10         # floor on the working weight mu*(1-mu); keeps
 IRLS_MIN_RECORDS = 20           # below this the two-parameter fit is not worth
                                 # reporting: 'too-few-records'
 N_BOOT = 2000                   # required valid resample draws per statistic;
-                                # same order as BBSE_BOOT, for the same reason
+                                # the same count and top-up discipline as
+                                # BBSE_BOOT. At CI_LEVEL = 0.95 each endpoint
+                                # rests on about 50 tail draws
 BOOT_MAX_ATTEMPTS = 4000        # == 2 * N_BOOT, and never read at runtime.
                                 # site_bootstrap_ci enforces the relation
                                 # 2 * n_boot instead, so a lowered n_boot gets
@@ -160,6 +169,27 @@ E6_POST_HOC_NOTE = (
 # panel can be misread. Dropping one is a contract change, not an editorial
 # decision. Note 2 is the estimand-honesty clause: every interval here is
 # marginal and there is no simultaneity claim.
+#
+# Erratum 2026-10-29 (audit reliability-2). notes[2] calls the ECE "positively
+# biased". That is its absolute-value term only. Under the site-superpopulation
+# estimand the record total in the ECE's denominator varies with the sites
+# drawn, which adds an O(1/K) term of either sign; it can make the net bias
+# negative when large gaps sit in the sites contributing the most records
+# (expected_calibration_error docstring). The string stays as emitted: it is in
+# every released panel and hashed into PANEL_DICT_SHA256.
+#
+# Erratum 2026-10-29 (audit reliability-10). notes[0] and WEIGHTING call every
+# reported quantity a ratio of sums. Rates, fractions, Brier scores (and their
+# paired difference) and reliability points are ratios of site-summed totals;
+# the ECE, the constant-predictor error rate, the skill margin and its
+# contrasts are functions of such ratios; the calibration slope and intercept
+# solve the pooled logistic score equations and are refitted on every
+# resample. All of them are record-weighted -- a large site contributes
+# proportionally more than a small one -- which is the point both strings make.
+# "Fixed site population" means the same n_sites in every scope and bin (see the
+# resampling comment below), not a finite-population estimand. Both strings
+# stay as emitted: they are in every released panel and hashed into
+# PANEL_DICT_SHA256.
 NOTES = (
     "Estimand: every reported quantity is a record-weighted ratio of sums over the fixed "
     "site population; a large site contributes proportionally more than a small one.",
@@ -768,9 +798,14 @@ def site_bootstrap_ci(statistic, names: tuple, n_sites: int, n_sites_carrying: i
         collected += 1
 
     if collected < required:
-        # Never quantile a reduced draw count. Keeping only the well-populated
-        # resamples biases the interval in favour of the easy draws, which is
-        # the failure this panel exists to expose.
+        # Never quantile a reduced draw count. A shortfall does not change the
+        # law: every interval here, an 'ok' one with n_attempts >
+        # n_boot_valid included, quantiles the resampling law conditional on
+        # the statistic's validity predicate, and fewer draws would quantile
+        # that same law less precisely. At the default budget of 2 * n_boot a
+        # shortfall means more than half the attempts were invalid, and the
+        # panel declines to describe a law conditioned that heavily
+        # (audit 2026-10 CORE-10, reliability-7).
         return {
             "ci": None,
             "ci_status": "degenerate-resamples",
@@ -942,11 +977,26 @@ def expected_calibration_error(p, y, site_id, n_sites, *, digest, scope,
         weights sum to 1 exactly. Empty bins are excluded, not folded in as a
         zero gap.
 
-    This is a plug-in estimate, positively biased because finite per-bin counts
-    inflate the mean absolute gap, and worse as those counts shrink. A
-    percentile interval does not correct bias, so the emitted interval covers
-    the biased plug-in estimand, not true calibration error. That disclosure is
-    `notes[2]` and must travel with the number.
+    This is a plug-in estimate, and it is biased. For K sites drawn iid from
+    the site population the point is sum_b |S_b| / N, with S_b the summed
+    p - y of bin b and N the scope's record count, and the population value is
+    sum_b |E S_b| / E[N]. When N > 0 on every draw the bias is exactly the sum
+    of two terms:
+
+        sum_b (E|S_b| - |E S_b|) / E[N] >= 0. The absolute value inflates
+            each bin's gap; this term grows as per-bin counts shrink and
+            dominates near calibration.
+        -Cov(ece, N) / E[N]. N varies with the sites drawn, so the ratio adds
+            a term of order 1/K and of either sign, negative when the estimate
+            rises with N, as when large gaps sit in the sites contributing the
+            most records.
+
+    The second term can outweigh the first, so the net bias is not always
+    upward. A percentile interval does not correct bias, so the emitted
+    interval covers the biased plug-in estimand, not true calibration error.
+    That disclosure is `notes[2]` and must travel with the number; its frozen
+    wording, "positively biased", names the first term only (audit 2026-10
+    reliability-2).
 
     Validity predicate for a resample: it carries at least one record.
     """
@@ -1032,8 +1082,10 @@ def clipped_logit(p, eps=LOGIT_EPS) -> np.ndarray:
     """log(pc / (1 - pc)) with pc = clip(p, eps, 1 - eps).
 
     Clipping is what makes p == 0.0 and p == 1.0 usable regression inputs at
-    all. At eps = 1e-6 the transform saturates at +/-13.815510557964274, so a
-    handful of saturated records cannot drag the fit to infinity.
+    all. At eps = 1e-6 the transform saturates at +/-log((1 - eps) / eps),
+    about +/-13.8155096, inside the bound |logit| <= 13.815510557964274 =
+    log(1 / eps), so a handful of saturated records cannot drag the fit to
+    infinity (audit 2026-10 reliability-12).
     """
     pc = np.clip(np.ascontiguousarray(p, dtype=np.float64), eps, 1.0 - eps)
     return np.log(pc / (1.0 - pc))
@@ -1042,9 +1094,8 @@ def clipped_logit(p, eps=LOGIT_EPS) -> np.ndarray:
 def _sigmoid(t):
     """Overflow-free logistic; exp() only ever sees non-positive input.
 
-    The naive 1/(1+exp(-t)) raises an overflow warning for t << 0, and the suite
-    runs warnings-as-errors. A fit on well-separated scores would then abort
-    instead of reporting 'separable'.
+    The naive 1/(1+exp(-t)) overflows exp, with a RuntimeWarning, for
+    t < -log(DBL_MAX) ~ -709.78 (audit 2026-10 NUM-13).
     """
     out = np.empty_like(t)
     pos = t >= 0.0
@@ -1061,11 +1112,15 @@ def _is_separated(z, yf) -> bool:
     Albert-Anderson: for a logistic model the MLE exists exactly when the
     classes overlap. With one covariate that reduces to an interval test.
 
-    The test runs before iterating. The mandated weight floor keeps the normal
-    matrix invertible, so on separated data Newton crawls rather than blowing
-    past max_abs_coef; it would hit the iteration cap and report
-    'not-converged', naming the wrong defect. This pre-loop test is the only
-    source of the 'separable' status.
+    The test runs before iterating because the loop cannot name this defect.
+    Fed separated data it would stop on a wrong status, and which one depends
+    on the gap between the classes. With records close to the cut the Newton
+    steps are large and |beta| passes max_abs_coef: 'coef-out-of-range', which
+    asserts that a finite MLE exists. Across a wide gap the working weights
+    sink to the floor before |beta| gets there, the full step stays small but
+    above tol, and the fit crawls to the iteration cap: 'not-converged'. This
+    pre-loop test is the only source of the 'separable' status (audit 2026-10
+    reliability-6).
     """
     pos = yf > 0.0
     z_pos = z[pos]
@@ -1212,18 +1267,25 @@ def calibration_pair(p, y, site_id, n_sites, *, digest, scope, n_boot=N_BOOT,
     Suppression:
       * point status != 'ok' -> null_ci('undefined-point'), no resampling at
         all: there is no point estimate for an interval to be around.
-      * a refit returning 'coef-out-of-range' is a value-dependent rejection.
-        The driver tops it up, a closure counter records it, and the block is
-        then overwritten with ci=None, ci_status='truncated-resamples' --
-        n_boot_valid, n_attempts and n_sites_carrying pass through unchanged so
-        the attempt counts stay honest. A quantile over the retained draws would
-        delete the tail of the resampling distribution, not thin it.
+      * a refit returning 'coef-out-of-range', 'separable' or 'single-class' is
+        a value-dependent rejection: its estimate lies beyond the reporting
+        range, and the last two have no finite MLE at all. The driver tops it
+        up, a closure counter records it, and the block is then overwritten
+        with ci=None, ci_status='truncated-resamples' -- n_boot_valid,
+        n_attempts and n_sites_carrying pass through unchanged so the attempt
+        counts stay honest. A quantile over the retained draws would delete the
+        tail of the resampling distribution, not thin it.
+      * any other non-ok refit, or an empty resample, is topped up and nothing
+        more: too-few-records and degenerate-design are structural, and
+        not-converged and singular are numerical failures on a resample whose
+        MLE is finite.
 
     Both coefficients come from the same valid draws, so the pair is at least
     mutually consistent. Each is still a marginal percentile interval, and the
     two endpoints must not be differenced or read as a joint region.
 
-    Refs: audit RP-4.
+    Refs: audit RP-4; audit 2026-10 reliability-11 (separable and single-class
+    refits, the one code divergence from srp).
     """
     p = np.ascontiguousarray(p, dtype=np.float64)
     yb = np.ascontiguousarray(y)
@@ -1244,16 +1306,25 @@ def calibration_pair(p, y, site_id, n_sites, *, digest, scope, n_boot=N_BOOT,
             if rec.size == 0:
                 return None
             fit = fit_calibration_line(p[rec], yb[rec])
-            if fit["status"] == "coef-out-of-range":
-                # Rejected for the statistic's value, not for being undefined.
-                # Counted so the whole interval can be refused below. Letting
-                # the driver top this up would delete the tail of the resampling
+            if fit["status"] in ("coef-out-of-range", "separable", "single-class"):
+                # Rejected for the statistic's value, not for being undefined:
+                # the refit's estimate lies beyond the reporting range.
+                # 'coef-out-of-range' left it while iterating; 'separable' and
+                # 'single-class' have no finite MLE at all -- across separated
+                # classes the likelihood climbs only as the slope runs to +inf
+                # or -inf, and with one class the Newton path would hold the
+                # slope at 0 and drive the intercept to -inf or +inf. Counted
+                # so the whole interval can be refused below. Letting the
+                # driver top these up would delete the tail of the resampling
                 # distribution and quantile only the middle.
                 truncated["count"] += 1
                 return None
             if fit["status"] != "ok":
-                # Structurally invalid draw (no usable MLE inside it), not a
-                # zero: topped up by the bootstrap driver.
+                # too-few-records and degenerate-design are structural;
+                # not-converged and singular are numerical failures on a
+                # resample whose MLE is finite (the pre-loop guards have ruled
+                # out separation). Neither is a value rejection, so the
+                # bootstrap driver tops the draw up.
                 return None
             return (fit["slope"], fit["intercept"])
 
@@ -1320,8 +1391,10 @@ def brier_block(p, y, site_id, n_sites, p_ref, *, digest, n_boot=N_BOOT,
     the size of that gap, so the prohibition is checkable (`notes[4]`).
 
     brier_difference is a single statistic per resample, the third element of a
-    3-tuple from one stream. It is never a subtraction of two independently
-    bootstrapped endpoints, which is strictly wider and has no coverage claim.
+    3-tuple from one stream. It is never a subtraction of two marginal interval
+    endpoints, [lo_reference - hi_matched, hi_reference - lo_matched]: that
+    ignores the dependence between the two scores, is typically far wider, and
+    has no coverage claim (audit 2026-10 reliability-3).
 
     p, y, site_id and p_ref arrive already restricted to the answered subset;
     n_sites is the full site count. Validity predicate for both streams: the
@@ -1577,10 +1650,25 @@ def skill_contrast(p, y, answered, site_id, n_sites, *, digest,
         answered_minus_declined = skill_margin(answered) - skill_margin(declined)
 
     Each is a single statistic per draw, never a subtraction of two
-    independently bootstrapped endpoints. A strongly negative answered_minus_all
-    says the answered subset is where the scorer has the least skill relative to
-    a constant predictor: the low answered error rate came from the gate's
-    selection, not from the scorer.
+    independently bootstrapped endpoints.
+
+    Reading them (audit 2026-10 reliability-4, NUM-9). Error and positive rates
+    are record-share mixtures of the two subsets, so with w_a = n_answered / n
+    and w_d = n_declined / n:
+
+        answered_minus_all = w_d * answered_minus_declined - G
+        G = min(pi_all, 1 - pi_all) - (w_a * min(pi_a, 1 - pi_a)
+                                       + w_d * min(pi_d, 1 - pi_d)) >= 0
+
+    by concavity of min(pi, 1 - pi). G == 0 exactly when one constant class is
+    optimal on both subsets. In that shared-majority case, a negative
+    answered_minus_all says only that the scorer's margin over the constant
+    rule is smaller on the answered subset than on the declined one, scaled by
+    the declined share, so it sits near zero at high coverage. When the
+    majority classes differ, G > 0 can make answered_minus_all strongly
+    negative even when the answered subset has the larger margin. Read
+    answered_minus_declined and the composition block before attributing a low
+    answered error rate to selection.
 
     The point estimate is _margins(np.arange(n_sites)) -- each site once.
     Validity predicate: the resample carries at least one answered record, and
@@ -1972,9 +2060,9 @@ def panel_from_head(head, x, y, site_id, tau_star, *, answered_mask=None,
 
     The caller never constructs p. Feeding score as p passes validate_inputs
     silently -- it is finite and in [0, 1] -- and produces a fully populated but
-    meaningless panel: the four bins below 0.5 are empty and the calibration
-    slope is inverted. Nothing inside the statistics catches that, so the guard
-    is structural here.
+    meaningless panel: the five bins wholly below 0.5 are empty and the
+    calibration slope is inverted. Nothing inside the statistics catches that,
+    so the guard is structural here.
 
     head is reached only by duck typing. This module has no certgate import and
     never sees a Head type.

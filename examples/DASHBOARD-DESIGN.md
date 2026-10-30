@@ -66,7 +66,9 @@ workhorse stack). Hierarchy is role discipline, not family contrast:
   240ms `cubic-bezier(.22,.68,.36,1.04)` settle is the page's ONE authored
   motion; everything else is quick state feedback, and reduced-motion kills all.
 - **Distribution** (`.hist`): same grammar — baseline rule, band, red-line
-  flag, ticked axis (`.haxis`).
+  flag, ticked axis (`.haxis`). Bar colour is the deployed verdict, counted
+  at build time from the float64 mask; a bin holding both verdicts (τ* off
+  the 0.01 grid) is drawn two-tone with a `.hbdec` segment.
 - **Slider rails** (`.sldw`/`.srail`/`.smark`): every what-if slider runs on a
   hairline tick rail with a notch at the recorded value; the threshold
   explorer's notch is the deployed τ* in red-line color. Inputs stay native

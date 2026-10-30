@@ -48,9 +48,9 @@
 
 % row 5: the certification walk
 \node[box, thick, fill=orange!15] (walk) at (7,-7.8)
-  {\textbf{fixed-sequence betting walk} --- certify a prefix of the grid or stop\\[-1pt]
-   \footnotesize one WSR supermartingale over site atoms $Z_c$, per rung $\alpha\in\{0.05,0.10\}$ and per mode:\\[-2pt]
-   \footnotesize exchangeable (full $\delta$) $\;\cdot\;$ BBSE (tested at both $\rho$ endpoints, $\delta_{\mathrm{bet}}$)};
+  {\textbf{fixed-sequence betting walk} --- certify a prefix of the margin-sorted grid or stop\\[-1pt]
+   \footnotesize one WSR betting test over site atoms $Z_c$ per threshold tested, per rung $\alpha\in\{0.05,0.10\}$ and per mode:\\[-2pt]
+   \footnotesize exchangeable (full $\delta$) $\;\cdot\;$ BBSE (one test at each $\rho$ endpoint, $\delta_{\mathrm{bet}}$)};
 \draw[arr] (head.south)  -- ++(0,-0.4) -| ([xshift=-3.2cm]walk.north);
 \draw[arr] (order.south) -- ++(0,-0.55) -| ([xshift=-1.1cm]walk.north);
 \draw[arr] (bbse.south)  -- ++(0,-0.4) -| ([xshift=1.1cm]walk.north);
@@ -59,7 +59,7 @@
 % row 6: certificate or decline
 \node[cert] (certif) at (3.6,-10.4)
   {\textbf{certificate}: deployed $\tau^{*}$ $+$ frozen guarantee text\\[-1pt]
-   \footnotesize site-population average $\cdot$ tagged assumption\\[-2pt]
+   \footnotesize influence-weighted $R_M$ (site population) $\cdot$ tagged assumption\\[-2pt]
    \footnotesize dispersion and parameter-not-count clauses};
 \node[dec] (decline) at (10.6,-10.4)
   {\textbf{decline}, with a named reason\\[-1pt] \footnotesize no fallback, no shrinkage};

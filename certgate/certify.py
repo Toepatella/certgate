@@ -9,7 +9,7 @@ What lives here:
   - influence_atoms       per-site atoms Z_c in [0, 1]
   - wsr_reject            one-sided Waudby-Smith-Ramdas betting test
   - margin_floor          information-theoretic feasibility floor
-  - walk_order            S_aux-ordered fixed sequence, most conservative first
+  - walk_order            S_aux-ordered fixed sequence, largest estimated margin first
   - fixed_sequence_walk   learn-then-test threshold walk at full delta
   - certification_rng     deterministic, unchoosable permutation stream
 
@@ -30,12 +30,19 @@ def influence_atoms(score, err, site_id, n_sites, tau_grid, alpha, M,
 
         Z_c = (g_c / (M*n_c)) * sum_{i in c} ans_i*(err_i - alpha) + alpha
 
-    with the data-independent influence weight g_c = min(n_c, M). The whole
-    point of that construction: E[Z] <= alpha exactly when R_M <= alpha.
+    with the outcome-independent influence weight g_c = min(n_c, M), a
+    function of site size only. The whole point of that construction:
+    E[Z] <= alpha exactly when R_M <= alpha, provided E[g_c a_c] > 0 (if
+    nothing answers, R_M is 0/0, every atom is alpha, and the test cannot
+    certify). Audit 2026-10 CORE-16.
 
     A site with no answered-eligible records enters as a neutral atom,
-    Z_c = alpha. It is never dropped -- dropping would redefine the cluster
-    population after the fact. A neutral atom costs power, never validity.
+    Z_c = alpha. Its own wealth factor in wsr_reject is exactly 1, but it
+    still counts toward n and enters the running (mu, s2) that set later
+    bets, so it can move the outcome either way -- never validity. It is
+    never dropped: dropping would leave R_M unchanged (such sites carry zero
+    weight in it) but make the number of atoms depend on tau. Audit 2026-10
+    CORE-4.
 
     Weighted mode (label-shift correction) scales each record's contribution by
     w_i / wmax, with w_i in [0, wmax]. The certified statistic is
@@ -84,11 +91,16 @@ def wsr_reject(z, alpha, delta, rng=None):
     level-delta test.
 
     lam_t is predictable and variance-adaptive: capped at
-    WSR_LAMBDA_CAP/(1-alpha), variance floored at WSR_VAR_FLOOR, with the
-    running (mu, s2) starting from (WSR_MU0, WSR_S2_0). rng supplies the
-    prespecified permutation.
+    WSR_LAMBDA_CAP/(1-alpha), variance floored at WSR_VAR_FLOOR, with
 
-    Refs: METHODS 4; SPEC seed rule.
+        s2_{t-1} = (WSR_S2_0 + sum_{i<t} (z_i - mu_i)**2) / t
+        mu_i     = (WSR_MU0 + sum_{j<=i} z_j) / (i+1)
+
+    for z_1, z_2, ... in processing order -- WSR's predictable plug-in, the
+    start counted as one pseudo-observation. rng supplies the prespecified
+    permutation.
+
+    Refs: METHODS 4; SPEC seed rule; audit 2026-10 CORE-13.
     """
     z = np.asarray(z, dtype=float)
     if rng is not None:
@@ -111,10 +123,15 @@ def wsr_reject(z, alpha, delta, rng=None):
 
 
 def margin_floor(n, delta, alpha):
-    """Smallest margin any valid level-delta test could certify (METHODS 4).
+    """Information floor ln(1/delta)*(1-alpha)/n (METHODS 4).
 
-    No test of a [0,1]-bounded mean beats ln(1/delta) * (1 - alpha) / n. We
-    report it as a diagnostic, never as a gate.
+    At atom-unit margin m, every valid level-delta test of a [0,1]-bounded
+    mean over n iid clusters certifies with probability at most
+    delta*(1 + m/(1-alpha))**n <= delta*exp(n*m/(1-alpha)); the right-hand
+    bound is below one exactly when m is below this floor. Certifying with
+    certainty needs m >= (1-alpha)*(delta**(-1/n) - 1), of which the floor is
+    the first-order term: a lower bound, not the exact frontier. We report it
+    as a diagnostic, never as a gate. Audit 2026-10 CORE-2.
     """
     return np.log(1.0 / delta) * (1.0 - alpha) / n
 
@@ -122,9 +139,12 @@ def margin_floor(n, delta, alpha):
 def walk_order(atoms_aux):
     """Order the thresholds for the fixed-sequence walk, using S_aux only.
 
-    Ascending mean atom, so the most conservative threshold -- largest
-    estimated margin -- is tried first. The order never looks at S_cal, which
-    is why it costs no multiplicity budget. (METHODS 4)
+    Ascending mean atom, so the threshold with the largest estimated margin,
+    alpha - mean_c Z_c = mean_c (g_c/M) a_c (alpha - e_c), is tried first.
+    That margin weights each site's error gap by its influence and answered
+    fraction, so the order need not be monotone in tau and need not start at
+    the highest threshold. The order never looks at S_cal, which is why it
+    costs no multiplicity budget. (METHODS 4; audit 2026-10 CORE-1)
     """
     return np.argsort(atoms_aux.mean(axis=1))
 

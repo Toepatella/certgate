@@ -29,7 +29,9 @@ from experiments import eicu_mock as mock
 # ---------------------------------------------------------------------------
 # Sizes for the auxiliary corpora. The canonical small arm is the mock's own
 # default: 180 hospitals / 9000 stays -> 63 carrying calibration sites, so
-# certification is reachable and a decline is equally legitimate. The tiny
+# the cluster gate is cleared and the walk is reached; at the frozen B = 0.85
+# the walk declines every rung (measured), and the honesty assertion accepts
+# either outcome (audit 2026-10 GAP-eicu-mock-math-3). The tiny
 # byte-determinism corpus runs signal=False, the one configuration in which
 # generate admits fewer than EICU_MIN_TOTAL_SITES sites.
 TINY_SITES, TINY_STAYS = 60, 900
@@ -37,11 +39,12 @@ DRIFT_STAYS = 2400
 
 # F-D, the unfalsifiable-success failure: too good a result is a leak alarm.
 # The mock's outcome comes from a latent severity at the frozen slope
-# EICU_MOCK_SIGNAL_B = 0.85, so its Bayes-optimal AUC is Phi(0.85/sqrt(2)) =
-# 0.726 and the shipped clean corpus measures 0.597.
+# EICU_MOCK_SIGNAL_B = 0.85, so its exact Bayes-optimal AUC is 0.748
+# (0.715 for a score recovering z alone; Phi(0.85/sqrt(2)) = 0.726 is the
+# rare-event binormal approximation) and the shipped clean corpus measures 0.597.
 #
 # The ceiling is therefore derived from that Bayes-optimal value plus a margin.
-# 0.80 leaves ~0.07 of headroom for finite-sample noise and still refuses
+# 0.80 leaves ~0.05 of headroom over 0.748 for finite-sample noise and still refuses
 # anything a latent-severity model at B = 0.85 cannot produce. A ceiling far
 # above it -- the audit found 0.98 -- detects only a leak of near-label
 # strength, and let a leak-planted corpus measuring 0.835 through.
@@ -336,7 +339,11 @@ def _run_eicu(data_dir, replicate=0):
 
 
 def _assert_honest(rep, ctx):
-    """The only acceptable outcomes: a valid certificate, or a decline."""
+    """Acceptable outcomes: a decline, or a certificate that is not grossly
+    violated on this one target pool (one-sided 95% Wilson LCB of the
+    record-pooled answered error <= alpha). A gross-violation screen, not a
+    validity check: the certificate bounds R_M over the site population at
+    1 - delta. Ref: audit 2026-10 GAP-unreviewed-tests-4."""
     parts = rep["decline_partition"]
     assert sum(parts.values()) == ctx["target"].n
     assert "[partition]" in render_text(rep)      # renders without KeyError

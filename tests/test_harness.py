@@ -49,10 +49,11 @@ def test_hard_violation_criterion():
     """
     alpha = 0.10
     assert not hard_violation(np.array([], dtype=bool), alpha)   # empty set
-    # 3/20 = 15% raw > alpha, but the LCB is ~0.056 < alpha: not hard
+    # 3/20 = 15% raw > alpha, but the LCB is ~0.062 < alpha: not hard
     e = np.zeros(20, dtype=bool)
     e[:3] = True
     assert wilson_lcb(3, 20) < alpha
+    assert abs(wilson_lcb(3, 20) - 0.0616) < 1e-4     # audit 2026-10 NUM-12
     assert not hard_violation(e, alpha)
     # 60/200 = 30%: LCB ~0.25 > alpha: hard
     e2 = np.zeros(200, dtype=bool)
@@ -75,6 +76,53 @@ def test_exceedance_reference_matches_brute_force():
     assert abs(exceedance_reference(100, 0.10)
                - float(binom.sf(10, 100, 0.10))) < 1e-12
     assert exceedance_reference(0, 0.10) == 0.0
+
+
+def test_exceedance_reference_small_n_lattice():
+    """The reference oscillates with the integer lattice at small n.
+
+    It is not monotone in n: below 30 answered cases at alpha = 0.10 it runs
+    from 0.10 (n = 1) to about 0.61 (n = 9) and drops to about 0.26 at
+    n = 10, then tends to 1/2 as n grows. These are the figures the corrected
+    Section 3.9 sentence quotes.
+
+    Refs: audit 2026-10 synthetic-3, PAPER1-16.
+    """
+    assert abs(exceedance_reference(1, 0.10) - 0.1) < 1e-12
+    assert abs(exceedance_reference(9, 0.10) - (1 - 0.9 ** 9)) < 1e-12
+    assert abs(exceedance_reference(10, 0.10)
+               - (1 - 0.9 ** 10 - 0.9 ** 9)) < 1e-12
+    small = [exceedance_reference(n, 0.10) for n in range(1, 30)]
+    assert min(small) == small[0] and abs(small[0] - 0.1) < 1e-12
+    assert max(small) == small[8] and abs(small[8] - 0.6126) < 1e-4
+    assert exceedance_reference(10, 0.10) < 0.27
+    assert abs(exceedance_reference(10000, 0.10) - 0.5) < 0.01
+
+
+def test_exceedance_reference_is_a_homogeneous_yardstick():
+    """A yardstick for a batch erring at exactly alpha, not a bound.
+
+    (i) A homogeneous batch below alpha exceeds less often than the
+    reference. (ii) Under between-site heterogeneity it is not an upper
+    bound: a two-point site mixture whose mean risk is exactly 0.10 (0.11
+    with probability 0.8, 0.06 with probability 0.2) exceeds at about 0.736
+    at n = 2000, against a reference of about 0.481.
+
+    Refs: audit 2026-10 synthetic-3.
+    """
+    alpha = 0.10
+    for n in (5, 9, 30, 100, 2000):
+        k = int(np.floor(alpha * n + 1e-9))
+        for p in (0.02, 0.05, 0.09):
+            assert float(binom.sf(k, n, p)) < exceedance_reference(n, alpha)
+    n = 2000
+    k = int(np.floor(alpha * n + 1e-9))
+    mix = (0.8 * float(binom.sf(k, n, 0.11))
+           + 0.2 * float(binom.sf(k, n, 0.06)))
+    ref = exceedance_reference(n, alpha)
+    assert abs(0.8 * 0.11 + 0.2 * 0.06 - alpha) < 1e-12
+    assert abs(mix - 0.7357) < 1e-3 and abs(ref - 0.4812) < 1e-3
+    assert mix > ref
 
 
 def test_wilson_lcb_matches_the_scipy_reference_implementation():

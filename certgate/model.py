@@ -5,10 +5,12 @@ call, so callers always pass RAW features to logit / predict_proba / predict /
 score. A relative-tolerance guard on sd divides a near-constant column by 1.0
 rather than by a numerically-zero standard deviation.
 
-The score only ranks. Certificate validity never depends on how good or how
-well-calibrated the head is.
+Certificate validity never depends on how good or how well-calibrated the
+head is. The operating point does: TAU_GRID is fixed in score units, so even
+an order-preserving rescaling of the score (temperature scaling) can change
+which answered sets the walk can certify.
 
-Refs: SPEC "model.py"; METHODS 6; audit F06.
+Refs: SPEC "model.py"; METHODS 6; audits F06, 2026-10 synthetic-4.
 """
 from __future__ import annotations
 
@@ -25,8 +27,17 @@ if TYPE_CHECKING:                      # annotation only -- keeps model runtime-
 
 
 def _sigmoid(z):
+    """Logistic function, evaluated stably on both tails.
+
+    np.where evaluates both branches on every element. The discarded branch
+    overflows exp once |z| > log(DBL_MAX) ~ 709.78 (and forms inf/inf when
+    z > 709.78), and exp underflows once |z| > -log(DBL_MIN) ~ 708.40. None
+    of these flags marks a wrong returned value, so all three are silenced;
+    the values are bit-for-bit those of the unsilenced expression. Audit
+    2026-10 NUM-13.
+    """
     z = np.asarray(z, dtype=np.float64)
-    with np.errstate(over="ignore"):
+    with np.errstate(over="ignore", under="ignore", invalid="ignore"):
         return np.where(z >= 0, 1.0 / (1.0 + np.exp(-z)), np.exp(z) / (1.0 + np.exp(z)))
 
 

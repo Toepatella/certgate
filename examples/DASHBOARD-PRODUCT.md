@@ -30,11 +30,14 @@ attached to review documents.
 CertGate Explain is the explanation surface for a **certified selective
 classifier**: a safety gate in front of a risk model that answers only when
 confident enough (score ≥ τ*) and abstains to a human otherwise, with a
-certificate bounding the site-population-average error rate among answered
-cases. The page is a **local, self-contained instrument**: it embeds the model
-head and recomputes every number live — the confidence meter, sliders,
-waterfall, smallest-change flip, threshold explorer all run the deployed rule's
-own float64 arithmetic. Success: a reader leaves knowing (1) what the gate
+certificate bounding R_M, the influence-weighted error rate among answered
+cases across the hospital population (each hospital counted as at most 100
+patients). The page is a **local, self-contained instrument**: it embeds the
+model head and recomputes the per-case numbers live — the confidence meter,
+sliders, waterfall and smallest-change flip all run the deployed rule's own
+float64 arithmetic — and its histogram and threshold explorer show counts
+computed when the page is built, by the same rule (score ≥ τ) on the head's
+float64 scores. Success: a reader leaves knowing (1) what the gate
 decided on a case and what drove it, (2) what would have to change for it to
 answer, (3) exactly what the certificate does and does not promise.
 

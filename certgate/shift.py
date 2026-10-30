@@ -11,7 +11,8 @@ Ported from the audited v1 fit_a2/certify_a2
 (../xAI-projtect-v1/testbed/modes.py), plus four pieces of SPEC hardening:
 
   - bootstrap top-up-or-decline;
-  - decline when the q_t range leaves the box;
+  - decline unless the q_t interval sits wholly inside the box's
+    [c0_lo, c1_hi] range;
   - deterministic per-endpoint permutation streams, replacing v1's single
     shared stream;
   - a confidence share for q_t itself.
@@ -23,13 +24,14 @@ q_t effectively exact issued none.
 
 Declines, never fallbacks:
 
-  bbse-empty-target -> bbse-target-clustering -> bbse-degenerate-bootstrap
-  -> bbse-ill-conditioned -> bbse-misspecified
+  bbse-empty-target -> bbse-target-clustering -> bbse-aux-clustering
+  -> bbse-degenerate-bootstrap -> bbse-ill-conditioned -> bbse-misspecified
 
 Runtime dependencies are constants, certify and scipy only. Cohort and Head are
 duck-typed at runtime and imported for type hints under TYPE_CHECKING only.
 
-Refs: SPEC "shift.py"; METHODS 5; audits F40/B-8, F41/B-9, V2.
+Refs: SPEC "shift.py"; METHODS 5; audits F40/B-8, F41/B-9, V2; audit round
+2026-10 NUM-1, BBSE-2, BBSE-8.
 """
 
 from __future__ import annotations
@@ -52,18 +54,35 @@ if TYPE_CHECKING:                      # type hints only -- never imported at ru
     from .model import Head
 
 
+# S_aux cluster floor for the (c0, c1, pi_s) bootstrap: fewer S_aux sites
+# carrying a positive record than this, or fewer carrying a negative one,
+# declines "bbse-aux-clustering". Per class, because c1 draws only on the
+# positive-carrying sites and c0 only on the negative-carrying ones. Post-hoc
+# (audit round 2026-10, NUM-1), so it lives here and not in constants.py, the
+# a-priori pre-extract surface -- reliability.MIN_SITES_FOR_CI is the
+# precedent. Same value and lesson as BBSE_MIN_TARGET_SITES;
+# tests/test_constants.py pins both. No released BBSE fit moves: a replay of
+# every synthetic label-shift stream found at least 28 S_aux sites carrying
+# each class, and a 20-re-split eICU re-run on the restricted extract
+# reproduced all 20 released fits exactly (audit round 2026-10).
+BBSE_MIN_AUX_SITES = 10
+
+
 @dataclass
 class BBSEFit:
     """Frozen label-shift correction, a function of (head, S_aux, target pool).
 
     q_target is an estimate of the target population predicted-positive rate
-    and carries sampling error, so it gets its own confidence share in the box.
+    -- the declared site's own rate for a single-site pool, the record-pooled
+    rate of the target-site population for a pool declaring
+    BBSE_MIN_TARGET_SITES or more -- and carries sampling error, so it gets its
+    own confidence share in the box.
 
     Scale-invariance lets record weights be (1, rho), with rho the
     target/source odds ratio of the positive class. walk_orders maps each alpha
     to its S_aux-derived fixed sequence.
 
-    Refs: METHODS 5; audit V2.
+    Refs: METHODS 5; audit V2; audit round 2026-10 BBSE-2.
     """
     declined: bool
     reason: str
@@ -111,20 +130,26 @@ def _decline(reason: str, diag: dict) -> BBSEFit:
 def _q_interval(pred, target_site_id, lvl, rng):
     """Two-sided level-lvl interval for the target predicted-positive rate q.
 
-    Passing target_site_id as None, or as one distinct site, is the caller
-    declaring the pool is a single site. That branch is exact Clopper-Pearson
-    on the record count -- finite-sample valid for records iid within one site.
-    A multi-site pool must supply target_site_id, or the interval under-covers.
+    Which rate q names follows the declaration. Passing target_site_id as
+    None, or as one distinct site, is the caller declaring the pool is a
+    single site, and q is that site's own rate. That branch is exact
+    Clopper-Pearson on the record count -- finite-sample valid for records iid
+    within one site.
 
-    With at least BBSE_MIN_TARGET_SITES sites the interval is a percentile
-    cluster bootstrap over target sites, BBSE_BOOT resamples. Every resample is
-    valid, because q needs no both-classes constraint. It is asymptotic, like
-    the S_aux box.
+    With at least BBSE_MIN_TARGET_SITES sites, q is the record-pooled rate
+    E[k_c]/E[n_c] of the site population the declared sites were drawn from,
+    and the interval is a percentile cluster bootstrap over target sites,
+    BBSE_BOOT resamples. Every resample is valid, because q needs no
+    both-classes constraint. It is asymptotic, like the S_aux box, and below
+    nominal at 10-40 sites (audit multisite-q). A multi-site pool must supply
+    target_site_id: Clopper-Pearson on its pooled count covers only the
+    declared sites' own rate and under-covers the site-population rate.
 
     Pools of 2..BBSE_MIN_TARGET_SITES-1 sites decline upstream in fit_bbse and
     never reach here.
 
-    Refs: audit V2; verification F1.
+    Refs: audit V2; verification F1; audit multisite-q (audit round 2026-10
+    BBSE-2).
     """
     pred = np.asarray(pred, dtype=bool)
     n = int(pred.shape[0])
@@ -185,9 +210,11 @@ def rho_box_interval(q_lo, q_hi, q_point, lo, hi, point):
     covered whenever the true pi_t lies in [PI_CLIP, 1-PI_CLIP]. Outside that
     range the exposure is bounded at the PI_CLIP odds scale, about 1e-4 in an
     affine-in-rho statistic. Out-of-range corners are clipped, not declined;
-    the clipped endpoint then fails to certify (failsafe).
+    a clip-bound endpoint is tested like any other and can certify, and a
+    threshold still certifies only if both endpoints pass.
 
-    Refs: SPEC "shift.py"; audits V2, F41/B-9; verification F2-bbse.
+    Refs: SPEC "shift.py"; audits V2, F41/B-9; verification F2-bbse; audit
+    round 2026-10 NUM-5.
     """
     def rho_of(q, c0, c1, pi_s):
         pi_t = np.clip((q - c0) / (c1 - c0), PI_CLIP, 1.0 - PI_CLIP)
@@ -218,13 +245,16 @@ def fit_bbse(head: "Head", aux: "Cohort", target_x, rng,
     q_t is an estimate of the target population predicted-positive rate, so it
     gets its own confidence share at BBSE_DELTA_CONF / BBSE_BONFERRONI. That
     share is exact Clopper-Pearson for a single-site pool (target_site_id None
-    or one distinct value), and a cluster bootstrap over target sites
-    otherwise -- see _q_interval.
+    or one distinct value), and otherwise an asymptotic percentile cluster
+    bootstrap over target sites, aimed at the site population's rate -- see
+    _q_interval.
 
     Decline order:
 
       - bbse-empty-target;
       - bbse-target-clustering;
+      - bbse-aux-clustering, when fewer than BBSE_MIN_AUX_SITES S_aux sites
+        carry a positive record, or fewer carry a negative one;
       - bbse-degenerate-bootstrap;
       - bbse-ill-conditioned, when the worst-case confusion gap
         lo_c1 - hi_c0 < BBSE_GAP_FLOOR;
@@ -235,7 +265,7 @@ def fit_bbse(head: "Head", aux: "Cohort", target_x, rng,
     declines instead of flowing through.
 
     Refs: SPEC "shift.py"; METHODS 5; audits F40/B-8, F41/B-9 (widened by V2),
-    V2, V14; verification F1.
+    V2, V14; verification F1; audit round 2026-10 NUM-1, BBSE-2.
     """
     stats = _site_stats(head, aux)
     n_sites = stats.shape[1]
@@ -258,6 +288,21 @@ def fit_bbse(head: "Head", aux: "Cohort", target_x, rng,
             return _decline("bbse-target-clustering", bbse_diagnostics(
                 n_target=n_target, n_target_sites=n_ts,
                 min_target_sites=BBSE_MIN_TARGET_SITES))
+    # S_aux cluster floor, the mirror of the target-side floor above. The
+    # (c0, c1, pi_s) intervals are a percentile bootstrap over S_aux sites,
+    # and each rate draws only on the sites that carry its class: c1 =
+    # TP/positives on the positive-carrying sites, c0 = FP/negatives on the
+    # negative-carrying ones. With one such site every valid resample gives
+    # that rate's point estimate -- a zero-width interval that certified
+    # silently -- and a few cannot approach nominal coverage either. So each
+    # class needs BBSE_MIN_AUX_SITES carrying sites (stats rows: 0 = records,
+    # 1 = positives); empty labels carry neither (audit B-5). Decline before
+    # any resampling work. Ref: audit round 2026-10, NUM-1.
+    pos_sites = int((stats[1] > 0).sum())
+    neg_sites = int(((stats[0] - stats[1]) > 0).sum())
+    if min(pos_sites, neg_sites) < BBSE_MIN_AUX_SITES:
+        return _decline("bbse-aux-clustering",
+                        bbse_diagnostics(n_target=n_target))
     pred_t = head.predict(target_x)
     q_t = float(np.asarray(pred_t, dtype=float).mean())
 

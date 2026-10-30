@@ -7,8 +7,9 @@ The path under test:
     labels
   - from_raw, then run_certgate, must reach an honest outcome
 
-Honest means either a certificate whose oracle-checked answered error respects
-alpha, or a decline.
+Honest means either a decline, or a certificate whose oracle answered error on
+the target pool is not grossly violated (Wilson LCB <= alpha) -- a smoke
+screen, not a validity check (audit GAP-unreviewed-tests-4).
 
 The smoke test keeps the default suite fast. The full-scale arm -- 20800
 sessions over 208 heavy-tailed sites, the pilot-trial configuration -- runs
@@ -62,7 +63,12 @@ def _run_fixture(tmp_path, sessions, sites, rate, site_sigma):
 
 
 def _assert_honest(rep, ctx):
-    """The only acceptable outcomes: a valid certificate, or a decline."""
+    """Acceptable outcomes: a decline, or a certificate that is not grossly
+    violated on this one target pool (one-sided 95% Wilson LCB of the
+    record-pooled answered error <= alpha). A gross-violation screen, not a
+    validity check: the certificate bounds R_M over the site population at
+    1 - delta.
+    """
     parts = rep["decline_partition"]
     assert sum(parts.values()) == ctx["target"].n
     assert "[partition]" in render_text(rep)     # renders without KeyError

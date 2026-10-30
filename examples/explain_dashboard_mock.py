@@ -10,13 +10,16 @@ hospitals -- and renders the page with the real eICU column names (aps_motor,
 apv_oobintubday1, unitstaytype=stepdown/other), so a reader sees what the eICU
 page looks like without a single record from the eICU corpus.
 
-The corpus size is not the mock's default. margin_floor scales as 1/n_carrying,
-and at the mock's frozen 180- and 208-hospital sizes the gate declines every
-rung by design (EICU-PROTOCOL.md step 4 and the calibration note on
-EICU_MOCK_SIGNAL_LOAD). The floor crosses the mock's oracle margin at about 217
-hospitals, so the page is built at 900 hospitals / 90,000 stays -- the size the
-CERTGATE_EICU_LARGE arm of tests/test_eicu_mock.py uses -- where alpha = 0.10
-certifies with every pre-registered constant untouched.
+The corpus size is not the mock's default. At the mock's frozen 180- and
+208-hospital sizes the gate declines every rung (measured; EICU-PROTOCOL.md
+step 4 and the calibration note on EICU_MOCK_SIGNAL_LOAD). margin_floor scales
+as 1/n_carrying, and the oracle's atom-unit margin scales with the calibration
+hospitals' mean min(n_c,100)/100, so the crossing depends on stays per hospital
+as well as the hospital count. At 900 hospitals / 90,000 stays it is about 134
+calibration clusters against the 351 this size yields, so the page is built
+there -- the size the CERTGATE_EICU_LARGE arm of tests/test_eicu_mock.py uses
+-- where alpha = 0.10 certifies with every pre-registered constant untouched.
+(Audit 2026-10 GAP-eicu-mock-math-1.)
 
 Every number on the page is a property of the mock, and the page says so three
 times: a banner reading "MOCK CORPUS -- synthetic, no eICU record" is inserted
@@ -50,16 +53,16 @@ import tempfile
 
 import numpy as np
 
-from certgate.constants import DELTA
+from certgate.constants import ALPHA_LADDER, DELTA
 from certgate.model import fit_head
 from certgate.pipeline import run_certgate
+from certgate.report import _ASSUMPTION
 from certgate.validate import assert_site_disjoint, from_raw
 from examples.explain_dashboard import build_dashboard
 from experiments import eicu_etl as etl
 from experiments import eicu_mock as mock
 
-# The size at which the mock certifies alpha = 0.10 (see the module docstring
-# and test_large_mock_reaches_the_certified_branch in tests/test_eicu_mock.py).
+# A size (900 hospitals, 90,000 stays) at which the mock certifies alpha = 0.10
 MOCK_SITES = 900
 MOCK_STAYS = 90000
 
@@ -177,15 +180,25 @@ def render(res, out, *, corpus_note, provenance_comment, allow_declined=False,
         status = ("no rung certified at this size; demonstration threshold = "
                   "pool-median score")
     else:
-        # TAU_GRID values come back as binary floats (0.8300000000000001); the
-        # banner prints bare key = value pairs, so round to the grid's precision.
-        tau = round(float(op["tau"]), 6)
+        # The page deploys the certified grid value exactly (report.py applies
+        # score >= operative["tau"]); TAU_GRID values are binary floats
+        # (0.8300000000000001), so only the banner's printed copy is rounded,
+        # and tau_idx names the exact grid point. Ref: audit 2026-10
+        # explain-13, GAP-example-builders-1.
+        tau = float(op["tau"])
         certificate = {
             "certified": True,
             "alpha": float(op["alpha"]),
             "delta": float(DELTA),
-            "tau": tau,
-            "mode": op["deploy_mode"],
+            "tau": round(tau, 6),
+            "tau_idx": int(op["tau_idx"]),
+            # delta is per rung; the operative rung is a data-driven selection
+            # over ALPHA_LADDER, so the selected claim holds jointly at the
+            # union bound 1 - len(ALPHA_LADDER)*delta. Ref: audit 2026-10
+            # GAP-estimand-wording-all-surfaces-6, GAP-example-builders-4.
+            "deploy_mode": op["deploy_mode"],
+            "tagged_assumption": " or ".join(_ASSUMPTION[m] for m in op["modes"]),
+            "joint_confidence_over_ladder": round(1.0 - len(ALPHA_LADDER) * DELTA, 2),
             "n_cal_hospitals": int(cal.n_sites),
             "corpus": f"{MOCK_BANNER} ({corpus_note})",
             "verification": ("not cross-checked: a synthetic corpus has no "

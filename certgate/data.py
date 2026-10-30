@@ -6,13 +6,14 @@ machinery. A Cohort here holds only x, y, site_id, site_labels.
 
 The generative model is chosen so each shift is EXACT rather than approximate:
 
-  Site c:   size n_c ~ clipped LogNormal(size_mu, size_sigma)
+  Site c:   size n_c = floor(clip(exp(N(size_mu, size_sigma^2)),
+                                  size_lo, size_hi))
             random effect u_c ~ N(0, s_u^2) on the log-odds base rate
             pi_c = sigmoid(logit(base) + u_c)
   Record:   class-conditional Gaussians x | y ~ N(mu_y, I_d), with symmetric
             means mu_1 = +sep/2 * v and mu_0 = -sep/2 * v for unit v. That
-            makes the posterior logit Bayes-exact:
-            P(y=1 | x, c) = logit(pi_c) + sep * (v . x).
+            makes the posterior log-odds Bayes-exact:
+            logit P(y=1 | x, c) = logit(pi_c) + sep * (v . x).
 
 Two shift paths:
 

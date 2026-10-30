@@ -81,6 +81,17 @@ def test_bbse_min_target_sites():
     assert C.BBSE_MIN_TARGET_SITES == 10
 
 
+def test_bbse_min_aux_sites():
+    # Post-hoc S_aux cluster floor (audit round 2026-10, NUM-1): below it the
+    # BBSE fit declines "bbse-aux-clustering". Module-local in shift.py, NOT
+    # constants.py, the a-priori pre-extract surface (the
+    # reliability.MIN_SITES_FOR_CI precedent); same value as the target floor.
+    from certgate import shift as S
+    assert S.BBSE_MIN_AUX_SITES == 10
+    assert S.BBSE_MIN_AUX_SITES == C.BBSE_MIN_TARGET_SITES
+    assert not hasattr(C, "BBSE_MIN_AUX_SITES")
+
+
 def test_bbse_boot_counts():
     assert C.BBSE_BOOT == 2000
     assert C.BBSE_BOOT_MAX_ATTEMPTS == 4000
@@ -101,6 +112,27 @@ def test_head_hyperparams():
 
 def test_mode_indices():
     assert (C.MODE_BASELINE, C.MODE_BBSE) == (0, 1)
+
+
+def test_report_bootstrap_resamples_pinned():
+    """Table S1 'Report bootstrap | 500 resamples'. The estimated tier's count
+    is a default argument of report._bootstrap_estimate, not a constants.py
+    name, so it is pinned where it lives (value unchanged since the freeze
+    commit 9f25b49). The production call site must not override it, so that
+    default is the deployed value. Estimated tier only; it has no bearing on
+    the certificate (audit round 2026-10 PAPER2-10)."""
+    import inspect
+    from certgate import report
+    params = inspect.signature(report._bootstrap_estimate).parameters
+    assert list(params)[:5] == ["head", "cal", "tau", "weights", "n_boot"]
+    assert params["n_boot"].default == 500
+    assert params["max_attempts"].default is None     # resolves to 2 * n_boot
+    tree = ast.parse(pathlib.Path(report.__file__).read_text(encoding="utf-8"))
+    calls = [n for n in ast.walk(tree) if isinstance(n, ast.Call)
+             and getattr(n.func, "id", None) == "_bootstrap_estimate"]
+    assert calls and all(len(c.args) <= 4
+                         and "n_boot" not in {k.arg for k in c.keywords}
+                         for c in calls)
 
 
 # ---- experiment-grid constants. An undeclared generator parameter once made
@@ -420,29 +452,50 @@ def test_eicu_mock_constants_pinned():
     assert mock.EICU_MOCK_SITE_SIGMA == 1.1
     assert mock.EICU_MOCK_SITE_SIGMA_U == 0.5
 
-    # The latent-severity slope. Its Bayes-optimal AUC is Phi(B/sqrt(2)) = 0.73
-    # and the fitted head reaches ~0.60 out of sample. At the two frozen corpus
-    # sizes -- EICU_MOCK_SMALL_SITES = 180 (63 calibration clusters) and
-    # EICU_MOCK_FULL_SITES = 208 (75) -- an oracle ranking's best margin 0.0354
-    # sits below certify.margin_floor (0.0428 and 0.0359), so run_certgate
-    # declines every rung and the default suite exercises the decline branch.
+    # The latent-severity slope. Its Bayes-optimal AUC is 0.748 (0.715
+    # recovering z alone; Phi(B/sqrt(2)) = 0.73 is the rare-event
+    # approximation) and the fitted head reaches ~0.60 out of sample at the
+    # small arm (~0.69 at the full arm).
     #
-    # Those two sizes are the whole of that claim. margin_floor scales as
-    # 1/n_carrying, so the floor drops below 0.0354 at n_carrying = 77
-    # (~217 hospitals), and a 900- or 1500-hospital mock certifies alpha = 0.10
-    # with this constant untouched -- the branch
-    # test_large_mock_reaches_the_certified_branch (CERTGATE_EICU_LARGE=1)
-    # exercises. Raising this toward synth_fixture's 2.0 is one option among
-    # several, and either way it is a SPEC + test_constants change.
-    # Ref: audit E-20 (2026-07-31).
+    # At the two frozen corpus sizes -- EICU_MOCK_SMALL_SITES = 180 (63
+    # calibration clusters) and EICU_MOCK_FULL_SITES = 208 (75) --
+    # run_certgate declines every rung on the frozen seeds (measured: below
+    # the floor a valid test may still certify, never with certainty), so the
+    # default suite exercises the decline branch. The asserts below are
+    # record-unit floor arithmetic: an oracle ranking's best record-unit
+    # margin 0.0354 sits below certify.margin_floor (0.0428 and 0.0359), but
+    # margin_floor is in atom units (x mean min(n_c,100)/100), so 77 is the
+    # crossing only if every calibration site has >= 100 stays. site_split
+    # first yields 77 calibration clusters at 213 hospitals (214 gives 76;
+    # every size from 215 up gives at least 77). A 900-hospital, 90,000-stay
+    # mock certifies alpha = 0.10 with this constant untouched
+    # (test_large_mock_reaches_the_certified_branch, CERTGATE_EICU_LARGE=1); a
+    # 1500-hospital, 30,000-stay one declines. Raising this toward
+    # synth_fixture's 2.0 is one option among several, and either way it is a
+    # SPEC + test_constants change.
+    # Ref: audit E-20 (2026-07-31); audit round 2026-10 DOCS-2, DOCS-7,
+    # GAP-eicu-mock-math-1, -4, -6, GAP-example-builders-7.
     assert mock.EICU_MOCK_SIGNAL_B == 0.85
     assert mock.EICU_MOCK_BASE_RATE == 0.095       # == SimConfig().base_rate
     _floor = __import__("certgate.certify", fromlist=["x"]).margin_floor
-    assert _floor(63, C.DELTA, 0.10) > 0.0354      # small arm declines
-    assert _floor(75, C.DELTA, 0.10) > 0.0354      # full arm declines
-    assert _floor(77, C.DELTA, 0.10) < 0.0354      # ... and 77 does NOT
+    assert _floor(63, C.DELTA, 0.10) > 0.0354      # small arm, record units
+    assert _floor(75, C.DELTA, 0.10) > 0.0354      # full arm, record units
+    assert _floor(77, C.DELTA, 0.10) < 0.0354      # record-unit crossing
     assert min(n for n in range(50, 400)
                if _floor(n, C.DELTA, 0.10) < 0.0354) == 77
+
+    # site_split's calibration count: 77 first at 213 hospitals, 76 at 214,
+    # at least 77 from 215 up (GAP-eicu-mock-math-6, GAP-example-builders-7).
+    # Read off site_split itself, so a change to its fractions or truncation
+    # moves these; it refuses totals below EICU_MIN_TOTAL_SITES
+    def _n_cal_mock(total):
+        sites = np.array([f"h{i}" for i in range(total)])
+        return len(etl.site_split(sites, replicate=0)[1]["cal"])
+    assert (_n_cal_mock(180), _n_cal_mock(208)) == (63, 75)
+    assert _n_cal_mock(213) == 77 and _n_cal_mock(214) == 76
+    assert max(_n_cal_mock(t)
+               for t in range(etl.EICU_MIN_TOTAL_SITES, 213)) < 77
+    assert all(_n_cal_mock(t) >= 77 for t in range(215, 401))
 
     # EICU_MOCK_SIGNAL_LOAD is the per-feature loading dict. Together with
     # EICU_MOCK_SIGNAL_B it sets the mock's head AUC, so both numbers quoted
@@ -527,8 +580,9 @@ def test_eicu_mock_constants_pinned():
         assert mock.EICU_MOCK_SCHEMA[table][0][0] == first
         assert mock.EICU_MOCK_SCHEMA[table][1][0] == "patientunitstayid"
 
-    # the intercept is derived from the base rate, never pinned on its own, so
-    # the advertised prevalence and the emitted prevalence cannot drift apart
+    # the intercept is derived from the base rate (probit approximation), never
+    # pinned on its own; the exact superpopulation prevalence it yields is
+    # 9.25% (audit round 2026-10 GAP-eicu-mock-math-5)
     assert not hasattr(mock, "EICU_MOCK_SIGNAL_INTERCEPT_LITERAL")
     assert mock.EICU_MOCK_SIGNAL_INTERCEPT == pytest.approx(-2.649740738, rel=1e-9)
 

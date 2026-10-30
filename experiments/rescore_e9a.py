@@ -18,7 +18,11 @@ so the replay reproduces the frozen pool byte for byte). It checks that the
 replayed R_M matches the frozen rm_fresh to four decimals on every certified
 row, refusing to emit anything if one differs, and then rescores each
 certificate on the same fresh pool reweighted by class to the declared
-target's own oracle prevalence. Both scores are reported side by side. The
+target's own oracle prevalence. (This is the declared pool's realised
+prevalence, a plug-in proxy: the single-site Clopper-Pearson box covers the
+site's latent prevalence, and for k40-boot rows the cluster-bootstrap box
+targets the shifted site population, which the unweighted pool already
+scores; audit FNR-6.) Both scores are reported side by side. The
 frozen CSV is never opened for writing.
 
 The reweighting: with pi_t the declared pool's prevalence and pi_e the fresh
@@ -35,9 +39,11 @@ which is in the frozen CSV. It costs one BBSE fit per draw and changes
 nothing above; the recovered box is compared with the frozen one as a second
 self-check.
 
-Run: python -m experiments.rescore_e9a [--rho-point] [--out DIR]
+Run: python -m experiments.rescore_e9a [--rho-point] --out DIR
+     (the released out-e9a-rescore/ is refused, so a bare run writes nothing)
 
-Writes E9a_rescore.csv and E9a_rescore.json into experiments/out-e9a-rescore/.
+Writes E9a_rescore.csv and E9a_rescore.json into DIR; the released copy is
+experiments/out-e9a-rescore/, frozen as released.
 The JSON carries a _run block (UTC, git sha, sha256 of the frozen input).
 
 Refs: SPEC "E9" arm A; fix-pass plan WP2; panel action item 4.
@@ -50,7 +56,7 @@ import time
 
 import numpy as np
 
-from certgate.constants import M_INFLUENCE
+from certgate.constants import M_INFLUENCE, TAU_GRID
 from certgate.data import SimConfig, draw_cohort, split_sites
 from certgate.model import fit_head
 from certgate.pipeline import run_certgate
@@ -79,6 +85,15 @@ POST_HOC = ("[MEASURE] POST-HOC (2026-09-04): replay and rescoring of the "
             "The rescored column is a second estimand for the same "
             "certificates, not a correction of the first.")
 
+# Kept byte-for-byte: this string is emitted into the frozen
+# out-e9a-rescore/E9a_rescore.json. Correction 2026-10-29 (audit FNR-6):
+# "which is what the BBSE box was fitted to" is approximate. pi_target is the
+# declared pool's REALISED prevalence, a sample estimate of the latent site
+# prevalence a single-site certificate names (its exact Clopper-Pearson q
+# interval covers the site's own predicted-positive rate), so rm_rescored
+# estimates that estimand rather than equals it; for k40-boot rows the
+# cluster-bootstrap q interval targets the target-site population, which
+# rm_fresh already scores.
 ESTIMAND_NOTE = (
     "rm_fresh scores each certificate on a fresh 200-site pool at the "
     "population shift (target base rate 0.22 with site random effects). "
@@ -194,7 +209,12 @@ def rescore(rho_point=False, draws=None, frozen_path=FROZEN, log=print):
             bbse = report["diagnostic"]["bbse"]
         for fr in certified[key]:
             alpha = float(fr["alpha"])
-            tau = float(fr["tau"])
+            # the frozen CSV prints tau at 2 dp (0.91 for the deployed
+            # 0.9099999999999999); snap back to the deployed grid double
+            # (audit explain-13). The grid spacing of 0.02 is far above the
+            # rounding error, so the snap is exact.
+            tau = float(TAU_GRID[int(np.argmin(np.abs(TAU_GRID
+                                                      - float(fr["tau"]))))])
             rm_frozen = float(fr["rm_fresh"])
             rm_replayed = round(_rm_on_pool(head, evalp, tau), 6)
             cov_replayed = round(float((head.score(evalp.x) >= tau).mean()), 4)
@@ -328,6 +348,13 @@ def summarise(rows, check, frozen_rows, rho_point):
                self_check=dict(**check, exceeding_rows_pinned={
                    f"{k[0]}|{k[1]}|{k[2]}|{k[3]}": v
                    for k, v in EXCEEDING_ROWS.items()}),
+               # Released key: the value is the nominal, site-conditional
+               # odds multiplier exp(logit 0.22 - logit 0.095) = 2.6869 that
+               # every site receives at a fixed site effect, not the
+               # population-averaged (record-pooled) ratio rho_pop estimates,
+               # 2.6013 under s_u = 0.5 (out-bbse-probe truth.rho_pop); each
+               # row's rho_pop is the realised pool's. The key name stays:
+               # E9a_rescore.json is released (audits NUM-4, FNR-6).
                population_odds_ratio=round(_odds(SHIFT_BASE)
                                            / _odds(SimConfig().base_rate), 4),
                cells=cells, exceeding_rows=exceeding,

@@ -12,9 +12,11 @@ The guarantee text is a verbatim obligation. A certified row must carry:
   - the operative-rung selection clause
   - the tagged-assumption wording
   - the concept/combined-shift out-of-scope disclosure
-  - for BBSE rows, the four-parameter box and its bootstrap caveat
+  - for BBSE rows, the four-parameter box, its bootstrap caveat and the
+    record-pooled source-odds sentence
 
-Refs: SPEC "report.py"; METHODS 3, 6, 7; audits F01/F02, V1, V3, V13, V27.
+Refs: SPEC "report.py"; METHODS 3, 6, 7; audits F01/F02, V1, V3, V13, V27;
+audit 2026-10 BBSE-2, BBSE-3.
 """
 
 import datetime
@@ -85,8 +87,10 @@ def _statement(alpha: float, modes) -> str:
     #   - baseline certifies the unweighted risk over the calibration site
     #     population, with probability over the calibration draw;
     #   - bbse certifies the rho-reweighted risk -- the population risk at the
-    #     target class prevalence -- with probability over the joint draw of
-    #     calibration sites, S_aux split and target pool.
+    #     target class prevalence when the record-pooled and influence-weighted
+    #     source prevalences coincide (rho's source odds are record-pooled; the
+    #     last BBSE sentence states the general case) -- with probability over
+    #     the joint draw of calibration sites, S_aux split and target pool.
     # Naming the unweighted calibration-population risk on a BBSE row emits a
     # false certificate under a downward prevalence shift.
     # Ref: audit V1; verification G-1, G-3.
@@ -158,29 +162,52 @@ def _statement(alpha: float, modes) -> str:
             "bootstraps -- asymptotic, with realized joint coverage at small "
             "cluster counts measurably below nominal (see METHODS); the "
             "q_target interval is finite-sample Clopper-Pearson for "
-            "single-site pools and a cluster bootstrap for multi-site pools.")
+            "single-site pools and an asymptotic percentile cluster "
+            "bootstrap for multi-site pools.")
+        # rho's source odds are record-pooled (pi_source) while R_M weights
+        # sites by g_c = min(n_c, M): the reweighted class mix has odds
+        # rho * odds(pi_g), pi_g = E[g_c pi_c]/E[g_c] -- the target's exactly
+        # when pi_g equals the record-pooled prevalence (paper 3.6; audit
+        # 2026-10 BBSE-3)
+        parts.append(
+            "Under label shift the odds ratio rho takes its source odds from "
+            "pi_source, the record-pooled source prevalence, while the "
+            "estimand weights sites by influence, so the reweighted risk is "
+            "at the target class prevalence exactly where the record-pooled "
+            "and influence-weighted source prevalences coincide, and "
+            "otherwise at the prevalence whose odds are rho times those of "
+            "the influence-weighted source prevalence.")
     return " ".join(parts)
 
 
 def _bootstrap_estimate(head, cal, tau, weights=None, n_boot=500,
                         max_attempts=None):
-    """Estimated-tier answered-set risk at tau.
+    """Estimated-tier answered-set risk at tau: record-pooled, not R_M.
 
-    Point estimate plus a cluster bootstrap over S_cal sites, weighted under
-    the deploy mode when weights are supplied. This estimates the (re-weighted)
-    target risk and is never the certified guarantee, so it is labelled with
-    the weighting it used.
+    The point is sum(w*ans*err) / sum(w*ans) over S_cal records, with w the
+    deploy-mode class weights (rho_point on positives under BBSE, 1
+    otherwise) and no influence cap -- M = infinity in the R_M notation. It
+    estimates the site population's record-weighted answered-set risk
+    (reweighted to the target class prevalence under BBSE), not the certified
+    influence-weighted R_M, whose S_cal plug-in (at rho_point under BBSE) is
+    diagnostic['rm_vs_unweighted']['r_m']. The CI is a cluster bootstrap over
+    S_cal sites with tau and w held fixed; under BBSE it is conditional on
+    rho_point and does not propagate [rho_lo, rho_hi]. Never the certified
+    guarantee, so it is labelled with the weighting it used.
 
     Resampling discipline, mirroring shift.py:
 
-      - resamples with zero answered mass are topped up, not dropped;
-        quantiling over a reduced count keeps only the high-mass resamples and
-        biases the interval
-      - if n_boot valid resamples cannot be collected within 2 * n_boot
-        attempts, the CI is NaN, never a quantile over fewer draws
+      - a resample with zero answered mass has no ratio and is redrawn (topped
+        up). Dropping it without a redraw would quantile the same law -- the
+        bootstrap law conditional on positive answered mass -- from fewer
+        draws; topping up only restores the Monte-Carlo count to n_boot
+      - if n_boot valid resamples cannot be collected within max_attempts
+        (default 2 * n_boot, so more than half the attempts had zero answered
+        mass), the CI is NaN, never a quantile over fewer draws
       - an empty answered set yields a NaN point, never 0.0
 
-    Refs: SPEC "report.py"; v1 report.py:14-35; audits V21, F40, B-8.
+    Refs: SPEC "report.py"; v1 report.py:14-35; audits V21, F40, B-8; audit
+    2026-10 CORE-5, CORE-10.
     """
     rng = np.random.default_rng(SEED)
     score = head.score(cal.x)
@@ -212,10 +239,18 @@ def _bootstrap_estimate(head, cal, tau, weights=None, n_boot=500,
 
 
 def _rm_vs_unweighted(head, cal, tau, weights=None) -> dict:
-    """Influence-weighted risk R_M vs the plain record-mean risk (audit F26).
+    """Influence-weighted risk R_M vs the record-pooled risk (audit F26).
+
+    Both sides carry the deploy-mode class weights w (1 in baseline,
+    rho_point^y under BBSE), so the gap isolates the M-cap's influence
+    weighting and is exactly 0 when no calibration site exceeds M.
+    'unweighted' means not influence-weighted: unweighted_risk is
+    sum(w*ans*err) / sum(w*ans), the estimated tier's point ratio.
 
     Shows when the M-cap is masking a heavy tail. A large positive gap means
-    the influence weighting is catching bad news an unweighted read hides.
+    the influence weighting is catching bad news a record-pooled read hides.
+
+    Ref: audit 2026-10 CORE-9.
     """
     score = head.score(cal.x)
     err = (head.predict(cal.x) != cal.y).astype(np.float64)
@@ -230,13 +265,24 @@ def _rm_vs_unweighted(head, cal, tau, weights=None) -> dict:
     num = float(np.sum(infl * ans * err * w))
     den = float(np.sum(infl * ans * w))
     r_m = num / den if den > 0 else float("nan")
-    ans_bool = score >= tau
-    unweighted = float(err[ans_bool].mean()) if ans_bool.any() else float("nan")
+    # the same w on the record-pooled side; a plain record mean here would
+    # fold the BBSE class reweighting into a gap read as the M-cap's
+    pooled_den = float(np.sum(w * ans))
+    unweighted = (float(np.sum(w * ans * err)) / pooled_den
+                  if pooled_den > 0 else float("nan"))
     return dict(r_m=r_m, unweighted_risk=unweighted, gap=r_m - unweighted)
 
 
 def _capped_influence_share(cal) -> float:
-    """Fraction of records whose realized contribution is capped by M (audit F26)."""
+    """Share of calibration records beyond their site's influence cap (audit F26).
+
+    sum_c max(n_c - M, 0) / sum_c n_c = 1 - sum_c g_c / sum_c n_c: the record
+    mass the cap removes from influence. Not the share of records at capped
+    sites (sum of n_c over n_c > M, over sum_c n_c); every record of such a
+    site is down-weighted by M/n_c, and no realized contribution is capped.
+
+    Ref: audit 2026-10 CORE-8.
+    """
     sizes = cal.site_sizes.astype(np.float64)
     excess = np.maximum(sizes - M_INFLUENCE, 0.0).sum()
     total = sizes.sum()
@@ -246,9 +292,10 @@ def _capped_influence_share(cal) -> float:
 def _combine_alpha(mode_results_alpha: dict) -> dict:
     """OR-combine baseline and BBSE for one alpha.
 
-    Deploy the most conservative certified threshold, the max tau across modes.
-    Then list only the modes that certified that exact threshold index. The
-    OR-guarantee "if either tagged assumption holds" rests on the modes that
+    Deploy the most conservative of the modes' own selections: the max, over
+    certifying modes, of each mode's deployed (lowest certified) tau (audit
+    2026-10 CORE-12). Then list only the modes that certified that exact
+    threshold index. The OR-guarantee "if either tagged assumption holds" rests on the modes that
     actually back the deployed tau.
 
     A certified row also carries mode_outcomes, mapping each mode to
@@ -282,11 +329,14 @@ def _combine_alpha(mode_results_alpha: dict) -> dict:
 def build_report(*, target_label, head, cal, target_x, mode_results,
                  feasibility, bbse_fit, provenance_block,
                  oracle_y=None, gate_reason=None,
-                 target_site_id_supplied=False) -> dict:
+                 target_site_id_supplied=False, pi_train=None) -> dict:
     """Assemble the full tiered report for one target pool (SPEC report.py).
 
     mode_results maps alpha -> {"baseline": r, "bbse": r}, where each r carries
     certified (a list of tau indices), tau_idx, tau and reason.
+
+    pi_train is the S_train record prevalence, the prior the head's odds
+    carry; only the BBSE-implied composition reads it (audit 2026-10 BBSE-1).
 
     gate_reason, either "insufficient-clusters" or "pool-too-small",
     short-circuits to an all-declined report whose partition puts every target
@@ -360,11 +410,16 @@ def build_report(*, target_label, head, cal, target_x, mode_results,
     # certificate. Supply rho_point whenever the fit did not decline, whichever
     # mode won deployment. Gating it on deploy_mode silently degrades the
     # three-way composition to two-way wherever BBSE fits but loses the
-    # OR-combination (verification N5).
+    # OR-combination (verification N5). rho_point divides out the S_aux
+    # prevalence while the head's odds carry the S_train prevalence, so both
+    # priors travel with it; composition clips pi_s exactly as
+    # rho_box_interval clipped it (audit 2026-10 BBSE-1).
     rho_pt = bbse_fit.rho_point if not bbse_fit.declined else None
+    pi_src = (bbse_fit.diagnostics.get("pi_s") if rho_pt is not None
+              else None)
 
     comp = composition(head, target_x, answered, rho_point=rho_pt,
-                       oracle_y=oracle_y)
+                       oracle_y=oracle_y, pi_source=pi_src, pi_train=pi_train)
     abst = cohort_abstention_profile(head, target_x, answered)
 
     diagnostic = dict(
@@ -429,7 +484,8 @@ def render_text(report: dict) -> str:
     if report.get("estimated"):
         e = report["estimated"]
         lines.append(
-            f"  [estimated] answered-set risk ({e['weighting']}-weighted) "
+            f"  [estimated] record-pooled answered-set risk on S_cal "
+            f"({e['weighting']}-weighted) "
             f"{e['point']:.4f} (95% cluster-bootstrap "
             f"{e['ci95'][0]:.4f}-{e['ci95'][1]:.4f}, n_boot={e['n_boot']})")
     d = report["diagnostic"]

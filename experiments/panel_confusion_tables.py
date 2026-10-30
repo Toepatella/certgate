@@ -89,8 +89,35 @@ def _op_chars(c, skill):
     return row
 
 
+# (numerator, denominator) of every summarised rate, from a row's counts: the
+# ratios panel_s2_tables._op_chars rounds to 4 dp for the per-replicate rows.
+_RATIOS = dict(
+    sensitivity=lambda r: (r["tp"], r["tp"] + r["fn"]),
+    specificity=lambda r: (r["tn"], r["tn"] + r["fp"]),
+    ppv=lambda r: (r["tp"], r["tp"] + r["fp"]),
+    npv=lambda r: (r["tn"], r["tn"] + r["fn"]),
+    fnr=lambda r: (r["fn"], r["tp"] + r["fn"]),
+    error=lambda r: (r["fp"] + r["fn"], r["records"]),
+    fn_share_of_errors=lambda r: (r["fn"], r["fp"] + r["fn"]))
+
+
 def _agg(rows, key):
-    vals = [row[key] for row in rows if row[key] is not None]
+    """min / median / max of one rate over the replicates, rounded once.
+
+    Taken over the exact count ratios, not the rows' 4-dp rates: the median
+    of an even count is the midpoint of two rounded rates, a 5th-decimal tie
+    that can round away from the exact median (audit 2026-10 reliability-1).
+    """
+    vals = []
+    for row in rows:
+        num, den = _RATIOS[key](row)
+        if not den:
+            continue
+        if round(num / den, 4) != row[key]:
+            raise AssertionError(
+                f"panel_confusion_tables: {key} ratio does not reproduce the "
+                f"per-replicate rate (reason=ratio-mismatch)")
+        vals.append(num / den)
     if not vals:
         return None
     return dict(min=round(float(np.min(vals)), 4),

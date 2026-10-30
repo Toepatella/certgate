@@ -11,14 +11,24 @@ Two numbers look alike and mean different things, so keep them apart:
     average across sites, not any one site, so per-site exceedances climb with
     between-site heterogeneity while the certified average stays in budget.
   - exceedance_reference is the binomial P(realized answered-error rate >
-    alpha). It is the yardstick for the raw exceedance count: small answered
-    sets clear alpha on luck alone, at exactly this rate.
+    alpha) for a batch whose records err independently with probability
+    exactly alpha. It is the yardstick for the raw exceedance count: such a
+    batch clears alpha on luck alone at this rate, and a homogeneous batch
+    below alpha at a lower one. It is not a bound for a single-site batch
+    under between-site heterogeneity, whose rate is a mixture over site risks
+    and can sit on either side of it even when the certified average is
+    exactly alpha.
 
-The number that does carry the <= delta target is the aggregate R_M on a fresh
-multi-site pool (METHODS 7.1), computed in the experiment harness.
+The rate that carries the <= delta target is aggregate conformance (METHODS
+7.1), computed in the experiment harness: the share of certified draws whose
+influence-weighted R_M on a fresh multi-site pool exceeds alpha. That pool R_M
+is a finite-sample estimate of the population R_M the certificate bounds, and
+the share is conditional on certification; the betting test itself bounds the
+joint probability of certifying while the population R_M is at or above
+alpha.
 
 Refs: SPEC "harness.py"; METHODS 7; audits F29 (every label says exactly what
-it computes), V1 (per-site scope).
+it computes), V1 (per-site scope), 2026-10 synthetic-2 and synthetic-3.
 """
 
 import numpy as np
@@ -62,13 +72,18 @@ def hard_violation(err_answered, alpha):
 
 
 def exceedance_reference(n_answered, alpha):
-    """How often a perfectly valid certificate still exceeds alpha by luck.
+    """How often a batch erring at exactly alpha still exceeds alpha by luck.
 
-    P(K/n > alpha) for K ~ Binomial(n, p) evaluated at the boundary p = alpha,
-    which traces the dispersion curve of the worst certificate that is still
-    valid. Returns 0.0 when n_answered <= 0.
+    P(K/n > alpha) for K ~ Binomial(n, p) evaluated at p = alpha: the
+    exceedance rate of a homogeneous batch whose records err independently at
+    the budget. It oscillates with the integer lattice for small n and tends
+    to 1/2 as n grows. Under between-site heterogeneity a single-site batch,
+    drawn from a site population whose influence-weighted average risk R_M is
+    exactly alpha, exceeds at the mixture rate E_c[P(Bin(n, p_c) > alpha n)],
+    which tends to P(p_c > alpha) rather than 1/2. Returns 0.0 when
+    n_answered <= 0.
 
-    Refs: METHODS 7.
+    Refs: METHODS 7; audit 2026-10 synthetic-3.
     """
     if n_answered <= 0:
         return 0.0
