@@ -1,6 +1,6 @@
 # CertGate — certified selective prediction with explainable abstention for multi-site clinical risk models
 
-**Status:** code and aggregate artifacts accompanying the manuscript *"CertGate: finite-sample certified selective prediction for multi-site clinical risk models, with label-shift robustness and explainable abstention"* (prepared for the Springer Nature collection named below). The synthetic experiment grid (E1–E9) and a certified run on real multi-site clinical data (eICU-CRD v2.0, 20 by-site re-splits) are both published in `experiments/out*/`; the test suite is green (443 passed, 4 skipped); the code is archived at Zenodo (concept DOI 10.5281/zenodo.22148739).
+**Status:** code and aggregate artifacts accompanying the manuscript *"CertGate: finite-sample certified selective prediction for multi-site clinical risk models, with label-shift robustness and explainable abstention"*. The synthetic experiment grid (E1–E9) and a certified run on real multi-site clinical data (eICU-CRD v2.0, 20 by-site re-splits) are both published in `experiments/out*/`; the test suite is green (443 passed, 4 skipped); the code is archived at Zenodo (concept DOI 10.5281/zenodo.22148739).
 
 ## The pitch (one paragraph)
 
@@ -34,7 +34,7 @@ On the paper's metric — aggregate conformance, with the per-site rate a diagno
 | BBSE label-shift mode, worst-case over a four-parameter confidence box | The flagship robustness result; the asymptotic steps (the S_aux percentile box, and the q percentile cluster bootstrap for multi-site pools) are **disclosed in the guarantee text itself**, with realized coverage measured in METHODS for a single declared target site (the multi-site mode is not yet probed) |
 | α ladder {0.05, 0.10} | At ~83 calibration clusters only 0.10 is realistically certifiable; 0.05 is the stretch rung, and the E4 sweep quantifies exactly what more sites buy |
 | Concept-shift negative control | Certificates fail there *and must* — assumption tags are load-bearing, and the control is verified capable of failing before it is trusted |
-| Explainable abstention layer | The collection's headline theme; exact attributions come nearly free on a linear head |
+| Explainable abstention layer | Exact attributions come nearly free on a linear head |
 | Input-contract validation (loud, at the boundary) | Silent input failure modes are designed out rather than patched: strict labels, finite features, dense site ids, disjointness asserted at pipeline entry |
 
 ## Scope — what is OUT (each cut is deliberate)
@@ -140,7 +140,7 @@ python -m experiments.run_synthetic            # full paper grid
 
 ## Paper
 
-The manuscript master is `paper/draft.md` (pandoc markdown; citations are `[@key]` groups against `paper/references.bib`) — the canonical, self-contained home of every result number alongside the generated artifacts in `experiments/out*/`. `python paper/make_submission.py` builds the whole submission package for Discover Computing (Springer Nature `sn-jnl`, pdflatex): `CertGate_DiscoverComputing.pdf` (the submission typescript), `CertGate_SI.pdf` (Supplementary Information A — deferred proofs, reproducibility details, the frozen-constants register as Table S1, and Figures S1–S10), `CertGate_compact.pdf` (a 10pt reading copy, not the typescript), and the Snapp figures zip (`Fig1.pdf`, `Fig2.png`, …). All author blanks are filled; the code is archived at Zenodo (concept DOI 10.5281/zenodo.22148739).
+The manuscript master is `paper/draft.md` (pandoc markdown; citations are `[@key]` groups against `paper/references.bib`) — the canonical, self-contained home of every result number alongside the generated artifacts in `experiments/out*/`. `python paper/make_submission.py` builds the whole submission package with pdflatex: the submission typescript, `CertGate_SI.pdf` (Supplementary Information A — deferred proofs, reproducibility details, the frozen-constants register as Table S1, and Figures S1–S10), `CertGate_compact.pdf` (a 10pt reading copy, not the typescript), and the figures zip (`Fig1.pdf`, `Fig2.png`, …). All author blanks are filled; the code is archived at Zenodo (concept DOI 10.5281/zenodo.22148739).
 
 Figure → source map (as called out in the draft; the current build keeps five figures and two tables in the main text and moves the rest to the peer-reviewed SI):
 
