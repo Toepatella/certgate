@@ -138,12 +138,6 @@ python -m experiments.run_synthetic            # full paper grid
 
 **This path has been exercised on the real thing** (eICU-CRD v2.0, 2026-07-31 — see the results section above and `EICU-PROTOCOL.md`). `experiments/eicu_etl.py` + `run_eicu.py` are the worked real-extract implementation; the extract itself is gitignored, never committed, and never redistributable.
 
-## How this repository was built
-
-Large language models (Anthropic Claude) were used throughout as coding, drafting and review-simulation assistants. All methods, analyses, results and text were specified, verified and are the sole responsibility of the author; no language model is an author. The repository's commit trailers record this assistance.
-
-Concretely: a commit carries a `Co-Authored-By: Claude …` trailer whenever a model drafted part of the change (82 of the 83 commits at the time of writing), and the history is kept as written rather than rewritten, because the pre-extract freeze commit `9f25b49` is cited in the manuscript. Two adversarial passes were run on the statistical core with simulated reviewers and resolved in the open: `REDTEAM.md` (2026-07-21/22; six reviewer lenses with independent skeptic verification of every actionable finding; resolution ledger at its head) and `CODE-AUDIT.md` (2026-07-25; six dimension sweeps and four prosecution passes; RESOLUTION ledger after the verdict, naming the test that now pins each fix). The repository history also contains the author's internal pre-submission audits and simulated reviews, removed from HEAD at submission and kept for provenance; they are not part of the submission.
-
 ## Paper
 
 The manuscript master is `paper/draft.md` (pandoc markdown; citations are `[@key]` groups against `paper/references.bib`) — the canonical, self-contained home of every result number alongside the generated artifacts in `experiments/out*/`. `python paper/make_submission.py` builds the whole submission package for Discover Computing (Springer Nature `sn-jnl`, pdflatex): `CertGate_DiscoverComputing.pdf` (the submission typescript), `CertGate_SI.pdf` (Supplementary Information A — deferred proofs, reproducibility details, the frozen-constants register as Table S1, and Figures S1–S10), `CertGate_compact.pdf` (a 10pt reading copy, not the typescript), and the Snapp figures zip (`Fig1.pdf`, `Fig2.png`, …). All author blanks are filled; the code is archived at Zenodo (concept DOI 10.5281/zenodo.22148739).
