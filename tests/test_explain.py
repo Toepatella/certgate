@@ -492,9 +492,12 @@ def test_declined_flag_is_the_logit_test_at_the_float64_bar():
     """`declined` is the logit-space test, not the deployed score rule.
 
     On the bar itself, |logit| == L* exactly, the margin is 0 and the flag is
-    False, while at the float-hostile threshold 0.63 the deployed rule
+    False, while at a float-hostile threshold the deployed rule
     head.score(x) >= tau still declines (sigmoid(L*) < tau by 1 ULP). The
-    documented band where the two can disagree is pinned here.
+    documented band where the two can disagree is pinned here. Which grid
+    thresholds are float-hostile depends on the platform's exp and log, so
+    the threshold is picked through the same expression the test asserts on;
+    0.97 is hostile for any exp and log within numpy's 1-ULP budget.
 
     Ref: audit 2026-10 explain-11.
     """
@@ -503,8 +506,13 @@ def test_declined_flag_is_the_logit_test_at_the_float64_bar():
     from certgate.explain import counterfactual_to_answer
     head = Head(coef=np.array([1.0]), intercept=0.0, mu=np.array([0.0]),
                 sd=np.array([1.0]))
-    tau = float(TAU_GRID[4])
-    assert abs(tau - 0.63) < 1e-12
+
+    def score_on_bar(t):
+        return float(head.score(np.array([[np.log(t / (1.0 - t))]]))[0])
+
+    hostile = [t for t in map(float, TAU_GRID) if score_on_bar(t) < t]
+    assert hostile, "no float-hostile grid threshold on this platform"
+    tau = hostile[-1]
     x = np.array([np.log(tau / (1.0 - tau))])
     exp = abstention_explanation(head, x, tau)
     assert exp["margin_to_answer"] == 0.0

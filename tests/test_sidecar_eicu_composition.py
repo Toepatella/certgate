@@ -295,7 +295,7 @@ def test_composition_formulas_are_the_released_and_the_corrected_ones(
 
     rel, rel_n = sc.released_bbse_fraction(head, target.x, mask, rho)
     p = head.predict_proba(target.x)
-    o = rho * p / np.clip(1.0 - p, 1e-12, None)
+    o = rho * (p / np.clip(1.0 - p, 1e-12, None))   # the function's order
     assert rel == float((o / (1.0 + o))[mask].mean())
     assert rel_n == pytest.approx(rel * int(mask.sum()), rel=1e-12)
 

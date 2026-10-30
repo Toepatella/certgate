@@ -50,8 +50,9 @@ estimand below.
 - **Arm A.** Each of the 40 replayed draws re-runs the pipeline in bbse mode
   on its frozen stream. It must equal `out/E9_bbse_frontier.csv` cell for
   cell at both alphas: 720 cells, covering the certified flag, tau,
-  coverage, decline reason, `rho_lo`/`rho_hi` to the last digit, box width,
-  `rm_fresh` and `rm_exceed`.
+  coverage, decline reason, box width, `rm_fresh` and `rm_exceed` as
+  printed, and the unrounded `rho_lo`/`rho_hi` to 1e-12 relative (another
+  platform's floating-point libraries can move their last bits).
 - **Arm A, rescore file.** Each certified row must also reproduce
   `out-e9a-rescore/E9a_rescore.csv`'s `pi_target`, `pi_eval`, `pi_source`,
   `rm_fresh` and `rm_rescored` to six decimals.

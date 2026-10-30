@@ -7,8 +7,9 @@ the script's own refuse-to-write self-check):
     classes' logits are mirror images
   - the sidecar refuses every released output directory
   - one arm-A draw (1,200 sites, draw 48) replays its frozen rows cell for
-    cell and names 0.0792 at the declared site's latent prevalence, against
-    the released proxy 0.058612
+    cell (the unrounded rho_lo/rho_hi to 1e-12 relative: a Linux replay moves
+    their last bits) and names 0.0792 at the declared site's latent
+    prevalence, against the released proxy 0.058612
   - one arm-B draw (600 sites, draw 80) replays both arms' released rows and
     scores the 0.400108 fresh-pool certificate at 0.3902
   - the released out-e9-exact/ files carry the verdict numbers
@@ -65,6 +66,13 @@ def test_arm_a_draw48_replays_and_names_the_latent_estimand():
     frozen, released = ex.load_a()
     rep = ex.replay_a(3, 48)
     assert ex.check_a(rep, frozen, released) == []
+    # the values a Linux CI replay of this draw gave (about 6 ulps off the
+    # Windows release) pass; a real change does not, and other cells stay exact
+    assert ex._same_cell("rho_lo", 0.29164722290741557, "0.2916472229074152")
+    assert ex._same_cell("rho_hi", 1.65402541301774, "1.6540254130177414")
+    assert not ex._same_cell("rho_hi", 1.6540254130177414 * (1 + 1e-9),
+                             "1.6540254130177414")
+    assert not ex._same_cell("tau", 0.5500000000000001, "0.55")
     pop = ex.population_parameters(SimConfig())
     rows = {x["budget"]: x for x in ex.score_a(rep, pop, mc=False)}
     assert sorted(rows) == [0.05, 0.1]

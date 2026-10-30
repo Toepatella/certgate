@@ -54,8 +54,9 @@ Self-check (refuse to write). Before anything is written:
   - arm A: each replayed draw rebuilds its E9_bbse_frontier.csv rows exactly
     as run_E9 does (pipeline in bbse mode, then the fresh pool) and must
     equal the frozen CSV cell for cell at every alpha -- certified flag,
-    tau, coverage, decline reason, rho_lo and rho_hi to the last digit, box
-    width, rm_fresh, rm_exceed; each certified row must also reproduce
+    tau, coverage, decline reason, box width, rm_fresh, rm_exceed as
+    printed, and rho_lo and rho_hi (printed unrounded) to REPLAY_RTOL
+    relative; each certified row must also reproduce
     out-e9a-rescore/E9a_rescore.csv's pi_target, pi_eval, pi_source and
     rm_rescored to six decimals, and the three rows rescore_e9a pins as
     exceeding must replay to its four;
@@ -95,6 +96,7 @@ minutes, almost all of it the arm-B walk replay.
 
 import argparse
 import copy
+import math
 import os
 import sys
 import time
@@ -140,6 +142,12 @@ SINGLE_SITE = "single-site-cp"
 M_IDX_SINGLE = E9_TARGET_MODES.index(SINGLE_SITE)
 FROZEN_A_FIELDS = ("certified", "tau", "coverage", "decline_reason", "rho_lo",
                    "rho_hi", "box_width", "rm_fresh", "rm_exceed")
+# rho_lo and rho_hi are the only arm-A cells run_E9 printed unrounded. Another
+# platform's floating-point libraries can move their last bits (a Linux CI
+# replay of draw (1200, 48) differed from the Windows release by about 6 ulps),
+# so they are compared to REPLAY_RTOL relative; every other cell as printed.
+UNROUNDED_A_FIELDS = ("rho_lo", "rho_hi")
+REPLAY_RTOL = 1e-12
 RELEASED_A_6DP = ("pi_target", "pi_eval", "pi_source", "rm_fresh_replayed",
                   "rm_rescored")
 B_FIELDS = tuple(f for f in e9b.FIELDS if f != "arm")
@@ -193,6 +201,14 @@ def _logit(p):
 def _cell(v):
     """A value as csv.DictWriter rendered it in the released CSVs."""
     return "" if v is None else str(v)
+
+
+def _same_cell(field, replayed, frozen_cell):
+    """True when a replayed arm-A value reproduces its released CSV cell."""
+    if field in UNROUNDED_A_FIELDS and replayed is not None and frozen_cell:
+        return math.isclose(float(replayed), float(frozen_cell),
+                            rel_tol=REPLAY_RTOL, abs_tol=0.0)
+    return _cell(replayed) == frozen_cell
 
 
 def _snap(tau):
@@ -329,7 +345,7 @@ def check_a(rep, frozen, released):
             bad.append(dict(row=key, reason="not in E9_bbse_frontier.csv"))
             continue
         for f in FROZEN_A_FIELDS:
-            if _cell(row[f]) != fr[f]:
+            if not _same_cell(f, row[f], fr[f]):
                 bad.append(dict(row=key, field=f, frozen=fr[f],
                                 replayed=_cell(row[f])))
         if not row["certified"]:
