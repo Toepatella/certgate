@@ -1,0 +1,28 @@
+{
+  "title": "CertGate: finite-sample certified selective prediction for multi-site clinical risk models, with label-shift robustness and explainable abstention",
+  "upload_type": "software",
+  "creators": [
+    {
+      "name": "Zhang, Tony",
+      "affiliation": "Department of Physiology and Pharmacology, Western University, London, Ontario, Canada"
+    }
+  ],
+  "description": "<p>Code and aggregate artifacts for CertGate, a selective-prediction gate for multi-site clinical risk models: it answers when confident and defers the rest. Treating the hospital as the unit of independence, it certifies that the influence-capped answered error rate, averaged over hospitals, stays within a stated budget at a stated confidence (finite-sample in the exchangeable mode). A label-shift mode folds the uncertainty of its correction into the guarantee, and a linear head explains every answer and every abstention exactly.</p><p>The archive contains the library, the test suite, the synthetic experiment grid and its frozen outputs, and the aggregate results of a certified run on eICU-CRD v2.0 (20 by-site re-splits). No patient-level data is included; eICU-CRD requires credentialed access through PhysioNet.</p>",
+  "license": "MIT",
+  "access_right": "open",
+  "keywords": [
+    "selective prediction",
+    "distribution-free uncertainty quantification",
+    "cluster-robust inference",
+    "label shift",
+    "explainable abstention",
+    "clinical risk prediction"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/Toepatella/certgate",
+      "relation": "isSupplementTo",
+      "resource_type": "software"
+    }
+  ]
+}
